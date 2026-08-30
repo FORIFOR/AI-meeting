@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - services/*
+  - packages/*
+  - providers/*
+  - avatar-providers/*
+  - characters
+  - personas
+  - connectors/*

@@ -1,0 +1,9 @@
+{
+  "_doc": "GET /api/v1/bot/{id}/ shapes as returned by the broker's /api/meeting/recall/bots/:id (status_changes tail).",
+  "in_call": { "botId": "bot_fixture", "code": "in_call_recording", "subCode": null, "updatedAt": "2026-08-30T10:00:21.000Z", "statusChanges": [{ "code": "joining_call" }, { "code": "in_waiting_room" }, { "code": "in_call_recording", "sub_code": null }], "botPageActivatedAt": null, "outputMediaRestarts": 0 },
+  "kicked": { "botId": "bot_fixture", "code": "call_ended", "subCode": "bot_kicked_from_call", "statusChanges": [{ "code": "in_call_recording" }, { "code": "call_ended", "sub_code": "bot_kicked_from_call" }] },
+  "denied": { "botId": "bot_fixture", "code": "call_ended", "subCode": "bot_kicked_from_waiting_room", "statusChanges": [{ "code": "in_waiting_room" }, { "code": "call_ended", "sub_code": "bot_kicked_from_waiting_room" }] },
+  "ended": { "botId": "bot_fixture", "code": "call_ended", "subCode": "call_ended_by_host", "statusChanges": [{ "code": "in_call_recording" }, { "code": "call_ended", "sub_code": "call_ended_by_host" }] },
+  "done_after_ended": { "botId": "bot_fixture", "code": "done", "subCode": null, "statusChanges": [{ "code": "call_ended", "sub_code": "call_ended_by_host" }, { "code": "done" }] },
+  "fatal": { "botId": "bot_fixture", "code": "fatal", "subCode": "bot_errored", "statusChanges": [{ "code": "joining_call" }, { "code": "fatal", "sub_code": "bot_errored" }] }
+}

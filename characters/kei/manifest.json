@@ -1,0 +1,10 @@
+{
+  "id": "kei",
+  "name": "Kei",
+  "renderer": "live2d",
+  "defaultPersona": "friendly",
+  "supportedLanguages": ["ja-JP", "en-US"],
+  "motionProfile": "expressive_v1",
+  "voiceProfiles": ["kei_openai", "kei_google", "kei_local"],
+  "license": "Live2D sample 'Kei_basic' (MotionSync sample) — Live2D Free Material License (dev only)"
+}

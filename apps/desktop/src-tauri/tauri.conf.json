@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Realtime Character AI",
+  "version": "0.2.0-beta.1",
+  "identifier": "dev.rcai.desktop",
+  "build": {
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../web/dist",
+    "beforeDevCommand": "pnpm --filter @rcai/web dev",
+    "beforeBuildCommand": "pnpm --filter @rcai/web build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Realtime Character AI",
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "icon": [
+      "icons/icon.png"
+    ],
+    "macOS": {
+      "entitlements": "Entitlements.plist",
+      "minimumSystemVersion": "12.0",
+      "signingIdentity": "Developer ID Application: Shuhei Horio (6RR7572ZLU)"
+    }
+  }
+}

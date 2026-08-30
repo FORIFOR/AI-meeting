@@ -1,0 +1,10 @@
+{
+  "id": "reina",
+  "name": "Reina",
+  "renderer": "live2d",
+  "defaultPersona": "interviewer",
+  "supportedLanguages": ["ja-JP", "en-US"],
+  "motionProfile": "calm_v1",
+  "voiceProfiles": ["reina_openai", "reina_google", "reina_local"],
+  "license": "Model: Live2D sample 'Mao' (Live2D Free Material License) — dev only; replace for production."
+}

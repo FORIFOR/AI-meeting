@@ -1,0 +1,154 @@
+{
+  "model": "model/Kei_basic.model3.json",
+  "expressions": {
+    "neutral": {},
+    "smile": {
+      "eyeLSmile": 0.9,
+      "eyeRSmile": 0.9,
+      "mouthForm": 0.8,
+      "cheek": 0.5,
+      "browLY": 0.1,
+      "browRY": 0.1
+    },
+    "laugh": {
+      "eyeLSmile": 1,
+      "eyeRSmile": 1,
+      "eyeLOpen": 0.35,
+      "eyeROpen": 0.35,
+      "mouthForm": 1,
+      "cheek": 0.8,
+      "angleY": -3
+    },
+    "warm_positive": {
+      "eyeLSmile": 0.5,
+      "eyeRSmile": 0.5,
+      "mouthForm": 0.45,
+      "cheek": 0.3,
+      "browLY": 0.1,
+      "browRY": 0.1
+    },
+    "serious": {
+      "browLY": -0.4,
+      "browRY": -0.4,
+      "browLForm": -0.5,
+      "browRForm": -0.5,
+      "mouthForm": -0.2,
+      "eyeLOpen": 0.9,
+      "eyeROpen": 0.9
+    },
+    "sad": {
+      "browLForm": 0.7,
+      "browRForm": 0.7,
+      "browLY": -0.15,
+      "browRY": -0.15,
+      "mouthForm": -0.7,
+      "eyeLOpen": 0.7,
+      "eyeROpen": 0.7,
+      "angleY": -4
+    },
+    "thinking": {
+      "browLY": 0.3,
+      "browRY": 0.05,
+      "eyeBallX": 0.45,
+      "eyeBallY": 0.45,
+      "angleZ": 5,
+      "mouthForm": -0.1
+    },
+    "surprised": {
+      "eyeLOpen": 1.3,
+      "eyeROpen": 1.3,
+      "browLY": 0.9,
+      "browRY": 0.9,
+      "mouthForm": -0.2,
+      "angleY": 3
+    },
+    "concerned": {
+      "browLForm": 0.45,
+      "browRForm": 0.45,
+      "browLY": -0.1,
+      "browRY": -0.1,
+      "mouthForm": -0.4,
+      "angleZ": -3
+    },
+    "encourage": {
+      "eyeLSmile": 0.55,
+      "eyeRSmile": 0.55,
+      "mouthForm": 0.55,
+      "browLY": 0.2,
+      "browRY": 0.2,
+      "angleY": -2
+    }
+  },
+  "motions": {
+    "idle": [
+      "idle_breathe",
+      "idle_soft_sway",
+      "idle_look_left",
+      "idle_look_right",
+      "idle_relaxed"
+    ],
+    "listening": [
+      "listen_neutral",
+      "listen_small_nod",
+      "listen_interested",
+      "listen_head_tilt",
+      "listen_serious",
+      "listen_long_answer"
+    ],
+    "thinking": [
+      "think_look_up",
+      "think_hmm"
+    ],
+    "speaking": [
+      "speak_calm",
+      "speak_soft",
+      "speak_energetic",
+      "speak_explain",
+      "speak_question",
+      "speak_serious"
+    ],
+    "reaction": [
+      "nod_small",
+      "nod_normal",
+      "nod_strong",
+      "surprised",
+      "happy",
+      "laugh_soft",
+      "concerned",
+      "thinking",
+      "encourage",
+      "head_tilt",
+      "head_shake",
+      "eyebrow_raise"
+    ],
+    "social": [
+      "greeting",
+      "bow",
+      "goodbye",
+      "celebrate"
+    ],
+    "teaching": [
+      "teach_point",
+      "teach_explain_hands"
+    ]
+  },
+  "voice": {
+    "voices": {
+      "openai": "sage",
+      "google": "Aoede",
+      "local": "Kyoko"
+    },
+    "style": {
+      "speed": 1.0,
+      "energy": 0.5,
+      "pitch": "mid",
+      "politeness": "polite"
+    }
+  },
+  "view": {
+    "scale": 1.6,
+    "x": 0,
+    "y": 0.35,
+    "background": "#eef3f6"
+  }
+}

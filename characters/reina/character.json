@@ -1,0 +1,114 @@
+{
+  "model": "model/Mao.model3.json",
+  "paramIds": {
+    "mouthOpenY": "ParamA",
+    "mouthForm": "ParamMouthUp",
+    "armL": "ParamArmLA01",
+    "armR": "ParamArmRA01",
+    "shoulder": "ParamLeftShoulderUp"
+  },
+  "expressions": {
+    "neutral": {},
+    "smile": "exp_04",
+    "laugh": "exp_02",
+    "warm_positive": {
+      "eyeLSmile": 0.4,
+      "eyeRSmile": 0.4,
+      "mouthForm": 0.5,
+      "cheek": 0.2
+    },
+    "serious": "exp_05",
+    "sad": "exp_07",
+    "thinking": {
+      "browLY": 0.25,
+      "browRY": 0.05,
+      "eyeBallX": 0.4,
+      "eyeBallY": 0.4,
+      "angleZ": 4
+    },
+    "surprised": {
+      "eyeLOpen": 1.25,
+      "eyeROpen": 1.25,
+      "browLY": 0.8,
+      "browRY": 0.8,
+      "angleY": 3
+    },
+    "concerned": {
+      "browLForm": 0.4,
+      "browRForm": 0.4,
+      "browLY": -0.15,
+      "browRY": -0.15,
+      "mouthForm": -0.4,
+      "angleZ": -3
+    },
+    "encourage": {
+      "eyeLSmile": 0.5,
+      "eyeRSmile": 0.5,
+      "mouthForm": 0.5,
+      "browLY": 0.15,
+      "browRY": 0.15
+    }
+  },
+  "motions": {
+    "idle": [
+      "idle_breathe",
+      "idle_soft_sway",
+      "idle_relaxed"
+    ],
+    "listening": [
+      "listen_neutral",
+      "listen_small_nod",
+      "listen_interested",
+      "listen_serious",
+      "listen_long_answer"
+    ],
+    "thinking": [
+      "think_look_up",
+      "think_hmm"
+    ],
+    "speaking": [
+      "speak_calm",
+      "speak_soft",
+      "speak_explain",
+      "speak_question",
+      "speak_serious"
+    ],
+    "reaction": [
+      "nod_small",
+      "nod_normal",
+      "surprised",
+      "concerned",
+      "thinking",
+      "encourage",
+      "head_tilt",
+      "eyebrow_raise"
+    ],
+    "social": [
+      "greeting",
+      "bow",
+      "goodbye"
+    ],
+    "teaching": [
+      "teach_point"
+    ]
+  },
+  "voice": {
+    "voices": {
+      "openai": "cedar",
+      "google": "Leda",
+      "local": "Kyoko"
+    },
+    "style": {
+      "speed": 0.95,
+      "energy": 0.35,
+      "pitch": "low",
+      "politeness": "formal"
+    }
+  },
+  "view": {
+    "scale": 1.5,
+    "x": 0,
+    "y": 0.3,
+    "background": "#f2f0f5"
+  }
+}

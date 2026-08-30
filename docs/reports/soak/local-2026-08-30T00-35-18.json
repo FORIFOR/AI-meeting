@@ -1,0 +1,1576 @@
+{
+  "engine": "local",
+  "minutes": 10,
+  "character": "yui",
+  "mode": "free_talk",
+  "startedAt": "2026-08-30T00:35:18.670Z",
+  "verdict": "FAIL",
+  "blocked": null,
+  "preflight": {
+    "broker": {
+      "ok": true,
+      "providers": {
+        "openai": false,
+        "google": false,
+        "livekit": false,
+        "heygen": false,
+        "tavus": false
+      }
+    },
+    "agent": {
+      "ok": true,
+      "strictLocalCapable": true,
+      "stt": {
+        "engine": "sherpa-onnx",
+        "ready": true,
+        "model": "sense_voice:sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
+      },
+      "llm": {
+        "engine": "openai-compatible",
+        "ready": true,
+        "model": "gemma-4-E2B-it-Q4_K_M.gguf",
+        "url": "http://127.0.0.1:8080/v1"
+      },
+      "tts": {
+        "engine": "macos-say",
+        "ready": true,
+        "voice": "Kyoko"
+      },
+      "vad": {
+        "engine": "silero-vad"
+      }
+    },
+    "blocked": null
+  },
+  "timeline": {
+    "seconds": 598.7485208333334,
+    "timeline": [
+      {
+        "index": 0,
+        "startSec": 3,
+        "endSec": 6.292458333333333,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 1,
+        "startSec": 10.339270833333334,
+        "endSec": 14.468458333333333,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 2,
+        "startSec": 18.716291666666667,
+        "endSec": 21.8181875,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 3,
+        "startSec": 29.7258125,
+        "endSec": 33.9229375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 4,
+        "startSec": 40.7190625,
+        "endSec": 43.63552083333333,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 5,
+        "startSec": 45.63552083333333,
+        "endSec": 48.512708333333336,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 6,
+        "startSec": 54.598479166666664,
+        "endSec": 57.385416666666664,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 7,
+        "startSec": 63.0075,
+        "endSec": 66.1655,
+        "text": "私は最近、ランニングを始めました。",
+        "kind": "turn"
+      },
+      {
+        "index": 8,
+        "startSec": 72.0304375,
+        "endSec": 75.79872916666666,
+        "text": "英語の勉強を続けるコツがあれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 9,
+        "startSec": 80.7584375,
+        "endSec": 84.71208333333334,
+        "text": "今日は天気がいいので、散歩に行こうと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 10,
+        "startSec": 86.71208333333334,
+        "endSec": 89.731125,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 11,
+        "startSec": 95.9444375,
+        "endSec": 100.20129166666666,
+        "text": "面接で緊張しないためには、どうすればいいでしょうか。",
+        "kind": "turn"
+      },
+      {
+        "index": 12,
+        "startSec": 107.12058333333333,
+        "endSec": 110.6569375,
+        "text": "先週、友人と京都に旅行に行きました。",
+        "kind": "turn"
+      },
+      {
+        "index": 13,
+        "startSec": 115.68820833333334,
+        "endSec": 118.67889583333333,
+        "text": "そのとき、とても美味しいお茶を飲みました。",
+        "kind": "turn"
+      },
+      {
+        "index": 14,
+        "startSec": 123.3026875,
+        "endSec": 126.3218125,
+        "text": "あなたの一番好きな季節はいつですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 15,
+        "startSec": 128.3218125,
+        "endSec": 130.67377083333332,
+        "text": "ちょっと待って、質問があります。",
+        "kind": "barge_in"
+      },
+      {
+        "index": 16,
+        "startSec": 137.730125,
+        "endSec": 141.55264583333334,
+        "text": "来月、新しい部署に異動することになりました。",
+        "kind": "turn"
+      },
+      {
+        "index": 17,
+        "startSec": 147.62625,
+        "endSec": 151.0015625,
+        "text": "少し不安ですが、頑張ってみようと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 18,
+        "startSec": 155.79010416666668,
+        "endSec": 159.7595625,
+        "text": "プレゼンの準備で何から始めればいいか迷っています。",
+        "kind": "turn"
+      },
+      {
+        "index": 19,
+        "startSec": 165.23139583333332,
+        "endSec": 168.14072916666666,
+        "text": "昨日の夜は、映画を見て過ごしました。",
+        "kind": "turn"
+      },
+      {
+        "index": 20,
+        "startSec": 170.14072916666666,
+        "endSec": 173.01791666666668,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 21,
+        "startSec": 178.19089583333334,
+        "endSec": 180.77927083333333,
+        "text": "おすすめの本があれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 22,
+        "startSec": 186.91822916666666,
+        "endSec": 190.699125,
+        "text": "最近、睡眠時間が短くて疲れやすいです。",
+        "kind": "turn"
+      },
+      {
+        "index": 23,
+        "startSec": 195.8844375,
+        "endSec": 199.095,
+        "text": "コーヒーと紅茶なら、どちらが好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 24,
+        "startSec": 207.00679166666666,
+        "endSec": 210.571125,
+        "text": "私は三年前にこの会社に入りました。",
+        "kind": "turn"
+      },
+      {
+        "index": 25,
+        "startSec": 212.571125,
+        "endSec": 215.59016666666668,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 26,
+        "startSec": 220.58029166666665,
+        "endSec": 223.86522916666667,
+        "text": "今の目標は、チームリーダーになることです。",
+        "kind": "turn"
+      },
+      {
+        "index": 27,
+        "startSec": 231.37635416666666,
+        "endSec": 234.19897916666667,
+        "text": "ところで、あなたは何が得意ですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 28,
+        "startSec": 238.96214583333332,
+        "endSec": 242.73002083333333,
+        "text": "今日はここまでにしましょう。ありがとうございました。",
+        "kind": "turn"
+      },
+      {
+        "index": 29,
+        "startSec": 247.30464583333332,
+        "endSec": 250.59710416666667,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 30,
+        "startSec": 252.59710416666667,
+        "endSec": 254.9490625,
+        "text": "ちょっと待って、質問があります。",
+        "kind": "barge_in"
+      },
+      {
+        "index": 31,
+        "startSec": 259.56764583333336,
+        "endSec": 263.69683333333336,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 32,
+        "startSec": 268.8606458333333,
+        "endSec": 271.96254166666665,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 33,
+        "startSec": 278.15414583333336,
+        "endSec": 282.35127083333333,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 34,
+        "startSec": 289.39877083333334,
+        "endSec": 292.31522916666665,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 35,
+        "startSec": 294.31522916666665,
+        "endSec": 297.19241666666665,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 36,
+        "startSec": 301.49047916666666,
+        "endSec": 304.2774166666667,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 37,
+        "startSec": 311.9291875,
+        "endSec": 315.0871875,
+        "text": "私は最近、ランニングを始めました。",
+        "kind": "turn"
+      },
+      {
+        "index": 38,
+        "startSec": 321.30202083333336,
+        "endSec": 325.0703125,
+        "text": "英語の勉強を続けるコツがあれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 39,
+        "startSec": 331.5568125,
+        "endSec": 335.51045833333336,
+        "text": "今日は天気がいいので、散歩に行こうと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 40,
+        "startSec": 337.51045833333336,
+        "endSec": 340.5295,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 41,
+        "startSec": 347.2498541666667,
+        "endSec": 351.50670833333334,
+        "text": "面接で緊張しないためには、どうすればいいでしょうか。",
+        "kind": "turn"
+      },
+      {
+        "index": 42,
+        "startSec": 359.3706666666667,
+        "endSec": 362.9070208333333,
+        "text": "先週、友人と京都に旅行に行きました。",
+        "kind": "turn"
+      },
+      {
+        "index": 43,
+        "startSec": 369.40454166666666,
+        "endSec": 372.39522916666664,
+        "text": "そのとき、とても美味しいお茶を飲みました。",
+        "kind": "turn"
+      },
+      {
+        "index": 44,
+        "startSec": 380.08004166666666,
+        "endSec": 383.0991666666667,
+        "text": "あなたの一番好きな季節はいつですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 45,
+        "startSec": 385.0991666666667,
+        "endSec": 387.451125,
+        "text": "ちょっと待って、質問があります。",
+        "kind": "barge_in"
+      },
+      {
+        "index": 46,
+        "startSec": 394.7616458333333,
+        "endSec": 398.58416666666665,
+        "text": "来月、新しい部署に異動することになりました。",
+        "kind": "turn"
+      },
+      {
+        "index": 47,
+        "startSec": 402.7440833333333,
+        "endSec": 406.11939583333333,
+        "text": "少し不安ですが、頑張ってみようと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 48,
+        "startSec": 410.81916666666666,
+        "endSec": 414.788625,
+        "text": "プレゼンの準備で何から始めればいいか迷っています。",
+        "kind": "turn"
+      },
+      {
+        "index": 49,
+        "startSec": 420.21654166666667,
+        "endSec": 423.125875,
+        "text": "昨日の夜は、映画を見て過ごしました。",
+        "kind": "turn"
+      },
+      {
+        "index": 50,
+        "startSec": 425.125875,
+        "endSec": 428.0030625,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 51,
+        "startSec": 433.70433333333335,
+        "endSec": 436.29270833333334,
+        "text": "おすすめの本があれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 52,
+        "startSec": 440.3734166666667,
+        "endSec": 444.1543125,
+        "text": "最近、睡眠時間が短くて疲れやすいです。",
+        "kind": "turn"
+      },
+      {
+        "index": 53,
+        "startSec": 448.5067291666667,
+        "endSec": 451.71729166666665,
+        "text": "コーヒーと紅茶なら、どちらが好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 54,
+        "startSec": 458.78935416666667,
+        "endSec": 462.3536875,
+        "text": "私は三年前にこの会社に入りました。",
+        "kind": "turn"
+      },
+      {
+        "index": 55,
+        "startSec": 464.3536875,
+        "endSec": 467.37272916666666,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 56,
+        "startSec": 472.8486041666667,
+        "endSec": 476.13354166666664,
+        "text": "今の目標は、チームリーダーになることです。",
+        "kind": "turn"
+      },
+      {
+        "index": 57,
+        "startSec": 481.84039583333333,
+        "endSec": 484.66302083333335,
+        "text": "ところで、あなたは何が得意ですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 58,
+        "startSec": 490.53766666666667,
+        "endSec": 494.30554166666667,
+        "text": "今日はここまでにしましょう。ありがとうございました。",
+        "kind": "turn"
+      },
+      {
+        "index": 59,
+        "startSec": 502.09041666666667,
+        "endSec": 505.382875,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 60,
+        "startSec": 507.382875,
+        "endSec": 509.7348333333333,
+        "text": "ちょっと待って、質問があります。",
+        "kind": "barge_in"
+      },
+      {
+        "index": 61,
+        "startSec": 516.5479583333333,
+        "endSec": 520.6771458333334,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 62,
+        "startSec": 527.4303333333334,
+        "endSec": 530.5322291666666,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 63,
+        "startSec": 535.8548125,
+        "endSec": 540.0519375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 64,
+        "startSec": 545.4772708333334,
+        "endSec": 548.3937291666666,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 65,
+        "startSec": 550.3937291666666,
+        "endSec": 553.2709166666667,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 66,
+        "startSec": 557.8260833333334,
+        "endSec": 560.6130208333333,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 67,
+        "startSec": 565.1461875,
+        "endSec": 568.3041875,
+        "text": "私は最近、ランニングを始めました。",
+        "kind": "turn"
+      },
+      {
+        "index": 68,
+        "startSec": 575.9563333333333,
+        "endSec": 579.724625,
+        "text": "英語の勉強を続けるコツがあれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 69,
+        "startSec": 585.0143333333333,
+        "endSec": 588.9679791666666,
+        "text": "今日は天気がいいので、散歩に行こうと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 70,
+        "startSec": 590.9679791666666,
+        "endSec": 593.9870208333333,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "t": 2,
+      "pill": "Connecting 接続中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": null
+        },
+        "bargeIn": {
+          "ms": null,
+          "n": null
+        },
+        "listening": {
+          "ms": null,
+          "n": null
+        },
+        "mouthStop": {
+          "ms": null,
+          "n": null
+        }
+      },
+      "transcript": 0
+    },
+    {
+      "t": 30272,
+      "pill": "Speaking 話しています",
+      "hud": {
+        "turn": {
+          "p50": 2687,
+          "p95": 2792,
+          "n": 3
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 3
+        },
+        "listening": {
+          "ms": 0,
+          "n": 3
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 3
+        }
+      },
+      "transcript": 7
+    },
+    {
+      "t": 60448,
+      "pill": "Listening 聞いています",
+      "hud": {
+        "turn": {
+          "p50": 2611,
+          "p95": 2792,
+          "n": 6
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 5
+        },
+        "listening": {
+          "ms": 0,
+          "n": 7
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 5
+        }
+      },
+      "transcript": 14
+    },
+    {
+      "t": 90662,
+      "pill": "Thinking 考え中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": 0
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 1
+        },
+        "listening": {
+          "ms": 0,
+          "n": 1
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 1
+        }
+      },
+      "transcript": 20
+    },
+    {
+      "t": 120945,
+      "pill": "Speaking 話しています",
+      "hud": {
+        "turn": {
+          "p50": 2608,
+          "p95": 2811,
+          "n": 4
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 4
+        },
+        "listening": {
+          "ms": 0,
+          "n": 4
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 4
+        }
+      },
+      "transcript": 24
+    },
+    {
+      "t": 151164,
+      "pill": "Thinking 考え中",
+      "hud": {
+        "turn": {
+          "p50": 2608,
+          "p95": 2866,
+          "n": 6
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 6
+        },
+        "listening": {
+          "ms": 0,
+          "n": 8
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 6
+        }
+      },
+      "transcript": 28
+    },
+    {
+      "t": 181413,
+      "pill": "Listening 聞いています",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": 0
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 1
+        },
+        "listening": {
+          "ms": 0,
+          "n": 1
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 1
+        }
+      },
+      "transcript": 34
+    },
+    {
+      "t": 211720,
+      "pill": "Listening 聞いています",
+      "hud": {
+        "turn": {
+          "p50": 2859,
+          "p95": 3304,
+          "n": 3
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 4
+        },
+        "listening": {
+          "ms": 0,
+          "n": 4
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 4
+        }
+      },
+      "transcript": 38
+    },
+    {
+      "t": 242124,
+      "pill": "Thinking 考え中",
+      "hud": {
+        "turn": {
+          "p50": 2497,
+          "p95": 2497,
+          "n": 1
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 2
+        },
+        "listening": {
+          "ms": 0,
+          "n": 2
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 2
+        }
+      },
+      "transcript": 38
+    }
+  ],
+  "pills": [
+    {
+      "t": 2,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 1801,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 2808,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 3944,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 4975,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 5978,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 7986,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 11522,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 13547,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 15597,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 19616,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 22202,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 23710,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 27245,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 29268,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 34788,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 39322,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 41325,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 43837,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 45357,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 48883,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 50388,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 53908,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 55924,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 59445,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 62457,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 63744,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 64255,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 65779,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 67788,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 71304,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 73319,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 74826,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 79345,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 81365,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 82597,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 83607,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 84634,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 86642,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 90160,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 92168,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 94197,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 98288,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 100297,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 102319,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 105850,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 107860,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 113394,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 117918,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 119937,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 122461,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 123966,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 127490,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 129001,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 132521,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 134530,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 138051,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 141060,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 142574,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 146623,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 150149,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 152211,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 155230,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 155735,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 159756,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 161262,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 164297,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 168809,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 170314,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 173853,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 176590,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 178401,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 179405,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 181413,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 184936,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 186943,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 188954,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 192992,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 196009,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 197012,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 200541,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 203086,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 208194,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 212723,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 215234,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 217761,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 218770,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 222291,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 223795,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 226517,
+      "pill": "Connecting 接続中"
+    },
+    {
+      "t": 227018,
+      "pill": "Idle 待機中"
+    },
+    {
+      "t": 228523,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 230029,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 234070,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 236080,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 237596,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 242124,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 244158,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 246184,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 249225,
+      "pill": "Thinking 考え中"
+    },
+    {
+      "t": 252241,
+      "pill": "Speaking 話しています"
+    },
+    {
+      "t": 257298,
+      "pill": "Listening 聞いています"
+    },
+    {
+      "t": 261331,
+      "pill": "Thinking 考え中"
+    }
+  ],
+  "transcript": [
+    {
+      "t": 7986,
+      "role": "assistant",
+      "text": "おつかれー！最近どう？なんかあった？おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 11522,
+      "role": "user",
+      "text": "こんにちは。今日はよろしくお願いし ます。"
+    },
+    {
+      "t": 15076,
+      "role": "assistant",
+      "text": "やあ！よろしくね。今日はどんな一日になりそう？"
+    },
+    {
+      "t": 20118,
+      "role": "user",
+      "text": "最近、仕事 で 新しい プロジェクト が 始まっ たん です。"
+    },
+    {
+      "t": 23710,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトなんだ！"
+    },
+    {
+      "t": 23710,
+      "role": "assistant",
+      "text": "どんな内容なの？"
+    },
+    {
+      "t": 27245,
+      "role": "user",
+      "text": "週末は何をするのがおすすめですか？"
+    },
+    {
+      "t": 34788,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトか！それは楽しみだね。週末は何をして過ごしたい気分？"
+    },
+    {
+      "t": 39322,
+      "role": "user",
+      "text": "実 は 昨日 少し 失敗 して しま って 落ち 込 んで、います。"
+    },
+    {
+      "t": 43837,
+      "role": "assistant",
+      "text": "え、そうなの？どんな失敗だったの？"
+    },
+    {
+      "t": 49384,
+      "role": "user",
+      "text": "で も、チームのみん なが助け て くれ ま した。"
+    },
+    {
+      "t": 50388,
+      "role": "assistant",
+      "text": "よかったね、周りの人が助けてくれたんだ。"
+    },
+    {
+      "t": 53908,
+      "role": "user",
+      "text": "すみません、それはどういう意味ですか？"
+    },
+    {
+      "t": 59445,
+      "role": "assistant",
+      "text": "チームのみんながサポートしてくれたってことだよね。それは良かったね！"
+    },
+    {
+      "t": 62962,
+      "role": "user",
+      "text": "あなたは音楽を聴くのは好きですか？"
+    },
+    {
+      "t": 67788,
+      "role": "assistant",
+      "text": "おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 74826,
+      "role": "assistant",
+      "text": "こんにちは！うん、よろしくね。今日はどんな一日になりそう？"
+    },
+    {
+      "t": 79345,
+      "role": "user",
+      "text": "最近、仕事 で 新しいプロジェクト が 始まったん です。"
+    },
+    {
+      "t": 86642,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトか！おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 90160,
+      "role": "user",
+      "text": "こんにちは、今日はよろしくお願いし ます。"
+    },
+    {
+      "t": 93690,
+      "role": "assistant",
+      "text": "やあ！よろしくね。今日はどんな一日だった？"
+    },
+    {
+      "t": 98789,
+      "role": "user",
+      "text": "最近、仕事 で 新しい プロジェクト が 始まったん です。"
+    },
+    {
+      "t": 102319,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトか！どんな内容なの？"
+    },
+    {
+      "t": 113394,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトが始まったんだ！どんな内容なの？週末は何するつもり？"
+    },
+    {
+      "t": 127995,
+      "role": "user",
+      "text": "で も、チームのみん なが助けて くれま した。"
+    },
+    {
+      "t": 138051,
+      "role": "assistant",
+      "text": "チームのみんなが助けてくれたってことは、何か良い方向に進むきっかけになったんじゃない？"
+    },
+    {
+      "t": 146623,
+      "role": "assistant",
+      "text": "うん、音楽って結構好きだよ！最近は新しいジャンルも色々聴いてるんだ。"
+    },
+    {
+      "t": 150149,
+      "role": "user",
+      "text": "私は最近ランニング を始めました。"
+    },
+    {
+      "t": 155230,
+      "role": "assistant",
+      "text": "へえ、ランニングか！どんな風に始めたの？"
+    },
+    {
+      "t": 159756,
+      "role": "user",
+      "text": "英語 の 勉強 を 続ける コツ が あれ ば 教え て ください。"
+    },
+    {
+      "t": 164297,
+      "role": "assistant",
+      "text": "英語の勉強、続けるのって結構大変だよね。"
+    },
+    {
+      "t": 168809,
+      "role": "user",
+      "text": "今日は天気がいいので散歩に行こうと思います。"
+    },
+    {
+      "t": 173853,
+      "role": "user",
+      "text": "あ、ごめんなさい」一つ聞いてもいいですか？"
+    },
+    {
+      "t": 181413,
+      "role": "assistant",
+      "text": "うん、いいよ。おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 188452,
+      "role": "assistant",
+      "text": "こんにちは！うん、よろしくね。"
+    },
+    {
+      "t": 188954,
+      "role": "assistant",
+      "text": "今日はどんな話したい？"
+    },
+    {
+      "t": 197012,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトが始まったんだ！"
+    },
+    {
+      "t": 208194,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトが始まったんだ！それは楽しみだね。週末は何する？"
+    },
+    {
+      "t": 256795,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトが始まったんだ！それは楽しみだね。週末は何をして過ごしたい気分？"
+    }
+  ],
+  "toasts": [],
+  "consoleErrors": [
+    {
+      "t": 14662,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 14819,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 15318,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 15818,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16318,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16436,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16440,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16652,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16820,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 16820,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 17327,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 17508,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 17820,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 18086,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 18093,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 18233,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 18319,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 18817,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 19323,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 19819,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 20324,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 20825,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 21320,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 21818,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 22318,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 22611,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 22819,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 22867,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 23318,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 23825,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 24324,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 24839,
+      "text": "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. 2"
+    },
+    {
+      "t": 129090,
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "t": 129090,
+      "text": "[vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)"
+    },
+    {
+      "t": 129090,
+      "text": "[vite] Failed to reload /src/screens/Session.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)"
+    }
+  ],
+  "pageErrors": [],
+  "httpErrors": [
+    {
+      "t": 129089,
+      "status": 500,
+      "url": "http://localhost:5173/src/integrations/registry.ts?t=1788050249819"
+    }
+  ],
+  "reconnects": [],
+  "hudLast": "LATENCY · LOCAL\nturn p50/p95\t2808 / 3458 ms\t< 700 / 1500 · n=3\nbarge-in stop\t43 ms\t< 150 · n=4\n→ listening\t0 ms\t< 100 · n=4\nmouth stop\t0 ms\t< 100 · n=4",
+  "result": null,
+  "summary": {
+    "elapsedMs": 264316,
+    "survived": false,
+    "failReason": "session screen disappeared",
+    "userUtterancesHeard": 15,
+    "assistantTurns": 24,
+    "answered": 15,
+    "answeredRatio": 1,
+    "expectedUtterancesFromWav": 32,
+    "speakingEpisodes": 28,
+    "turnLatency": {
+      "p50": 2808,
+      "p95": 3458,
+      "n": 3
+    },
+    "bargeInStop": {
+      "ms": 43,
+      "n": 4
+    },
+    "listeningReact": {
+      "ms": 0,
+      "n": 4
+    },
+    "mouthStop": {
+      "ms": 0,
+      "n": 4
+    },
+    "reconnectEvents": 0,
+    "toasts": 0,
+    "consoleErrors": 35,
+    "pageErrors": 0,
+    "httpErrors": 1,
+    "longestNoAssistantSpeechMs": 15108,
+    "replyChars": {
+      "min": 8,
+      "p50": 22,
+      "max": 44,
+      "avg": 26
+    },
+    "resultOverall": null
+  },
+  "wav": "/private/tmp/claude-501/rcai-soak/soak-10m.wav",
+  "chrome": "Chrome/152.0.7977.64",
+  "sessionStartMs": 3141,
+  "resultError": "Error: No element found for selector: .btn--danger",
+  "endedAt": "2026-08-30T00:39:48.615Z"
+}

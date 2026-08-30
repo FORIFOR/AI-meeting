@@ -1,0 +1,137 @@
+{
+  "model": "model/Haru.model3.json",
+  "expressions": {
+    "neutral": {},
+    "smile": {
+      "eyeLSmile": 0.8,
+      "eyeRSmile": 0.8,
+      "mouthForm": 0.8,
+      "browLY": 0.1,
+      "browRY": 0.1
+    },
+    "laugh": "F05",
+    "warm_positive": {
+      "eyeLSmile": 0.4,
+      "eyeRSmile": 0.4,
+      "mouthForm": 0.5,
+      "browLY": 0.1,
+      "browRY": 0.1
+    },
+    "serious": {
+      "browLY": -0.5,
+      "browRY": -0.5,
+      "browLForm": -0.6,
+      "browRForm": -0.6,
+      "mouthForm": -0.4,
+      "eyeLOpen": 0.9,
+      "eyeROpen": 0.9
+    },
+    "sad": {
+      "browLForm": 0.7,
+      "browRForm": 0.7,
+      "browLY": -0.3,
+      "browRY": -0.3,
+      "mouthForm": -0.9,
+      "eyeLOpen": 0.75,
+      "eyeROpen": 0.75,
+      "angleY": -4
+    },
+    "thinking": {
+      "browLY": 0.3,
+      "browRY": 0.05,
+      "eyeBallX": 0.45,
+      "eyeBallY": 0.45,
+      "angleZ": 5,
+      "mouthForm": -0.1
+    },
+    "surprised": "F06",
+    "concerned": {
+      "browLForm": 0.4,
+      "browRForm": 0.4,
+      "browLY": -0.2,
+      "browRY": -0.2,
+      "mouthForm": -0.5,
+      "angleZ": -3
+    },
+    "encourage": {
+      "eyeLSmile": 0.5,
+      "eyeRSmile": 0.5,
+      "mouthForm": 0.6,
+      "browLY": 0.2,
+      "browRY": 0.2,
+      "angleY": -2
+    }
+  },
+  "motions": {
+    "idle": [
+      "idle_breathe",
+      "idle_soft_sway",
+      "idle_look_left",
+      "idle_look_right",
+      "idle_relaxed"
+    ],
+    "listening": [
+      "listen_neutral",
+      "listen_small_nod",
+      "listen_interested",
+      "listen_head_tilt",
+      "listen_serious",
+      "listen_long_answer"
+    ],
+    "thinking": [
+      "think_look_up",
+      "think_hmm"
+    ],
+    "speaking": [
+      "speak_calm",
+      "speak_soft",
+      "speak_energetic",
+      "speak_explain",
+      "speak_question",
+      "speak_serious"
+    ],
+    "reaction": [
+      "nod_small",
+      "nod_normal",
+      "nod_strong",
+      "surprised",
+      "happy",
+      "laugh_soft",
+      "concerned",
+      "thinking",
+      "encourage",
+      "head_tilt",
+      "head_shake",
+      "eyebrow_raise"
+    ],
+    "social": [
+      "greeting",
+      "bow",
+      "goodbye",
+      "celebrate"
+    ],
+    "teaching": [
+      "teach_point",
+      "teach_explain_hands"
+    ]
+  },
+  "voice": {
+    "voices": {
+      "openai": "sage",
+      "google": "Aoede",
+      "local": "Kyoko"
+    },
+    "style": {
+      "speed": 0.95,
+      "energy": 0.5,
+      "pitch": "mid",
+      "politeness": "polite"
+    }
+  },
+  "view": {
+    "scale": 1.5,
+    "x": 0,
+    "y": 0.32,
+    "background": "#eef3f7"
+  }
+}

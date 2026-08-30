@@ -1,0 +1,2322 @@
+{
+  "summary": {
+    "iterations": 100,
+    "uncaught": 0,
+    "consoleErrors": 0,
+    "leakedContextsIterations": 0,
+    "heapFirstMB": 9,
+    "heapLastMB": 31,
+    "heapMaxMB": 31,
+    "pass": true
+  },
+  "chrome": "Chrome/152.0.7977.64",
+  "iterations": 100,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "leaks": [],
+  "heap": [
+    9,
+    10,
+    12,
+    13,
+    13,
+    15,
+    15,
+    16,
+    17,
+    20,
+    20,
+    22,
+    22,
+    22,
+    24,
+    24,
+    24,
+    26,
+    24,
+    28,
+    26,
+    24,
+    25,
+    26,
+    25,
+    25,
+    27,
+    26,
+    25,
+    29,
+    28,
+    25,
+    27,
+    25,
+    25,
+    27,
+    25,
+    25,
+    27,
+    24,
+    24,
+    26,
+    24,
+    24,
+    26,
+    24,
+    25,
+    27,
+    24,
+    27,
+    27,
+    24,
+    24,
+    26,
+    26,
+    26,
+    27,
+    25,
+    26,
+    30,
+    29,
+    25,
+    27,
+    25,
+    25,
+    27,
+    26,
+    25,
+    28,
+    24,
+    24,
+    26,
+    24,
+    24,
+    26,
+    25,
+    25,
+    27,
+    24,
+    28,
+    26,
+    25,
+    24,
+    26,
+    26,
+    26,
+    27,
+    25,
+    26,
+    28,
+    24,
+    25,
+    26,
+    25,
+    25,
+    27,
+    25,
+    25,
+    28,
+    31
+  ],
+  "perIteration": [
+    {
+      "i": 1,
+      "ms": 25155,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 9
+    },
+    {
+      "i": 2,
+      "ms": 19497,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 10
+    },
+    {
+      "i": 3,
+      "ms": 2846,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 12
+    },
+    {
+      "i": 4,
+      "ms": 19521,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 13
+    },
+    {
+      "i": 5,
+      "ms": 20837,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 13
+    },
+    {
+      "i": 6,
+      "ms": 2757,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 15
+    },
+    {
+      "i": 7,
+      "ms": 18562,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 15
+    },
+    {
+      "i": 8,
+      "ms": 20645,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 16
+    },
+    {
+      "i": 9,
+      "ms": 2880,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 17
+    },
+    {
+      "i": 10,
+      "ms": 20424,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 20
+    },
+    {
+      "i": 11,
+      "ms": 19981,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 20
+    },
+    {
+      "i": 12,
+      "ms": 2627,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 22
+    },
+    {
+      "i": 13,
+      "ms": 19454,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 22
+    },
+    {
+      "i": 14,
+      "ms": 20850,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 22
+    },
+    {
+      "i": 15,
+      "ms": 2705,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 16,
+      "ms": 18320,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 17,
+      "ms": 19875,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 18,
+      "ms": 3007,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 19,
+      "ms": 20120,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 20,
+      "ms": 23164,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 21,
+      "ms": 2831,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 22,
+      "ms": 18651,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 23,
+      "ms": 20714,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 24,
+      "ms": 2840,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 25,
+      "ms": 22915,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 26,
+      "ms": 21312,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 27,
+      "ms": 3135,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 28,
+      "ms": 29784,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 29,
+      "ms": 20247,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 30,
+      "ms": 4138,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 29
+    },
+    {
+      "i": 31,
+      "ms": 21284,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 32,
+      "ms": 18472,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 33,
+      "ms": 2810,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 34,
+      "ms": 20386,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 35,
+      "ms": 16598,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 36,
+      "ms": 3048,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 37,
+      "ms": 21352,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 38,
+      "ms": 20617,
+      "pill": "Idle 待機中",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 39,
+      "ms": 3343,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 40,
+      "ms": 26473,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 41,
+      "ms": 26686,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 42,
+      "ms": 2884,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 43,
+      "ms": 19299,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 44,
+      "ms": 19712,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 45,
+      "ms": 3133,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 46,
+      "ms": 16379,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 47,
+      "ms": 19440,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 48,
+      "ms": 2711,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 49,
+      "ms": 18056,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 50,
+      "ms": 19195,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 51,
+      "ms": 2746,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 52,
+      "ms": 19124,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 53,
+      "ms": 18210,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 54,
+      "ms": 2935,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 55,
+      "ms": 19150,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 56,
+      "ms": 20795,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 57,
+      "ms": 2888,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 58,
+      "ms": 17984,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 59,
+      "ms": 16911,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 60,
+      "ms": 3555,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 30
+    },
+    {
+      "i": 61,
+      "ms": 16737,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 29
+    },
+    {
+      "i": 62,
+      "ms": 19689,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 63,
+      "ms": 2822,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 64,
+      "ms": 18144,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 65,
+      "ms": 20499,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 66,
+      "ms": 2944,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 67,
+      "ms": 19388,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 68,
+      "ms": 21197,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 69,
+      "ms": 3281,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 70,
+      "ms": 21879,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 71,
+      "ms": 21698,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 72,
+      "ms": 2897,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 73,
+      "ms": 19797,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 74,
+      "ms": 19046,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 75,
+      "ms": 2891,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 76,
+      "ms": 20249,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 77,
+      "ms": 20375,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 78,
+      "ms": 3069,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 79,
+      "ms": 28639,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 0
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 80,
+      "ms": 20340,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 81,
+      "ms": 2727,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 82,
+      "ms": 19742,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 83,
+      "ms": 20837,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 84,
+      "ms": 4791,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 85,
+      "ms": 38128,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 86,
+      "ms": 23017,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 87,
+      "ms": 5335,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 88,
+      "ms": 42157,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 0
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 89,
+      "ms": 46532,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 90,
+      "ms": 4648,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 0
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 91,
+      "ms": 22193,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 24
+    },
+    {
+      "i": 92,
+      "ms": 22548,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 93,
+      "ms": 3437,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 26
+    },
+    {
+      "i": 94,
+      "ms": 23395,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 95,
+      "ms": 19847,
+      "pill": "Listening 聞いています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 96,
+      "ms": 3048,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 27
+    },
+    {
+      "i": 97,
+      "ms": 24003,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 98,
+      "ms": 32712,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 4,
+        "createdTracks": 1
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 4,
+        "createdTracks": 2
+      },
+      "heapMB": 25
+    },
+    {
+      "i": 99,
+      "ms": 5920,
+      "pill": "Speaking 話しています",
+      "during": {
+        "contexts": 1,
+        "tracks": 1,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 6,
+        "createdTracks": 3
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 0,
+        "createdTracks": 0
+      },
+      "heapMB": 28
+    },
+    {
+      "i": 100,
+      "ms": 52283,
+      "pill": "Connecting 接続中",
+      "during": {
+        "contexts": 1,
+        "tracks": 0,
+        "contextStates": [
+          "running"
+        ],
+        "createdContexts": 2,
+        "createdTracks": 0
+      },
+      "after": {
+        "contexts": 0,
+        "tracks": 0,
+        "contextStates": [],
+        "createdContexts": 2,
+        "createdTracks": 1
+      },
+      "heapMB": 31
+    }
+  ],
+  "startedAt": "2026-08-30T02:07:51.066Z"
+}

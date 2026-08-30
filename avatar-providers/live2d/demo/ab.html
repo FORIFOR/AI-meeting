@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>LipSync A/B — analyzer vs MotionSync</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #ddd; display: grid; grid-template-columns: 480px 1fr; height: 100vh; }
+    #stage { width: 480px; height: 100vh; background: #f6f1ea; position: relative; }
+    #panel { padding: 12px; overflow: auto; font-size: 13px; }
+    pre { background: #222; color: #9f9; padding: 8px; font-size: 12px; white-space: pre-wrap; }
+    button { margin: 2px; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="panel">
+    <div>engine=<b id="engine"></b> · character=<b id="char"></b> · <a href="?engine=analyzer">analyzer</a> <a href="?engine=motionsync">motionsync</a> <a href="?engine=motionsync&character=kei">motionsync/kei</a></div>
+    <div><input id="wav" size="60" value="/tools/lipsync-corpus/wav/母音_a_01.wav" /> <button id="btn-run">▶ run one</button></div>
+    <pre id="overlay">loading…</pre>
+    <pre id="log"></pre>
+  </div>
+  <script type="module" src="./ab-main.ts"></script>
+</body>
+</html>

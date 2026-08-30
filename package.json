@@ -1,0 +1,38 @@
+{
+  "name": "realtime-character-ai-platform",
+  "private": true,
+  "version": "0.2.0-beta.1",
+  "type": "module",
+  "packageManager": "pnpm@10.12.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,broker,agent \"pnpm --filter @rcai/web dev\" \"pnpm --filter @rcai/token-broker dev\" \"pnpm --filter @rcai/agent dev\"",
+    "dev:web": "pnpm --filter @rcai/web dev",
+    "dev:broker": "pnpm --filter @rcai/token-broker dev",
+    "dev:agent": "pnpm --filter @rcai/agent dev",
+    "build": "pnpm --filter @rcai/web build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "pnpm -r --if-present lint",
+    "gate": "pnpm typecheck && pnpm test && pnpm build",
+    "licenses": "node scripts/licenses.mjs",
+    "licenses:check": "node scripts/licenses.mjs --check",
+    "reality:openai": "node scripts/reality/cloud.mjs openai 30",
+    "reality:gemini": "node scripts/reality/cloud.mjs google 30",
+    "reality:local": "node scripts/reality/local.mjs 10",
+    "reality:meet": "node scripts/reality/meeting.mjs meet",
+    "reality:zoom": "node scripts/reality/meeting.mjs zoom",
+    "reality:human": "node scripts/reality/human.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.20.0",
+    "concurrently": "^9.2.0"
+  }
+}

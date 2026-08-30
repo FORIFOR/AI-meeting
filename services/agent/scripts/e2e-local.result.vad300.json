@@ -1,0 +1,332 @@
+{
+  "turn1": {
+    "transcript": "こんにちは、今日はいい天気ですね。",
+    "reply": "うん、本当に気持ちいい天気だね！",
+    "audioChunks": 65,
+    "audioMs": 2590,
+    "sampleRate": 22050,
+    "userSpeechEnd_to_firstAudio_ms": 597,
+    "userSpeechEnd_to_transcript_ms": 151,
+    "userSpeechEnd_to_speechStarted_ms": 596,
+    "total_ms": 7710
+  },
+  "bargeIn": {
+    "audioChunksBeforeBargeIn": 13,
+    "speechStart_to_interrupted_ms": 0,
+    "bargeSend_to_interrupted_ms": 1269,
+    "audioChunksAfterInterrupt": 0,
+    "audioChunksWithin1500msAfterInterrupt_excludingNewReply": 47,
+    "transcriptsAfterBargeIn": [
+      "ちょっと待って。"
+    ]
+  },
+  "textTurn": {
+    "reply": "うん、またいつでも話しかけてね！バイバイ！",
+    "audioMs": 2883
+  },
+  "plan": {
+    "emotion": "smile",
+    "emotionIntensity": 0.8,
+    "gesture": "nod_normal",
+    "gestureIntensity": 0.7,
+    "energy": 0.7,
+    "question": false
+  },
+  "evaluate": {
+    "overall": 85,
+    "clarity": 88,
+    "specificity": 80,
+    "structure": 75,
+    "relevance": 90,
+    "fluency": 85,
+    "feedback": [
+      "具体的な成果（40%削減）を最初に提示すると、よりインパクトが増します。",
+      "「既存のコードを壊さずに」という課題に対して、具体的な技術的アプローチを補足しましょう。",
+      "次の回答では、計測の具体的な手法についてもう少し掘り下げると良いでしょう。",
+      "結論から入る構成を意識すると、回答の論理性が向上します。",
+      "少し間（えっと）を減らし、自信を持って話す練習をしましょう。",
+      "次の質問に対して、具体的なアクションを明確に述べることが重要です。"
+    ],
+    "improvedAnswer": "決済システムの開発で三年間、バックエンドエンジニアとして貢献しました。特にレイテンシ改善において、平均応答時間を40%削減した経験があります。最も難しかったのは、既存コードを維持しながら変更を適用することでした。そのため、段階的なリリースと詳細な計測からアプローチしました。",
+    "evaluatedBy": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+    "criteria": [
+      {
+        "key": "relevance",
+        "score": 95,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          }
+        ],
+        "explanation": "質問の意図（経験や成果）に直接答えており、非常に的確です。",
+        "improvement": "この回答は非常に優れています。この流れを維持してください。"
+      },
+      {
+        "key": "specificity",
+        "score": 80,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "平均応答時間を四十パーセント削減した経験があります。"
+          }
+        ],
+        "explanation": "具体的な数値（40%）が示されており、具体性が高いです。",
+        "improvement": "次に、その課題解決のために使用した具体的な技術や手法を付け加えると、さらに具体性が増します。"
+      },
+      {
+        "key": "star_structure",
+        "score": 75,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          },
+          {
+            "turnIndex": 3,
+            "quote": "えっと、既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。"
+          }
+        ],
+        "explanation": "経験→成果→課題→対応策という流れは取れていますが、課題と対応策の接続がやや口語的です。",
+        "improvement": "課題と対応策をより明確に接続し、結論から述べる練習をしましょう。"
+      },
+      {
+        "key": "logical_clarity",
+        "score": 90,
+        "evidence": [
+          {
+            "turnIndex": 3,
+            "quote": "えっと、既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。"
+          }
+        ],
+        "explanation": "「既存コードの維持」という課題に対し、「段階的リリースと計測」という論理的な解決策が示されています。",
+        "improvement": "課題と解決策の因果関係をより明確に説明できるように準備してください。"
+      },
+      {
+        "key": "conciseness",
+        "score": 85,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。"
+          }
+        ],
+        "explanation": "自己紹介としては情報量があり適切ですが、少し冗長な部分を削れる可能性があります。",
+        "improvement": "自己紹介の核となるスキルと実績に焦点を絞り、簡潔にまとめましょう。"
+      },
+      {
+        "key": "confidence",
+        "score": 85,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。"
+          }
+        ],
+        "explanation": "自信を持って事実を述べられていますが、口調に若干の迷いが見られました。",
+        "improvement": "重要な実績については、断定的な口調で自信を持って話す練習をしてください。"
+      },
+      {
+        "key": "fluency",
+        "score": 85,
+        "evidence": [
+          {
+            "turnIndex": 3,
+            "quote": "えっと、既存のコードを壊さずに変更する点です。"
+          }
+        ],
+        "explanation": "「えっと」というフィラー（つなぎ言葉）が見られましたが、全体的なテンポは良好でした。",
+        "improvement": "フィラーを減らし、一文を途切れさせずにスムーズに話す練習をしましょう。"
+      }
+    ],
+    "speech": {
+      "paceCharsPerSec": 8.3,
+      "pauseMeanMs": 1050,
+      "fillerRate": 0.32,
+      "fillerCount": 1,
+      "interruptions": 0,
+      "answerDurationMeanMs": 7500,
+      "wordsPerTurn": 63
+    },
+    "questions": [
+      {
+        "questionTurn": 0,
+        "answerTurn": 1,
+        "question": "自己紹介をお願いします。",
+        "answer": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。",
+        "relevance": 45,
+        "specificity": 82,
+        "star": {
+          "situation": false,
+          "task": false,
+          "action": true,
+          "result": true
+        },
+        "issues": [
+          "質問の焦点からずれている"
+        ]
+      },
+      {
+        "questionTurn": 2,
+        "answerTurn": 3,
+        "question": "ありがとうございます。その改善で一番難しかった点は何でしたか？",
+        "answer": "えっと、既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。",
+        "relevance": 45,
+        "specificity": 40,
+        "star": {
+          "situation": false,
+          "task": false,
+          "action": false,
+          "result": false
+        },
+        "issues": [
+          "質問の焦点からずれている",
+          "数字がない",
+          "結果(R)が語られていない",
+          "自身の行動(A)が不明確"
+        ]
+      }
+    ]
+  },
+  "egress": {
+    "entries": []
+  },
+  "breakdown": {
+    "vadEndMs": {
+      "n": 4,
+      "p50": 332,
+      "p95": 332
+    },
+    "sttMs": {
+      "n": 4,
+      "p50": 150,
+      "p95": 284
+    },
+    "llmTtftMs": {
+      "n": 4,
+      "p50": 166,
+      "p95": 206
+    },
+    "firstPhraseMs": {
+      "n": 4,
+      "p50": 278,
+      "p95": 397
+    },
+    "ttsTtfaMs": {
+      "n": 4,
+      "p50": 52,
+      "p95": 56
+    },
+    "firstAudioSentMs": {
+      "n": 4,
+      "p50": 596,
+      "p95": 734
+    },
+    "totalMs": {
+      "n": 4,
+      "p50": 6501,
+      "p95": 7239
+    },
+    "client_speechEnd_to_firstAudio": {
+      "n": 4,
+      "p50": 596,
+      "p95": 733
+    }
+  },
+  "turns": [
+    {
+      "source": "speech",
+      "vadEndMs": 332,
+      "sttMs": 150,
+      "llmTtftMs": 166,
+      "firstPhraseMs": 389,
+      "ttsTtfaMs": 56,
+      "firstAudioSentMs": 596,
+      "totalMs": 2556,
+      "phrases": 1,
+      "sentences": 1,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "avspeech-daemon"
+      }
+    },
+    {
+      "source": "speech",
+      "vadEndMs": 332,
+      "sttMs": 113,
+      "llmTtftMs": 206,
+      "firstPhraseMs": 272,
+      "ttsTtfaMs": 52,
+      "firstAudioSentMs": 438,
+      "totalMs": 7239,
+      "phrases": 3,
+      "sentences": 2,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "avspeech-daemon"
+      }
+    },
+    {
+      "source": "speech",
+      "vadEndMs": 332,
+      "sttMs": 284,
+      "llmTtftMs": 169,
+      "firstPhraseMs": 397,
+      "ttsTtfaMs": 52,
+      "firstAudioSentMs": 734,
+      "totalMs": 6501,
+      "phrases": 2,
+      "sentences": 2,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "avspeech-daemon"
+      }
+    },
+    {
+      "source": "speech",
+      "vadEndMs": 332,
+      "sttMs": 276,
+      "llmTtftMs": 132,
+      "firstPhraseMs": 278,
+      "ttsTtfaMs": 42,
+      "firstAudioSentMs": 597,
+      "totalMs": 6623,
+      "phrases": 2,
+      "sentences": 1,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "avspeech-daemon"
+      }
+    },
+    {
+      "source": "text",
+      "llmTtftMs": 396,
+      "firstPhraseMs": 564,
+      "ttsTtfaMs": 38,
+      "firstAudioSentMs": 602,
+      "totalMs": 2864,
+      "phrases": 2,
+      "sentences": 2,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "avspeech-daemon"
+      }
+    }
+  ],
+  "engines": {
+    "vad": "silero-vad",
+    "stt": "sherpa-onnx",
+    "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+    "tts": "avspeech-daemon"
+  }
+}

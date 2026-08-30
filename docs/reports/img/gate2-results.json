@@ -1,0 +1,162 @@
+{
+  "chrome": "Chrome/152.0.7977.64",
+  "characters": {
+    "yui": {
+      "diag": {
+        "lipSync": "analyzer",
+        "blocked": [
+          "BLOCKED_BY_MOTIONSYNC_CORE"
+        ],
+        "core": {
+          "url": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+          "source": "cdn"
+        },
+        "modelUrl": "/characters/yui/model/Hiyori.model3.json",
+        "parameterCount": 70,
+        "missingCanonicalParams": []
+      },
+      "canvasInfo": {
+        "width": 480,
+        "height": 800,
+        "hasGL": true
+      },
+      "pixels": {
+        "nonTransparent": 0,
+        "total": 6144,
+        "meanRGB": 0
+      },
+      "consoleErrors": [
+        "404 http://localhost:5180/vendor/live2d/live2dcubismcore.min.js",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "404 http://localhost:5180/favicon.ico",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    "haru": {
+      "diag": {
+        "lipSync": "analyzer",
+        "blocked": [
+          "BLOCKED_BY_MOTIONSYNC_CORE"
+        ],
+        "core": {
+          "url": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+          "source": "cdn"
+        },
+        "modelUrl": "/characters/haru/model/Haru.model3.json",
+        "parameterCount": 42,
+        "missingCanonicalParams": [
+          "cheek→ParamCheek",
+          "shoulder→ParamShoulder",
+          "handL→ParamHandL",
+          "handR→ParamHandR"
+        ]
+      },
+      "canvasInfo": {
+        "width": 480,
+        "height": 800,
+        "hasGL": true
+      },
+      "pixels": {
+        "nonTransparent": 0,
+        "total": 6144,
+        "meanRGB": 0
+      },
+      "consoleErrors": [
+        "404 http://localhost:5180/vendor/live2d/live2dcubismcore.min.js",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    "reina": {
+      "diag": {
+        "lipSync": "analyzer",
+        "blocked": [
+          "BLOCKED_BY_MOTIONSYNC_CORE"
+        ],
+        "core": {
+          "url": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+          "source": "cdn"
+        },
+        "modelUrl": "/characters/reina/model/Mao.model3.json",
+        "parameterCount": 132,
+        "missingCanonicalParams": [
+          "handL→ParamHandL",
+          "handR→ParamHandR"
+        ]
+      },
+      "canvasInfo": {
+        "width": 480,
+        "height": 800,
+        "hasGL": true
+      },
+      "pixels": {
+        "nonTransparent": 0,
+        "total": 6144,
+        "meanRGB": 0
+      },
+      "consoleErrors": [
+        "404 http://localhost:5180/vendor/live2d/live2dcubismcore.min.js",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    }
+  },
+  "listening": {
+    "state": "LISTENING",
+    "angleYRange": 2.779270015813987,
+    "angleZRange": 0,
+    "angleXRange": 1.0816115133138997,
+    "eyeBallXRange": 0.18026858555231662,
+    "bodyXRange": 0.9294664840721648,
+    "blinkFramesSeen": 0,
+    "p1": {
+      "angleX": 0,
+      "angleY": 2.07,
+      "angleZ": 0,
+      "eyeBallX": 0,
+      "eyeLOpen": 0.14
+    },
+    "p2": {
+      "angleX": -1.08,
+      "angleY": 2.2,
+      "angleZ": 0,
+      "eyeBallX": -0.18,
+      "eyeLOpen": 1
+    },
+    "clip": "listen_interested"
+  },
+  "lipsync": {
+    "audioContextState": "running",
+    "audioClockAdvanced": 1.2746666666666666,
+    "maxMouthOpenY": 0.9545847922442801,
+    "framesOpen": 30,
+    "framesClosed": 0,
+    "samples": 31,
+    "formRange": [
+      -0.955,
+      0.23513903067425054
+    ],
+    "stateDuring": "SPEAKING"
+  },
+  "interrupt": {
+    "before": 0.44785350962141135,
+    "after": 0,
+    "ms": 0.19999999925494194,
+    "state": "LISTENING",
+    "speaking": false,
+    "speechClip": null,
+    "mouthAfter50ms": 0,
+    "mouthNext500ms": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "audioStillScheduled": false
+  },
+  "errors": []
+}

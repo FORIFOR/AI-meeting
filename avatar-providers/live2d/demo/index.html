@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>Live2D provider demo</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #ddd; display: grid; grid-template-columns: 480px 1fr; height: 100vh; }
+    #stage { width: 480px; height: 100vh; background: #f6f1ea; position: relative; }
+    #panel { padding: 12px; overflow: auto; font-size: 13px; }
+    button { margin: 2px; padding: 6px 10px; }
+    pre { background: #222; color: #9f9; padding: 8px; font-size: 12px; white-space: pre-wrap; }
+    .row { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="panel">
+    <div class="row">Character: <span id="char"></span> · <a href="?character=yui">yui</a> <a href="?character=haru">haru</a> <a href="?character=reina">reina</a></div>
+    <div class="row">State:
+      <button data-ev="user_speech_started">user_speech_started → LISTENING</button>
+      <button data-ev="user_speech_ended">user_speech_ended → THINKING</button>
+      <button data-ev="assistant_speech_started">assistant_speech_started → SPEAKING</button>
+      <button data-ev="assistant_speech_ended">assistant_speech_ended → IDLE</button>
+      <button data-ev="interrupted" id="btn-interrupt">INTERRUPT</button>
+    </div>
+    <div class="row">Emotion: <span id="emotions"></span></div>
+    <div class="row">Gesture: <span id="gestures"></span></div>
+    <div class="row"><button id="btn-audio">▶ play test audio (vowel sequence)</button> <button id="btn-behavior">toggle BehaviorEngine</button> <button id="btn-blink">blink</button></div>
+    <pre id="overlay">loading…</pre>
+    <pre id="log"></pre>
+  </div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

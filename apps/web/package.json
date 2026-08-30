@@ -1,0 +1,43 @@
+{
+  "name": "@rcai/web",
+  "version": "0.2.0-beta.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@rcai/audio-core": "workspace:*",
+    "@rcai/avatar-canvas": "workspace:*",
+    "@rcai/avatar-core": "workspace:*",
+    "@rcai/avatar-live2d": "workspace:*",
+    "@rcai/avatar-liveavatar": "workspace:*",
+    "@rcai/avatar-tavus": "workspace:*",
+    "@rcai/avatar-vrm": "workspace:*",
+    "@rcai/behavior-engine": "workspace:*",
+    "@rcai/characters": "workspace:*",
+    "@rcai/connector-recall": "workspace:*",
+    "@rcai/conversation-core": "workspace:*",
+    "@rcai/evaluation": "workspace:*",
+    "@rcai/meeting-core": "workspace:*",
+    "@rcai/observability": "workspace:*",
+    "@rcai/persona-core": "workspace:*",
+    "@rcai/personas": "workspace:*",
+    "@rcai/provider-core": "workspace:*",
+    "@rcai/provider-gemini": "workspace:*",
+    "@rcai/provider-local": "workspace:*",
+    "@rcai/provider-openai": "workspace:*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "puppeteer-core": "25.9.0",
+    "vite": "^7.1.0"
+  }
+}

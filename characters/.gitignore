@@ -1,0 +1,3 @@
+# Licensed sample models are fetched locally by scripts/fetch-sample-character.sh
+*/model/*
+!*/model/README.md

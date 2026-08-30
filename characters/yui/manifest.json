@@ -1,0 +1,10 @@
+{
+  "id": "yui",
+  "name": "Yui",
+  "renderer": "live2d",
+  "defaultPersona": "friendly",
+  "supportedLanguages": ["ja-JP", "en-US"],
+  "motionProfile": "expressive_v1",
+  "voiceProfiles": ["yui_openai", "yui_google", "yui_local"],
+  "license": "Model: Live2D sample 'Hiyori' (Live2D Free Material License) — dev only; replace for production."
+}

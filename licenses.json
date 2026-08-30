@@ -1,0 +1,3354 @@
+{
+  "generatedAt": "2026-08-30T09:05:33.276Z",
+  "count": 332,
+  "packages": [
+    {
+      "name": "@asamuzakjp/css-color",
+      "versions": [
+        "3.2.0"
+      ],
+      "license": "MIT",
+      "author": "asamuzaK",
+      "homepage": "https://github.com/asamuzaK/cssColor#readme",
+      "description": "CSS color - Resolve and convert CSS colors."
+    },
+    {
+      "name": "@babel/code-frame",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-code-frame",
+      "description": "Generate errors that contain a code frame that point to source locations."
+    },
+    {
+      "name": "@babel/compat-data",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://github.com/babel/babel#readme",
+      "description": "The compat-data to determine required Babel plugins"
+    },
+    {
+      "name": "@babel/core",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-core",
+      "description": "Babel compiler core."
+    },
+    {
+      "name": "@babel/generator",
+      "versions": [
+        "7.29.8"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-generator",
+      "description": "Turns an AST into code."
+    },
+    {
+      "name": "@babel/helper-compilation-targets",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://github.com/babel/babel#readme",
+      "description": "Helper functions on Babel compilation targets"
+    },
+    {
+      "name": "@babel/helper-globals",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://github.com/babel/babel#readme",
+      "description": "A collection of JavaScript globals for Babel internal usage"
+    },
+    {
+      "name": "@babel/helper-module-imports",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-helper-module-imports",
+      "description": "Babel helper functions for inserting module loads"
+    },
+    {
+      "name": "@babel/helper-module-transforms",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-helper-module-transforms",
+      "description": "Babel helper functions for implementing ES6 module transformations"
+    },
+    {
+      "name": "@babel/helper-plugin-utils",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-helper-plugin-utils",
+      "description": "General utilities for plugins to use"
+    },
+    {
+      "name": "@babel/helper-string-parser",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-helper-string-parser",
+      "description": "A utility package to parse strings"
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://github.com/babel/babel#readme",
+      "description": "Validate identifier/keywords name"
+    },
+    {
+      "name": "@babel/helper-validator-option",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://github.com/babel/babel#readme",
+      "description": "Validate plugin/preset options"
+    },
+    {
+      "name": "@babel/helpers",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-helpers",
+      "description": "Collection of helper functions used by Babel transforms."
+    },
+    {
+      "name": "@babel/parser",
+      "versions": [
+        "7.29.8"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-parser",
+      "description": "A JavaScript parser"
+    },
+    {
+      "name": "@babel/plugin-transform-react-jsx-self",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-plugin-transform-react-jsx-self",
+      "description": "Add a __self prop to all JSX Elements"
+    },
+    {
+      "name": "@babel/plugin-transform-react-jsx-source",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-plugin-transform-react-jsx-source",
+      "description": "Add a __source prop to all JSX Elements"
+    },
+    {
+      "name": "@babel/runtime",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-runtime",
+      "description": "babel's modular runtime helpers"
+    },
+    {
+      "name": "@babel/template",
+      "versions": [
+        "7.29.7"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-template",
+      "description": "Generate an AST from a string template."
+    },
+    {
+      "name": "@babel/traverse",
+      "versions": [
+        "7.29.8"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-traverse",
+      "description": "The Babel Traverse module maintains the overall tree state, and is responsible for replacing, removing, and adding nodes"
+    },
+    {
+      "name": "@babel/types",
+      "versions": [
+        "7.29.8"
+      ],
+      "license": "MIT",
+      "author": "The Babel Team",
+      "homepage": "https://babel.dev/docs/en/next/babel-types",
+      "description": "Babel Types is a Lodash-esque utility library for AST nodes"
+    },
+    {
+      "name": "@bufbuild/protobuf",
+      "versions": [
+        "1.10.1"
+      ],
+      "license": "(Apache-2.0 AND BSD-3-Clause)",
+      "author": "",
+      "homepage": "https://github.com/bufbuild/protobuf-es#readme",
+      "description": "A complete implementation of Protocol Buffers in TypeScript, suitable for web browsers and Node.js."
+    },
+    {
+      "name": "@csstools/color-helpers",
+      "versions": [
+        "5.1.0"
+      ],
+      "license": "MIT-0",
+      "author": "",
+      "homepage": "https://github.com/csstools/postcss-plugins/tree/main/packages/color-helpers#readme",
+      "description": "Color helpers to ease transformation between formats, gamut, etc"
+    },
+    {
+      "name": "@csstools/css-calc",
+      "versions": [
+        "2.1.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/csstools/postcss-plugins/tree/main/packages/css-calc#readme",
+      "description": "Solve CSS math expressions"
+    },
+    {
+      "name": "@csstools/css-color-parser",
+      "versions": [
+        "3.1.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/csstools/postcss-plugins/tree/main/packages/css-color-parser#readme",
+      "description": "Parse CSS color values"
+    },
+    {
+      "name": "@csstools/css-parser-algorithms",
+      "versions": [
+        "3.0.5"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/csstools/postcss-plugins/tree/main/packages/css-parser-algorithms#readme",
+      "description": "Algorithms to help you parse CSS from an array of tokens."
+    },
+    {
+      "name": "@csstools/css-tokenizer",
+      "versions": [
+        "3.0.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/csstools/postcss-plugins/tree/main/packages/css-tokenizer#readme",
+      "description": "Tokenize CSS"
+    },
+    {
+      "name": "@daily-co/daily-js",
+      "versions": [
+        "0.92.2"
+      ],
+      "license": "BSD-2-Clause",
+      "author": "",
+      "homepage": "https://github.com/daily-co/daily-js/",
+      "description": ""
+    },
+    {
+      "name": "@dimforge/rapier3d-compat",
+      "versions": [
+        "0.12.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "",
+      "homepage": "https://rapier.rs",
+      "description": "3-dimensional physics engine in Rust - official JS bindings. Compatibility package with inlined webassembly as base64."
+    },
+    {
+      "name": "@esbuild/darwin-arm64",
+      "versions": [
+        "0.28.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/evanw/esbuild#readme",
+      "description": "The macOS ARM 64-bit binary for esbuild, a JavaScript bundler."
+    },
+    {
+      "name": "@hono/node-server",
+      "versions": [
+        "2.1.1"
+      ],
+      "license": "MIT",
+      "author": "Yusuke Wada",
+      "homepage": "https://github.com/honojs/node-server",
+      "description": "Node.js Adapter for Hono"
+    },
+    {
+      "name": "@jridgewell/gen-mapping",
+      "versions": [
+        "0.3.13"
+      ],
+      "license": "MIT",
+      "author": "Justin Ridgewell",
+      "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/gen-mapping",
+      "description": "Generate source maps"
+    },
+    {
+      "name": "@jridgewell/remapping",
+      "versions": [
+        "2.3.5"
+      ],
+      "license": "MIT",
+      "author": "Justin Ridgewell",
+      "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/remapping",
+      "description": "Remap sequential sourcemaps through transformations to point at the original source code"
+    },
+    {
+      "name": "@jridgewell/resolve-uri",
+      "versions": [
+        "3.1.2"
+      ],
+      "license": "MIT",
+      "author": "Justin Ridgewell",
+      "homepage": "https://github.com/jridgewell/resolve-uri#readme",
+      "description": "Resolve a URI relative to an optional base URI"
+    },
+    {
+      "name": "@jridgewell/sourcemap-codec",
+      "versions": [
+        "1.6.0"
+      ],
+      "license": "MIT",
+      "author": "Justin Ridgewell",
+      "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/sourcemap-codec",
+      "description": "Encode/decode sourcemap mappings"
+    },
+    {
+      "name": "@jridgewell/trace-mapping",
+      "versions": [
+        "0.3.31"
+      ],
+      "license": "MIT",
+      "author": "Justin Ridgewell",
+      "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping",
+      "description": "Trace the original position through a source map"
+    },
+    {
+      "name": "@livekit/mutex",
+      "versions": [
+        "1.1.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "",
+      "homepage": "https://github.com/livekit/ts-mutex#readme",
+      "description": "Tiny mutex helper"
+    },
+    {
+      "name": "@livekit/protocol",
+      "versions": [
+        "1.48.0",
+        "1.50.4"
+      ],
+      "license": "Apache-2.0",
+      "author": "LiveKit",
+      "homepage": "https://github.com/livekit/protocol#readme",
+      "description": ""
+    },
+    {
+      "name": "@pixi/accessibility",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Accessibility Plugin for visually impaired users"
+    },
+    {
+      "name": "@pixi/app",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Convenience class to create a new PixiJS application"
+    },
+    {
+      "name": "@pixi/compressed-textures",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Shukant Pal",
+      "homepage": "https://github.com/pixijs/pixi.js#readme",
+      "description": "Loaders for compressed texture file formats"
+    },
+    {
+      "name": "@pixi/constants",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Constants used across PixiJS"
+    },
+    {
+      "name": "@pixi/core",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Core PixiJS"
+    },
+    {
+      "name": "@pixi/display",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Core display functionality"
+    },
+    {
+      "name": "@pixi/extensions",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Matt Karl",
+      "homepage": "http://pixijs.com/",
+      "description": "Installing and uninstalling extensions for PixiJS"
+    },
+    {
+      "name": "@pixi/extract",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Extract raw graphics data from renderer"
+    },
+    {
+      "name": "@pixi/filter-alpha",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter that applies alpha evenly across the entire display object and any opaque elements it contains"
+    },
+    {
+      "name": "@pixi/filter-blur",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter that blurs the display object"
+    },
+    {
+      "name": "@pixi/filter-color-matrix",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter that lets you change RGBA via a 5x4 matrix transformation"
+    },
+    {
+      "name": "@pixi/filter-displacement",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter that allows offsetting of pixel values to create warping effects"
+    },
+    {
+      "name": "@pixi/filter-fxaa",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter for fast approximate anti-aliasing"
+    },
+    {
+      "name": "@pixi/filter-noise",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Filter that applies noise to a display object"
+    },
+    {
+      "name": "@pixi/graphics",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Draw primitive shapes such as lines, circles and rectangles to the display"
+    },
+    {
+      "name": "@pixi/interaction",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Plugin for handling mouse, touch and pointer events"
+    },
+    {
+      "name": "@pixi/loaders",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Load assets and resources"
+    },
+    {
+      "name": "@pixi/math",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Collection of math utilities"
+    },
+    {
+      "name": "@pixi/mesh",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Core Mesh functionality"
+    },
+    {
+      "name": "@pixi/mesh-extras",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Custom Mesh display objects, like Rope and SimplePlane"
+    },
+    {
+      "name": "@pixi/mixin-cache-as-bitmap",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Mixin to allow caching container and its children to a bitmap texture"
+    },
+    {
+      "name": "@pixi/mixin-get-child-by-name",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Mixin function to find a child DisplayObject by name"
+    },
+    {
+      "name": "@pixi/mixin-get-global-position",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Mixin to find the global position of a DisplayObject"
+    },
+    {
+      "name": "@pixi/particle-container",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Render many sprite particles as efficiently as possible"
+    },
+    {
+      "name": "@pixi/polyfill",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Support for legacy browser JavaScript environments"
+    },
+    {
+      "name": "@pixi/prepare",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Plugin to allow uploading textures to the GPU"
+    },
+    {
+      "name": "@pixi/runner",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "A simple alternative to events and signals with an emphasis on performance."
+    },
+    {
+      "name": "@pixi/settings",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Collecting of user configurable settings used throughout PixiJS"
+    },
+    {
+      "name": "@pixi/sprite",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Base object for textured objects rendered to the screen"
+    },
+    {
+      "name": "@pixi/sprite-animated",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Sprite Animations as depicted by playing a series of Textures"
+    },
+    {
+      "name": "@pixi/sprite-tiling",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Tiling Sprites for faster rendering a tiling image"
+    },
+    {
+      "name": "@pixi/spritesheet",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Spritesheets maintain a collection of Textures on a single image"
+    },
+    {
+      "name": "@pixi/text",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Text via the Canvas API"
+    },
+    {
+      "name": "@pixi/text-bitmap",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Text via bitmap fonts"
+    },
+    {
+      "name": "@pixi/ticker",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Tickers are control the timings within PixiJS"
+    },
+    {
+      "name": "@pixi/utils",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://pixijs.com/",
+      "description": "Collection of utilities used by PixiJS"
+    },
+    {
+      "name": "@pixiv/three-vrm",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "VRM file loader for three.js."
+    },
+    {
+      "name": "@pixiv/three-vrm-core",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "The implementation of core features of VRM, for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/three-vrm-materials-hdr-emissive-multiplier",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Support VRMC_hdr_emissiveMultiplier for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/three-vrm-materials-mtoon",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "MToon (toon material) module for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/three-vrm-materials-v0compat",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "VRM0.0 materials compatibility layer plugin for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/three-vrm-node-constraint",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Node constraint module for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/three-vrm-springbone",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Spring bone module for @pixiv/three-vrm"
+    },
+    {
+      "name": "@pixiv/types-vrm-0.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRM 0.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-materials-hdr-emissive-multiplier-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_materials_hdr_emissiveMultiplier 1.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-materials-mtoon-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_materials_mtoon 1.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-node-constraint-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_node_constraint 1.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-springbone-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_springBone 1.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-springbone-extended-collider-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_springBone_extended_collider 1.0 schema"
+    },
+    {
+      "name": "@pixiv/types-vrmc-vrm-1.0",
+      "versions": [
+        "3.5.5"
+      ],
+      "license": "MIT",
+      "author": "pixiv",
+      "homepage": "https://github.com/pixiv/three-vrm#readme",
+      "description": "Type definitions of VRMC_vrm 1.0 schema"
+    },
+    {
+      "name": "@puppeteer/browsers",
+      "versions": [
+        "3.2.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "The Chromium Authors",
+      "homepage": "https://github.com/puppeteer/puppeteer/tree/main#readme",
+      "description": "Download and launch browsers"
+    },
+    {
+      "name": "@rolldown/pluginutils",
+      "versions": [
+        "1.0.0-rc.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://rolldown.rs/",
+      "description": ""
+    },
+    {
+      "name": "@rollup/rollup-darwin-arm64",
+      "versions": [
+        "4.63.1"
+      ],
+      "license": "MIT",
+      "author": "Lukas Taegert-Atkinson",
+      "homepage": "https://rollupjs.org/",
+      "description": "Native bindings for Rollup"
+    },
+    {
+      "name": "@sentry-internal/browser-utils",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://github.com/getsentry/sentry-javascript/tree/master/packages/browser-utils",
+      "description": "Browser Utilities for all Sentry JavaScript SDKs"
+    },
+    {
+      "name": "@sentry-internal/feedback",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://github.com/getsentry/sentry-javascript/tree/master/packages/feedback",
+      "description": "Sentry SDK integration for user feedback"
+    },
+    {
+      "name": "@sentry-internal/replay",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://docs.sentry.io/platforms/javascript/session-replay/",
+      "description": "User replays for Sentry"
+    },
+    {
+      "name": "@sentry-internal/replay-canvas",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://docs.sentry.io/platforms/javascript/session-replay/",
+      "description": "Replay canvas integration"
+    },
+    {
+      "name": "@sentry/browser",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://github.com/getsentry/sentry-javascript/tree/master/packages/browser",
+      "description": "Official Sentry SDK for browsers"
+    },
+    {
+      "name": "@sentry/core",
+      "versions": [
+        "8.55.2"
+      ],
+      "license": "MIT",
+      "author": "Sentry",
+      "homepage": "https://github.com/getsentry/sentry-javascript/tree/master/packages/core",
+      "description": "Base implementation for all Sentry JavaScript SDKs"
+    },
+    {
+      "name": "@tauri-apps/cli",
+      "versions": [
+        "2.11.4"
+      ],
+      "license": "Apache-2.0 OR MIT",
+      "author": "",
+      "homepage": "https://github.com/tauri-apps/tauri#readme",
+      "description": "Command line interface for building Tauri apps"
+    },
+    {
+      "name": "@tauri-apps/cli-darwin-arm64",
+      "versions": [
+        "2.11.4"
+      ],
+      "license": "Apache-2.0 OR MIT",
+      "author": "",
+      "homepage": "https://github.com/tauri-apps/tauri#readme",
+      "description": "Command line interface for building Tauri apps"
+    },
+    {
+      "name": "@tweenjs/tween.js",
+      "versions": [
+        "23.1.3"
+      ],
+      "license": "MIT",
+      "author": "tween.js contributors",
+      "homepage": "https://github.com/tweenjs/tween.js",
+      "description": "Simple and fast tweening engine with optimised Robert Penner's equations."
+    },
+    {
+      "name": "@types/babel__core",
+      "versions": [
+        "7.20.5"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/babel__core",
+      "description": "TypeScript definitions for @babel/core"
+    },
+    {
+      "name": "@types/babel__generator",
+      "versions": [
+        "7.27.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/babel__generator",
+      "description": "TypeScript definitions for @babel/generator"
+    },
+    {
+      "name": "@types/babel__template",
+      "versions": [
+        "7.4.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/babel__template",
+      "description": "TypeScript definitions for @babel/template"
+    },
+    {
+      "name": "@types/babel__traverse",
+      "versions": [
+        "7.28.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/babel__traverse",
+      "description": "TypeScript definitions for @babel/traverse"
+    },
+    {
+      "name": "@types/chai",
+      "versions": [
+        "5.2.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/chai",
+      "description": "TypeScript definitions for chai"
+    },
+    {
+      "name": "@types/deep-eql",
+      "versions": [
+        "4.0.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/deep-eql",
+      "description": "TypeScript definitions for deep-eql"
+    },
+    {
+      "name": "@types/dom-mediacapture-record",
+      "versions": [
+        "1.0.22"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/dom-mediacapture-record",
+      "description": "TypeScript definitions for dom-mediacapture-record"
+    },
+    {
+      "name": "@types/earcut",
+      "versions": [
+        "2.1.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/earcut",
+      "description": "TypeScript definitions for earcut"
+    },
+    {
+      "name": "@types/estree",
+      "versions": [
+        "1.0.9"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree",
+      "description": "TypeScript definitions for estree"
+    },
+    {
+      "name": "@types/node",
+      "versions": [
+        "24.13.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node",
+      "description": "TypeScript definitions for node"
+    },
+    {
+      "name": "@types/offscreencanvas",
+      "versions": [
+        "2019.7.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/offscreencanvas",
+      "description": "TypeScript definitions for offscreencanvas"
+    },
+    {
+      "name": "@types/react",
+      "versions": [
+        "19.2.18"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react",
+      "description": "TypeScript definitions for react"
+    },
+    {
+      "name": "@types/react-dom",
+      "versions": [
+        "19.2.5"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react-dom",
+      "description": "TypeScript definitions for react-dom"
+    },
+    {
+      "name": "@types/stats.js",
+      "versions": [
+        "0.17.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/stats.js",
+      "description": "TypeScript definitions for stats.js"
+    },
+    {
+      "name": "@types/three",
+      "versions": [
+        "0.185.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/three",
+      "description": "TypeScript definitions for three"
+    },
+    {
+      "name": "@types/webxr",
+      "versions": [
+        "0.5.24"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/webxr",
+      "description": "TypeScript definitions for webxr"
+    },
+    {
+      "name": "@types/ws",
+      "versions": [
+        "8.18.1"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ws",
+      "description": "TypeScript definitions for ws"
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "versions": [
+        "5.2.0"
+      ],
+      "license": "MIT",
+      "author": "Evan You",
+      "homepage": "https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#readme",
+      "description": "The default Vite plugin for React projects"
+    },
+    {
+      "name": "@vitest/expect",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/expect#readme",
+      "description": "Jest's expect matchers as a Chai plugin"
+    },
+    {
+      "name": "@vitest/mocker",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/mocker#readme",
+      "description": "Vitest module mocker implementation"
+    },
+    {
+      "name": "@vitest/pretty-format",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/utils#readme",
+      "description": "Fork of pretty-format with support for ESM"
+    },
+    {
+      "name": "@vitest/runner",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/runner#readme",
+      "description": "Vitest test runner"
+    },
+    {
+      "name": "@vitest/snapshot",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/snapshot#readme",
+      "description": "Vitest snapshot manager"
+    },
+    {
+      "name": "@vitest/spy",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/spy#readme",
+      "description": "Lightweight Jest compatible spy implementation"
+    },
+    {
+      "name": "@vitest/utils",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/utils#readme",
+      "description": "Shared Vitest utility functions"
+    },
+    {
+      "name": "agent-base",
+      "versions": [
+        "7.1.4"
+      ],
+      "license": "MIT",
+      "author": "Nathan Rajlich",
+      "homepage": "https://github.com/TooTallNate/proxy-agents#readme",
+      "description": "Turn a function into an `http.Agent` instance"
+    },
+    {
+      "name": "ansi-regex",
+      "versions": [
+        "5.0.1",
+        "6.3.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/chalk/ansi-regex#readme",
+      "description": "Regular expression for matching ANSI escape codes"
+    },
+    {
+      "name": "ansi-styles",
+      "versions": [
+        "4.3.0",
+        "6.2.3"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/chalk/ansi-styles#readme",
+      "description": "ANSI escape codes for styling strings in the terminal"
+    },
+    {
+      "name": "array-union",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/array-union#readme",
+      "description": "Create an array of unique values, in order, from the input arrays"
+    },
+    {
+      "name": "array-uniq",
+      "versions": [
+        "1.0.3"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/array-uniq#readme",
+      "description": "Create an array without duplicates"
+    },
+    {
+      "name": "assertion-error",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jake Luer",
+      "homepage": "https://github.com/chaijs/assertion-error#readme",
+      "description": "Error constructor for test and validation frameworks that implements standardized AssertionError specification."
+    },
+    {
+      "name": "async",
+      "versions": [
+        "2.6.4"
+      ],
+      "license": "MIT",
+      "author": "Caolan McMahon",
+      "homepage": "https://caolan.github.io/async/",
+      "description": "Higher-order functions and common patterns for asynchronous code"
+    },
+    {
+      "name": "balanced-match",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "MIT",
+      "author": "Julian Gruber",
+      "homepage": "https://github.com/juliangruber/balanced-match",
+      "description": "Match balanced character pairs, like \"{\" and \"}\""
+    },
+    {
+      "name": "baseline-browser-mapping",
+      "versions": [
+        "2.11.20"
+      ],
+      "license": "Apache-2.0",
+      "author": "",
+      "homepage": "https://github.com/web-platform-dx/baseline-browser-mapping#readme",
+      "description": "A library for obtaining browser versions with their maximum supported Baseline feature set and Widely Available status."
+    },
+    {
+      "name": "bowser",
+      "versions": [
+        "2.14.1"
+      ],
+      "license": "MIT",
+      "author": "Dustin Diaz",
+      "homepage": "https://github.com/bowser-js/bowser",
+      "description": "Lightweight browser detector"
+    },
+    {
+      "name": "brace-expansion",
+      "versions": [
+        "1.1.18"
+      ],
+      "license": "MIT",
+      "author": "Julian Gruber",
+      "homepage": "https://github.com/juliangruber/brace-expansion",
+      "description": "Brace expansion as known from sh/bash"
+    },
+    {
+      "name": "browserslist",
+      "versions": [
+        "4.28.8"
+      ],
+      "license": "MIT",
+      "author": "Andrey Sitnik",
+      "homepage": "https://github.com/browserslist/browserslist#readme",
+      "description": "Share target browsers between different front-end tools, like Autoprefixer, Stylelint and babel-env-preset"
+    },
+    {
+      "name": "cac",
+      "versions": [
+        "6.7.14"
+      ],
+      "license": "MIT",
+      "author": "egoist",
+      "homepage": "https://github.com/egoist/cac#readme",
+      "description": "Simple yet powerful framework for building command-line apps."
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/call-bind-apply-helpers#readme",
+      "description": "Helper functions around Function call/apply/bind, for use in `call-bind`"
+    },
+    {
+      "name": "call-bound",
+      "versions": [
+        "1.0.4"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/call-bound#readme",
+      "description": "Robust call-bound JavaScript intrinsics, using `call-bind` and `get-intrinsic`."
+    },
+    {
+      "name": "caniuse-lite",
+      "versions": [
+        "1.0.30001810"
+      ],
+      "license": "CC-BY-4.0",
+      "author": "Ben Briggs",
+      "homepage": "https://github.com/browserslist/caniuse-lite#readme",
+      "description": "A smaller version of caniuse-db, with only the essentials!"
+    },
+    {
+      "name": "chai",
+      "versions": [
+        "5.3.3"
+      ],
+      "license": "MIT",
+      "author": "Jake Luer",
+      "homepage": "http://chaijs.com",
+      "description": "BDD/TDD assertion library for node.js and the browser. Test framework agnostic."
+    },
+    {
+      "name": "chalk",
+      "versions": [
+        "4.1.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/chalk/chalk#readme",
+      "description": "Terminal string styling done right"
+    },
+    {
+      "name": "check-error",
+      "versions": [
+        "2.1.3"
+      ],
+      "license": "MIT",
+      "author": "Jake Luer",
+      "homepage": "https://github.com/chaijs/check-error#readme",
+      "description": "Error comparison and information related utility for node and the browser"
+    },
+    {
+      "name": "chromium-bidi",
+      "versions": [
+        "17.0.2"
+      ],
+      "license": "Apache-2.0",
+      "author": "The Chromium Authors",
+      "homepage": "https://github.com/GoogleChromeLabs/chromium-bidi#readme",
+      "description": "An implementation of the WebDriver BiDi protocol for Chromium implemented as a JavaScript layer translating between BiDi and CDP, running inside a Chrome tab."
+    },
+    {
+      "name": "cliui",
+      "versions": [
+        "8.0.1",
+        "9.0.1"
+      ],
+      "license": "ISC",
+      "author": "Ben Coe",
+      "homepage": "https://github.com/yargs/cliui#readme",
+      "description": "easily create complex multi-column command-line-interfaces"
+    },
+    {
+      "name": "color-convert",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Heather Arthur",
+      "homepage": "https://github.com/Qix-/color-convert#readme",
+      "description": "Plain color conversion functions"
+    },
+    {
+      "name": "color-name",
+      "versions": [
+        "1.1.4"
+      ],
+      "license": "MIT",
+      "author": "DY",
+      "homepage": "https://github.com/colorjs/color-name",
+      "description": "A list of color names and its values"
+    },
+    {
+      "name": "commander",
+      "versions": [
+        "2.20.3"
+      ],
+      "license": "MIT",
+      "author": "TJ Holowaychuk",
+      "homepage": "https://github.com/tj/commander.js#readme",
+      "description": "the complete solution for node.js command-line programs"
+    },
+    {
+      "name": "commondir",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "James Halliday",
+      "homepage": "https://github.com/substack/node-commondir#readme",
+      "description": "compute the closest common parent for file paths"
+    },
+    {
+      "name": "concat-map",
+      "versions": [
+        "0.0.1"
+      ],
+      "license": "MIT",
+      "author": "James Halliday",
+      "homepage": "https://github.com/substack/node-concat-map#readme",
+      "description": "concatenative mapdashery"
+    },
+    {
+      "name": "concurrently",
+      "versions": [
+        "9.2.4"
+      ],
+      "license": "MIT",
+      "author": "Kimmo Brunfeldt",
+      "homepage": "https://github.com/open-cli-tools/concurrently#readme",
+      "description": "Run commands concurrently"
+    },
+    {
+      "name": "convert-source-map",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "MIT",
+      "author": "Thorsten Lorenz",
+      "homepage": "https://github.com/thlorenz/convert-source-map",
+      "description": "Converts a source-map from/to  different formats and allows adding/changing properties."
+    },
+    {
+      "name": "cssstyle",
+      "versions": [
+        "4.6.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/jsdom/cssstyle",
+      "description": "CSSStyleDeclaration Object Model implementation"
+    },
+    {
+      "name": "csstype",
+      "versions": [
+        "3.2.3"
+      ],
+      "license": "MIT",
+      "author": "Fredrik Nicol",
+      "homepage": "https://github.com/frenic/csstype#readme",
+      "description": "Strict TypeScript and Flow types for style based on MDN data"
+    },
+    {
+      "name": "data-urls",
+      "versions": [
+        "5.0.0"
+      ],
+      "license": "MIT",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/data-urls#readme",
+      "description": "Parses data: URLs"
+    },
+    {
+      "name": "debug",
+      "versions": [
+        "4.4.3"
+      ],
+      "license": "MIT",
+      "author": "Josh Junon",
+      "homepage": "https://github.com/debug-js/debug#readme",
+      "description": "Lightweight debugging utility for Node.js and the browser"
+    },
+    {
+      "name": "decimal.js",
+      "versions": [
+        "10.6.0"
+      ],
+      "license": "MIT",
+      "author": "Michael Mclaughlin",
+      "homepage": "https://github.com/MikeMcl/decimal.js#readme",
+      "description": "An arbitrary-precision Decimal type for JavaScript."
+    },
+    {
+      "name": "deep-eql",
+      "versions": [
+        "5.0.2"
+      ],
+      "license": "MIT",
+      "author": "Jake Luer",
+      "homepage": "https://github.com/chaijs/deep-eql#readme",
+      "description": "Improved deep equality testing for Node.js and the browser."
+    },
+    {
+      "name": "dequal",
+      "versions": [
+        "2.0.3"
+      ],
+      "license": "MIT",
+      "author": "Luke Edwards",
+      "homepage": "https://github.com/lukeed/dequal#readme",
+      "description": "A tiny (304B to 489B) utility for check for deep equality"
+    },
+    {
+      "name": "devtools-protocol",
+      "versions": [
+        "0.0.1666840"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "The Chromium Authors",
+      "homepage": "https://github.com/ChromeDevTools/devtools-protocol#readme",
+      "description": "The Chrome DevTools Protocol JSON"
+    },
+    {
+      "name": "dunder-proto",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/es-shims/dunder-proto#readme",
+      "description": "If available, the `Object.prototype.__proto__` accessor and mutator, call-bound"
+    },
+    {
+      "name": "earcut",
+      "versions": [
+        "2.2.4"
+      ],
+      "license": "ISC",
+      "author": "Vladimir Agafonkin",
+      "homepage": "https://github.com/mapbox/earcut#readme",
+      "description": "The fastest and smallest JavaScript polygon triangulation library for your WebGL apps"
+    },
+    {
+      "name": "electron-to-chromium",
+      "versions": [
+        "1.5.416"
+      ],
+      "license": "ISC",
+      "author": "Kilian Valkhof",
+      "homepage": "https://github.com/Kilian/electron-to-chromium#readme",
+      "description": "Provides a list of electron-to-chromium version mappings"
+    },
+    {
+      "name": "email-addresses",
+      "versions": [
+        "3.1.0"
+      ],
+      "license": "MIT",
+      "author": "Jack Bearheart",
+      "homepage": "https://github.com/jackbearheart/email-addresses",
+      "description": "An email address parser based on rfc5322"
+    },
+    {
+      "name": "emoji-regex",
+      "versions": [
+        "8.0.0",
+        "10.6.0"
+      ],
+      "license": "MIT",
+      "author": "Mathias Bynens",
+      "homepage": "https://mths.be/emoji-regex",
+      "description": "A regular expression to match all Emoji-only symbols as per the Unicode Standard."
+    },
+    {
+      "name": "entities",
+      "versions": [
+        "6.0.1"
+      ],
+      "license": "BSD-2-Clause",
+      "author": "Felix Boehm",
+      "homepage": "https://github.com/fb55/entities#readme",
+      "description": "Encode & decode XML and HTML entities with ease & speed"
+    },
+    {
+      "name": "es-define-property",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/es-define-property#readme",
+      "description": "`Object.defineProperty`, but not IE 8's broken one."
+    },
+    {
+      "name": "es-errors",
+      "versions": [
+        "1.3.0"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/es-errors#readme",
+      "description": "A simple cache for a few of the JS Error constructors."
+    },
+    {
+      "name": "es-module-lexer",
+      "versions": [
+        "1.7.0"
+      ],
+      "license": "MIT",
+      "author": "Guy Bedford",
+      "homepage": "https://github.com/guybedford/es-module-lexer#readme",
+      "description": "Lexes ES modules returning their import/export metadata"
+    },
+    {
+      "name": "es-object-atoms",
+      "versions": [
+        "1.1.2"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/es-object-atoms#readme",
+      "description": "ES Object-related atoms: Object, ToObject, RequireObjectCoercible"
+    },
+    {
+      "name": "esbuild",
+      "versions": [
+        "0.28.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/evanw/esbuild#readme",
+      "description": "An extremely fast JavaScript and CSS bundler and minifier."
+    },
+    {
+      "name": "escalade",
+      "versions": [
+        "3.2.0"
+      ],
+      "license": "MIT",
+      "author": "Luke Edwards",
+      "homepage": "https://github.com/lukeed/escalade#readme",
+      "description": "A tiny (183B to 210B) and fast utility to ascend parent directories"
+    },
+    {
+      "name": "escape-string-regexp",
+      "versions": [
+        "1.0.5"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/escape-string-regexp#readme",
+      "description": "Escape RegExp special characters"
+    },
+    {
+      "name": "estree-walker",
+      "versions": [
+        "3.0.3"
+      ],
+      "license": "MIT",
+      "author": "Rich Harris",
+      "homepage": "https://github.com/Rich-Harris/estree-walker#readme",
+      "description": "Traverse an ESTree-compliant AST"
+    },
+    {
+      "name": "eventemitter3",
+      "versions": [
+        "3.1.2"
+      ],
+      "license": "MIT",
+      "author": "Arnout Kazemier",
+      "homepage": "https://github.com/primus/eventemitter3#readme",
+      "description": "EventEmitter3 focuses on performance while maintaining a Node.js AND browser compatible interface."
+    },
+    {
+      "name": "events",
+      "versions": [
+        "3.3.0"
+      ],
+      "license": "MIT",
+      "author": "Irakli Gozalishvili",
+      "homepage": "https://github.com/Gozala/events#readme",
+      "description": "Node's event emitter for all engines."
+    },
+    {
+      "name": "expect-type",
+      "versions": [
+        "1.4.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "",
+      "homepage": "https://github.com/mmkal/expect-type#readme",
+      "description": ""
+    },
+    {
+      "name": "fdir",
+      "versions": [
+        "6.5.0"
+      ],
+      "license": "MIT",
+      "author": "thecodrr",
+      "homepage": "https://github.com/thecodrr/fdir#readme",
+      "description": "The fastest directory crawler & globbing alternative to glob, fast-glob, & tiny-glob. Crawls 1m files in < 1s"
+    },
+    {
+      "name": "fflate",
+      "versions": [
+        "0.8.3"
+      ],
+      "license": "MIT",
+      "author": "Arjun Barrett",
+      "homepage": "https://101arrowz.github.io/fflate",
+      "description": "High performance (de)compression in an 8kB package"
+    },
+    {
+      "name": "filename-reserved-regex",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/filename-reserved-regex#readme",
+      "description": "Regular expression for matching reserved filename characters"
+    },
+    {
+      "name": "filenamify",
+      "versions": [
+        "4.3.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/filenamify#readme",
+      "description": "Convert a string to a valid safe filename"
+    },
+    {
+      "name": "find-cache-dir",
+      "versions": [
+        "3.3.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/avajs/find-cache-dir#readme",
+      "description": "Finds the common standard cache directory"
+    },
+    {
+      "name": "find-up",
+      "versions": [
+        "4.1.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/find-up#readme",
+      "description": "Find a file or directory by walking up parent directories"
+    },
+    {
+      "name": "fs-extra",
+      "versions": [
+        "8.1.0"
+      ],
+      "license": "MIT",
+      "author": "JP Richardson",
+      "homepage": "https://github.com/jprichardson/node-fs-extra",
+      "description": "fs-extra contains methods that aren't included in the vanilla Node.js fs package. Such as mkdir -p, cp -r, and rm -rf."
+    },
+    {
+      "name": "fs.realpath",
+      "versions": [
+        "1.0.0"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/fs.realpath#readme",
+      "description": "Use node's fs.realpath, but fall back to the JS implementation if the native one fails"
+    },
+    {
+      "name": "fsevents",
+      "versions": [
+        "2.3.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/fsevents/fsevents",
+      "description": "Native Access to MacOS FSEvents"
+    },
+    {
+      "name": "function-bind",
+      "versions": [
+        "1.1.2"
+      ],
+      "license": "MIT",
+      "author": "Raynos",
+      "homepage": "https://github.com/Raynos/function-bind",
+      "description": "Implementation of Function.prototype.bind"
+    },
+    {
+      "name": "gensync",
+      "versions": [
+        "1.0.0-beta.2"
+      ],
+      "license": "MIT",
+      "author": "Logan Smyth",
+      "homepage": "https://github.com/loganfsmyth/gensync",
+      "description": "Allows users to use generators in order to write common functions that can be both sync or async."
+    },
+    {
+      "name": "get-caller-file",
+      "versions": [
+        "2.0.5"
+      ],
+      "license": "ISC",
+      "author": "Stefan Penner",
+      "homepage": "https://github.com/stefanpenner/get-caller-file#readme",
+      "description": ""
+    },
+    {
+      "name": "get-east-asian-width",
+      "versions": [
+        "1.6.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/get-east-asian-width#readme",
+      "description": "Determine the East Asian Width of a Unicode character"
+    },
+    {
+      "name": "get-intrinsic",
+      "versions": [
+        "1.3.0"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/get-intrinsic#readme",
+      "description": "Get and robustly cache all JS language-level intrinsics at first require time"
+    },
+    {
+      "name": "get-proto",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/get-proto#readme",
+      "description": "Robustly get the [[Prototype]] of an object"
+    },
+    {
+      "name": "gh-pages",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "Tim Schaub",
+      "homepage": "https://github.com/tschaub/gh-pages",
+      "description": "Publish to a gh-pages branch on GitHub (or any other branch on any other remote)"
+    },
+    {
+      "name": "glob",
+      "versions": [
+        "7.2.3"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/node-glob#readme",
+      "description": "a little globber"
+    },
+    {
+      "name": "globby",
+      "versions": [
+        "6.1.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/globby#readme",
+      "description": "Extends `glob` with support for multiple patterns and exposes a Promise API"
+    },
+    {
+      "name": "gopd",
+      "versions": [
+        "1.2.0"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/gopd#readme",
+      "description": "`Object.getOwnPropertyDescriptor`, but accounts for IE's broken implementation."
+    },
+    {
+      "name": "graceful-fs",
+      "versions": [
+        "4.2.11"
+      ],
+      "license": "ISC",
+      "author": "",
+      "homepage": "https://github.com/isaacs/node-graceful-fs#readme",
+      "description": "A drop-in replacement for fs, making various improvements."
+    },
+    {
+      "name": "has-flag",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/has-flag#readme",
+      "description": "Check if argv has a specific flag"
+    },
+    {
+      "name": "has-symbols",
+      "versions": [
+        "1.1.0"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/has-symbols#readme",
+      "description": "Determine if the JS environment has Symbol support. Supports spec, or shams."
+    },
+    {
+      "name": "hasown",
+      "versions": [
+        "2.0.4"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/inspect-js/hasOwn#readme",
+      "description": "A robust, ES3 compatible, \"has own property\" predicate."
+    },
+    {
+      "name": "hono",
+      "versions": [
+        "4.13.5"
+      ],
+      "license": "MIT",
+      "author": "Yusuke Wada",
+      "homepage": "https://hono.dev",
+      "description": "Web framework built on Web Standards"
+    },
+    {
+      "name": "html-encoding-sniffer",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/html-encoding-sniffer#readme",
+      "description": "Sniff the encoding from a HTML byte stream"
+    },
+    {
+      "name": "http-proxy-agent",
+      "versions": [
+        "7.0.2"
+      ],
+      "license": "MIT",
+      "author": "Nathan Rajlich",
+      "homepage": "https://github.com/TooTallNate/proxy-agents#readme",
+      "description": "An HTTP(s) proxy `http.Agent` implementation for HTTP"
+    },
+    {
+      "name": "https-proxy-agent",
+      "versions": [
+        "7.0.6"
+      ],
+      "license": "MIT",
+      "author": "Nathan Rajlich",
+      "homepage": "https://github.com/TooTallNate/proxy-agents#readme",
+      "description": "An HTTP(s) proxy `http.Agent` implementation for HTTPS"
+    },
+    {
+      "name": "iconv-lite",
+      "versions": [
+        "0.6.3"
+      ],
+      "license": "MIT",
+      "author": "Alexander Shtuchkin",
+      "homepage": "https://github.com/ashtuchkin/iconv-lite",
+      "description": "Convert character encodings in pure javascript."
+    },
+    {
+      "name": "inflight",
+      "versions": [
+        "1.0.6"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/inflight",
+      "description": "Add callbacks to requests in flight to avoid async duplication"
+    },
+    {
+      "name": "inherits",
+      "versions": [
+        "2.0.4"
+      ],
+      "license": "ISC",
+      "author": "",
+      "homepage": "https://github.com/isaacs/inherits#readme",
+      "description": "Browser-friendly inheritance fully compatible with standard node.js inherits()"
+    },
+    {
+      "name": "is-fullwidth-code-point",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/is-fullwidth-code-point#readme",
+      "description": "Check if the character represented by a given Unicode code point is fullwidth"
+    },
+    {
+      "name": "is-potential-custom-element-name",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Mathias Bynens",
+      "homepage": "https://github.com/mathiasbynens/is-potential-custom-element-name",
+      "description": "Check whether a given string matches the `PotentialCustomElementName` production as defined in the HTML Standard."
+    },
+    {
+      "name": "jose",
+      "versions": [
+        "5.10.0",
+        "6.2.10"
+      ],
+      "license": "MIT",
+      "author": "Filip Skokan",
+      "homepage": "https://github.com/panva/jose",
+      "description": "JWA, JWS, JWE, JWT, JWK, JWKS for Node.js, Browser, Cloudflare Workers, Deno, Bun, and other Web-interoperable runtimes"
+    },
+    {
+      "name": "js-tokens",
+      "versions": [
+        "4.0.0",
+        "9.0.1"
+      ],
+      "license": "MIT",
+      "author": "Simon Lydell",
+      "homepage": "https://github.com/lydell/js-tokens#readme",
+      "description": "Tiny JavaScript tokenizer."
+    },
+    {
+      "name": "jsdom",
+      "versions": [
+        "26.1.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/jsdom/jsdom#readme",
+      "description": "A JavaScript implementation of many web standards"
+    },
+    {
+      "name": "jsesc",
+      "versions": [
+        "3.1.0"
+      ],
+      "license": "MIT",
+      "author": "Mathias Bynens",
+      "homepage": "https://mths.be/jsesc",
+      "description": "Given some data, jsesc returns the shortest possible stringified & ASCII-safe representation of that data."
+    },
+    {
+      "name": "json5",
+      "versions": [
+        "2.2.3"
+      ],
+      "license": "MIT",
+      "author": "Aseem Kishore",
+      "homepage": "http://json5.org/",
+      "description": "JSON for Humans"
+    },
+    {
+      "name": "jsonfile",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "JP Richardson",
+      "homepage": "https://github.com/jprichardson/node-jsonfile#readme",
+      "description": "Easily read/write JSON files."
+    },
+    {
+      "name": "livekit-client",
+      "versions": [
+        "2.22.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "LiveKit",
+      "homepage": "https://github.com/livekit/client-sdk-js#readme",
+      "description": "JavaScript/TypeScript client SDK for LiveKit"
+    },
+    {
+      "name": "livekit-server-sdk",
+      "versions": [
+        "2.18.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "David Zhao",
+      "homepage": "https://github.com/livekit/node-sdks#readme",
+      "description": "Server-side SDK for LiveKit"
+    },
+    {
+      "name": "locate-path",
+      "versions": [
+        "5.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/locate-path#readme",
+      "description": "Get the first path that exists on disk of multiple paths"
+    },
+    {
+      "name": "lodash",
+      "versions": [
+        "4.18.1"
+      ],
+      "license": "MIT",
+      "author": "John-David Dalton",
+      "homepage": "https://lodash.com/",
+      "description": "Lodash modular utilities."
+    },
+    {
+      "name": "loglevel",
+      "versions": [
+        "1.9.2"
+      ],
+      "license": "MIT",
+      "author": "Tim Perry",
+      "homepage": "https://github.com/pimterry/loglevel",
+      "description": "Minimal lightweight logging for JavaScript, adding reliable log level methods to any available console.log methods"
+    },
+    {
+      "name": "loupe",
+      "versions": [
+        "3.2.1"
+      ],
+      "license": "MIT",
+      "author": "Veselin Todorov",
+      "homepage": "https://github.com/chaijs/loupe",
+      "description": "Inspect utility for Node.js and browsers"
+    },
+    {
+      "name": "lru-cache",
+      "versions": [
+        "5.1.1",
+        "10.4.3"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/node-lru-cache#readme",
+      "description": "A cache object that deletes the least-recently-used items."
+    },
+    {
+      "name": "machina",
+      "versions": [
+        "7.0.1"
+      ],
+      "license": "(MIT OR GPL)",
+      "author": "Jim Cowart",
+      "homepage": "https://machina-js.org/",
+      "description": "Focused finite state machines for JavaScript and TypeScript. States in, states out."
+    },
+    {
+      "name": "magic-string",
+      "versions": [
+        "0.30.21"
+      ],
+      "license": "MIT",
+      "author": "Rich Harris",
+      "homepage": "https://github.com/Rich-Harris/magic-string#readme",
+      "description": "Modify strings, generate sourcemaps"
+    },
+    {
+      "name": "make-dir",
+      "versions": [
+        "3.1.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/make-dir#readme",
+      "description": "Make a directory and its parents if needed - Think `mkdir -p`"
+    },
+    {
+      "name": "math-intrinsics",
+      "versions": [
+        "1.1.0"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/es-shims/math-intrinsics#readme",
+      "description": "ES Math-related intrinsics and helpers, robustly cached."
+    },
+    {
+      "name": "meshoptimizer",
+      "versions": [
+        "1.1.1"
+      ],
+      "license": "MIT",
+      "author": "Arseny Kapoulkine",
+      "homepage": "https://github.com/zeux/meshoptimizer",
+      "description": "Mesh optimization library that makes meshes smaller and faster to render"
+    },
+    {
+      "name": "minimatch",
+      "versions": [
+        "3.1.5"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/minimatch#readme",
+      "description": "a glob matcher in javascript"
+    },
+    {
+      "name": "mitt",
+      "versions": [
+        "3.0.1"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/developit/mitt",
+      "description": "Tiny 200b functional Event Emitter / pubsub."
+    },
+    {
+      "name": "modern-tar",
+      "versions": [
+        "0.8.4"
+      ],
+      "license": "MIT",
+      "author": "Ayuhito",
+      "homepage": "https://github.com/ayuhito/modern-tar",
+      "description": "Zero dependency streaming tar parser and writer for JavaScript."
+    },
+    {
+      "name": "ms",
+      "versions": [
+        "2.1.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/vercel/ms#readme",
+      "description": "Tiny millisecond conversion utility"
+    },
+    {
+      "name": "nanoid",
+      "versions": [
+        "3.3.18"
+      ],
+      "license": "MIT",
+      "author": "Andrey Sitnik",
+      "homepage": "https://github.com/ai/nanoid#readme",
+      "description": "A tiny (116 bytes), secure URL-friendly unique string ID generator"
+    },
+    {
+      "name": "node-releases",
+      "versions": [
+        "2.0.54"
+      ],
+      "license": "MIT",
+      "author": "Sergey Rubanov",
+      "homepage": "https://github.com/chicoxyzzy/node-releases#readme",
+      "description": "Node.js releases data"
+    },
+    {
+      "name": "nwsapi",
+      "versions": [
+        "2.2.26"
+      ],
+      "license": "MIT",
+      "author": "Diego Perini",
+      "homepage": "https://javascript.nwbox.com/nwsapi/",
+      "description": "Fast CSS Selectors API Engine"
+    },
+    {
+      "name": "object-assign",
+      "versions": [
+        "4.1.1"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/object-assign#readme",
+      "description": "ES2015 `Object.assign()` ponyfill"
+    },
+    {
+      "name": "object-inspect",
+      "versions": [
+        "1.13.4"
+      ],
+      "license": "MIT",
+      "author": "James Halliday",
+      "homepage": "https://github.com/inspect-js/object-inspect",
+      "description": "string representations of objects in node and the browser"
+    },
+    {
+      "name": "once",
+      "versions": [
+        "1.4.0"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/once#readme",
+      "description": "Run a function exactly one time"
+    },
+    {
+      "name": "p-limit",
+      "versions": [
+        "2.3.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/p-limit#readme",
+      "description": "Run multiple promise-returning & async functions with limited concurrency"
+    },
+    {
+      "name": "p-locate",
+      "versions": [
+        "4.1.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/p-locate#readme",
+      "description": "Get the first fulfilled promise that satisfies the provided testing function"
+    },
+    {
+      "name": "p-try",
+      "versions": [
+        "2.2.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/p-try#readme",
+      "description": "`Start a promise chain"
+    },
+    {
+      "name": "parse5",
+      "versions": [
+        "7.3.0"
+      ],
+      "license": "MIT",
+      "author": "Ivan Nikulin",
+      "homepage": "https://parse5.js.org",
+      "description": "HTML parser and serializer."
+    },
+    {
+      "name": "path-exists",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/path-exists#readme",
+      "description": "Check if a path exists"
+    },
+    {
+      "name": "path-is-absolute",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/path-is-absolute#readme",
+      "description": "Node.js 0.12 path.isAbsolute() ponyfill"
+    },
+    {
+      "name": "pathe",
+      "versions": [
+        "2.0.3"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/unjs/pathe#readme",
+      "description": "Universal filesystem path utils"
+    },
+    {
+      "name": "pathval",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Veselin Todorov",
+      "homepage": "https://github.com/chaijs/pathval",
+      "description": "Object value retrieval given a string path"
+    },
+    {
+      "name": "picocolors",
+      "versions": [
+        "1.1.1"
+      ],
+      "license": "ISC",
+      "author": "Alexey Raspopov",
+      "homepage": "https://github.com/alexeyraspopov/picocolors#readme",
+      "description": "The tiniest and the fastest library for terminal output formatting with ANSI colors"
+    },
+    {
+      "name": "picomatch",
+      "versions": [
+        "4.0.7"
+      ],
+      "license": "MIT",
+      "author": "Jon Schlinkert",
+      "homepage": "https://github.com/micromatch/picomatch",
+      "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions."
+    },
+    {
+      "name": "pify",
+      "versions": [
+        "2.3.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/pify#readme",
+      "description": "Promisify a callback-style function"
+    },
+    {
+      "name": "pinkie",
+      "versions": [
+        "2.0.4"
+      ],
+      "license": "MIT",
+      "author": "Vsevolod Strukchinsky",
+      "homepage": "https://github.com/floatdrop/pinkie#readme",
+      "description": "Itty bitty little widdle twinkie pinkie ES2015 Promise implementation"
+    },
+    {
+      "name": "pinkie-promise",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Vsevolod Strukchinsky",
+      "homepage": "https://github.com/floatdrop/pinkie-promise#readme",
+      "description": "ES2015 Promise ponyfill"
+    },
+    {
+      "name": "pixi-live2d-display",
+      "versions": [
+        "0.4.0"
+      ],
+      "license": "MIT",
+      "author": "guansss",
+      "homepage": "https://github.com/guansss/pixi-live2d-display#readme",
+      "description": "Live2D plugin for PixiJS"
+    },
+    {
+      "name": "pixi.js",
+      "versions": [
+        "6.5.10"
+      ],
+      "license": "MIT",
+      "author": "Mat Groves",
+      "homepage": "http://www.pixijs.com/",
+      "description": "PixiJS without the CanvasRenderer fallback, modern browsers only"
+    },
+    {
+      "name": "pkg-dir",
+      "versions": [
+        "4.2.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/pkg-dir#readme",
+      "description": "Find the root directory of a Node.js project or npm package"
+    },
+    {
+      "name": "postcss",
+      "versions": [
+        "8.5.26"
+      ],
+      "license": "MIT",
+      "author": "Andrey Sitnik",
+      "homepage": "https://postcss.org/",
+      "description": "Tool for transforming styles with JS plugins"
+    },
+    {
+      "name": "promise-polyfill",
+      "versions": [
+        "8.3.0"
+      ],
+      "license": "MIT",
+      "author": "Taylor Hakes",
+      "homepage": "https://github.com/taylorhakes/promise-polyfill",
+      "description": "Lightweight promise polyfill. A+ compliant"
+    },
+    {
+      "name": "punycode",
+      "versions": [
+        "1.4.1",
+        "2.3.1"
+      ],
+      "license": "MIT",
+      "author": "Mathias Bynens",
+      "homepage": "https://mths.be/punycode",
+      "description": "A robust Punycode converter that fully complies to RFC 3492 and RFC 5891, and works on nearly all JavaScript platforms."
+    },
+    {
+      "name": "puppeteer-core",
+      "versions": [
+        "25.9.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "The Chromium Authors",
+      "homepage": "https://github.com/puppeteer/puppeteer/tree/main#readme",
+      "description": "A high-level API to control headless Chrome over the DevTools Protocol"
+    },
+    {
+      "name": "qs",
+      "versions": [
+        "6.15.3"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "",
+      "homepage": "https://github.com/ljharb/qs",
+      "description": "A querystring parser that supports nesting and arrays, with a depth limit"
+    },
+    {
+      "name": "react",
+      "versions": [
+        "19.2.8"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://react.dev/",
+      "description": "React is a JavaScript library for building user interfaces."
+    },
+    {
+      "name": "react-dom",
+      "versions": [
+        "19.2.8"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://react.dev/",
+      "description": "React package for working with the DOM."
+    },
+    {
+      "name": "react-refresh",
+      "versions": [
+        "0.18.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://react.dev/",
+      "description": "React is a JavaScript library for building user interfaces."
+    },
+    {
+      "name": "require-directory",
+      "versions": [
+        "2.1.1"
+      ],
+      "license": "MIT",
+      "author": "Troy Goode",
+      "homepage": "https://github.com/troygoode/node-require-directory/",
+      "description": "Recursively iterates over specified directory, require()'ing each file, and returning a nested hash structure containing those modules."
+    },
+    {
+      "name": "rollup",
+      "versions": [
+        "4.63.1"
+      ],
+      "license": "MIT",
+      "author": "Rich Harris",
+      "homepage": "https://rollupjs.org/",
+      "description": "Next-generation ES module bundler"
+    },
+    {
+      "name": "rrweb-cssom",
+      "versions": [
+        "0.8.0"
+      ],
+      "license": "MIT",
+      "author": "Nikita Vasilyev",
+      "homepage": "https://github.com/rrweb-io/CSSOM#readme",
+      "description": "CSS Object Model implementation and CSS parser"
+    },
+    {
+      "name": "rxjs",
+      "versions": [
+        "7.8.2"
+      ],
+      "license": "Apache-2.0",
+      "author": "Ben Lesh",
+      "homepage": "https://rxjs.dev",
+      "description": "Reactive Extensions for modern JavaScript"
+    },
+    {
+      "name": "safer-buffer",
+      "versions": [
+        "2.1.2"
+      ],
+      "license": "MIT",
+      "author": "Nikita Skovoroda",
+      "homepage": "https://github.com/ChALkeR/safer-buffer#readme",
+      "description": "Modern Buffer API polyfill without footguns"
+    },
+    {
+      "name": "saxes",
+      "versions": [
+        "6.0.0"
+      ],
+      "license": "ISC",
+      "author": "Louis-Dominique Dubeau",
+      "homepage": "https://github.com/lddubeau/saxes#readme",
+      "description": "An evented streaming XML parser in JavaScript"
+    },
+    {
+      "name": "scheduler",
+      "versions": [
+        "0.27.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://react.dev/",
+      "description": "Cooperative scheduler for the browser environment."
+    },
+    {
+      "name": "sdp",
+      "versions": [
+        "3.2.2"
+      ],
+      "license": "MIT",
+      "author": "Philipp Hancke",
+      "homepage": "https://github.com/fippo/sdp#readme",
+      "description": "SDP parsing and serialization utilities"
+    },
+    {
+      "name": "sdp-transform",
+      "versions": [
+        "2.15.0"
+      ],
+      "license": "MIT",
+      "author": "Eirik Albrigtsen",
+      "homepage": "https://github.com/clux/sdp-transform#readme",
+      "description": "A simple parser/writer for the Session Description Protocol"
+    },
+    {
+      "name": "semver",
+      "versions": [
+        "6.3.1"
+      ],
+      "license": "ISC",
+      "author": "GitHub Inc.",
+      "homepage": "https://github.com/npm/node-semver#readme",
+      "description": "The semantic version parser used by npm."
+    },
+    {
+      "name": "shell-quote",
+      "versions": [
+        "1.9.0"
+      ],
+      "license": "MIT",
+      "author": "James Halliday",
+      "homepage": "https://github.com/ljharb/shell-quote",
+      "description": "quote and parse shell commands"
+    },
+    {
+      "name": "sherpa-onnx-darwin-arm64",
+      "versions": [
+        "1.13.6"
+      ],
+      "license": "Apache-2.0",
+      "author": "The next-gen Kaldi team",
+      "homepage": "https://github.com/csukuangfj/sherpa-onnx#readme",
+      "description": "Speech-to-text, text-to-speech, speaker diarization, and speech enhancement using Next-gen Kaldi without internet connection"
+    },
+    {
+      "name": "sherpa-onnx-node",
+      "versions": [
+        "1.13.6"
+      ],
+      "license": "Apache-2.0",
+      "author": "The next-gen Kaldi team",
+      "homepage": "https://github.com/csukuangfj/sherpa-onnx#readme",
+      "description": "Speech-to-text, text-to-speech, speaker diarization, and speech enhancement using Next-gen Kaldi without internet connection"
+    },
+    {
+      "name": "side-channel",
+      "versions": [
+        "1.1.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/side-channel#readme",
+      "description": "Store information about any JS value in a side channel. Uses WeakMap if available."
+    },
+    {
+      "name": "side-channel-list",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/side-channel-list#readme",
+      "description": "Store information about any JS value in a side channel, using a linked list"
+    },
+    {
+      "name": "side-channel-map",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/side-channel-map#readme",
+      "description": "Store information about any JS value in a side channel, using a Map"
+    },
+    {
+      "name": "side-channel-weakmap",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "MIT",
+      "author": "Jordan Harband",
+      "homepage": "https://github.com/ljharb/side-channel-weakmap#readme",
+      "description": "Store information about any JS value in a side channel. Uses WeakMap if available."
+    },
+    {
+      "name": "siginfo",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "ISC",
+      "author": "Emil Bay",
+      "homepage": "https://github.com/emilbayes/siginfo#readme",
+      "description": "Utility module to print pretty messages on SIGINFO/SIGUSR1"
+    },
+    {
+      "name": "source-map-js",
+      "versions": [
+        "1.2.1"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "Valentin 7rulnik Semirulnik",
+      "homepage": "https://github.com/7rulnik/source-map-js",
+      "description": "Generates and consumes source maps"
+    },
+    {
+      "name": "stackback",
+      "versions": [
+        "0.0.2"
+      ],
+      "license": "MIT",
+      "author": "Roman Shtylman",
+      "homepage": "https://github.com/shtylman/node-stackback#readme",
+      "description": "return list of CallSite objects from a captured stacktrace"
+    },
+    {
+      "name": "std-env",
+      "versions": [
+        "3.10.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/unjs/std-env#readme",
+      "description": "Runtime agnostic JS utils"
+    },
+    {
+      "name": "string-width",
+      "versions": [
+        "4.2.3",
+        "7.2.0",
+        "8.2.2"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/string-width#readme",
+      "description": "Get the visual width of a string - the number of columns required to display it"
+    },
+    {
+      "name": "strip-ansi",
+      "versions": [
+        "6.0.1",
+        "7.2.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/chalk/strip-ansi#readme",
+      "description": "Strip ANSI escape codes from a string"
+    },
+    {
+      "name": "strip-literal",
+      "versions": [
+        "3.1.0"
+      ],
+      "license": "MIT",
+      "author": "Anthony Fu",
+      "homepage": "https://github.com/antfu/strip-literal#readme",
+      "description": "Strip comments and string literals from JavaScript code"
+    },
+    {
+      "name": "strip-outer",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/strip-outer#readme",
+      "description": "Strip a substring from the start/end of a string"
+    },
+    {
+      "name": "supports-color",
+      "versions": [
+        "7.2.0",
+        "8.1.1"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/chalk/supports-color#readme",
+      "description": "Detect whether a terminal supports color"
+    },
+    {
+      "name": "symbol-tree",
+      "versions": [
+        "3.2.4"
+      ],
+      "license": "MIT",
+      "author": "Joris van der Wel",
+      "homepage": "https://github.com/jsdom/js-symbol-tree#symbol-tree",
+      "description": "Turn any collection of objects into its own efficient tree or linked list using Symbol"
+    },
+    {
+      "name": "three",
+      "versions": [
+        "0.185.1"
+      ],
+      "license": "MIT",
+      "author": "mrdoob",
+      "homepage": "https://threejs.org/",
+      "description": "JavaScript 3D library"
+    },
+    {
+      "name": "tinybench",
+      "versions": [
+        "2.9.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/tinylibs/tinybench#readme",
+      "description": ""
+    },
+    {
+      "name": "tinyexec",
+      "versions": [
+        "0.3.2"
+      ],
+      "license": "MIT",
+      "author": "James Garbutt",
+      "homepage": "https://github.com/tinylibs/tinyexec#readme",
+      "description": "A minimal library for executing processes in Node"
+    },
+    {
+      "name": "tinyglobby",
+      "versions": [
+        "0.2.17"
+      ],
+      "license": "MIT",
+      "author": "Superchupu",
+      "homepage": "https://superchupu.dev/tinyglobby",
+      "description": "A fast and minimal alternative to globby and fast-glob"
+    },
+    {
+      "name": "tinypool",
+      "versions": [
+        "1.1.1"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/tinylibs/tinypool#readme",
+      "description": "A minimal and tiny Node.js Worker Thread Pool implementation, a fork of piscina, but with fewer features"
+    },
+    {
+      "name": "tinyrainbow",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/tinylibs/tinyrainbow#readme",
+      "description": "A small library to print colourful messages."
+    },
+    {
+      "name": "tinyspy",
+      "versions": [
+        "4.0.4"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/tinylibs/tinyspy#readme",
+      "description": "A minimal fork of nanospy, with more features"
+    },
+    {
+      "name": "tldts",
+      "versions": [
+        "6.1.86"
+      ],
+      "license": "MIT",
+      "author": "Rémi Berson",
+      "homepage": "https://github.com/remusao/tldts#readme",
+      "description": "Library to work against complex domain names, subdomains and URIs."
+    },
+    {
+      "name": "tldts-core",
+      "versions": [
+        "6.1.86"
+      ],
+      "license": "MIT",
+      "author": "Rémi Berson",
+      "homepage": "https://github.com/remusao/tldts#readme",
+      "description": "tldts core primitives (internal module)"
+    },
+    {
+      "name": "tough-cookie",
+      "versions": [
+        "5.1.2"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "Jeremy Stashewsky",
+      "homepage": "https://github.com/salesforce/tough-cookie",
+      "description": "RFC6265 Cookies and Cookie Jar for node.js"
+    },
+    {
+      "name": "tr46",
+      "versions": [
+        "5.1.1"
+      ],
+      "license": "MIT",
+      "author": "Sebastian Mayr",
+      "homepage": "https://github.com/jsdom/tr46#readme",
+      "description": "An implementation of the Unicode UTS #46: Unicode IDNA Compatibility Processing"
+    },
+    {
+      "name": "tree-kill",
+      "versions": [
+        "1.2.2"
+      ],
+      "license": "MIT",
+      "author": "Peteris Krumins",
+      "homepage": "https://github.com/pkrumins/node-tree-kill",
+      "description": "kill trees of processes"
+    },
+    {
+      "name": "trim-repeated",
+      "versions": [
+        "1.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/trim-repeated#readme",
+      "description": "Trim a consecutively repeated substring: foo--bar---baz → foo-bar-baz"
+    },
+    {
+      "name": "tslib",
+      "versions": [
+        "2.8.1"
+      ],
+      "license": "0BSD",
+      "author": "Microsoft Corp.",
+      "homepage": "https://www.typescriptlang.org/",
+      "description": "Runtime library for TypeScript helper functions"
+    },
+    {
+      "name": "tsx",
+      "versions": [
+        "4.23.12",
+        "4.23.13"
+      ],
+      "license": "MIT",
+      "author": "Hiroki Osame",
+      "homepage": "https://tsx.hirok.io",
+      "description": "TypeScript Execute (tsx): Node.js enhanced with esbuild to run TypeScript & ESM files"
+    },
+    {
+      "name": "typed-emitter",
+      "versions": [
+        "2.1.0"
+      ],
+      "license": "MIT",
+      "author": "Andy Wermke",
+      "homepage": "https://github.com/andywer/typed-emitter#readme",
+      "description": "Strictly typed event emitter interface for TypeScript 3."
+    },
+    {
+      "name": "typed-query-selector",
+      "versions": [
+        "2.12.2"
+      ],
+      "license": "MIT",
+      "author": "Pig Fang",
+      "homepage": "https://github.com/g-plane/typed-query-selector#readme",
+      "description": "Better typed `querySelector` and `querySelectorAll`."
+    },
+    {
+      "name": "typescript",
+      "versions": [
+        "5.9.3"
+      ],
+      "license": "Apache-2.0",
+      "author": "Microsoft Corp.",
+      "homepage": "https://www.typescriptlang.org/",
+      "description": "TypeScript is a language for application scale JavaScript development"
+    },
+    {
+      "name": "undici-types",
+      "versions": [
+        "7.18.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://undici.nodejs.org",
+      "description": "A stand-alone types package for Undici"
+    },
+    {
+      "name": "universalify",
+      "versions": [
+        "0.1.2"
+      ],
+      "license": "MIT",
+      "author": "Ryan Zimmerman",
+      "homepage": "https://github.com/RyanZim/universalify#readme",
+      "description": "Make a callback- or promise-based function support both promises and callbacks."
+    },
+    {
+      "name": "update-browserslist-db",
+      "versions": [
+        "1.3.2"
+      ],
+      "license": "MIT",
+      "author": "Andrey Sitnik",
+      "homepage": "https://github.com/browserslist/update-db#readme",
+      "description": "CLI tool to update caniuse-lite to refresh target browsers from Browserslist config"
+    },
+    {
+      "name": "url",
+      "versions": [
+        "0.11.4"
+      ],
+      "license": "MIT",
+      "author": "defunctzombie",
+      "homepage": "https://github.com/defunctzombie/node-url#readme",
+      "description": "The core `url` packaged standalone for use with Browserify."
+    },
+    {
+      "name": "vite",
+      "versions": [
+        "7.3.6"
+      ],
+      "license": "MIT",
+      "author": "Evan You",
+      "homepage": "https://vite.dev",
+      "description": "Native-ESM powered web dev build tool"
+    },
+    {
+      "name": "vite-node",
+      "versions": [
+        "3.2.4"
+      ],
+      "license": "MIT",
+      "author": "Anthony Fu",
+      "homepage": "https://github.com/vitest-dev/vitest/blob/main/packages/vite-node#readme",
+      "description": "Vite as Node.js runtime"
+    },
+    {
+      "name": "vitest",
+      "versions": [
+        "3.2.7"
+      ],
+      "license": "MIT",
+      "author": "Anthony Fu",
+      "homepage": "https://github.com/vitest-dev/vitest#readme",
+      "description": "Next generation testing framework powered by Vite"
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "versions": [
+        "5.0.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/jsdom/w3c-xmlserializer#readme",
+      "description": "A per-spec XML serializer implementation"
+    },
+    {
+      "name": "webdriver-bidi-protocol",
+      "versions": [
+        "0.4.2"
+      ],
+      "license": "Apache-2.0",
+      "author": "The Chromium Authors",
+      "homepage": "https://github.com/GoogleChromeLabs/webdriver-bidi-protocol#readme",
+      "description": ""
+    },
+    {
+      "name": "webidl-conversions",
+      "versions": [
+        "7.0.0"
+      ],
+      "license": "BSD-2-Clause",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/webidl-conversions#readme",
+      "description": "Implements the WebIDL algorithms for converting to and from JavaScript values"
+    },
+    {
+      "name": "webrtc-adapter",
+      "versions": [
+        "9.0.6"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "",
+      "homepage": "https://github.com/webrtchacks/adapter#readme",
+      "description": "A shim to insulate apps from WebRTC spec changes and browser prefix differences"
+    },
+    {
+      "name": "whatwg-encoding",
+      "versions": [
+        "3.1.1"
+      ],
+      "license": "MIT",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/whatwg-encoding#readme",
+      "description": "Decode strings according to the WHATWG Encoding Standard"
+    },
+    {
+      "name": "whatwg-mimetype",
+      "versions": [
+        "4.0.0"
+      ],
+      "license": "MIT",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/whatwg-mimetype#readme",
+      "description": "Parses, serializes, and manipulates MIME types, according to the WHATWG MIME Sniffing Standard"
+    },
+    {
+      "name": "whatwg-url",
+      "versions": [
+        "14.2.0"
+      ],
+      "license": "MIT",
+      "author": "Sebastian Mayr",
+      "homepage": "https://github.com/jsdom/whatwg-url#readme",
+      "description": "An implementation of the WHATWG URL Standard's URL API and parsing machinery"
+    },
+    {
+      "name": "why-is-node-running",
+      "versions": [
+        "2.3.0"
+      ],
+      "license": "MIT",
+      "author": "Mathias Buus",
+      "homepage": "https://github.com/mafintosh/why-is-node-running",
+      "description": "Node is running but you don't know why? why-is-node-running is here to help you."
+    },
+    {
+      "name": "wrap-ansi",
+      "versions": [
+        "7.0.0",
+        "9.0.2"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/chalk/wrap-ansi#readme",
+      "description": "Wordwrap a string with ANSI escape codes"
+    },
+    {
+      "name": "wrappy",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/npm/wrappy",
+      "description": "Callback wrapping utility"
+    },
+    {
+      "name": "ws",
+      "versions": [
+        "8.21.3"
+      ],
+      "license": "MIT",
+      "author": "Einar Otto Stangvik",
+      "homepage": "https://github.com/websockets/ws",
+      "description": "Simple to use, blazing fast and thoroughly tested websocket client and server for Node.js"
+    },
+    {
+      "name": "xml-name-validator",
+      "versions": [
+        "5.0.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "Domenic Denicola",
+      "homepage": "https://github.com/jsdom/xml-name-validator#readme",
+      "description": "Validates whether a string matches the production for an XML name or qualified name"
+    },
+    {
+      "name": "xmlchars",
+      "versions": [
+        "2.2.0"
+      ],
+      "license": "MIT",
+      "author": "Louis-Dominique Dubeau",
+      "homepage": "https://github.com/lddubeau/xmlchars#readme",
+      "description": "Utilities for determining if characters belong to character classes defined by the XML specs."
+    },
+    {
+      "name": "y18n",
+      "versions": [
+        "5.0.8"
+      ],
+      "license": "ISC",
+      "author": "Ben Coe",
+      "homepage": "https://github.com/yargs/y18n",
+      "description": "the bare-bones internationalization library used by yargs"
+    },
+    {
+      "name": "yallist",
+      "versions": [
+        "3.1.1"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/yallist#readme",
+      "description": "Yet Another Linked List"
+    },
+    {
+      "name": "yargs",
+      "versions": [
+        "17.7.2",
+        "18.1.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://yargs.js.org/",
+      "description": "yargs the modern, pirate-themed, successor to optimist."
+    },
+    {
+      "name": "yargs-parser",
+      "versions": [
+        "21.1.1",
+        "22.0.0"
+      ],
+      "license": "ISC",
+      "author": "Ben Coe",
+      "homepage": "https://github.com/yargs/yargs-parser#readme",
+      "description": "the mighty option parser used by yargs"
+    },
+    {
+      "name": "zod",
+      "versions": [
+        "3.25.76"
+      ],
+      "license": "MIT",
+      "author": "Colin McDonnell",
+      "homepage": "https://zod.dev",
+      "description": "TypeScript-first schema declaration and validation library with static type inference"
+    }
+  ],
+  "flagged": [],
+  "attention": [
+    {
+      "name": "caniuse-lite",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "name": "machina",
+      "license": "(MIT OR GPL)"
+    }
+  ]
+}

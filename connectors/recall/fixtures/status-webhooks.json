@@ -1,0 +1,17 @@
+{
+  "_doc": "Real-shaped Recall.ai bot status webhook payloads (docs.recall.ai/docs/bot-status-change-events, /docs/sub-codes). Used by lifecycle fixture tests.",
+  "joining": { "event": "bot.joining_call", "data": { "data": { "code": "joining_call", "sub_code": null, "updated_at": "2026-08-30T10:00:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": { "app": "rcai" } } } },
+  "waiting_room": { "event": "bot.in_waiting_room", "data": { "data": { "code": "in_waiting_room", "sub_code": null, "updated_at": "2026-08-30T10:00:05.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "admitted_not_recording": { "event": "bot.in_call_not_recording", "data": { "data": { "code": "in_call_not_recording", "sub_code": null, "updated_at": "2026-08-30T10:00:20.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "admitted_recording": { "event": "bot.in_call_recording", "data": { "data": { "code": "in_call_recording", "sub_code": null, "updated_at": "2026-08-30T10:00:21.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "denied_waiting_room": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "bot_kicked_from_waiting_room", "updated_at": "2026-08-30T10:01:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "denied_timeout": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "timeout_exceeded_waiting_room", "updated_at": "2026-08-30T10:05:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "removed_by_host": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "bot_kicked_from_call", "updated_at": "2026-08-30T10:10:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "meeting_ended_by_host": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "call_ended_by_host", "updated_at": "2026-08-30T10:30:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "everyone_left": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "timeout_exceeded_everyone_left", "updated_at": "2026-08-30T10:31:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "left_on_request": { "event": "bot.call_ended", "data": { "data": { "code": "call_ended", "sub_code": "bot_received_leave_call", "updated_at": "2026-08-30T10:32:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "done": { "event": "bot.done", "data": { "data": { "code": "done", "sub_code": null, "updated_at": "2026-08-30T10:33:00.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "fatal_not_found": { "event": "bot.fatal", "data": { "data": { "code": "fatal", "sub_code": "meeting_not_found", "updated_at": "2026-08-30T10:00:03.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "fatal_knocking_disabled": { "event": "bot.fatal", "data": { "data": { "code": "fatal", "sub_code": "google_meet_knocking_disabled", "updated_at": "2026-08-30T10:00:03.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } },
+  "fatal_meeting_ended": { "event": "bot.fatal", "data": { "data": { "code": "fatal", "sub_code": "meeting_ended", "updated_at": "2026-08-30T10:00:03.000Z" }, "bot": { "id": "bot_fixture", "metadata": {} } } }
+}

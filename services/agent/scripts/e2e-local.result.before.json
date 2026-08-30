@@ -1,0 +1,273 @@
+{
+  "turn1": {
+    "transcript": "こんにちは、今日はいい天気ですね。",
+    "reply": "うん、本当に気持ちいい天気だね！",
+    "audioChunks": 65,
+    "audioMs": 2590,
+    "sampleRate": 24000,
+    "userSpeechEnd_to_firstAudio_ms": 1582,
+    "userSpeechEnd_to_transcript_ms": 127,
+    "userSpeechEnd_to_speechStarted_ms": 1582,
+    "total_ms": 9028
+  },
+  "bargeIn": {
+    "audioChunksBeforeBargeIn": 9,
+    "speechStart_to_interrupted_ms": 0,
+    "bargeSend_to_interrupted_ms": 1364,
+    "audioChunksAfterInterrupt": 0,
+    "audioChunksWithin1500msAfterInterrupt_excludingNewReply": 21,
+    "transcriptsAfterBargeIn": [
+      "ちょっと待って。"
+    ]
+  },
+  "textTurn": {
+    "reply": "またね！何かあったらいつでも話してね。",
+    "audioMs": 2755
+  },
+  "plan": {
+    "emotion": "warm_positive",
+    "emotionIntensity": 0.71,
+    "gesture": "nod_normal",
+    "gestureIntensity": 0.6000000000000001,
+    "energy": 0.55,
+    "question": false
+  },
+  "evaluate": {
+    "overall": 85,
+    "clarity": 90,
+    "specificity": 85,
+    "structure": 80,
+    "relevance": 95,
+    "fluency": 85,
+    "feedback": [
+      "結論から述べ、具体的な成果を最初に提示すると、よりインパクトが増します。",
+      "『既存のコードを壊さずに変更する点』について、具体的な技術的課題を一つ加えると深みが出ます。",
+      "段階的なリリースプロセスについて、具体的な計測指標（例：どの指標をどう計測したか）を補足してください。",
+      "回答の最後に、その経験から何を学んだかという教訓を付け加えると、さらに説得力が増します。",
+      "全体的に論理的な流れは良いですが、接続詞を意識して、よりスムーズな流れを目指しましょう。"
+    ],
+    "improvedAnswer": "決済システムの開発で三年間、バックエンドエンジニアとして貢献しました。特にレイテンシ改善において、平均応答時間を40%削減した経験があります。最も難しかったのは、既存コードを維持しながら安全に変更を適用することでした。そのため、段階的なリリース戦略を採用し、まず計測から着手しました。",
+    "evaluatedBy": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+    "criteria": [
+      {
+        "key": "relevance",
+        "score": 98,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          }
+        ],
+        "explanation": "質問（自己紹介）に対して、職種、経験年数、具体的な成果（レイテンシ改善）を的確に回答しています。",
+        "improvement": "次の質問への橋渡しとして、成果の深掘りについて触れると、より一貫性が高まります。"
+      },
+      {
+        "key": "specificity",
+        "score": 88,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "平均応答時間を四十パーセント削減した経験があります。"
+          },
+          {
+            "turnIndex": 3,
+            "quote": "既存のコードを壊さずに変更する点です。"
+          }
+        ],
+        "explanation": "具体的な数字（40%削減）が提示されており、課題も具体的な技術的側面（コードの安全な変更）に言及できています。",
+        "improvement": "計測方法や使用した技術スタックなど、具体的な要素を一つ加えるとさらに具体性が向上します。"
+      },
+      {
+        "key": "star_structure",
+        "score": 80,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          },
+          {
+            "turnIndex": 3,
+            "quote": "えっと、既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。"
+          }
+        ],
+        "explanation": "自己紹介（経験と成果）→次の質問への移行（課題）→具体的な対応策（段階的リリースと計測）という流れは取れています。",
+        "improvement": "結論（成果）→課題→行動（対応）→結果（または学び）の構造を意識して、各ステップを明確に区切ると構造が強固になります。"
+      },
+      {
+        "key": "logical_clarity",
+        "score": 92,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          },
+          {
+            "turnIndex": 3,
+            "quote": "既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。"
+          }
+        ],
+        "explanation": "成果（何を達成したか）→その過程で直面した課題（何が難しかったか）→その課題に対する具体的なアプローチ（どう対処したか）という論理的なつながりが明確です。",
+        "improvement": "課題と対応策の間に、なぜそのアプローチを選んだのかという理由を明確に述べると、論理性がさらに高まります。"
+      },
+      {
+        "key": "conciseness",
+        "score": 90,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。"
+          }
+        ],
+        "explanation": "必要な情報（役割、期間、成果）が過不足なく、簡潔にまとめられています。",
+        "improvement": "特に問題ありませんが、もし時間があれば、成果のインパクトを強調する一文を加えても良いでしょう。"
+      },
+      {
+        "key": "confidence",
+        "score": 90,
+        "evidence": [
+          {
+            "turnIndex": 1,
+            "quote": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。"
+          }
+        ],
+        "explanation": "自信を持って経験と成果を提示できており、発話に迷いが見られませんでした。",
+        "improvement": "自信を示すため、声のトーンを安定させ、一文を区切るタイミングを意識すると、さらに自信が伝わります。"
+      }
+    ],
+    "speech": {
+      "paceCharsPerSec": 8.3,
+      "pauseMeanMs": 1050,
+      "fillerRate": 0.32,
+      "fillerCount": 1,
+      "interruptions": 0,
+      "answerDurationMeanMs": 7500,
+      "wordsPerTurn": 63
+    },
+    "questions": [
+      {
+        "questionTurn": 0,
+        "answerTurn": 1,
+        "question": "自己紹介をお願いします。",
+        "answer": "はい、私はバックエンドエンジニアとして三年間、決済システムの開発を担当してきました。特にレイテンシ改善で、平均応答時間を四十パーセント削減した経験があります。",
+        "relevance": 45,
+        "specificity": 82,
+        "star": {
+          "situation": false,
+          "task": false,
+          "action": true,
+          "result": true
+        },
+        "issues": [
+          "質問の焦点からずれている"
+        ]
+      },
+      {
+        "questionTurn": 2,
+        "answerTurn": 3,
+        "question": "ありがとうございます。その改善で一番難しかった点は何でしたか？",
+        "answer": "えっと、既存のコードを壊さずに変更する点です。段階的にリリースして、まず計測から始めました。",
+        "relevance": 45,
+        "specificity": 40,
+        "star": {
+          "situation": false,
+          "task": false,
+          "action": false,
+          "result": false
+        },
+        "issues": [
+          "質問の焦点からずれている",
+          "数字がない",
+          "結果(R)が語られていない",
+          "自身の行動(A)が不明確"
+        ]
+      }
+    ]
+  },
+  "egress": {
+    "entries": []
+  },
+  "breakdown": {
+    "vadEndMs": {
+      "n": 1,
+      "p50": 432,
+      "p95": 432
+    },
+    "sttMs": {
+      "n": 1,
+      "p50": 128,
+      "p95": 128
+    },
+    "llmTtftMs": {
+      "n": 1,
+      "p50": 188,
+      "p95": 188
+    },
+    "firstPhraseMs": {
+      "n": 1,
+      "p50": 374,
+      "p95": 374
+    },
+    "ttsTtfaMs": {
+      "n": 1,
+      "p50": 1080,
+      "p95": 1080
+    },
+    "firstAudioSentMs": {
+      "n": 1,
+      "p50": 1583,
+      "p95": 1583
+    },
+    "totalMs": {
+      "n": 1,
+      "p50": 3544,
+      "p95": 3544
+    },
+    "client_speechEnd_to_firstAudio": {
+      "n": 1,
+      "p50": 1582,
+      "p95": 1582
+    }
+  },
+  "turns": [
+    {
+      "source": "speech",
+      "vadEndMs": 432,
+      "sttMs": 128,
+      "llmTtftMs": 188,
+      "firstPhraseMs": 374,
+      "ttsTtfaMs": 1080,
+      "firstAudioSentMs": 1583,
+      "totalMs": 3544,
+      "phrases": 1,
+      "sentences": 1,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "macos-say"
+      }
+    },
+    {
+      "source": "text",
+      "llmTtftMs": 650,
+      "firstPhraseMs": 704,
+      "ttsTtfaMs": 1263,
+      "firstAudioSentMs": 1967,
+      "totalMs": 4092,
+      "phrases": 2,
+      "sentences": 2,
+      "engines": {
+        "vad": "silero-vad",
+        "stt": "sherpa-onnx",
+        "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+        "tts": "macos-say"
+      }
+    }
+  ],
+  "engines": {
+    "vad": "silero-vad",
+    "stt": "sherpa-onnx",
+    "llm": "openai-compatible:gemma-4-E2B-it-Q4_K_M.gguf",
+    "tts": "macos-say"
+  }
+}

@@ -1,0 +1,1 @@
+Model files are fetched by `scripts/fetch-sample-character.sh` (Hiyori from CubismWebSamples, Live2D Free Material License). Git-ignored.
