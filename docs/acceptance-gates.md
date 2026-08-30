@@ -20,6 +20,16 @@ Never mark PASS from code existence alone.
 ## Whole-repo gate (2026-08-30)
 `pnpm -r typecheck` → 20/20 Done · `pnpm test` → 21 files / 121+ tests passed · `pnpm build` → web bundle built · `cargo check` (apps/desktop Tauri shell) → OK.
 
+## Release 0.2.0-beta.1 (Production Beta Candidate, 2026-08-30)
+| Item | Status | Evidence |
+|---|---|---|
+| Release readiness check (`scripts/release/check.mjs --artifacts`) | **Readiness=PASS_WITH_BLOCKED** — version consistency, CHANGELOG/RELEASE, no secrets, typecheck/tests/build/licenses PASS; artifacts present and `codesign --verify` PASS | `RELEASE.md` |
+| Signed macOS app + DMG | PASS (Developer ID) · launched once: process ran, window rendered | `apps/desktop/src-tauri/target/release/bundle/{macos,dmg}` |
+| Notarization / Gatekeeper | **BLOCKED_BY_APPLE_NOTARY_CREDS** (`spctl` rejected) | |
+| Auto-update | **BLOCKED_BY_UPDATE_ENDPOINT** (plugin not wired; no channel) | |
+| Distribution / remote | **NOT_PERFORMED** — no git remote; pushing/creating a repo is a human decision | `git tag v0.2.0-beta.1` |
+| Manual GUI smoke | ManualSmoke=NOT_RUN_BY_ASSISTANT (headless evidence only; no mic on the build host) | |
+
 ## Production Reality Gate — Round 3 (Beta Candidate quality, 2026-08-30)
 | Gate | Status | Evidence |
 |---|---|---|

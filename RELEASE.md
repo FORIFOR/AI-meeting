@@ -11,7 +11,7 @@ Policy: H0 (see `~/.claude/CLAUDE.md`). Stable release requires `Readiness=PASS`
 | Artifact | Path | Status |
 |---|---|---|
 | macOS app (Developer ID signed) | `apps/desktop/src-tauri/target/release/bundle/macos/Realtime Character AI.app` | built by `pnpm --filter @rcai/desktop exec tauri build` |
-| macOS DMG | `apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg` | same |
+| macOS DMG | `apps/desktop/src-tauri/target/release/bundle/dmg/Realtime Character AI_0.2.0-beta.1_aarch64.dmg` ( 24M) | signed; sha256 `9b14b01fbb1e4490373f688f0e2a987494f28c76a4691a984433a98dc9664772` |
 | Notarization / stapling | — | **BLOCKED_BY_APPLE_NOTARY_CREDS** (`APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`) |
 | Auto-update (`latest.json`) | — | **BLOCKED_BY_UPDATE_ENDPOINT** (no updater endpoint/signing key; plugin not wired) |
 | Web static build | `apps/web/dist/` | `pnpm build` |
@@ -25,7 +25,7 @@ Internal / tester distribution only. The desktop app does not bundle the service
 1. Version bump 0.1.0 → 0.2.0-beta.1 in package.json (root/web/desktop), tauri.conf.json, Cargo.toml.
 2. `node scripts/release/check.mjs --artifacts` → see the report appended below.
 3. `pnpm --filter @rcai/desktop exec tauri build` (app + dmg, signed).
-4. Git: initial commit, `release/0.2.0-beta.1` branch, tag `v0.2.0-beta.1` (no remote configured → not pushed).
+4. Git: initial commit `c1e7c70` on `main`, branch `release/0.2.0-beta.1`, tag `v0.2.0-beta.1` (no remote configured → not pushed; creating/pushing a remote is a human decision).
 
 ## Steps a human must do to reach a public stable release
 1. Provide notarization credentials and run `pnpm --filter @rcai/desktop exec tauri build` again (Tauri notarizes + staples automatically), then `spctl --assess --type execute -vv "<app>"` must print `accepted`.
