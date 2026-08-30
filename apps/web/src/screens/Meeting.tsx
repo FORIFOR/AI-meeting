@@ -151,7 +151,7 @@ export function Meeting(p: MeetingProps) {
       <div className="session session--bot">
         <div className="stage" ref={stage}>
           <div className={`pill pill--${pill.key}`}><span className="pill__dot" /> {muted ? "ミュート中" : POLICY_JA[policy]} <span style={{ opacity: 0.5 }}>{pill.en}</span></div>
-          {!activation && !error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12, opacity: 0.6 }}>activating…</div>}
+          {!activation && !error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12, opacity: 0.6 }}>接続中…</div>}
           {error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12 }}>{error}</div>}
         </div>
       </div>
@@ -162,26 +162,26 @@ export function Meeting(p: MeetingProps) {
     <div className="setup meeting">
       <div className="card">
         <div className="card__head">
-          <div className="card__kana">Join a meeting</div>
+          <div className="card__kana">同席</div>
           <h2>会議に参加</h2>
           <p className="card__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。名前で呼ばれたときだけ答えます（{POLICY_JA[policy]}）。</p>
         </div>
         {blocked && <p className="err">{blocked}{blocked === "BLOCKED_BY_RECALL_PUBLIC_URL" ? " — broker を公開URL(ngrok等)で公開し RECALL_PUBLIC_URL / RECALL_BOT_PAGE_URL を設定してください" : blocked === "BLOCKED_BY_RECALL_KEY" ? " — services/token-broker/.env に RECALL_API_KEY を設定してください" : ""}</p>}
-        <div className="field"><label>Meeting URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
-        <div className="field"><label>表示名 · Display name</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
-        <div className="field"><label>ペルソナ · Persona</label>
+        <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
+        <div className="field"><label>表示名</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
+        <div className="field"><label>相手</label>
           <select className="select" value={persona?.id ?? ""} onChange={(e) => setPersonaId(e.target.value)} disabled={joined}>
             {p.personas.map((x) => <option key={x.id} value={x.id}>{x.name} — {x.mode}</option>)}
           </select>
         </div>
-        <div className="field"><label>発言ポリシー · Participation</label>
+        <div className="field"><label>発言のしかた</label>
           <select className="select" value={proactivity} onChange={(e) => setProactivity(e.target.value as Proactivity)} disabled={joined}>
             <option value="addressed_only">名前で呼ばれたときだけ（推奨）</option>
             <option value="invited">「誰か意見ある？」にも答える</option>
             <option value="active">未回答の質問にも自発的に答える</option>
           </select>
         </div>
-        <div className="field"><label>接続モード · Mode</label>
+        <div className="field"><label>接続方式</label>
           <select className="select" value={mode} onChange={(e) => setMode(e.target.value as typeof mode)} disabled={joined}>
             <option value="output_media">output_media — bot がこのアプリを表示・発話（推奨、映像あり）</option>
             <option value="relay">relay — このブラウザで会話（音声出力はMP3クリップ）</option>
@@ -190,21 +190,21 @@ export function Meeting(p: MeetingProps) {
         <div className="actions">
           <button type="button" className="btn btn--ghost" onClick={p.onBack} disabled={busy}>← 戻る</button>
           {!joined ? (
-            <button type="button" className="btn btn--primary btn--lg" disabled={busy || !url || !!blocked || !character} onClick={() => void start("operator")}>参加する · Join</button>
+            <button type="button" className="btn btn--primary btn--lg" disabled={busy || !url || !!blocked || !character} onClick={() => void start("operator")}>参加する</button>
           ) : (
             <>
-              <button type="button" className="btn btn--ghost" onClick={() => ctrl.current?.hush()}>黙らせる · Hush</button>
-              <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void leave()}>退出 · Leave</button>
+              <button type="button" className="btn btn--ghost" onClick={() => ctrl.current?.hush()}>黙らせる</button>
+              <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void leave()}>退出する</button>
             </>
           )}
         </div>
         {error && <p className="err">{error}</p>}
       </div>
-      <div className="card">
+      <div className="panel">
         <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>
         <div className="stage stage--mini" ref={stage} style={{ display: mode === "relay" ? "block" : "none" }} />
         <ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul>
-        <h3>会議の文字起こし <small>transcript</small></h3>
+        <h3>会議の文字起こし</h3>
         <div className="captions captions--list">
           {lines.map((l) => (
             <div key={l.id} className={`caption ${l.self ? "caption--assistant" : "caption--user"} ${l.final ? "" : "caption--partial"}`}>

@@ -14,7 +14,7 @@ export interface GateEntry {
 
 export const GATE_TAGS = ["口パクが変", "頷きすぎ", "視線が怖い", "瞬きが規則的", "身体が止まる", "同じmotionが目につく", "聞いている感じがない", "返答が長い", "相槌が多い", "割り込みが変", "発話開始が遅い", "👍良い瞬間"] as const;
 export const RATING_AXES: { key: string; ja: string }[] = [
-  { key: "listening", ja: "Listening の自然さ" },
+  { key: "listening", ja: "聞いている様子の自然さ" },
   { key: "presence", ja: "そこにいる感じ" },
   { key: "latency", ja: "応答の速さ" },
   { key: "japanese", ja: "日本語の自然さ" },

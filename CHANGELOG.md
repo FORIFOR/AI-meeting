@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Evidence for every gate lives in `docs/acceptance-gates.md` and `docs/reports/`.
 
+## [Unreleased]
+### Changed
+- **UI redesign (稽古場の進行表)**: paper shell with ink type, hairline rules and a single 朱 accent; the session stage is now the only dark surface. Products became a numbered running order (ink-sweep hover) instead of a card grid; characters are name plates (結・春・玲・慧) instead of gradient blobs; emoji controls became typographic buttons.
+- Japanese-first wording throughout: removed the 日本語/English double labels, translated persona parameter labels, renderer names, meeting/settings fields, evaluation metrics and `BLOCKED_BY_*` codes (raw codes kept in tooltips and reports).
+- Typography: Zen Old Mincho (display) + Zen Kaku Gothic New (body) + IBM Plex Mono restricted to numerals and instrument readouts. Design rules documented in `docs/ui-design.md`.
+- `soak-browser.mjs` matches the status pill by state word rather than prefix (the pill is now Japanese-first).
+
 ## [0.2.0-beta.1] — 2026-08-30 — Production Beta Candidate
 First versioned build. Everything below was implemented and executed on 2026-08-30 (Gate 0–10, Round 2, Round 3).
 

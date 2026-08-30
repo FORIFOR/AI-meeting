@@ -5,6 +5,7 @@ import { PROVIDER_LABEL, loadSettings } from "../state/settings.js";
 import { RATING_AXES, clearGate, loadGate, saveGate, submitGate, type GateEntry } from "../components/humanGateStore.js";
 import { reportToMarkdown } from "@rcai/observability";
 
+const MODE_JA: Record<string, string> = {"interview": "面接練習", "english_lesson": "英会話", "free_talk": "雑談", "sales_roleplay": "営業ロープレ", "tutor": "学習", "career": "キャリア相談"};
 const AXES: { key: "clarity" | "specificity" | "structure" | "relevance" | "fluency"; ja: string }[] = [
   { key: "clarity", ja: "明瞭さ" },
   { key: "specificity", ja: "具体性" },
@@ -28,7 +29,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
     <div className="result">
       <div className="result__head">
         <div>
-          <div className="card__eyebrow">Session report · {record.mode} · {PROVIDER_LABEL[outcome.providerId]}</div>
+          <div className="card__eyebrow">記録 — {MODE_JA[record.mode] ?? record.mode} · {PROVIDER_LABEL[outcome.providerId]}</div>
           <h2 className="result__title">おつかれさまでした。</h2>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
@@ -40,13 +41,13 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
       {evaluation ? (
         <div className="scores">
           <div className="score score--overall">
-            <div className="score__label">Overall</div>
+            <div className="score__label">総合</div>
             <div className="score__value">{Math.round(evaluation.overall)}</div>
             <div className="score__bar"><i style={{ width: `${evaluation.overall}%` }} /></div>
           </div>
           {AXES.map((a, i) => (
             <div className="score" key={a.key} style={{ animationDelay: `${80 * (i + 1)}ms` }}>
-              <div className="score__label">{a.ja} · {a.key}</div>
+              <div className="score__label">{a.ja}</div>
               <div className="score__value">{Math.round(evaluation[a.key])}</div>
               <div className="score__bar"><i style={{ width: `${evaluation[a.key]}%` }} /></div>
             </div>
@@ -61,7 +62,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
 
       {evaluation && (
         <div className="section">
-          <h4>フィードバック <small>Feedback{evaluation.evaluatedBy ? ` · ${evaluation.evaluatedBy}` : ""}</small></h4>
+          <h4>フィードバック{evaluation.evaluatedBy ? <small>{evaluation.evaluatedBy}</small> : null}</h4>
           {evaluation.feedback.length ? (
             <ul className="feedback">{evaluation.feedback.map((f, i) => <li key={i}>{f}</li>)}</ul>
           ) : (
@@ -69,7 +70,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
           )}
           {evaluation.improvedAnswer && (
             <>
-              <h4 style={{ marginTop: 22 }}>改善例 <small>Improved answer</small></h4>
+              <h4 style={{ marginTop: 22 }}>言い換えるなら</h4>
               <div className="improved">{evaluation.improvedAnswer}</div>
             </>
           )}
@@ -78,20 +79,19 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
 
       {ev && ev.criteria.length > 0 && (
         <div className="section">
-          <h4>採点根拠 <small>Criteria with evidence</small></h4>
+          <h4>採点の根拠</h4>
           <div className="criteria">
             {ev.criteria.map((c) => (
               <div className="criterion" key={c.key}>
                 <div className="criterion__head">
                   <div>
-                    <div className="criterion__key">{c.key}</div>
                     <div>{CRITERION_LABEL[c.key]?.[ja ? "ja" : "en"] ?? c.key}</div>
                   </div>
                   <div className="criterion__score">{Math.round(c.score)}</div>
                 </div>
                 {c.explanation && <div style={{ fontSize: 13, color: "var(--cream-dim)" }}>{c.explanation}</div>}
                 {c.evidence.slice(0, 2).map((e, i) => (
-                  <div className="criterion__quote" key={i}><small>該当発話 · turn {e.turnIndex}</small>「{e.quote}」</div>
+                  <div className="criterion__quote" key={i}><small>該当の発話（{e.turnIndex + 1} 番目）</small>「{e.quote}」</div>
                 ))}
                 {c.improvement && <div className="criterion__fix">改善: {c.improvement}</div>}
                 {c.proxy && <div className="criterion__proxy">PROXY — {c.proxy}</div>}
@@ -100,21 +100,21 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
           </div>
           {ev.speech && (
             <div className="speech" style={{ marginTop: 16 }}>
-              <span>pace {ev.speech.paceCharsPerSec ?? "–"} {ja ? "chars/s" : "w/s"}</span>
-              <span>pause {ev.speech.pauseMeanMs ?? "–"} ms</span>
-              <span>fillers {ev.speech.fillerCount} ({ev.speech.fillerRate}/clause)</span>
-              <span>interruptions {ev.speech.interruptions}</span>
-              <span>answer {ev.speech.answerDurationMeanMs ?? "–"} ms</span>
-              <span>{ev.speech.wordsPerTurn} {ja ? "chars" : "words"}/turn</span>
+              <span>話す速さ {ev.speech.paceCharsPerSec ?? "–"} {ja ? "字/秒" : "w/s"}</span>
+              <span>間の平均 {ev.speech.pauseMeanMs ?? "–"} ms</span>
+              <span>言いよどみ {ev.speech.fillerCount} 回</span>
+              <span>割り込み {ev.speech.interruptions} 回</span>
+              <span>回答の長さ {ev.speech.answerDurationMeanMs ?? "–"} ms</span>
+              <span>1回あたり {ev.speech.wordsPerTurn} {ja ? "字" : "words"}</span>
             </div>
           )}
-          {ev.warnings?.length ? <p className="empty" style={{ marginTop: 10 }}>{ev.warnings.length} evidence quote(s) from the evaluator were not verbatim and were dropped.</p> : null}
+          {ev.warnings?.length ? <p className="empty" style={{ marginTop: 10 }}>評価モデルの引用のうち {ev.warnings.length} 件は発話と一致しなかったため除外しました。</p> : null}
         </div>
       )}
 
       {ev?.questions && ev.questions.length > 0 && (
         <div className="section">
-          <h4>質問ごとの評価 <small>Per question</small></h4>
+          <h4>質問ごとの評価</h4>
           <div style={{ overflowX: "auto" }}>
             <table className="qtable">
               <thead><tr><th>質問</th><th>回答（冒頭）</th><th>的確さ</th><th>具体性</th><th>STAR</th><th>問題</th></tr></thead>
@@ -141,7 +141,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
 
       {record.mode === "english_lesson" && (
         <div className="section">
-          <h4>会話中に記録した気づき <small>Deferred feedback (every 4 turns)</small></h4>
+          <h4>会話中に記録した気づき</h4>
           {deferred.length ? (
             deferred.map((d, i) => (
               <div key={i} style={{ marginBottom: 14 }}>
@@ -156,7 +156,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
       )}
 
       <div className="section">
-        <h4>セッション統計 <small>Stats</small></h4>
+        <h4>セッションの記録</h4>
         <div className="stats">
           <div className="stat"><b>{minutes.toFixed(1)} min</b><span>duration</span></div>
           <div className="stat"><b>{record.turns.filter((t) => t.role === "user").length}</b><span>your turns</span></div>
@@ -168,7 +168,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
       </div>
 
       <div className="section">
-        <h4>トランスクリプト <small>Transcript</small></h4>
+        <h4>会話の記録</h4>
         <div className="transcript">
           {record.turns.length ? record.turns.map((t, i) => (
             <div key={i} className={`turn turn--${t.role}`}>
@@ -206,7 +206,7 @@ function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
   const maxCount = Math.max(1, ...hist.map((b) => b.count));
   return (
     <div className="section">
-      <h4>セッションレポート <small>Observability · {r.provider ?? "—"} · telemetry {outcome.telemetry ?? "—"}</small></h4>
+      <h4>計測レポート<small>{r.provider ?? "—"} · telemetry {outcome.telemetry ?? "—"}</small></h4>
       <div className="stats">
         <div className="stat"><b>{r.turns.user} / {r.turns.assistant}</b><span>turns you / AI</span></div>
         <div className="stat"><b>{ms(r.responseLatency.p50)} / {ms(r.responseLatency.p95)}</b><span>response p50 / p95 ms</span></div>
@@ -274,7 +274,7 @@ function HumanGateSummary(p: { sessionStartedAt: number; mode: string; character
   const t0 = observations[0]?.at ?? p.sessionStartedAt;
   return (
     <div className="section">
-      <h4>目視評価 <small>Human Reality Gate · {observations.length} observations</small></h4>
+      <h4>目視評価<small>{observations.length} 件</small></h4>
       {observations.length ? (
         <div className="gate__timeline" style={{ marginBottom: 18 }}>
           {observations.map((e, i) => (

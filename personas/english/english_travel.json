@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "level",
-      "label": "Level",
+      "label": "レベル",
       "type": "select",
       "options": [
         "beginner",
@@ -35,7 +35,7 @@
     },
     {
       "key": "scene",
-      "label": "Scene",
+      "label": "場面",
       "type": "select",
       "options": [
         "hotel check-in",

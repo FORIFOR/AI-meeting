@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "level",
-      "label": "Level",
+      "label": "レベル",
       "type": "select",
       "options": [
         "beginner",

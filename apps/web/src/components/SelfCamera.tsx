@@ -19,8 +19,8 @@ export function SelfCamera({ enabled }: { enabled: boolean }) {
   }, [enabled]);
   return (
     <div className="pip">
-      {enabled && !error ? <video ref={ref} autoPlay playsInline muted /> : <div className="pip__off">{error ?? "camera off"}</div>}
-      <span className="pip__label">You</span>
+      {enabled && !error ? <video ref={ref} autoPlay playsInline muted /> : <div className="pip__off">{error ?? "カメラ停止中"}</div>}
+      <span className="pip__label">あなた</span>
     </div>
   );
 }

@@ -142,8 +142,8 @@ export function App() {
       {!inSession && (
         <header className="topbar">
           <a className="brand" href="#" onClick={(e) => { e.preventDefault(); setScreen({ name: "home" }); }}>
-            <span className="brand__mark">Stage</span>
-            <span className="brand__sub">realtime character ai</span>
+            <span className="brand__mark">稽古場</span>
+            <span className="brand__sub">Stage</span>
           </a>
           <div className="topbar__actions">
             <span className="radio__meta">{settings.privacyMode === "strict_local" ? "strict_local" : settings.engine === "auto" ? `auto · ${settings.autoPolicy}` : settings.engine}</span>

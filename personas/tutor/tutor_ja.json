@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "subject",
-      "label": "Subject",
+      "label": "教科",
       "type": "select",
       "options": [
         "数学",
@@ -37,7 +37,7 @@
     },
     {
       "key": "level",
-      "label": "Level",
+      "label": "レベル",
       "type": "select",
       "options": [
         "中学生",

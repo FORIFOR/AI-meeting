@@ -4,6 +4,7 @@ import type { Persona } from "@rcai/persona-core";
 import { EngineSelector } from "../components/EngineSelector.jsx";
 import type { CharacterEntry } from "../integrations/registry.js";
 import type { Availability, Settings, SettingsAction } from "../state/settings.js";
+import { RENDERER_JA } from "../components/CharacterPicker.jsx";
 import { PRODUCTS } from "./Home.jsx";
 
 export interface SetupProps {
@@ -29,7 +30,7 @@ export function Setup(p: SetupProps) {
     return v;
   }, [persona, params]);
   if (!persona) return <div className="setup"><div className="card"><p className="empty">このモードのペルソナがありません。</p><button className="btn" onClick={p.onBack}>戻る</button></div></div>;
-  const charLabel = p.mode === "interview" ? "面接官 · Interviewer" : "キャラクター · Character";
+  const charLabel = p.mode === "interview" ? "面接官" : "キャラクター";
   return (
     <div className="setup">
       <div className="card">
@@ -38,7 +39,7 @@ export function Setup(p: SetupProps) {
         <div className="card__grid">
           {p.personas.length > 1 && (
             <div className="field">
-              <label>{p.mode === "english_lesson" ? "Mode" : "Persona"}</label>
+              <label>{p.mode === "english_lesson" ? "レッスンの種類" : "相手"}</label>
               <div className="chips">
                 {p.personas.map((x) => (
                   <button key={x.id} type="button" className={`chip ${x.id === persona.id ? "is-active" : ""}`} onClick={() => setPersonaId(x.id)}>
@@ -69,20 +70,20 @@ export function Setup(p: SetupProps) {
                 const cloud = c.renderer === "liveavatar" || c.renderer === "tavus";
                 const blocked = p.settings.privacyMode === "strict_local" && cloud;
                 return (
-                  <option key={c.id} value={c.id} disabled={blocked}>{c.name} — {c.renderer}{blocked ? " (BLOCKED_BY_STRICT_LOCAL)" : ""}</option>
+                  <option key={c.id} value={c.id} disabled={blocked}>{c.name} — {RENDERER_JA[c.renderer]}{blocked ? "（完全ローカル中は使えません）" : ""}</option>
                 );
               })}
             </select>
           </div>
           <div className="field">
-            <label>AI Engine</label>
+            <label>エンジン</label>
             <EngineSelector settings={p.settings} dispatch={p.dispatch} availability={p.availability} />
           </div>
         </div>
         <div className="card__actions">
           <button type="button" className="btn btn--ghost" onClick={p.onBack}>← 戻る</button>
           <button type="button" className="btn btn--primary btn--lg" onClick={() => p.onStart(persona, values)}>
-            {p.mode === "interview" ? "Start Interview" : p.mode === "english_lesson" ? "Start Lesson" : "Start"}
+            {p.mode === "interview" ? "面接をはじめる" : p.mode === "english_lesson" ? "レッスンをはじめる" : "はじめる"}
           </button>
         </div>
       </div>

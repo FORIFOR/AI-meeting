@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "level",
-      "label": "Level",
+      "label": "レベル",
       "type": "select",
       "options": [
         "beginner",
@@ -35,7 +35,7 @@
     },
     {
       "key": "position",
-      "label": "Position",
+      "label": "職種",
       "type": "text",
       "default": "Software Engineer"
     }

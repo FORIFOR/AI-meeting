@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "topic",
-      "label": "Topic",
+      "label": "話題",
       "type": "select",
       "options": [
         "self-introduction",

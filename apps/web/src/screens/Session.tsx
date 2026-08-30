@@ -44,7 +44,7 @@ export function Session(p: SessionProps) {
       <div className="stage" onClick={s.interrupt} role="button" aria-label="tap to interrupt">
         <div className="stage__mount" ref={stageRef} />
         <div className="stage__floor" />
-        {s.status === "starting" && <div className="stage__loading">準備中 — 接続しています…</div>}
+        {s.status === "starting" && <div className="stage__loading">支度中 — 接続しています</div>}
         {s.status === "error" && (
           <div className="stage__loading">
             <div style={{ textAlign: "center" }}>
@@ -54,9 +54,9 @@ export function Session(p: SessionProps) {
           </div>
         )}
         <div className={`pill pill--${pill.key}`}>
-          <span className="pill__dot" /> {pill.en} <span style={{ opacity: 0.5 }}>{pill.ja}</span>
+          <span className="pill__dot" /> {pill.ja} <span>{pill.en}</span>
         </div>
-        {s.status === "live" && <div className="stage__hint">tap the character to interrupt</div>}
+        {s.status === "live" && <div className="stage__hint">画面をタップすると割り込めます</div>}
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
         <div className="menu" onClick={(e) => e.stopPropagation()}>
           <button type="button" className="btn btn--ghost" onClick={() => setMenu((m) => !m)}>
@@ -75,11 +75,11 @@ export function Session(p: SessionProps) {
                 );
               })}
               <button type="button" className="menu__item" onClick={() => p.dispatch({ type: "hud", on: !p.settings.showHud })}>
-                <span>Latency HUD</span>
+                <span>遅延の表示</span>
                 <span className="menu__meta">{p.settings.showHud ? "on" : "off"}</span>
               </button>
               <button type="button" className="menu__item" onClick={() => { setMenu(false); setGate((g) => !g); }}>
-                <span>評価パネル · Human gate</span>
+                <span>評価パネル</span>
                 <span className="menu__meta">{gate ? "on" : "off"}</span>
               </button>
             </div>
@@ -89,11 +89,11 @@ export function Session(p: SessionProps) {
         {p.settings.captionsOn && <Captions items={s.captions} />}
         <SelfCamera enabled={p.settings.cameraOn} />
         <div className="controls" onClick={(e) => e.stopPropagation()}>
-          <button type="button" className={`btn btn--icon ${s.muted ? "is-off" : "is-on"}`} title="Mic" onClick={s.toggleMute}>🎤</button>
-          <button type="button" className={`btn btn--icon ${p.settings.cameraOn ? "is-on" : ""}`} title="Camera" onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })}>📷</button>
-          <button type="button" className={`btn btn--icon ${p.settings.captionsOn ? "is-on" : ""}`} title="Captions" onClick={() => p.dispatch({ type: "captions", on: !p.settings.captionsOn })} style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>CC</button>
+          <button type="button" className={`btn btn--icon ${s.muted ? "is-off" : "is-on"}`} onClick={s.toggleMute}>{s.muted ? "マイク切" : "マイク"}</button>
+          <button type="button" className={`btn btn--icon ${p.settings.cameraOn ? "is-on" : ""}`} onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })}>カメラ</button>
+          <button type="button" className={`btn btn--icon ${p.settings.captionsOn ? "is-on" : ""}`} onClick={() => p.dispatch({ type: "captions", on: !p.settings.captionsOn })}>字幕</button>
           <button type="button" className="btn btn--danger" onClick={() => void s.end()} disabled={s.status === "ending" || s.status === "ended"}>
-            {s.status === "ending" ? "評価中…" : "End"}
+            {s.status === "ending" ? "評価中…" : "終了"}
           </button>
         </div>
       </div>

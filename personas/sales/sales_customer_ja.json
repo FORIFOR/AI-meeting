@@ -24,13 +24,13 @@
   "params": [
     {
       "key": "product",
-      "label": "Product",
+      "label": "商材",
       "type": "text",
       "default": "業務効率化SaaS"
     },
     {
       "key": "customerType",
-      "label": "Customer type",
+      "label": "顧客タイプ",
       "type": "select",
       "options": [
         "中小企業の社長",
@@ -42,7 +42,7 @@
     },
     {
       "key": "difficulty",
-      "label": "Difficulty",
+      "label": "難易度",
       "type": "select",
       "options": [
         "Easy",

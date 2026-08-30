@@ -135,9 +135,9 @@ while (now() - sessionStart < durationMs) {
   if (s.stageGone) { survived = false; failReason = "session screen disappeared"; break; }
   if (s.pill !== lastPill) {
     report.pills.push({ t, pill: s.pill });
-    const key = s.pill.split(" ")[0];
-    if (key === "Speaking") { speakingStart = t; longestNoSpeechGap = Math.max(longestNoSpeechGap, t - lastSpeakingEnd); }
-    else if (lastPill.startsWith("Speaking")) lastSpeakingEnd = t;
+    // The pill reads "話しています Speaking": match the state word anywhere, not at the start.
+    if (isSpeaking(s.pill)) { speakingStart = t; longestNoSpeechGap = Math.max(longestNoSpeechGap, t - lastSpeakingEnd); }
+    else if (isSpeaking(lastPill)) lastSpeakingEnd = t;
     lastPill = s.pill;
   }
   for (const c of s.captions) {
@@ -156,7 +156,7 @@ while (now() - sessionStart < durationMs) {
   await sleep(500);
 }
 const elapsedMs = now() - sessionStart;
-if (survived && lastPill.startsWith("Speaking")) longestNoSpeechGap = Math.max(longestNoSpeechGap, 0);
+if (survived && isSpeaking(lastPill)) longestNoSpeechGap = Math.max(longestNoSpeechGap, 0);
 else if (survived) longestNoSpeechGap = Math.max(longestNoSpeechGap, elapsedMs - lastSpeakingEnd);
 
 // ---- 5. End → Result -------------------------------------------------------------------------
@@ -181,7 +181,7 @@ for (let i = 0; i < userTurns.length; i++) {
 }
 const expectedUtterances = report.timeline ? report.timeline.timeline.filter((u) => u.startSec * 1000 <= elapsedMs % (report.timeline.seconds * 1000) || elapsedMs > report.timeline.seconds * 1000).length : null;
 const replyLens = aiTurns.map((a) => a.text.length);
-const speakingPills = report.pills.filter((p) => p.pill.startsWith("Speaking")).length;
+const speakingPills = report.pills.filter((p) => isSpeaking(p.pill)).length;
 report.summary = {
   elapsedMs, survived, failReason,
   userUtterancesHeard: userTurns.length, assistantTurns: aiTurns.length, answered, answeredRatio: userTurns.length ? answered / userTurns.length : 0,
@@ -212,6 +212,8 @@ async function preflight(engine, brokerUrl, agentUrl) {
   if (engine === "local" && !out.agent?.ok) out.blocked = "BLOCKED_BY_AGENT_OFFLINE";
   return out;
 }
+/** True when the status pill shows the speaking state (its label is "話しています Speaking"). */
+function isSpeaking(pill) { return /Speaking/i.test(pill ?? ""); }
 function num(x) { const n = Number(x); return Number.isFinite(n) ? n : null; }
 function parseHud(text) {
   const out = { turn: null, bargeIn: null, listening: null, mouthStop: null };

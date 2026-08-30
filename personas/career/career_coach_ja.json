@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "theme",
-      "label": "Theme",
+      "label": "テーマ",
       "type": "select",
       "options": [
         "転職を考えている",

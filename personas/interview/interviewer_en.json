@@ -24,13 +24,13 @@
   "params": [
     {
       "key": "position",
-      "label": "Position",
+      "label": "職種",
       "type": "text",
       "default": "Software Engineer"
     },
     {
       "key": "companyStyle",
-      "label": "Company style",
+      "label": "企業のスタイル",
       "type": "select",
       "options": [
         "large Japanese company",
@@ -42,7 +42,7 @@
     },
     {
       "key": "difficulty",
-      "label": "Difficulty",
+      "label": "難易度",
       "type": "select",
       "options": [
         "Easy",
@@ -53,7 +53,7 @@
     },
     {
       "key": "interviewStyle",
-      "label": "Interview style",
+      "label": "面接の形式",
       "type": "select",
       "options": [
         "general",

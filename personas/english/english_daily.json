@@ -24,7 +24,7 @@
   "params": [
     {
       "key": "level",
-      "label": "Level",
+      "label": "レベル",
       "type": "select",
       "options": [
         "beginner",
@@ -35,7 +35,7 @@
     },
     {
       "key": "topic",
-      "label": "Topic",
+      "label": "話題",
       "type": "select",
       "options": [
         "daily routine",
