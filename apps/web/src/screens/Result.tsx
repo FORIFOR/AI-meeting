@@ -25,97 +25,117 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
   const tr = outcome.latency.turn_response;
   const ev: EvidenceEvaluation | null = isEvidenceEvaluation(evaluation) ? evaluation : null;
   const ja = record.language.toLowerCase().startsWith("ja");
+  const verdict =
+    !evaluation ? "" :
+    evaluation.overall >= 85 ? "とても良い受け答えでした。" :
+    evaluation.overall >= 70 ? "受け答えは十分に伝わっています。" :
+    evaluation.overall >= 55 ? "伝わってはいますが、もう一段はっきりできます。" :
+    "まずは、答えの形を整えるところから。";
+  const reading = evaluation?.feedback[0] ?? "";
+  // The single most useful fix: the weakest criterion that quotes something the user actually said.
+  const lead = ev?.criteria
+    ? [...ev.criteria].filter((c) => c.evidence.length && c.improvement).sort((a, b) => a.score - b.score)[0]
+    : undefined;
+
   return (
     <div className="result">
-      <div className="result__head">
-        <div>
-          <div className="card__eyebrow">記録 — {MODE_JA[record.mode] ?? record.mode} · {PROVIDER_LABEL[outcome.providerId]}</div>
-          <h2 className="result__title">おつかれさまでした。</h2>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button type="button" className="btn" onClick={onAgain}>もう一度</button>
-          <button type="button" className="btn btn--primary" onClick={onHome}>ホームへ</button>
-        </div>
-      </div>
+      <p className="result__meta">{MODE_JA[record.mode] ?? record.mode} · {minutes < 1 ? "1分未満" : `${minutes.toFixed(0)}分`} · {PROVIDER_LABEL[outcome.providerId]}</p>
 
       {evaluation ? (
-        <div className="scores">
-          <div className="score score--overall">
-            <div className="score__label">総合</div>
-            <div className="score__value">{Math.round(evaluation.overall)}</div>
-            <div className="score__bar"><i style={{ width: `${evaluation.overall}%` }} /></div>
-          </div>
-          {AXES.map((a, i) => (
-            <div className="score" key={a.key} style={{ animationDelay: `${80 * (i + 1)}ms` }}>
-              <div className="score__label">{a.ja}</div>
-              <div className="score__value">{Math.round(evaluation[a.key])}</div>
-              <div className="score__bar"><i style={{ width: `${evaluation[a.key]}%` }} /></div>
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="result__score">{Math.round(evaluation.overall)}</div>
+          <p className="result__verdict">{verdict}</p>
+          {reading && <p className="result__reading">{reading}</p>}
+        </>
       ) : (
-        <div className="err">評価を取得できませんでした: {outcome.evaluationError ?? "unknown"}</div>
+        <p className="err" style={{ marginTop: 16 }}>評価を取得できませんでした: {outcome.evaluationError ?? "unknown"}</p>
       )}
       {evaluation && (outcome.fallbackUsed || outcome.evaluationError) && (
-        <div className="err">評価プロバイダに接続できなかったため、ローカルのヒューリスティック評価を表示しています（{outcome.evaluationError}）。</div>
+        <p className="empty" style={{ fontSize: 12 }}>評価モデルに接続できなかったため、手元のヒューリスティック評価です。</p>
+      )}
+
+      {lead && (
+        <>
+          <hr className="result__hr" />
+          <div className="lead">
+            <p className="lead__label">いちばん効くのはここ</p>
+            <p className="lead__quote">「{lead.evidence[0]!.quote}」</p>
+            <p className="lead__fix">{lead.improvement}</p>
+          </div>
+        </>
       )}
 
       {evaluation && (
-        <div className="section">
-          <h4>フィードバック{evaluation.evaluatedBy ? <small>{evaluation.evaluatedBy}</small> : null}</h4>
-          {evaluation.feedback.length ? (
-            <ul className="feedback">{evaluation.feedback.map((f, i) => <li key={i}>{f}</li>)}</ul>
-          ) : (
-            <p className="empty">フィードバックはありません。</p>
-          )}
-          {evaluation.improvedAnswer && (
-            <>
-              <h4 style={{ marginTop: 22 }}>言い換えるなら</h4>
-              <div className="improved">{evaluation.improvedAnswer}</div>
-            </>
-          )}
-        </div>
-      )}
-
-      {ev && ev.criteria.length > 0 && (
-        <div className="section">
-          <h4>採点の根拠</h4>
-          <div className="criteria">
-            {ev.criteria.map((c) => (
-              <div className="criterion" key={c.key}>
-                <div className="criterion__head">
-                  <div>
-                    <div>{CRITERION_LABEL[c.key]?.[ja ? "ja" : "en"] ?? c.key}</div>
-                  </div>
-                  <div className="criterion__score">{Math.round(c.score)}</div>
-                </div>
-                {c.explanation && <div style={{ fontSize: 13, color: "var(--cream-dim)" }}>{c.explanation}</div>}
-                {c.evidence.slice(0, 2).map((e, i) => (
-                  <div className="criterion__quote" key={i}><small>該当の発話（{e.turnIndex + 1} 番目）</small>「{e.quote}」</div>
-                ))}
-                {c.improvement && <div className="criterion__fix">改善: {c.improvement}</div>}
-                {c.proxy && <div className="criterion__proxy">PROXY — {c.proxy}</div>}
+        <>
+          <hr className="result__hr" />
+          <div className="axes">
+            {AXES.map((a, i) => (
+              <div className="axis" key={a.key}>
+                <div className="axis__v">{Math.round(evaluation[a.key])}</div>
+                <div className="axis__k">{a.ja}</div>
+                <div className="axis__bar"><i style={{ width: `${evaluation[a.key]}%`, animationDelay: `${80 * i}ms` }} /></div>
               </div>
             ))}
           </div>
-          {ev.speech && (
-            <div className="speech" style={{ marginTop: 16 }}>
-              <span>話す速さ {ev.speech.paceCharsPerSec ?? "–"} {ja ? "字/秒" : "w/s"}</span>
-              <span>間の平均 {ev.speech.pauseMeanMs ?? "–"} ms</span>
-              <span>言いよどみ {ev.speech.fillerCount} 回</span>
-              <span>割り込み {ev.speech.interruptions} 回</span>
-              <span>回答の長さ {ev.speech.answerDurationMeanMs ?? "–"} ms</span>
-              <span>1回あたり {ev.speech.wordsPerTurn} {ja ? "字" : "words"}</span>
+        </>
+      )}
+
+      <hr className="result__hr" />
+
+      {evaluation && evaluation.feedback.length > 1 && (
+        <details className="disc">
+          <summary>気づいたこと（{evaluation.feedback.length}）</summary>
+          <div className="disc__body">
+            <ul className="feedback">{evaluation.feedback.map((f, i) => <li key={i}>{f}</li>)}</ul>
+            {evaluation.improvedAnswer && (
+              <>
+                <h4 style={{ marginTop: 22 }}>言い換えるなら</h4>
+                <div className="improved">{evaluation.improvedAnswer}</div>
+              </>
+            )}
+          </div>
+        </details>
+      )}
+
+      {ev && ev.criteria.length > 0 && (
+        <details className="disc">
+          <summary>採点の根拠</summary>
+          <div className="disc__body">
+            <div className="criteria">
+              {ev.criteria.map((c) => (
+                <div className="criterion" key={c.key}>
+                  <div className="criterion__head">
+                    <div>{CRITERION_LABEL[c.key]?.[ja ? "ja" : "en"] ?? c.key}</div>
+                    <div className="criterion__score">{Math.round(c.score)}</div>
+                  </div>
+                  {c.explanation && <div style={{ fontSize: 13, color: "var(--fg-2)" }}>{c.explanation}</div>}
+                  {c.evidence.slice(0, 2).map((e, i) => (
+                    <div className="criterion__quote" key={i}><small>該当の発話（{e.turnIndex + 1} 番目）</small>「{e.quote}」</div>
+                  ))}
+                  {c.improvement && <div className="criterion__fix">{c.improvement}</div>}
+                  {c.proxy && <div className="criterion__proxy">参考値 — {c.proxy}</div>}
+                </div>
+              ))}
             </div>
-          )}
-          {ev.warnings?.length ? <p className="empty" style={{ marginTop: 10 }}>評価モデルの引用のうち {ev.warnings.length} 件は発話と一致しなかったため除外しました。</p> : null}
-        </div>
+            {ev.speech && (
+              <div className="speech" style={{ marginTop: 18 }}>
+                <span>話す速さ {ev.speech.paceCharsPerSec ?? "–"} {ja ? "字/秒" : "w/s"}</span>
+                <span>間の平均 {ev.speech.pauseMeanMs ?? "–"} ms</span>
+                <span>言いよどみ {ev.speech.fillerCount} 回</span>
+                <span>割り込み {ev.speech.interruptions} 回</span>
+                <span>回答の長さ {ev.speech.answerDurationMeanMs ?? "–"} ms</span>
+                <span>1回あたり {ev.speech.wordsPerTurn} {ja ? "字" : "words"}</span>
+              </div>
+            )}
+            {ev.warnings?.length ? <p className="empty" style={{ fontSize: 12 }}>評価モデルの引用のうち {ev.warnings.length} 件は発話と一致せず除外しました。</p> : null}
+          </div>
+        </details>
       )}
 
       {ev?.questions && ev.questions.length > 0 && (
-        <div className="section">
-          <h4>質問ごとの評価</h4>
-          <div style={{ overflowX: "auto" }}>
+        <details className="disc">
+          <summary>質問ごとの評価（{ev.questions.length}）</summary>
+          <div className="disc__body" style={{ overflowX: "auto" }}>
             <table className="qtable">
               <thead><tr><th>質問</th><th>回答（冒頭）</th><th>的確さ</th><th>具体性</th><th>STAR</th><th>問題</th></tr></thead>
               <tbody>
@@ -132,51 +152,58 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
               </tbody>
             </table>
           </div>
-        </div>
+        </details>
       )}
-
-      <HumanGateSummary sessionStartedAt={record.startedAt} mode={record.mode} characterId={record.characterId ?? ""} providerId={outcome.providerId} />
-
-      {outcome.report && <SessionReportCard outcome={outcome} />}
 
       {record.mode === "english_lesson" && (
-        <div className="section">
-          <h4>会話中に記録した気づき</h4>
-          {deferred.length ? (
-            deferred.map((d, i) => (
-              <div key={i} style={{ marginBottom: 14 }}>
-                <div className="radio__meta">after turn {d.afterTurn}</div>
-                <ul className="feedback">{d.feedback.map((f, j) => <li key={j}>{f}</li>)}</ul>
-              </div>
-            ))
-          ) : (
-            <p className="empty">4ターンごとの中間フィードバックはありませんでした（短いセッションです）。</p>
-          )}
-        </div>
+        <details className="disc">
+          <summary>会話中に記録した気づき（{deferred.length}）</summary>
+          <div className="disc__body">
+            {deferred.length ? (
+              deferred.map((d, i) => (
+                <div key={i} style={{ marginBottom: 14 }}>
+                  <div className="axis__k">{d.afterTurn} ターン目まで</div>
+                  <ul className="feedback">{d.feedback.map((f, j) => <li key={j}>{f}</li>)}</ul>
+                </div>
+              ))
+            ) : (
+              <p className="empty">中間フィードバックはありません（短いセッションです）。</p>
+            )}
+          </div>
+        </details>
       )}
 
-      <div className="section">
-        <h4>セッションの記録</h4>
-        <div className="stats">
-          <div className="stat"><b>{minutes.toFixed(1)} min</b><span>duration</span></div>
-          <div className="stat"><b>{record.turns.filter((t) => t.role === "user").length}</b><span>your turns</span></div>
-          <div className="stat"><b>{record.interruptions.byUser}</b><span>barge-ins</span></div>
-          <div className="stat"><b>{ms(tr.p50)} / {ms(tr.p95)} ms</b><span>response p50 / p95</span></div>
-          <div className="stat"><b>{ms(outcome.latency.interrupt_stop.max)} ms</b><span>barge-in stop max</span></div>
-          <div className="stat"><b>{ms(outcome.latency.listening_react.max)} ms</b><span>→ listening max</span></div>
+      <details className="disc">
+        <summary>会話の記録（{record.turns.length}）</summary>
+        <div className="disc__body">
+          <div className="transcript">
+            {record.turns.length ? record.turns.map((t, i) => (
+              <div key={i} className={`turn turn--${t.role}`}>
+                <div className="turn__who">{t.role === "user" ? "あなた" : "AI"}</div>
+                <div className="turn__text">{t.text}{t.interrupted && <span className="turn__cut">割り込み</span>}</div>
+              </div>
+            )) : <p className="empty">発話は記録されませんでした。</p>}
+          </div>
+          <div className="stats" style={{ marginTop: 20 }}>
+            <div className="stat"><b>{minutes.toFixed(1)} min</b><span>長さ</span></div>
+            <div className="stat"><b>{record.turns.filter((t) => t.role === "user").length}</b><span>あなたの発話</span></div>
+            <div className="stat"><b>{record.interruptions.byUser}</b><span>割り込み</span></div>
+            <div className="stat"><b>{ms(tr.p50)} / {ms(tr.p95)} ms</b><span>応答 p50 / p95</span></div>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div className="section">
-        <h4>会話の記録</h4>
-        <div className="transcript">
-          {record.turns.length ? record.turns.map((t, i) => (
-            <div key={i} className={`turn turn--${t.role}`}>
-              <div className="turn__who">{t.role === "user" ? "You" : "AI"}</div>
-              <div className="turn__text">{t.text}{t.interrupted && <span className="turn__cut">interrupted</span>}</div>
-            </div>
-          )) : <p className="empty">発話は記録されませんでした。</p>}
+      <details className="disc">
+        <summary>目視評価と計測</summary>
+        <div className="disc__body">
+          <HumanGateSummary sessionStartedAt={record.startedAt} mode={record.mode} characterId={record.characterId ?? ""} providerId={outcome.providerId} />
+          {outcome.report && <SessionReportCard outcome={outcome} />}
         </div>
+      </details>
+
+      <div className="page__actions">
+        <button type="button" className="btn btn--ghost" onClick={onHome}>ホームへ</button>
+        <button type="button" className="btn btn--primary" onClick={onAgain}>もう一度</button>
       </div>
     </div>
   );

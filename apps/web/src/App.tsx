@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import { probe, type AgentHealth, type BrokerHealth } from "./api/health.js";
-import { withRealistic } from "./components/CharacterPicker.jsx";
+import { withRealistic } from "./components/characters.js";
 import { FALLBACK_PERSONAS } from "./content/fallbackPersonas.js";
 import { loadCharacterEntries, loadPersonas, type CharacterEntry } from "./integrations/registry.js";
+import { CharacterSelect } from "./screens/CharacterSelect.jsx";
 import { Home } from "./screens/Home.jsx";
 import { Result } from "./screens/Result.jsx";
 import { Session } from "./screens/Session.jsx";
@@ -13,11 +14,13 @@ import { Meeting } from "./screens/Meeting.jsx";
 import { Setup } from "./screens/Setup.jsx";
 import type { SessionOutcome } from "./session/SessionController.js";
 import { loadSettings, saveSettings, settingsReducer, type Availability } from "./state/settings.js";
+import { loadRecent, saveRecent, type Recent } from "./state/recent.js";
 import { disposeActiveSession } from "./session/activeSession.js";
 
 type Screen =
   | { name: "home" }
   | { name: "settings" }
+  | { name: "character"; back: "home" | "settings" | "setup"; mode?: ConversationMode }
   | { name: "meeting" }
   | { name: "setup"; mode: ConversationMode }
   | { name: "session"; persona: Persona; character: CharacterEntry; params: Record<string, string>; availability: Availability }
@@ -59,6 +62,7 @@ export function App() {
   const [broker, setBroker] = useState<BrokerHealth | null>(null);
   const [agent, setAgent] = useState<AgentHealth | null>(null);
   const [availability, setAvailability] = useState<Availability | null>(null);
+  const [recent, setRecent] = useState<Recent | null>(() => loadRecent());
 
   useEffect(() => saveSettings(settings), [settings]);
 
@@ -120,6 +124,9 @@ export function App() {
   const startSession = useCallback(
     (persona: Persona, params: Record<string, string>) => {
       if (!selectedCharacter) return;
+      const r: Recent = { mode: persona.mode, characterId: selectedCharacter.id, characterName: selectedCharacter.name, personaId: persona.id, at: Date.now() };
+      saveRecent(r);
+      setRecent(r);
       setScreen({ name: "session", persona, character: selectedCharacter, params, availability: availability ?? { openai: false, google: false, local: false } });
     },
     [selectedCharacter, availability],
@@ -145,21 +152,58 @@ export function App() {
             <span className="brand__mark">稽古場</span>
             <span className="brand__sub">Stage</span>
           </a>
-          <div className="topbar__actions">
-            <span className="radio__meta">{settings.privacyMode === "strict_local" ? "strict_local" : settings.engine === "auto" ? `auto · ${settings.autoPolicy}` : settings.engine}</span>
-            {screen.name !== "settings" && <button type="button" className="btn btn--ghost" onClick={() => setScreen({ name: "settings" })}>設定</button>}
-          </div>
+
         </header>
       )}
       {screen.name === "home" && (
-        <Home settings={settings} dispatch={dispatch} personas={personas} characters={characters} availability={availability} broker={broker} agent={agent} contentNote={contentNote} onContinue={onContinue} onSettings={() => setScreen({ name: "settings" })} onMeeting={() => setScreen({ name: "meeting" })} />
+        <Home
+          settings={settings}
+          dispatch={dispatch}
+          personas={personas}
+          characters={characters}
+          broker={broker}
+          agent={agent}
+          contentNote={contentNote}
+          recent={recent}
+          onContinue={onContinue}
+          onCharacter={() => setScreen({ name: "character", back: "home" })}
+          onSettings={() => setScreen({ name: "settings" })}
+          onMeeting={() => setScreen({ name: "meeting" })}
+        />
       )}
-      {screen.name === "settings" && <SettingsScreen settings={settings} dispatch={dispatch} onBack={() => setScreen({ name: "home" })} />}
+      {screen.name === "settings" && (
+        <SettingsScreen
+          settings={settings}
+          dispatch={dispatch}
+          availability={availability}
+          characters={characters}
+          onCharacter={() => setScreen({ name: "character", back: "settings" })}
+          onBack={() => setScreen({ name: "home" })}
+        />
+      )}
+      {screen.name === "character" && (
+        <CharacterSelect
+          characters={characters}
+          settings={settings}
+          dispatch={dispatch}
+          broker={broker}
+          onDone={() => setScreen(screen.back === "setup" && screen.mode ? { name: "setup", mode: screen.mode } : screen.back === "settings" ? { name: "settings" } : { name: "home" })}
+        />
+      )}
       {screen.name === "meeting" && (
         <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
       )}
       {screen.name === "setup" && (
-        <Setup mode={screen.mode} personas={personasByMode.get(screen.mode) ?? []} characters={characters} settings={settings} dispatch={dispatch} availability={availability} onBack={() => setScreen({ name: "home" })} onStart={startSession} />
+        <Setup
+          mode={screen.mode}
+          personas={personasByMode.get(screen.mode) ?? []}
+          characters={characters}
+          settings={settings}
+          dispatch={dispatch}
+          onBack={() => setScreen({ name: "home" })}
+          onCharacter={() => setScreen({ name: "character", back: "setup", mode: screen.mode })}
+          onStart={startSession}
+        />
       )}
       {screen.name === "session" && (
         <Session

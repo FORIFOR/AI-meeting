@@ -17,9 +17,10 @@ export function SelfCamera({ enabled }: { enabled: boolean }) {
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "camera unavailable"));
     return () => stream?.getTracks().forEach((t) => t.stop());
   }, [enabled]);
+  if (!enabled) return null;
   return (
     <div className="pip">
-      {enabled && !error ? <video ref={ref} autoPlay playsInline muted /> : <div className="pip__off">{error ?? "カメラ停止中"}</div>}
+      {error ? <div className="pip__off">{error}</div> : <video ref={ref} autoPlay playsInline muted />}
       <span className="pip__label">あなた</span>
     </div>
   );

@@ -17,26 +17,59 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e).slice(0, 160)));
-await page.evaluateOnNewDocument(() => localStorage.setItem("rcai.settings.v1", JSON.stringify({ brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: true, characterId: "yui", cameraOn: false, captionsOn: true })));
+await page.evaluateOnNewDocument(() => localStorage.setItem("rcai.settings.v1", JSON.stringify({ brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true })));
 await page.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
 await sleep(1600);
 await page.screenshot({ path: `${out}/01-home.png` });
-const products = await page.$$("button.product");
-await products[1].hover(); await sleep(500);
-await page.screenshot({ path: `${out}/02-home-hover.png` });
-await products[1].click();
-await page.waitForSelector(".btn--primary.btn--lg, .pill", { timeout: 20000 });
+const acts = await page.$$("button.act");
+await acts[0].hover(); await sleep(400);
+await page.screenshot({ path: `${out}/01b-home-hover.png` });
+// character screen
+for (const b of await page.$$("button.btn--ghost")) { const t = await page.evaluate((e) => e.textContent, b); if (t?.includes("相手")) { await b.click(); break; } }
+await sleep(900);
+await page.screenshot({ path: `${out}/02-character.png` });
+for (const b of await page.$$("button.btn")) { const t = await page.evaluate((e) => e.textContent, b); if (t?.includes("この相手")) { await b.click(); break; } }
+await sleep(700);
+await (await page.$$("button.act"))[0].click();
+await page.waitForSelector(".page__actions .btn--primary, .pill", { timeout: 20000 });
 await sleep(900);
 await page.screenshot({ path: `${out}/03-setup.png` });
-if (await page.$(".btn--primary.btn--lg")) await page.click(".btn--primary.btn--lg");
+if (await page.$(".page__actions .btn--primary")) await page.click(".page__actions .btn--primary");
 await page.waitForSelector(".pill", { timeout: 30000 });
-await sleep(14000);
-await page.screenshot({ path: `${out}/04-session.png` });
-await sleep(14000);
-await page.screenshot({ path: `${out}/05-session-late.png` });
-await page.click(".btn--danger");
+// catch each state as it happens
+const seen = new Set();
+const t0 = Date.now();
+while (Date.now() - t0 < 42000 && seen.size < 3) {
+  const pill = await page.evaluate(() => document.querySelector(".pill")?.textContent ?? "");
+  for (const [k, re] of [["04-listening", /Listening/], ["05-thinking", /Thinking/], ["06-speaking", /Speaking/]]) {
+    if (!seen.has(k) && re.test(pill)) { seen.add(k); await page.screenshot({ path: `${out}/${k}.png` }); }
+  }
+  await sleep(120);
+}
+// the ··· sheet
+await page.click(".more");
+await sleep(500);
+await page.screenshot({ path: `${out}/07-sheet.png` });
+await page.click(".more");
+await sleep(300);
+await page.click(".ctl--end");
 await page.waitForSelector(".result", { timeout: 90000 }).catch(() => {});
 await sleep(2000);
-await page.screenshot({ path: `${out}/06-result.png`, fullPage: true });
+await page.screenshot({ path: `${out}/08-result.png`, fullPage: true });
+// settings
+await page.click(".page__actions .btn--ghost").catch(() => {});
+await sleep(600);
+for (const b of await page.$$("button.btn--ghost")) { const t = await page.evaluate((e) => e.textContent, b); if (t?.includes("設定")) { await b.click(); break; } }
+await sleep(700);
+await page.screenshot({ path: `${out}/09-settings.png`, fullPage: true });
+// 10 — mobile conversation
+const m = await browser.newPage();
+await m.setViewport({ width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+await m.evaluateOnNewDocument(() => localStorage.setItem("rcai.settings.v1", JSON.stringify({ brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true })));
+await m.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
+await sleep(1200);
+await m.screenshot({ path: `${out}/10a-mobile-home.png` });
+const macts = await m.$$("button.act");
+if (macts[2]) { await macts[2].click(); await m.waitForSelector(".pill", { timeout: 30000 }).catch(() => {}); await sleep(12000); await m.screenshot({ path: `${out}/10-mobile-session.png` }); await m.click(".ctl--end").catch(() => {}); }
 await browser.close();
 console.log("shots in", out, "errors:", JSON.stringify(errors));

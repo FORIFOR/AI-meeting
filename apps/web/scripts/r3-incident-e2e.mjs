@@ -18,9 +18,9 @@ await page.evaluateOnNewDocument(() => {
   localStorage.removeItem("rcai.incidents.v1");
 });
 await page.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
-await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 30000 });
+await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 30000 });
 await sleep(300);
-await (await page.$$("button.product"))[0].click();
+await (await page.$$("button.act"))[0].click();
 await page.waitForSelector(".pill", { timeout: 30000 });
 const t0 = Date.now();
 let lastPill = "";
@@ -48,7 +48,7 @@ await sleep(600); await poll();
 const panelHead = await page.$eval(".gate__head", (e) => e.textContent);
 for (let i = 0; i < 70; i++) { await poll(); await sleep(100); } // +7 s: window completes and POSTs
 await page.screenshot({ path: "/Users/horioshuuhei/Projects/AI-meeting/docs/reports/img/r3-gate6-incident.png" });
-await page.click(".btn--danger");
+await page.click(".ctl--end");
 await page.waitForSelector(".result", { timeout: 60000 });
 await sleep(1500);
 log.result = await page.evaluate(() => {

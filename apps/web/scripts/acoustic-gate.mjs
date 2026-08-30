@@ -54,15 +54,15 @@ await page.evaluateOnNewDocument((inId, outId) => {
   localStorage.setItem("rcai.settings.v1", JSON.stringify({ brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: true, characterId: "yui", cameraOn: false, captionsOn: true, inputDeviceId: inId, outputDeviceId: outId }));
 }, inId, outId);
 await page.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
-await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 20000 }).catch(async () => {
-  console.log("home state:", JSON.stringify(await page.evaluate(() => ({ err: document.querySelector(".err")?.textContent, products: [...document.querySelectorAll("button.product")].map((b) => ({ t: b.textContent?.slice(0, 20), d: b.disabled, title: b.title })) }))));
+await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 20000 }).catch(async () => {
+  console.log("home state:", JSON.stringify(await page.evaluate(() => ({ err: document.querySelector(".err")?.textContent, products: [...document.querySelectorAll("button.act")].map((b) => ({ t: b.textContent?.slice(0, 20), d: b.disabled, title: b.title })) }))));
   await browser.close(); restore(); process.exit(1);
 });
 await sleep(300);
-const freeTalk = (await page.$$("button.product"))[0];
+const freeTalk = (await page.$$("button.act"))[0];
 await freeTalk.click(); // Free Talk (goes straight to the session; other products show a Setup screen first)
-await page.waitForSelector(".btn--primary.btn--lg, .pill", { timeout: 20000 });
-if (await page.$(".btn--primary.btn--lg")) await page.click(".btn--primary.btn--lg");
+await page.waitForSelector(".page__actions .btn--primary, .pill", { timeout: 20000 });
+if (await page.$(".page__actions .btn--primary")) await page.click(".page__actions .btn--primary");
 await page.waitForSelector(".pill", { timeout: 30000 });
 const sessionStart = now();
 
@@ -121,7 +121,7 @@ if (sawSpeaking) {
 const phase4End = now() + 12000;
 while (now() < phase4End) { await poll(); await sleep(100); }
 await page.screenshot({ path: `${outDir}/p0-4-acoustic.png` });
-await page.click(".btn--danger").catch(() => {});
+await page.click(".ctl--end").catch(() => {});
 await sleep(1500);
 await browser.close();
 restore();

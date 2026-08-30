@@ -41,15 +41,15 @@ const shot = async (name) => { const p = `${outDir}/${name}.png`; await page.scr
 await shot("gate7-home");
 
 // Home → Interview practice
-const products = await page.$$("button.product");
+const products = await page.$$("button.act");
 const homeState = await page.evaluate(() => ({ strict: document.querySelector(".switch")?.getAttribute("aria-pressed"), meta: document.querySelector(".radio__meta")?.textContent, blocked: document.querySelector(".err")?.textContent ?? null }));
-log.home = { ...homeState, products: await page.evaluate(() => [...document.querySelectorAll("button.product")].map((b) => ({ text: b.textContent?.trim().slice(0, 30), disabled: b.disabled, title: b.title }))) };
+log.home = { ...homeState, products: await page.evaluate(() => [...document.querySelectorAll("button.act")].map((b) => ({ text: b.textContent?.trim().slice(0, 30), disabled: b.disabled, title: b.title }))) };
 console.log("home:", JSON.stringify(log.home), "console:", JSON.stringify(log.console.slice(0, 5)), "errors:", JSON.stringify(log.errors.slice(0, 5)));
 await products[1].click(); // 面接練習
-await page.waitForSelector(".btn--primary.btn--lg", { timeout: 15000 });
+await page.waitForSelector(".page__actions .btn--primary", { timeout: 15000 });
 await shot("gate7-setup");
 log.setup = await page.evaluate(() => ({ chips: [...document.querySelectorAll(".chip")].map((c) => c.textContent?.trim()), selects: [...document.querySelectorAll("select.select")].map((s) => s.value) }));
-await page.click(".btn--primary.btn--lg");
+await page.click(".page__actions .btn--primary");
 
 // Session: poll pill + captions
 await page.waitForSelector(".pill", { timeout: 30000 });
@@ -75,11 +75,11 @@ while (now() < deadline) {
 }
 await shot("gate7-session-end");
 // End → Result
-await page.click(".btn--danger");
+await page.click(".ctl--end");
 try {
   await page.waitForSelector(".result", { timeout: 60000 });
   await sleep(1500);
-  log.result = await page.evaluate(() => ({ overall: document.querySelector(".score--overall .score__value")?.textContent, text: document.querySelector(".result")?.innerText?.slice(0, 2500) }));
+  log.result = await page.evaluate(() => ({ overall: document.querySelector(".result__score")?.textContent, text: document.querySelector(".result")?.innerText?.slice(0, 2500) }));
   await shot("gate7-result");
 } catch (e) {
   log.errors.push(`result screen: ${String(e).slice(0, 200)}`);

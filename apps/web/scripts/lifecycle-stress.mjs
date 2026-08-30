@@ -40,17 +40,17 @@ await page.evaluateOnNewDocument((agentUrl) => {
 }, agentUrl);
 const url = `${base}/?debug=1`;
 await page.goto(url, { waitUntil: "networkidle0", timeout: 60000 });
-await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 30000 });
+await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 30000 });
 
 const live = () => page.evaluate(() => window.__rcaiAudio?.live() ?? null);
 for (let i = 1; i <= iterations; i++) {
   const t0 = Date.now();
   if (i % 10 === 0) {
     await page.goto(`${url}&it=${i}`, { waitUntil: "networkidle0", timeout: 60000 });
-    await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 30000 });
+    await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 30000 });
   }
-  await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 30000 });
-  const products = await page.$$("button.product");
+  await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 30000 });
+  const products = await page.$$("button.act");
   if (!products[0]) {
     await page.screenshot({ path: `${outDir}/r3-lifecycle-fail-${i}.png` });
     log.pageErrors.push(`iteration ${i}: no product buttons: ${(await page.evaluate(() => document.body.innerText.slice(0, 300))).replace(/\n/g, " ")}`);
@@ -65,20 +65,20 @@ for (let i = 1; i <= iterations; i++) {
   if (i % 3 === 0) {
     // abrupt: navigate to the same URL (full unload → pagehide → dispose)
     await page.goto(`${url}&r=${i}`, { waitUntil: "networkidle0", timeout: 60000 });
-    await page.waitForFunction(() => [...document.querySelectorAll("button.product")].some((b) => !b.disabled), { timeout: 30000 });
+    await page.waitForFunction(() => [...document.querySelectorAll("button.act")].some((b) => !b.disabled), { timeout: 30000 });
   } else {
-    if (!(await page.$(".btn--danger"))) {
+    if (!(await page.$(".ctl--end"))) {
       const diag = await page.evaluate(() => ({ text: document.body.innerText.slice(0, 500), toasts: [...document.querySelectorAll(".toast")].map((t) => t.textContent) }));
       await page.screenshot({ path: `${outDir}/r3-lifecycle-fail-${i}.png` });
       log.pageErrors.push(`iteration ${i}: End button missing: ${JSON.stringify(diag)}`);
       break;
     }
-    await page.click(".btn--danger");
+    await page.click(".ctl--end");
     await page.waitForSelector(".result", { timeout: 60000 });
     await sleep(200);
     const home = await page.$$("xpath/.//div[contains(@class,'result')]//button[contains(., 'ホームへ')]");
     if (home[0]) await home[0].click();
-    await page.waitForFunction(() => !!document.querySelector("button.product"), { timeout: 20000 });
+    await page.waitForFunction(() => !!document.querySelector("button.act"), { timeout: 20000 });
   }
   await sleep(300);
   const after = await live();

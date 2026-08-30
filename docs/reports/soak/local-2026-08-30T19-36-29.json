@@ -1,0 +1,394 @@
+{
+  "engine": "local",
+  "minutes": 1,
+  "character": "yui",
+  "mode": "free_talk",
+  "startedAt": "2026-08-30T19:36:29.760Z",
+  "verdict": "PASS",
+  "blocked": null,
+  "preflight": {
+    "broker": {
+      "ok": true,
+      "providers": {
+        "openai": false,
+        "google": false,
+        "livekit": false,
+        "heygen": false,
+        "tavus": false,
+        "recall": false
+      },
+      "meeting": {
+        "recall": false,
+        "recallPublicUrl": false,
+        "recallBotPageUrl": false,
+        "region": "us-west-2",
+        "tokenSecret": "ephemeral"
+      }
+    },
+    "agent": {
+      "ok": true,
+      "strictLocalCapable": true,
+      "stt": {
+        "engine": "sherpa-onnx",
+        "ready": true,
+        "model": "sense_voice:sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+        "mode": "incremental",
+        "pauseMinSilenceMs": 200,
+        "endpoint": {
+          "minSilenceMs": 240,
+          "completeSilenceMs": 320,
+          "unknownSilenceMs": 520,
+          "incompleteSilenceMs": 800,
+          "maxSilenceMs": 900
+        }
+      },
+      "llm": {
+        "engine": "openai-compatible",
+        "ready": true,
+        "model": "gemma-4-E2B-it-Q4_K_M.gguf",
+        "url": "http://127.0.0.1:8080/v1"
+      },
+      "tts": {
+        "engine": "avspeech-daemon",
+        "ready": true,
+        "voice": "com.apple.voice.compact.ja-JP.Kyoko"
+      },
+      "vad": {
+        "engine": "silero-vad"
+      }
+    },
+    "blocked": null
+  },
+  "timeline": {
+    "seconds": 63.0075,
+    "timeline": [
+      {
+        "index": 0,
+        "startSec": 3,
+        "endSec": 6.292458333333333,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 1,
+        "startSec": 10.339270833333334,
+        "endSec": 14.468458333333333,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 2,
+        "startSec": 18.716291666666667,
+        "endSec": 21.8181875,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 3,
+        "startSec": 29.7258125,
+        "endSec": 33.9229375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 4,
+        "startSec": 40.7190625,
+        "endSec": 43.63552083333333,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 5,
+        "startSec": 45.63552083333333,
+        "endSec": 48.512708333333336,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 6,
+        "startSec": 54.598479166666664,
+        "endSec": 57.385416666666664,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "t": 3,
+      "pill": "Connecting接続中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": 0
+        },
+        "bargeIn": {
+          "ms": null,
+          "n": 0
+        },
+        "listening": {
+          "ms": null,
+          "n": 0
+        },
+        "mouthStop": {
+          "ms": null,
+          "n": 0
+        }
+      },
+      "transcript": 0
+    },
+    {
+      "t": 30278,
+      "pill": "Listening聞いています",
+      "hud": {
+        "turn": {
+          "p50": 889,
+          "p95": 1472,
+          "n": 3
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 2
+        },
+        "listening": {
+          "ms": 0,
+          "n": 4
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 2
+        }
+      },
+      "transcript": 7
+    }
+  ],
+  "pills": [
+    {
+      "t": 3,
+      "pill": "Connecting接続中"
+    },
+    {
+      "t": 532,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 3039,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 3540,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 7067,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 8084,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 10612,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 15144,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 16163,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 19189,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 22706,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 23234,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 26753,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 30278,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 34814,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 37330,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 40843,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 44378,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 44880,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 45897,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 48944,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 49446,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 54984,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 58005,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 58506,
+      "pill": "Speaking話しています"
+    }
+  ],
+  "transcript": [
+    {
+      "t": 3039,
+      "role": "assistant",
+      "text": "おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 7067,
+      "role": "user",
+      "text": "今日は よろし くお 願い し ます。"
+    },
+    {
+      "t": 10612,
+      "role": "assistant",
+      "text": "んー、何かお願いしたいことあるの？どんなことかな？"
+    },
+    {
+      "t": 15144,
+      "role": "user",
+      "text": "近 仕事 で 新しい プロジェクト が 始まっ たん です。"
+    },
+    {
+      "t": 19189,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトか！どんなことするの？面白そう！"
+    },
+    {
+      "t": 22706,
+      "role": "user",
+      "text": "末 は 何 を する の がおすすめ で すか？"
+    },
+    {
+      "t": 26753,
+      "role": "assistant",
+      "text": "へえ、新しいプロジェクトか！どんな内容なの？"
+    },
+    {
+      "t": 34814,
+      "role": "user",
+      "text": "は 昨日 少し 失敗 して しま って 落ち 込 んで、います。"
+    },
+    {
+      "t": 37330,
+      "role": "assistant",
+      "text": "え、そうなの？どんな失敗だったの？"
+    },
+    {
+      "t": 44378,
+      "role": "user",
+      "text": "チーム の みん なが 助け て くれ ま した。"
+    },
+    {
+      "t": 45897,
+      "role": "assistant",
+      "text": "みんなで助けてくれたんだね、"
+    },
+    {
+      "t": 48944,
+      "role": "user",
+      "text": "みません、それ は どういう 意味 で すか？"
+    },
+    {
+      "t": 54984,
+      "role": "assistant",
+      "text": "チームの皆さんが助けてくれたってことだよね。具体的にどんなサポートがあったの？"
+    },
+    {
+      "t": 58005,
+      "role": "user",
+      "text": "なたは音楽を聴くのは好きですか？"
+    }
+  ],
+  "toasts": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "httpErrors": [],
+  "reconnects": [],
+  "hudLast": "latency · local\nturn p50/p95\t849 / 1472 ms\t< 700 / 1500 · n=7\nbarge-in stop\t43 ms\t< 150 · n=4\n→ listening\t0 ms\t< 100 · n=7\nmouth stop\t0 ms\t< 100 · n=4\nturns\t7 / 7\treconnects 0 · stale 0\nstt / ttft / ttfa\t0 / 122 / 43 ms\tp50 · n=2\nlip delay / frame\t30 / 31 ms\terrors 0",
+  "result": {
+    "overall": "75"
+  },
+  "summary": {
+    "elapsedMs": 60011,
+    "survived": true,
+    "failReason": null,
+    "userUtterancesHeard": 7,
+    "assistantTurns": 7,
+    "answered": 6,
+    "answeredRatio": 0.8571428571428571,
+    "expectedUtterancesFromWav": 7,
+    "speakingEpisodes": 8,
+    "turnLatency": {
+      "p50": 849,
+      "p95": 1472,
+      "n": 7
+    },
+    "bargeInStop": {
+      "ms": 43,
+      "n": 4
+    },
+    "listeningReact": {
+      "ms": 0,
+      "n": 7
+    },
+    "mouthStop": {
+      "ms": 0,
+      "n": 4
+    },
+    "reconnectEvents": 0,
+    "toasts": 0,
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "httpErrors": 0,
+    "longestNoAssistantSpeechMs": 8061,
+    "replyChars": {
+      "min": 14,
+      "p50": 22,
+      "max": 39,
+      "avg": 23
+    },
+    "resultOverall": "75"
+  },
+  "wav": "/var/folders/qy/086ttpq57jsd36jnc1jffst00000gn/T/rcai-soak/soak-1m.wav",
+  "chrome": "Chrome/152.0.7977.64",
+  "sessionStartMs": 4721,
+  "endedAt": "2026-08-30T19:37:59.338Z"
+}

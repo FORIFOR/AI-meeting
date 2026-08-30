@@ -6,107 +6,103 @@
   "pills": [
     {
       "t": 1,
-      "pill": "接続中 Connecting"
+      "pill": "Connecting接続中"
     },
     {
-      "t": 1933,
-      "pill": "待機中 Idle"
+      "t": 2272,
+      "pill": "Idle待機中"
     },
     {
-      "t": 2073,
-      "pill": "話しています Speaking"
+      "t": 2386,
+      "pill": "Speaking話しています"
     },
     {
-      "t": 5095,
-      "pill": "聞いています Listening"
+      "t": 5385,
+      "pill": "Listening聞いています"
     },
     {
-      "t": 9425,
-      "pill": "考え中 Thinking"
+      "t": 9690,
+      "pill": "Thinking考え中"
     },
     {
-      "t": 10762,
-      "pill": "話しています Speaking"
+      "t": 10691,
+      "pill": "Speaking話しています"
     },
     {
-      "t": 11182,
-      "pill": "聞いています Listening"
+      "t": 11528,
+      "pill": "Listening聞いています"
     },
     {
-      "t": 13893,
-      "pill": "考え中 Thinking"
+      "t": 14267,
+      "pill": "Thinking考え中"
     },
     {
-      "t": 14215,
-      "pill": "話しています Speaking"
+      "t": 15198,
+      "pill": "Speaking話しています"
     },
     {
-      "t": 23746,
-      "pill": "待機中 Idle"
+      "t": 22903,
+      "pill": "Idle待機中"
     },
     {
-      "t": 25606,
-      "pill": "聞いています Listening"
+      "t": 25988,
+      "pill": "Listening聞いています"
     },
     {
-      "t": 35603,
-      "pill": "考え中 Thinking"
+      "t": 35904,
+      "pill": "Thinking考え中"
     },
     {
-      "t": 37044,
-      "pill": "話しています Speaking"
+      "t": 38419,
+      "pill": "Speaking話しています"
     }
   ],
   "captions": [
     {
-      "t": 2073,
-      "caps": "AI本日は面接にお越しいただきありがとうございます。"
+      "t": 2386,
+      "caps": "AIHey!"
     },
     {
-      "t": 9425,
-      "caps": "AI本日は面接にお越しいただきありがとうございます。 | Youは今日は 面接 の 練習 を お 願い し ます。"
+      "t": 3438,
+      "caps": "AIHey!Good to see you. What's been going on with you lately?"
     },
     {
-      "t": 10762,
-      "caps": "AI本日は面接にお越しいただきありがとうございます。 | Youは今日は 面接 の 練習 を お 願い し ます。 | AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。"
+      "t": 9691,
+      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。"
     },
     {
-      "t": 13893,
-      "caps": "AI本日は面接にお越しいただきありがとうございます。 | Youは今日は 面接 の 練習 を お 願い し ます。 | AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。 | Youと待 って 質問 が あり ます。"
+      "t": 10691,
+      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview!"
     },
     {
-      "t": 14215,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。 | Youと待 って 質問 が あり ます。 | AI承知いたしました。"
+      "t": 14267,
+      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。"
     },
     {
-      "t": 14929,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。 | Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。"
+      "t": 15198,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!"
     },
     {
-      "t": 19501,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。 | Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。"
+      "t": 18386,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!What kind of job are you interviewing for today?"
     },
     {
-      "t": 36840,
-      "caps": "AI承知いたしました。それでは、本番さながらの面接として進めてまいりますね。 | Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。 | You私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割 短縮しま した。"
+      "t": 22903,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today?"
     },
     {
-      "t": 37044,
-      "caps": "Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。 | You私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割 短縮しま した。 | AIありがとうございます。"
+      "t": 37480,
+      "caps": "AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。"
     },
     {
-      "t": 37822,
-      "caps": "Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。 | You私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割 短縮しま した。 | AIありがとうございます。粘り強さという強みについて、具体的なご経験を伺えました。"
-    },
-    {
-      "t": 42981,
-      "caps": "Youと待 って 質問 が あり ます。 | AI承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。 | You私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割 短縮しま した。 | AIありがとうございます。粘り強さという強みについて、具体的なご経験を伺えました。もう少し詳しく、その業務改善のプロセスについて教えていただけますか。"
+      "t": 38419,
+      "caps": "Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。 | AIThat sounds like a really valuable skill. Can you tell me a little more about how you used that perseverance in that work improvement project?"
     }
   ],
-  "hud": "latency · local\nturn p50/p95\t242 / 1982 ms\t< 700 / 1500 · n=3\nbarge-in stop\t43 ms\t< 150 · n=2\n→ listening\t0 ms\t< 100 · n=3\nmouth stop\t0 ms\t< 100 · n=2\nturns\t3 / 3\treconnects 0 · stale 0\nstt / ttft / ttfa\t0 / 132 / 47 ms\tp50 · n=1\nlip delay / frame\t62 / 67 ms\terrors 0",
+  "hud": "latency · local\nturn p50/p95\t910 / 2941 ms\t< 700 / 1500 · n=3\nbarge-in stop\t43 ms\t< 150 · n=2\n→ listening\t0 ms\t< 100 · n=3\nmouth stop\t0 ms\t< 100 · n=2\nturns\t3 / 3\treconnects 0 · stale 0\nstt / ttft / ttfa\t0 / 524 / 90 ms\tp50 · n=1\nlip delay / frame\t20 / 32 ms\terrors 0",
   "result": {
-    "overall": "80",
-    "text": "記録 — 面接練習 · Local\nおつかれさまでした。\nもう一度\nホームへ\n総合\n80\n明瞭さ\n85\n具体性\n85\n構成\n75\n関連性\n90\n流暢さ\n70\nフィードバックopenai-compatible:gemma-4-E2B-it-Q4_K_M.gguf\n自己紹介の際、結論から話す構成を意識しましょう。\n強みと具体的な成果（3割短縮）は非常に具体的で良いです。\n次の質問に対しては、プロセスを時系列で説明するとさらに明確になります。\n「粘り強さ」という抽象的な強みだけでなく、行動を具体的に示すと説得力が増します。\n回答の間の間（ポーズ）を意識して、落ち着いた印象を与えましょう。\n面接練習のシミュレーションとして、より自然な会話の流れを意識してください。\n言い換えるなら\n私の強みは粘り強さです。前職では、業務改善のために半年間取り組み、その結果、処理時間を3割短縮することができました。具体的には、[具体的な改善アクション]を行い、[具体的な結果]を達成しました。\n採点の根拠\n質問への的確さ\n95\n質問の意図（強みとその裏付け）に対して、強みと具体的な成果を的確に結びつけて回答できています。\n改善: 強みと成果を述べた後、そのプロセスを説明する流れを意識しましょう。\n具体性\n90\n具体的な数値（3割短縮）を用いて成果を提示しており、具体性が高いです。\n該当の発話（6 番目）\n「処理 時間 を 3割 短縮しま した。」\n改善: 改善プロセスについても、具体的な手順や使用したツールなどを加えるとさらに具体的になります。\nSTAR構成\n75\n強み→行動→結果という流れはありますが、結論（強み）から入る構成がより明確になると良いです。\n改善: まず強みを述べ、次にその強みを発揮した具体的な行動と結果を順序立てて説明してください。\n論理の明瞭さ\n90\n強みと成果が論理的に結びついており、話の流れは非常に分かりやすいです。\n改善: プロセスを説明する際、なぜその行動をとったのかという動機付けを明確にすると、論理性が向上します。\n簡潔さ\n85\n必要な情報（強み、期間、成果）が過不足なく簡潔にまとめられています。\n改善: プロセス説明の際、冗長な表現を避け、最も重要なアクションに焦点を当ててください。\n自信・言い切り\n80\n自信を持って成果を伝えられていますが、プロセスを説明する際に一貫したトーンを保つとさらに高まります。\n改善: 具体的なエピソードを語る際は、自信を持って、落ち着いたトーンで話す練習をしてください。\n話す速さ 4.3 字/秒\n間の平均 1794 ms\n言いよどみ 0 回\n割り込み 2 回\n回答の長さ 5555 ms\n1回あたり 24 字\n\n評価モデルの引用のうち 5 件は発話と一致しなかったため除外しました。\n\n質問ごとの評価\n質問\t回答（冒頭）\t的確さ\t具体性\tSTAR\t問題\n本日は面接にお越しいただきありがとうございます。\tは今日は 面接 の 練習 を お 願い し ます。\t57\t40\t\nS\nT\nA\nR\n\t質問の焦点からずれている · 数字がない · 結果(R)が語られていない · 自身の行動(A)が不明確\n承知いたしました。それでは、本番さながらの面接として進めてまいりますね。\tと待 って 質問 が あり ます。\t45\t40\t\nS\nT\nA\nR\n\t質問の焦点からずれている · 数字がない · 結果(R)が語られていない · 自身の行動(A)が不明確\n承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己…\t私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割…\t48\t62\t\nS\nT\nA\nR\n\t質問の焦点からずれている · 自身の行動(A)が不明確\n目視評価0 件\n\nセッション中の観察記録はありません（メニュー →「評価パネル · Human gate」）。\n\n聞いている様子の自然さ\n1\n2\n3\n4\n5\nそこにいる感じ\n1\n2\n3\n4\n5\n応答の速さ\n1\n2\n3\n4\n5\n日本語の自然さ\n1\n2\n3\n4\n5\n記録を保存\nJSON をコピー\nクリア\n計測レポートlocal · telemetry skipped-strict\n3 / 3\nturns you / AI\n242 / 1982\nresponse p50 / p95 ms\n0\nreconnects\n0\nbarge-ins\n0\nstale chunk drops\n0 / 132 / 47\nSTT / TTFT / TTFA p50 ms\n62 ms\naudio → lip delay p50\n67 ms\navatar frame interval p50\n0\nerrors\n0\n300\n500\n700\n1s\n1.5s\n2s\n3s\nレポートをコピー\nセッションの記録\n0.8 min\nduration\n3\nyour turns\n2\nbarge-ins\n242 / 1982 ms\nresponse p50 / p95\n43 ms\nbarge-in stop max\n0 ms\n→ listening max\n会話の記録\nAI\n本日は面接にお越しいただきありがとうございます。interrupted\nYou\nは今日は 面接 の 練習 を お 願い し ます。\nAI\n承知いたしました。それでは、本番さながらの面接として進めてまいりますね。interrupted\nYou\nと待 って 質問 が あり ます。\nAI\n承知いたしました。それでは、本日の面接練習を始めさせていただきます。まずは、自己紹介をお願いできますでしょうか。\nYou\n私 の強み は 粘り強さです、前職 で は 半年 かけ て 業務 改善 を進め、処理 時間 を 3割 短縮しま した。\nAI\nありがとうございます。粘り強さという強みについて、具体的なご経験を伺えました。もう少し詳しく、その業務改善のプロセスについて教えていただけます"
+    "overall": "78",
+    "text": "英会話 · 1分未満 · Local\n\n78\n\n受け答えは十分に伝わっています。\n\nFocus on using complete English sentences instead of fragmented phrases.\n\nいちばん効くのはここ\n\n「私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。」\n\nFocus on mastering subject-verb agreement and proper tense usage in your descriptions.\n\n85\n明瞭さ\n80\n具体性\n75\n構成\n90\n関連性\n65\n流暢さ\n気づいたこと（6）\n採点の根拠\n会話中に記録した気づき（0）\n会話の記録（7）\n目視評価と計測\nホームへ\nもう一度"
   },
   "screenshots": [
     "gate7-home",
@@ -118,46 +114,57 @@
     "gate7-result"
   ],
   "home": {
-    "strict": "true",
-    "meta": "strict_local",
     "blocked": null,
     "products": [
       {
-        "text": "雑談Free Talk話題は自由。気楽に話しながら、間や相槌",
+        "text": "面接練習",
         "disabled": false,
         "title": ""
       },
       {
-        "text": "面接練習Interview Practice職種・企業のスタ",
+        "text": "英会話",
         "disabled": false,
         "title": ""
       },
       {
-        "text": "英会話English Conversation会話中は訂正し",
+        "text": "雑談",
         "disabled": false,
         "title": ""
       },
       {
-        "text": "会議に参加Google Meet · ZoomGoogle ",
+        "text": "営業ロープレ",
+        "disabled": false,
+        "title": ""
+      },
+      {
+        "text": "学習",
+        "disabled": false,
+        "title": ""
+      },
+      {
+        "text": "キャリア相談",
+        "disabled": false,
+        "title": ""
+      },
+      {
+        "text": "会議に参加Google Meet · Zoom",
         "disabled": true,
-        "title": "BLOCKED_BY_STRICT_LOCAL"
+        "title": ""
       }
     ]
   },
   "setup": {
     "chips": [
-      "面接官（日本語）",
-      "Interviewer (English)"
+      "English: Free Talk",
+      "English: Travel",
+      "English: Business",
+      "English: Job Interview",
+      "English: Daily Conversation",
+      "English: Pronunciation",
+      "English: Beginner"
     ],
     "selects": [
-      "日系大手企業",
-      "Standard",
-      "一般面接",
-      "yui",
-      "",
-      "",
-      "",
-      ""
+      "intermediate"
     ]
   }
 }

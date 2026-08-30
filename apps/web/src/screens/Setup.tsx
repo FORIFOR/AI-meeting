@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
-import { EngineSelector } from "../components/EngineSelector.jsx";
 import type { CharacterEntry } from "../integrations/registry.js";
-import type { Availability, Settings, SettingsAction } from "../state/settings.js";
-import { RENDERER_JA } from "../components/CharacterPicker.jsx";
+import type { Settings, SettingsAction } from "../state/settings.js";
 import { PRODUCTS } from "./Home.jsx";
 
 export interface SetupProps {
@@ -13,12 +11,12 @@ export interface SetupProps {
   characters: CharacterEntry[];
   settings: Settings;
   dispatch: (a: SettingsAction) => void;
-  availability: Availability | null;
   onBack: () => void;
+  onCharacter: () => void;
   onStart: (persona: Persona, params: Record<string, string>) => void;
 }
 
-/** Spec §19 (Interview) / §20 (English modes) start screen, driven by persona.params. */
+/** Only what the session needs. Engines and endpoints live in Settings. */
 export function Setup(p: SetupProps) {
   const product = PRODUCTS.find((x) => x.mode === p.mode)!;
   const [personaId, setPersonaId] = useState(p.personas[0]?.id ?? "");
@@ -29,29 +27,45 @@ export function Setup(p: SetupProps) {
     for (const spec of persona?.params ?? []) v[spec.key] = params[spec.key] ?? spec.default ?? spec.options?.[0] ?? "";
     return v;
   }, [persona, params]);
-  if (!persona) return <div className="setup"><div className="card"><p className="empty">このモードのペルソナがありません。</p><button className="btn" onClick={p.onBack}>戻る</button></div></div>;
-  const charLabel = p.mode === "interview" ? "面接官" : "キャラクター";
+  const character = p.characters.find((c) => c.id === p.settings.characterId) ?? p.characters[0];
+
+  if (!persona) {
+    return (
+      <div className="page">
+        <p className="empty">このモードのペルソナがありません。</p>
+        <button type="button" className="btn" onClick={p.onBack}>戻る</button>
+      </div>
+    );
+  }
+
+  const partnerLabel = p.mode === "interview" ? "面接官" : "相手";
+  const styleLabel = p.mode === "english_lesson" ? "レッスン" : "進め方";
+
   return (
-    <div className="setup">
-      <div className="card">
-        <div className="card__eyebrow">{product.kana}</div>
-        <h2 className="card__title">{product.name}</h2>
-        <div className="card__grid">
-          {p.personas.length > 1 && (
-            <div className="field">
-              <label>{p.mode === "english_lesson" ? "レッスンの種類" : "相手"}</label>
-              <div className="chips">
+    <div className="page">
+      <p className="page__eyebrow">{product.kana}</p>
+      <h1 className="page__title">{product.name}</h1>
+      <p className="page__lede">{product.desc}</p>
+
+      <div className="rows">
+        {p.personas.length > 1 && (
+          <div className="row">
+            <span className="row__label">{styleLabel}</span>
+            <span className="row__value">
+              <span className="chips">
                 {p.personas.map((x) => (
                   <button key={x.id} type="button" className={`chip ${x.id === persona.id ? "is-active" : ""}`} onClick={() => setPersonaId(x.id)}>
                     {x.name}
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
-          {(persona.params ?? []).map((spec) => (
-            <div className="field" key={spec.key}>
-              <label>{spec.label}</label>
+              </span>
+            </span>
+          </div>
+        )}
+        {(persona.params ?? []).map((spec) => (
+          <div className="row" key={spec.key}>
+            <span className="row__label">{spec.label}</span>
+            <span className="row__value">
               {spec.type === "select" ? (
                 <select className="select" value={values[spec.key]} onChange={(e) => setParams({ ...params, [spec.key]: e.target.value })}>
                   {(spec.options ?? []).map((o) => (
@@ -61,31 +75,20 @@ export function Setup(p: SetupProps) {
               ) : (
                 <input className="input" value={values[spec.key]} onChange={(e) => setParams({ ...params, [spec.key]: e.target.value })} />
               )}
-            </div>
-          ))}
-          <div className="field">
-            <label>{charLabel}</label>
-            <select className="select" value={p.settings.characterId || p.characters[0]?.id} onChange={(e) => p.dispatch({ type: "character", id: e.target.value })}>
-              {p.characters.map((c) => {
-                const cloud = c.renderer === "liveavatar" || c.renderer === "tavus";
-                const blocked = p.settings.privacyMode === "strict_local" && cloud;
-                return (
-                  <option key={c.id} value={c.id} disabled={blocked}>{c.name} — {RENDERER_JA[c.renderer]}{blocked ? "（完全ローカル中は使えません）" : ""}</option>
-                );
-              })}
-            </select>
+            </span>
           </div>
-          <div className="field">
-            <label>エンジン</label>
-            <EngineSelector settings={p.settings} dispatch={p.dispatch} availability={p.availability} />
-          </div>
-        </div>
-        <div className="card__actions">
-          <button type="button" className="btn btn--ghost" onClick={p.onBack}>← 戻る</button>
-          <button type="button" className="btn btn--primary btn--lg" onClick={() => p.onStart(persona, values)}>
-            {p.mode === "interview" ? "面接をはじめる" : p.mode === "english_lesson" ? "レッスンをはじめる" : "はじめる"}
-          </button>
-        </div>
+        ))}
+        <button type="button" className="row" onClick={p.onCharacter}>
+          <span className="row__label">{partnerLabel}</span>
+          <span className="row__value">{character?.name ?? "—"} <span className="row__chev">›</span></span>
+        </button>
+      </div>
+
+      <div className="page__actions">
+        <button type="button" className="btn btn--ghost" onClick={p.onBack}>戻る</button>
+        <button type="button" className="btn btn--primary btn--lg" onClick={() => p.onStart(persona, values)}>
+          はじめる
+        </button>
       </div>
     </div>
   );

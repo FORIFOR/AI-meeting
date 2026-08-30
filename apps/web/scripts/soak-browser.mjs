@@ -93,14 +93,14 @@ await page.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
 await sleep(1500);
 
 // ---- 3. Home → product → Setup → Start -----------------------------------------------------------
-const productIndex = { free_talk: 0, interview: 1, english_lesson: 2 }[mode] ?? 0;
-const products = await page.$$("button.product");
-const disabled = await page.evaluate((i) => { const b = document.querySelectorAll("button.product")[i]; return b ? { disabled: b.disabled, title: b.title } : { disabled: true, title: "no product button" }; }, productIndex);
+const productIndex = { interview: 0, english_lesson: 1, free_talk: 2 }[mode] ?? 0;
+const products = await page.$$("button.act");
+const disabled = await page.evaluate((i) => { const b = document.querySelectorAll("button.act")[i]; return b ? { disabled: b.disabled, title: b.title } : { disabled: true, title: "no product button" }; }, productIndex);
 if (disabled.disabled) { report.verdict = "FAIL"; report.failReason = `product disabled: ${disabled.title}`; await browser.close(); finish(1); }
 await products[productIndex].click();
 // Modes with a single param-less persona (free talk) skip the Setup screen and start immediately.
-await page.waitForSelector(".btn--primary.btn--lg, .pill", { timeout: 30000 });
-if (await page.$(".btn--primary.btn--lg")) await page.click(".btn--primary.btn--lg");
+await page.waitForSelector(".page__actions .btn--primary, .pill", { timeout: 30000 });
+if (await page.$(".page__actions .btn--primary")) await page.click(".page__actions .btn--primary");
 await page.waitForSelector(".pill", { timeout: 30000 });
 const sessionStart = now();
 report.sessionStartMs = sessionStart;
@@ -161,10 +161,10 @@ else if (survived) longestNoSpeechGap = Math.max(longestNoSpeechGap, elapsedMs -
 
 // ---- 5. End → Result -------------------------------------------------------------------------
 try {
-  await page.click(".btn--danger");
+  await page.click(".ctl--end");
   await page.waitForSelector(".result", { timeout: 90000 });
   await sleep(1000);
-  report.result = await page.evaluate(() => ({ overall: document.querySelector(".score--overall .score__value")?.textContent ?? null }));
+  report.result = await page.evaluate(() => ({ overall: document.querySelector(".result__score")?.textContent ?? null }));
 } catch (e) {
   report.resultError = String(e).slice(0, 200);
 }
