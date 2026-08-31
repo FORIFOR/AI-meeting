@@ -9,7 +9,11 @@ import { PROTOCOL_VERSION, encodeAudioFrame, pcm16BytesToFloat32, type ServerMes
 import { SentenceChunker, endsSentence, stripMarkdown } from "./sentence.js";
 import { AsyncQueue } from "./queue.js";
 
-/** How much audio before `speech_start` is replayed into the recogniser (400 ms @ 16 kHz). */
+/**
+ * How much audio before `speech_start` is replayed into the recogniser (400 ms @ 16 kHz).
+ * Measured: 400 ms recovers the onset the VAD needed to decide; 800 ms started feeding the recogniser
+ * enough room tone to hurt it elsewhere (「手伝って」→「手学って」).
+ */
 const PREROLL_SAMPLES = 6400;
 
 export { AsyncQueue } from "./queue.js";
@@ -42,6 +46,13 @@ export interface SessionDeps {
   endpointing?: EndpointPolicyOptions;
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
   prematureWindowMs?: number;
+  /**
+   * Second-pass recogniser for the committed utterance. The streaming recogniser has to answer while the
+   * user is still talking, so it trades accuracy for latency — on Japanese it mangles exactly the words a
+   * character is listening for (「ゆいさん」→「ういさん」). Re-decoding the finished utterance with a
+   * stronger model costs a few hundred ms once per turn and fixes the text the LLM actually reads.
+   */
+  finalStt?: STTAdapter | null;
 }
 
 export type SessionState = "idle" | "listening" | "thinking" | "speaking";
@@ -81,6 +92,8 @@ interface Utterance {
   vadEndLagMs?: number;
   /** Text of a premature previous turn to merge into this one. */
   prefix: string;
+  /** Exactly the audio handed to the streaming recogniser, for the optional second pass. */
+  audio: Float32Array[];
 }
 
 /**
@@ -110,8 +123,10 @@ export class ConversationSession {
   private utterance: Utterance | null = null;
   private utteranceSeq = 0;
   /** Last committed endpoint (for premature detection + text merge). */
-  private lastEndpoint: { at: number; text: string; userHistoryIndex: number } | null = null;
+  private lastEndpoint: { at: number; text: string; userHistoryIndex: number; audio: Float32Array[] } | null = null;
   private pendingPrefix = "";
+  /** Audio of a premature previous turn, prepended to the next utterance for the final decode. */
+  private pendingAudio: Float32Array[] = [];
   /**
    * Onset pre-roll for the streaming path. Silero only reports `speech_start` after ~80 ms of speech
    * plus its own window latency, and until then nothing was handed to the recogniser — so the first
@@ -190,8 +205,12 @@ export class ConversationSession {
    */
   private onAudioStreaming(samples: Float32Array, at: number): void {
     const stt = this.streamingStt!;
-    if (this.utterance || this.deps.vad.speaking) stt.pushAudio(samples);
-    else this.rememberPreroll(samples);
+    if (this.utterance || this.deps.vad.speaking) {
+      stt.pushAudio(samples);
+      this.utterance?.audio.push(samples);
+    } else {
+      this.rememberPreroll(samples);
+    }
     for (const ev of this.deps.vad.process(samples, at)) {
       if (ev.type === "speech_start") {
         if (this.state === "speaking" || this.state === "thinking") {
@@ -202,6 +221,10 @@ export class ConversationSession {
             this.sessionStats.prematureEndpoints++;
             this.policy!.notePrematureEndpoint();
             this.pendingPrefix = le.text;
+            // Carry the audio too: the second pass must see the whole sentence, not the half that
+            // survived the split. 「ありがとう。ゆいさんは…」 paused before the name, and decoding only
+            // the tail is how 「ゆい」 kept coming back as 「イ」.
+            this.pendingAudio = le.audio;
             if (this.history[le.userHistoryIndex]?.role === "user") this.history.splice(le.userHistoryIndex, 1);
             this.deps.log?.(`premature endpoint (${at - le.at}ms) → merging "${le.text.slice(0, 20)}…"`);
           }
@@ -212,8 +235,9 @@ export class ConversationSession {
           if (this.utterance.timer) clearTimeout(this.utterance.timer);
           this.utterance.timer = null;
         } else {
-          this.utterance = { seq: ++this.utteranceSeq, startedAt: at, segments: [], segmentEndAt: at, timer: null, prefix: this.pendingPrefix };
+          this.utterance = { seq: ++this.utteranceSeq, startedAt: at, segments: [], segmentEndAt: at, timer: null, prefix: this.pendingPrefix, audio: this.pendingAudio };
           this.pendingPrefix = "";
+          this.pendingAudio = [];
           stt.start(this.language);
           this.flushPreroll(stt);
           this.state = "listening";
@@ -240,7 +264,10 @@ export class ConversationSession {
   }
 
   private flushPreroll(stt: { pushAudio(s: Float32Array): void }): void {
-    for (const chunk of this.preroll) stt.pushAudio(chunk);
+    for (const chunk of this.preroll) {
+      stt.pushAudio(chunk);
+      this.utterance?.audio.push(chunk);
+    }
     this.preroll = [];
     this.prerollSamples = 0;
   }
@@ -273,6 +300,31 @@ export class ConversationSession {
     }, d.waitMs);
   }
 
+  /**
+   * Second pass over the finished utterance. Returns the streaming text unchanged when no second
+   * recogniser is configured, when it fails, or when it returns nothing — accuracy is worth a few
+   * hundred ms, silence never is.
+   */
+  private async rescore(u: Utterance, streamed: string): Promise<string> {
+    const second = this.deps.finalStt;
+    if (!second?.ready || u.audio.length === 0) return streamed;
+    const total = u.audio.reduce((n, a) => n + a.length, 0);
+    const pcm = new Float32Array(total);
+    let o = 0;
+    for (const a of u.audio) { pcm.set(a, o); o += a.length; }
+    const t0 = this.clock();
+    try {
+      const text = (await second.transcribe(pcm, 16000, this.language)).trim();
+      const ms = this.clock() - t0;
+      if (!text) { this.deps.log?.(`rescore empty (${ms}ms) — keeping "${streamed}"`); return streamed; }
+      if (text !== streamed) this.deps.log?.(`rescore ${ms}ms "${streamed}" → "${text}"`);
+      return text;
+    } catch (err) {
+      this.deps.log?.(`rescore failed (${(err as Error).message}) — keeping the streaming text`);
+      return streamed;
+    }
+  }
+
   private async commitTurn(u: Utterance, text: string, ep: { reason: string; requiredSilenceMs: number; sttMs: number; reused: boolean }): Promise<void> {
     if (this.utterance !== u) return;
     this.utterance = null;
@@ -283,7 +335,10 @@ export class ConversationSession {
     this.deps.send({ type: "user_speech_ended" });
     this.state = "thinking";
     this.policy!.noteCleanEndpoint(); // provisional; a barge-in within the premature window revises it
-    const merged = (u.prefix ? `${u.prefix} ` : "") + (final.text || text.replace(u.prefix, "").trim());
+    const streamed = final.text || text.replace(u.prefix, "").trim();
+    const rescored = await this.rescore(u, streamed);
+    // `rescore` decodes the whole utterance audio, prefix included, so it already covers the merged text.
+    const merged = rescored !== streamed ? rescored : (u.prefix ? `${u.prefix} ` : "") + streamed;
     const turn: TurnClock = {
       source: "speech",
       speechEndAt: at,
@@ -304,7 +359,7 @@ export class ConversationSession {
       return;
     }
     this.deps.send({ type: "user_transcript", text: merged, final: true });
-    this.lastEndpoint = { at, text: merged, userHistoryIndex: this.history.length };
+    this.lastEndpoint = { at, text: merged, userHistoryIndex: this.history.length, audio: u.audio };
     await this.respond(merged, turn);
   }
 
@@ -374,6 +429,7 @@ export class ConversationSession {
     this.utterance = null;
     this.preroll = [];
     this.prerollSamples = 0;
+    this.pendingAudio = [];
     this.streamingStt?.reset();
     if (this.strictLocal) {
       this.deps.onStrictLocal?.(false); // exactly once per strict session (stop + ws close both call stop())

@@ -23,7 +23,9 @@ export async function createGeminiEphemeralToken(env: BrokerEnv, req: { model?: 
   const res = await fetchImpl(GEMINI_AUTH_TOKENS_URL, {
     method: "POST",
     headers: { "x-goog-api-key": env.GEMINI_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ uses: 1, expireTime, newSessionExpireTime, liveConnectConstraints: { model: `models/${model}` } }),
+    // The constraint field was renamed: `liveConnectConstraints` is now rejected as an unknown name.
+    // Keeping the model bound to the token matters — it is what stops a leaked token being spent elsewhere.
+    body: JSON.stringify({ uses: 1, expireTime, newSessionExpireTime, bidiGenerateContentSetup: { model: `models/${model}` } }),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");

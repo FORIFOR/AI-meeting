@@ -28,6 +28,8 @@ export interface AgentRuntime {
   /** Round 3: effective STT mode after fallbacks ("baseline" keeps the Gate 6 path byte-for-byte). */
   sttMode: "baseline" | "incremental" | "online";
   createStreamingStt: (() => StreamingSTT) | null;
+  /** Stronger recogniser used once per turn on the committed utterance (null when unavailable/disabled). */
+  finalStt: STTAdapter | null;
 }
 
 export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<AgentRuntime> {
@@ -45,6 +47,24 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
       await w.init();
       if (w.ready) stt = w;
     }
+  }
+  /**
+   * Second-pass recogniser for the committed utterance.
+   *
+   * The streaming pass has to answer while the user is still talking, so it decodes prefixes of the audio
+   * and its final text is measurably worse than one decode of the whole utterance — on the same SenseVoice
+   * model. Re-running the *same* model changes nothing — the incremental decoder already decodes the whole
+   * utterance — so the second pass is only worth it with a stronger one: LOCAL_STT_FINAL=whisper recovers
+   * 「ゆいさん」 where SenseVoice returns 「ういさん」, at ~1 s per turn (whisper.cpp always processes a 30 s
+   * window, so the cost barely varies with utterance length). Off by default: that second is expensive in
+   * a live conversation, and the cloud providers do not need it at all.
+   */
+  let finalStt: STTAdapter | null = null;
+  if (cfg.sttFinal === "whisper") {
+    const w = new WhisperServerSTT(cfg.whisperServerUrl);
+    await w.init();
+    if (w.ready) finalStt = w;
+    else console.warn("[agent] LOCAL_STT_FINAL=whisper but whisper-server is not reachable at", cfg.whisperServerUrl);
   }
   const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel);
   await llm.init();
@@ -75,6 +95,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
     vadEngine,
     sttMode,
     createStreamingStt,
+    finalStt,
     createVad: () =>
       probe.available
         ? new SileroVAD(cfg.sileroVadModel, { minSilenceSec: sttMode === "baseline" ? cfg.vadMinSilenceMs / 1000 : pauseSec })
@@ -115,7 +136,7 @@ export function createApp(rt: AgentRuntime): Hono {
     c.json({
       ok: true,
       strictLocalCapable: true,
-      stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
+      stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
       llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl },
       tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice },
       vad: { engine: rt.vadEngine },
@@ -165,6 +186,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
       sendAudio: (frame) => ws.readyState === ws.OPEN && ws.send(frame, { binary: true }),
       nonLoopbackEndpoints: () => nonLoopbackEndpoints(rt.cfg),
       streamingStt: rt.createStreamingStt ?? undefined,
+      finalStt: rt.finalStt,
       endpointing: rt.cfg.endpoint,
       onStrictLocal: (active) => {
         strictSessions += active ? 1 : -1;

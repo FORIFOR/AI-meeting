@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 export interface AgentConfig {
   port: number;
   stt: "sherpa" | "whisper";
+  /** Second pass over the committed utterance with a stronger model: "whisper" or "off" (default). */
+  sttFinal: "whisper" | "off";
   sherpaModelDir: string | null;
   sileroVadModel: string | null;
   whisperServerUrl: string;
@@ -48,6 +50,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
   return {
     port: Number(env.PORT ?? 8788),
     stt: (env.LOCAL_STT as AgentConfig["stt"]) ?? "sherpa",
+    sttFinal: (env.LOCAL_STT_FINAL as AgentConfig["sttFinal"]) ?? "off",
     sherpaModelDir:
       env.SHERPA_MODEL_DIR ??
       firstExisting([
