@@ -408,6 +408,9 @@ importers:
       '@rcai/evaluation':
         specifier: workspace:*
         version: link:../evaluation
+      '@rcai/meeting-core':
+        specifier: workspace:*
+        version: link:../../packages/meeting-core
       '@rcai/observability':
         specifier: workspace:*
         version: link:../../packages/observability

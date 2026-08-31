@@ -61,8 +61,8 @@ export function Home(p: HomeProps) {
         ))}
         {p.onMeeting && (
           <button type="button" className="act" disabled={!!blocked || strict} onClick={p.onMeeting}>
-            会議に参加
-            <span className="act__note">Google Meet · Zoom</span>
+            会議
+            <span className="act__note">Google Meet · Zoom に同席</span>
           </button>
         )}
       </div>

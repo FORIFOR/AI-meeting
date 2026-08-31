@@ -326,3 +326,10 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .meeting__side h3 { font-size: var(--app-size-secondary); font-weight: var(--app-weight-bold); color: var(--app-text-secondary); margin: 0 0 var(--app-space-3); }
 .meeting__side h3 small { font-weight: var(--app-weight-normal); margin-left: var(--app-space-2); }
 @media (max-width: 860px) { .meeting { grid-template-columns: 1fr; gap: var(--app-space-6); } .meeting__side { border-left: 0; border-top: 1px solid var(--app-border); padding: var(--app-space-5) 0 0; } }
+
+/* ---------- meeting records: dialogue ---------- */
+.dialogue { display: grid; gap: var(--app-space-5); }
+.dialogue__block { display: grid; gap: var(--app-space-1); }
+.dialogue__who { display: flex; align-items: baseline; gap: var(--app-space-3); font-size: var(--app-size-secondary); font-weight: var(--app-weight-bold); color: var(--app-text-secondary); }
+.dialogue__at { font-size: var(--app-size-secondary); font-weight: var(--app-weight-normal); color: var(--app-text-tertiary); }
+.dialogue__text { margin: 0; color: var(--app-text-primary); line-height: var(--app-leading-body); }

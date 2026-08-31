@@ -1,6 +1,8 @@
 import type { BrokerEnv } from "../env.js";
 import type { RouteResult } from "./openai.js";
 import type { MeetingSessionRegistry, MeetingTokenRole } from "../meeting-session.js";
+import type { MeetingStore } from "../recall/store.js";
+import { RecallApiError, RecallClient } from "../recall/client.js";
 
 /**
  * Recall.ai meeting bots (docs.recall.ai). Verified endpoints/fields (2026-08-30):
@@ -41,6 +43,10 @@ export interface CreateBotBody {
   botPageQuery?: Record<string, string>;
   /** Join even if a live session for the same meeting URL exists. */
   force?: boolean;
+  /** ISO-8601 scheduled join time (calendar path); omitted means join now. */
+  joinAt?: string;
+  /** Calendar event this bot was scheduled from (calendar path). */
+  calendarEventId?: string;
 }
 
 export interface RelayRegistry {
@@ -54,6 +60,8 @@ export interface RelayRegistry {
 export interface MeetingDeps {
   relay: RelayRegistry;
   sessions: MeetingSessionRegistry;
+  /** Durable meeting records; when present the scheduling intent is persisted before the bot exists. */
+  store?: MeetingStore;
 }
 
 export function publicWsBase(publicUrl: string): string {
@@ -83,6 +91,23 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
   if (dup && !body.force) return { status: 409, body: { error: "DUPLICATE_JOIN", sessionId: dup.id, botId: dup.botId, detail: "A live session for this meeting already exists; leave it or pass force:true." } };
 
   const session = sessions.create({ meetingUrl: body.meetingUrl, botName: body.botName ?? "Yui", mode, botPageQuery: body.botPageQuery });
+
+  /**
+   * Guide step 5: persist the scheduling intent BEFORE the Create Bot request, so an ambiguous
+   * failure is reconciled rather than blindly retried. Any earlier unreconciled intent for the same
+   * meeting URL is closed out first (its bot, if one exists, is found by the webhook metadata).
+   */
+  const store = deps.store;
+  for (const stale of store?.unreconciled(body.meetingUrl) ?? []) store!.update(stale.id, { status: "create_failed" }, "reconciled_stale_intent");
+  const record = store?.createIntent({
+    meetingUrl: body.meetingUrl,
+    botName: body.botName ?? "Yui",
+    source: body.calendarEventId ? "calendar" : "url",
+    calendarEventId: body.calendarEventId,
+    scheduledFor: body.joinAt,
+    sessionId: session.id,
+  });
+
   const relayToken = sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   relay.register(relayToken);
   const wsUrl = `${publicWsBase(publicUrl)}/api/meeting/recall/relay/${encodeURIComponent(relayToken)}/`;
@@ -96,8 +121,9 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
       realtime_endpoints: [{ type: "websocket", url: wsUrl, events: RECALL_EVENTS }],
       include_bot_in_recording: { audio: true },
     },
-    metadata: { app: "rcai", mode, sessionId: session.id },
+    metadata: { app: "rcai", mode, sessionId: session.id, ...(record ? { meetingRecordId: record.id } : {}) },
   };
+  if (body.joinAt) payload.join_at = body.joinAt;
   let pageUrl: string | undefined;
   let botPageTokenExpiresAt: number | undefined;
   if (mode === "output_media") {
@@ -106,17 +132,19 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
     botPageTokenExpiresAt = Date.now() + 15 * 60_000;
     payload.output_media = outputMediaPayload(env, pageToken);
   }
-  const res = await fetchImpl(`${recallBase(env)}/bot/`, {
-    method: "POST",
-    headers: { Authorization: env.RECALL_API_KEY, "Content-Type": "application/json", accept: "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
+  if (record) store!.update(record.id, { status: "creating" }, "creating");
+  const client = new RecallClient({ apiKey: env.RECALL_API_KEY, region: env.RECALL_REGION ?? "us-west-2", fetchImpl });
+  let bot: { id: string; status_changes?: { code: string }[] };
+  try {
+    bot = (await client.createBot(payload as unknown as Parameters<RecallClient["createBot"]>[0])) as { id: string; status_changes?: { code: string }[] };
+  } catch (e) {
     sessions.end(session.id, "create_failed");
-    return { status: 502, body: { error: "recall_create_bot_failed", detail: (await res.text().catch(() => "")).slice(0, 400) } };
+    if (record) store!.update(record.id, { status: "create_failed" }, "create_failed");
+    const detail = e instanceof RecallApiError ? e.detail : String((e as Error).message).slice(0, 200);
+    return { status: 502, body: { error: "recall_create_bot_failed", detail } };
   }
-  const bot = (await res.json()) as { id: string; status_changes?: { code: string }[] };
   sessions.bindBot(session.id, bot.id);
+  if (record) store!.update(record.id, { botId: bot.id, status: "joining_call" }, "bot_created");
   relay.bind(relayToken, bot.id);
   const clientToken = sessions.issue(session.id, "client");
   const status = bot.status_changes?.[bot.status_changes.length - 1]?.code ?? "ready";
@@ -125,6 +153,7 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
     body: {
       botId: bot.id,
       sessionId: session.id,
+      meetingRecordId: record?.id,
       status,
       mode,
       clientWsUrl: `${relay.clientUrl(bot.id)}?token=${encodeURIComponent(clientToken)}`,
@@ -223,6 +252,8 @@ export async function leaveRecallBot(env: BrokerEnv, botId: string, fetchImpl: t
   if (deps) {
     for (const s of deps.sessions.allByBot(botId)) if (!s.ended) deps.sessions.end(s.id, "leave_call");
     deps.relay.dropBot?.(botId);
+    const rec = deps.store?.byBot(botId);
+    if (rec && rec.status !== "done") deps.store!.update(rec.id, { status: "left" }, "leave_call");
   }
   if (!res.ok) return { status: 502, body: { error: "recall_leave_failed", detail: (await res.text().catch(() => "")).slice(0, 300) } };
   return { status: 200, body: { ok: true } };

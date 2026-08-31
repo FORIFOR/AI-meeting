@@ -27,6 +27,24 @@ export interface BrokerEnv {
   RECALL_PUBLIC_URL?: string;
   /** Public URL of the web app; the bot streams it as its camera/audio in output_media mode. */
   RECALL_BOT_PAGE_URL?: string;
+  /**
+   * Workspace verification secret (whsec_…) for dashboard webhooks, realtime endpoints and callbacks.
+   * `get_info` reports which source a workspace uses; NEXT-STANDARDS uses the workspace secret.
+   */
+  RECALL_WEBHOOK_VERIFICATION_SECRET?: string;
+  /** Display name of the meeting bot (calendar-scheduled bots reuse it). */
+  RECALL_BOT_NAME?: string;
+  /** Language passed to async transcription ("auto" lets Recall detect it). */
+  RECALL_TRANSCRIPT_LANGUAGE?: string;
+  /** Override the durable store/queue directory (tests). */
+  RECALL_DATA_DIR?: string;
+  /**
+   * Calendar V2: the `regional_callback_uri` returned by `start_calendar_integration_setup`.
+   * Our customer-owned callback forwards `state`/`code`/`error`/`recall_calendar_setup_probe` there.
+   */
+  RECALL_CALENDAR_REGIONAL_CALLBACK_URI?: string;
+  /** How often to inject the full bot config for imminent calendar bookings (ms). */
+  RECALL_CALENDAR_ARM_INTERVAL_MS?: string;
   /** HMAC secret (≥16 chars) for meeting session tokens; an ephemeral secret is generated when unset (tokens die with the process). */
   MEETING_TOKEN_SECRET?: string;
 }

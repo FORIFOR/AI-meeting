@@ -11,6 +11,8 @@ import { Result } from "./screens/Result.jsx";
 import { Session } from "./screens/Session.jsx";
 import { SettingsScreen } from "./screens/SettingsScreen.jsx";
 import { Meeting } from "./screens/Meeting.jsx";
+import { MeetingDetail } from "./screens/MeetingDetail.jsx";
+import { Meetings } from "./screens/Meetings.jsx";
 import { Setup } from "./screens/Setup.jsx";
 import type { SessionOutcome } from "./session/SessionController.js";
 import { loadSettings, saveSettings, settingsReducer, type Availability } from "./state/settings.js";
@@ -22,6 +24,8 @@ type Screen =
   | { name: "settings" }
   | { name: "character"; back: "home" | "settings" | "setup"; mode?: ConversationMode }
   | { name: "meeting" }
+  | { name: "meetings" }
+  | { name: "meetingDetail"; id: string }
   | { name: "setup"; mode: ConversationMode }
   | { name: "session"; persona: Persona; character: CharacterEntry; params: Record<string, string>; availability: Availability }
   | { name: "result"; outcome: SessionOutcome; last: Extract<Screen, { name: "session" }> };
@@ -168,7 +172,7 @@ export function App() {
           onContinue={onContinue}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
-          onMeeting={() => setScreen({ name: "meeting" })}
+          onMeeting={() => setScreen({ name: "meetings" })}
         />
       )}
       {screen.name === "settings" && (
@@ -191,7 +195,19 @@ export function App() {
         />
       )}
       {screen.name === "meeting" && (
-        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
+        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} brokerMeeting={brokerMeeting} onBack={() => setScreen(botParams ? { name: "home" } : { name: "meetings" })} />
+      )}
+      {screen.name === "meetings" && (
+        <Meetings
+          settings={settings}
+          brokerMeeting={brokerMeeting}
+          onOpenMeeting={(id) => setScreen({ name: "meetingDetail", id })}
+          onUrlFlow={() => setScreen({ name: "meeting" })}
+          onBack={() => setScreen({ name: "home" })}
+        />
+      )}
+      {screen.name === "meetingDetail" && (
+        <MeetingDetail settings={settings} meetingId={screen.id} onBack={() => setScreen({ name: "meetings" })} />
       )}
       {screen.name === "setup" && (
         <Setup

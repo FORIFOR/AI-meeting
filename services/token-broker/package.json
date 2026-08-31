@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "smoke:recall": "tsx scripts/smoke-recall-webhooks.ts"
   },
   "dependencies": {
     "@hono/node-server": "latest",
@@ -22,7 +23,8 @@
     "@rcai/provider-core": "workspace:*",
     "hono": "4.13.5",
     "livekit-server-sdk": "latest",
-    "ws": "8.21.3"
+    "ws": "8.21.3",
+    "@rcai/meeting-core": "workspace:*"
   },
   "devDependencies": {
     "@types/ws": "latest",
