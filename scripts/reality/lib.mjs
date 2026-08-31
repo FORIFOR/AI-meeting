@@ -58,20 +58,26 @@ function portFree(port) {
   try { execSync(`lsof -ti:${port}`, { stdio: "pipe" }); return false; } catch { return true; }
 }
 
-/** Starts broker (8787), optional local stack + agent (8788), and the built web app via vite preview (5180). */
+/**
+ * Starts broker (8787), optionally the local stack + agent (8788), and a web server.
+ * An already-running dev server on 5173 is reused (that is what a tunnel usually points at);
+ * otherwise the app is built and previewed on 5180.
+ */
 export async function startStack({ local = false, env = {} } = {}) {
+  const devUp = !portFree(5173);
   if (local) {
     execSync("scripts/local-stack.sh start", { cwd: ROOT, stdio: "inherit" });
     if (portFree(8788)) start("agent", "pnpm", ["--filter", "@rcai/agent", "start"], { RCAI_EGRESS_LOG: "1", ...env });
   }
   if (portFree(8787)) start("broker", "pnpm", ["--filter", "@rcai/token-broker", "start"], env);
-  if (portFree(5180)) {
+  const webPort = devUp ? 5173 : 5180;
+  if (!devUp && portFree(5180)) {
     execSync("pnpm --filter @rcai/web build", { cwd: ROOT, stdio: "inherit" });
     start("web", "pnpm", ["--filter", "@rcai/web", "exec", "vite", "preview", "--port", "5180", "--strictPort"], env);
   }
-  const ok = (await waitHttp("http://localhost:8787/health")) && (await waitHttp("http://localhost:5180/")) && (!local || (await waitHttp("http://127.0.0.1:8788/health")));
+  const ok = (await waitHttp("http://localhost:8787/health")) && (await waitHttp(`http://localhost:${webPort}/`)) && (!local || (await waitHttp("http://127.0.0.1:8788/health")));
   if (!ok) { console.log("FAIL: stack did not become healthy"); process.exit(1); }
-  return "http://localhost:5180";
+  return `http://localhost:${webPort}`;
 }
 
 export function run(cmd, args, env = {}) {

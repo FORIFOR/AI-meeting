@@ -44,7 +44,23 @@ export function createApp(deps: AppDeps): Hono {
   const meetingDeps = { relay, sessions };
   const app = new Hono();
 
-  app.use("*", cors({ origin: ["http://localhost:5173", "http://localhost:5178", "http://localhost:5180", "http://127.0.0.1:5173", "http://127.0.0.1:5178", "http://127.0.0.1:5180"], allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type"] }));
+  /**
+   * Local dev origins, plus the bot page's public origin when the meeting connector is configured:
+   * the Recall bot loads the app through a tunnel, so its Origin is not localhost.
+   */
+  const localOrigins = ["http://localhost:5173", "http://localhost:5178", "http://localhost:5180", "http://127.0.0.1:5173", "http://127.0.0.1:5178", "http://127.0.0.1:5180"];
+  const botPageOrigin = (() => {
+    try {
+      return env.RECALL_BOT_PAGE_URL ? new URL(env.RECALL_BOT_PAGE_URL).origin : null;
+    } catch {
+      return null;
+    }
+  })();
+  app.use("*", cors({
+    origin: (origin) => (!origin || localOrigins.includes(origin) || origin === botPageOrigin ? origin ?? localOrigins[0] : null),
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  }));
 
   app.get("/health", (c) =>
     c.json({

@@ -45,3 +45,15 @@ No mock was marked PASS. The harness exits `2` with `BLOCKED_BY_RECALL_KEY` on t
 | BLOCKED_BY_MP3_ENCODER | relay-mode audio out needs an MP3 encoder (not added as a dependency) |
 | BLOCKED_BY_STRICT_LOCAL | meetings are cloud by nature; refused under strict_local (tested) |
 | zoom_native / google_native | contract ids reserved; not implemented (Recall covers Meet/Zoom/Teams/Webex) |
+
+
+## 実会議テストの準備（2026-08-31）
+鍵以外は準備済み。残りは Recall.ai の API キーのみ。
+
+- `services/token-broker/.env` を作成（`RECALL_REGION=ap-northeast-1`、`MEETING_TOKEN_SECRET` はこの Mac 上で `openssl rand -hex 32` により生成、`RECALL_API_KEY` は空欄）。`.env` は git 管理外。
+- `scripts/reality/meet-setup.sh`（`pnpm reality:meet:setup` / `:stop`）— cloudflared Quick Tunnel を broker と web に張り、URL を `.env` の `RECALL_PUBLIC_URL` / `RECALL_BOT_PAGE_URL` に自動で書き込み、トンネル越しの疎通を確認する。URL 抽出は実際に cloudflared を起動して検証済み。
+- この経路のために直したもの:
+  - `apps/web/vite.config.ts` — dev / preview の `allowedHosts` に `*.trycloudflare.com`（および ngrok、`RCAI_ALLOWED_HOSTS`）を追加。これが無いと Bot がトンネル経由でページを開けない（Vite が Host を拒否する）。
+  - `services/token-broker/src/app.ts` — CORS に Bot ページの公開オリジン（`RECALL_BOT_PAGE_URL` のオリジン）を追加。Bot ページからブローカーへの `activate` 等が CORS で落ちるのを防ぐ。
+  - `scripts/reality/lib.mjs` — すでに 5173 で dev サーバが動いていればそれを使う（トンネルが指す先と実際の配信元がずれないように）。
+- 現状 `pnpm reality:meet` は `BLOCKED_BY_RECALL_KEY` で exit 2。**Google Meet / Zoom への実参加は未実施。**
