@@ -41,7 +41,8 @@ export interface CalendarStatus {
   connected: boolean;
   platformEmail?: string;
   syncState?: string;
-  readyForTesting?: boolean;
+  /** True once the backend has synced this calendar at least once. */
+  synced?: boolean;
   blocked?: string;
 }
 

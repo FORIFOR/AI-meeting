@@ -149,7 +149,7 @@ export function Meetings(p: MeetingsProps) {
               </div>
             )}
             {connected && status?.platformEmail && (
-              <p className="hint">接続中のカレンダー: {status.platformEmail}{status.readyForTesting === false ? "（同期の完了待ち）" : ""}</p>
+              <p className="hint">接続中のカレンダー: {status.platformEmail}{status.synced === false ? "（同期の完了待ち）" : ""}</p>
             )}
           </div>
 

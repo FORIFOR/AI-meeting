@@ -107,7 +107,8 @@ export async function calendarStatus(env: BrokerEnv, deps: CalendarDeps): Promis
           oauthEmail: c.oauth_email ?? null,
           connected: c.status === "connected",
           /** Testing readiness: a connected calendar whose first sync produced a cursor. */
-          readyForTesting: c.status === "connected" && Boolean(deps.store.syncCursor(c.id)),
+          // Local sync state only. Recall's own ready_for_testing lives on the setup object, not here.
+          synced: Boolean(deps.store.syncCursor(c.id)),
         })),
         scheduled: deps.store.listScheduled().length,
       },
