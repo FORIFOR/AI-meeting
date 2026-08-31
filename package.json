@@ -25,7 +25,8 @@
     "reality:local": "node scripts/reality/local.mjs 10",
     "reality:meet": "node scripts/reality/meeting.mjs meet",
     "reality:zoom": "node scripts/reality/meeting.mjs zoom",
-    "reality:human": "node scripts/reality/human.mjs"
+    "reality:human": "node scripts/reality/human.mjs",
+    "contrast": "node scripts/contrast-audit.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

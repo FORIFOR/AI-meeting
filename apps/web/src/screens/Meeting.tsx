@@ -159,12 +159,12 @@ export function Meeting(p: MeetingProps) {
   }
 
   return (
-    <div className="setup meeting">
-      <div className="card">
-        <div className="card__head">
-          <div className="card__kana">同席</div>
-          <h2>会議に参加</h2>
-          <p className="card__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。名前で呼ばれたときだけ答えます（{POLICY_JA[policy]}）。</p>
+    <div className="page meeting">
+      <div>
+        <div>
+          <div className="page__eyebrow">同席</div>
+          <h1 className="page__title">会議に参加</h1>
+          <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。名前で呼ばれたときだけ答えます（{POLICY_JA[policy]}）。</p>
         </div>
         {blocked && <p className="err">{blocked}{blocked === "BLOCKED_BY_RECALL_PUBLIC_URL" ? " — broker を公開URL(ngrok等)で公開し RECALL_PUBLIC_URL / RECALL_BOT_PAGE_URL を設定してください" : blocked === "BLOCKED_BY_RECALL_KEY" ? " — services/token-broker/.env に RECALL_API_KEY を設定してください" : ""}</p>}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
@@ -200,7 +200,7 @@ export function Meeting(p: MeetingProps) {
         </div>
         {error && <p className="err">{error}</p>}
       </div>
-      <div className="panel">
+      <div className="meeting__side">
         <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>
         <div className="stage stage--mini" ref={stage} style={{ display: mode === "relay" ? "block" : "none" }} />
         <ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul>

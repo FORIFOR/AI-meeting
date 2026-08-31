@@ -67,7 +67,45 @@ RESULT                                       SETTINGS
   会話を読み返す ›   この質問をもう一度 ›
 ```
 
-## 3. Visual system
+## 3. Visual foundation — Digital Agency Design System (DADS)
+
+Colour, typography, accessibility and the basic information rules come from the
+[Digital Agency Design System](https://design.digital.go.jp/dads/) via the official package
+`@digital-go-jp/design-tokens` (v2.0.1). No "DADS-like" value is invented here.
+
+**Three layers.** DADS primitive/semantic token → application semantic token (`--app-*` in
+`apps/web/src/styles/tokens.css`) → component (`global.css`). Components never read a DADS
+primitive directly, so a future DADS update lands in one file.
+
+| Application token | resolves to | used for |
+|---|---|---|
+| `--app-background` / `--app-surface` | `--color-neutral-white` | page and floating surfaces |
+| `--app-surface-sunk` | `--color-neutral-solid-gray-50` | the character plate, meter tracks |
+| `--app-text-primary/secondary/tertiary` | solid-gray `900 / 700 / 536` | body, secondary, metadata |
+| `--app-border` / `--app-border-strong` | solid-gray `200 / 420` | hairlines / control borders |
+| `--app-action-primary` / `-hover` | `--color-key-900` (#0017C1) / `key-800` (#0031D8) | primary button, switch on, focus, links, active underline |
+| `--app-selected-background` | `--color-key-50` (#E8F1FE) | selected chip / character |
+| `--app-danger` | `--color-semantic-error-2` | errors and destructive text |
+| `--app-font` / `--app-font-mono` | `--font-family-sans` (Noto Sans JP) / `-mono` (Noto Sans Mono) | all type |
+| `--app-size-*` | `--font-size-{14,16,17,20,28,32,64}` | the only sizes in the app |
+| `--app-leading-*` | `--line-height-{140,150,175}` | headings / dense UI / body |
+| `--app-elevation-sheet/toast` | `--elevation-4 / -2` | the ··· sheet, toasts — nothing else |
+
+**Colour budget.** White and neutral surfaces carry the interface; blue appears only on the
+primary button, the selected state, focus, links and the home actions. Providers have no colour.
+No gradients, no glows, no coloured cards. The stage is the one dark surface: DADS solid-gray-900
+with white-alpha text/lines derived in `tokens.css` (DADS defines opacity greys on white only) —
+each derivation is commented and covered by the contrast audit.
+
+**Type.** Noto Sans JP, weights 400 and 700 only. Display 32 · title 28 · section 20 · sub 17 ·
+body 16 · secondary 14 — and nothing below 14px anywhere in the product. Density problems are
+solved by removing information, not by shrinking it.
+
+**Accessibility.** `pnpm contrast` audits every painted pair: text ≥ 4.5:1, borders and meaningful
+non-text ≥ 3:1 — 17/17 pass. Focus is never removed (2px `--app-focus` ring), state is never colour
+alone (labels + switch position + text), controls are ≥ 44px high.
+
+## 4. Product layer (on top of DADS)
 
 - **Palette.** `--bg #faf9f7`, `--surface #ffffff`, text `#171614` / `#57544f` / `#8e8a83`, hairline `rgba(23,22,20,.09)`. One accent, `--accent #b0402b`, used only for: the selected character mark, the overall score, a destructive control, an error. Providers have no colour — they are plumbing.
 - **Containers.** A border or a background must earn its place: inputs, buttons, the ··· sheet, the avatar frame. No section backgrounds, no nested boxes, no shadow on static content. Shadow only on floating layers (sheet, menu, toast).
@@ -76,11 +114,11 @@ RESULT                                       SETTINGS
 - **Spacing.** 8px base, sections 40–64px apart. Prefer空白 over dividers; prefer dividers over boxes.
 - **Motion.** 140ms control feedback · 220ms panels/sheets · 320ms screen changes. No bounce. The avatar is the expressive motion.
 
-## 4. State without labels
+## 5. State without labels
 
 `LISTENING / THINKING / SPEAKING` is communicated by the character: gaze and small nods while listening, a brief look away and stillness while thinking, lip sync and body motion while speaking. A faint lowercase whisper (11px, opacity 0.28) appears for ~1.6s on change and then fades — it also keeps the state readable for the automated Reality-Gate runners, which match that word.
 
-## 5. Responsive
+## 6. Responsive
 
 | Screen | ≥900px | <900px |
 |---|---|---|
@@ -90,6 +128,6 @@ RESULT                                       SETTINGS
 | Result | one 720px column | same column, score row wraps 2×2 |
 | Settings / Meeting | label→value rows | value wraps under the label |
 
-## 6. Screens captured
+## 7. Screens captured
 
 `docs/reports/img/ui/` — 01 home · 02 character · 03 setup · 04 listening · 05 thinking · 06 speaking · 07 session sheet · 08 result · 09 settings · 10 mobile conversation.

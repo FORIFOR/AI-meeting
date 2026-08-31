@@ -1,0 +1,88 @@
+/*
+ * Layer 1 — Digital Agency Design System (DADS) primitives, imported from the official package.
+ *   https://design.digital.go.jp/dads/  ·  @digital-go-jp/design-tokens
+ * Layer 2 — application semantic tokens (below). Components read ONLY these.
+ * Nothing in this repository invents a "DADS-like" colour; every value here resolves to a DADS token,
+ * except the four documented on-dark derivations at the bottom (white alphas for the stage), which DADS
+ * does not define because it is a light-surface system.
+ */
+@import "@digital-go-jp/design-tokens/dist/tokens.css";
+
+:root {
+  /* ---- surfaces ---- */
+  --app-background: var(--color-neutral-white);
+  --app-surface: var(--color-neutral-white);
+  --app-surface-sunk: var(--color-neutral-solid-gray-50);
+  --app-selected-background: var(--color-key-50);
+
+  /* ---- text (all pass 4.5:1 on white — see scripts/contrast-audit.mjs) ---- */
+  --app-text-primary: var(--color-neutral-solid-gray-900);
+  --app-text-secondary: var(--color-neutral-solid-gray-700);
+  --app-text-tertiary: var(--color-neutral-solid-gray-536);
+  --app-text-on-fill: var(--color-neutral-white);
+  --app-text-link: var(--color-key-900);
+
+  /* ---- lines (3:1 against the surface behind them) ---- */
+  --app-border: var(--color-neutral-solid-gray-200);
+  --app-border-strong: var(--color-neutral-solid-gray-420);
+
+  /* ---- action ---- */
+  --app-action-primary: var(--color-key-900);
+  --app-action-primary-hover: var(--color-key-800);
+  --app-action-fill: var(--color-neutral-solid-gray-900);
+  --app-focus: var(--color-key-900);
+  --app-danger: var(--color-semantic-error-2);
+
+  /* ---- type ---- */
+  --app-font: var(--font-family-sans);
+  --app-font-mono: var(--font-family-mono);
+  --app-weight-normal: var(--font-weight-400);
+  --app-weight-bold: var(--font-weight-700);
+  --app-size-display: var(--font-size-32);
+  --app-size-title: var(--font-size-28);
+  --app-size-section: var(--font-size-20);
+  --app-size-sub: var(--font-size-17);
+  --app-size-body: var(--font-size-16);
+  --app-size-secondary: var(--font-size-14);
+  --app-leading-body: var(--line-height-175);
+  --app-leading-ui: var(--line-height-150);
+  --app-leading-heading: var(--line-height-140);
+
+  /* ---- elevation (floating layers only) ---- */
+  --app-elevation-sheet: var(--elevation-4);
+  --app-elevation-toast: var(--elevation-2);
+
+  /* ---- spacing / shape / motion ---- */
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
+  --app-space-7: 48px;
+  --app-space-8: 64px;
+  --app-radius: 8px;
+  --app-radius-lg: 16px;
+  --app-t-fast: 140ms;
+  --app-t-panel: 220ms;
+  --app-t-screen: 320ms;
+  --app-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --app-page: clamp(20px, 6vw, 72px);
+  --app-column: 720px;
+
+  /*
+   * ---- the stage ----
+   * The conversation happens on a dark surface so the character is the light in the room.
+   * Base and lamp are DADS neutrals; the four on-dark text/line values are white alphas
+   * derived here because DADS defines opacity greys on white only.
+   */
+  --app-stage: var(--color-neutral-solid-gray-900);
+  --app-stage-deep: var(--color-neutral-black);
+  --app-stage-text: var(--color-neutral-white);
+  --app-stage-text-2: rgba(255, 255, 255, 0.74); /* derived: white α — 4.5:1 on --app-stage */
+  --app-stage-text-3: rgba(255, 255, 255, 0.55); /* derived: white α — 3:1, non-text only */
+  --app-stage-line: rgba(255, 255, 255, 0.36); /* derived: white α — 3:1 border on the stage */
+  --app-stage-veil: rgba(0, 0, 0, 0.55); /* derived: black α — scrim over the character */
+  --app-stage-lamp: rgba(255, 255, 255, 0.14); /* derived: white α — stage light, not chrome */
+  --app-stage-accent: var(--color-key-300); /* blue that keeps 4.5:1 on the dark stage */
+}

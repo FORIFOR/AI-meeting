@@ -40,6 +40,7 @@ Evidence runners (real Chrome, headless):
 - Lip-sync corpus A/B (analyzer vs MotionSync): `tools/lipsync-corpus/build.sh && node avatar-providers/live2d/demo/ab-run.mjs --engine analyzer`
 - Google Meet / Zoom participation (Recall): `MEET_URL=… pnpm --filter @rcai/connector-recall e2e:meet` (needs `RECALL_API_KEY` + public tunnel URLs)
 - Human 10-minute gate: `docs/human-gate.md` (one-tap observation panel inside the session)
+- Contrast audit (DADS tokens, WCAG): `pnpm contrast`
 - License audit: `pnpm licenses` → `licenses.json`, `THIRD_PARTY_NOTICES.md` (curated exceptions in `NOTICE.md`)
 
 ## Layout

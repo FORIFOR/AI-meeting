@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@digital-go-jp/design-tokens": "^2.0.1",
     "@rcai/audio-core": "workspace:*",
     "@rcai/avatar-canvas": "workspace:*",
     "@rcai/avatar-core": "workspace:*",

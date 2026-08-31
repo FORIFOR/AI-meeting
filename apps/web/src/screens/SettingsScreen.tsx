@@ -138,7 +138,7 @@ export function SettingsScreen({ settings, dispatch, availability, characters, o
                 <button type="button" className={`switch ${settings.showHud ? "is-on" : ""}`} aria-pressed={settings.showHud} onClick={() => dispatch({ type: "hud", on: !settings.showHud })} />
               </div>
             </div>
-            <p className="empty" style={{ fontSize: 12 }}>API キーはクライアントに保存しません。キーは services/token-broker の環境変数で設定します。</p>
+            <p className="empty" >API キーはクライアントに保存しません。キーは services/token-broker の環境変数で設定します。</p>
           </div>
         </div>
       </details>

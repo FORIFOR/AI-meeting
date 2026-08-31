@@ -9,100 +9,104 @@
       "pill": "Connecting接続中"
     },
     {
-      "t": 2272,
+      "t": 1564,
       "pill": "Idle待機中"
     },
     {
-      "t": 2386,
+      "t": 1680,
       "pill": "Speaking話しています"
     },
     {
-      "t": 5385,
+      "t": 4754,
       "pill": "Listening聞いています"
     },
     {
-      "t": 9690,
+      "t": 8977,
       "pill": "Thinking考え中"
     },
     {
-      "t": 10691,
+      "t": 9953,
       "pill": "Speaking話しています"
     },
     {
-      "t": 11528,
+      "t": 10907,
       "pill": "Listening聞いています"
     },
     {
-      "t": 14267,
+      "t": 13533,
       "pill": "Thinking考え中"
     },
     {
-      "t": 15198,
+      "t": 14498,
       "pill": "Speaking話しています"
     },
     {
-      "t": 22903,
+      "t": 22231,
       "pill": "Idle待機中"
     },
     {
-      "t": 25988,
+      "t": 25231,
       "pill": "Listening聞いています"
     },
     {
-      "t": 35904,
+      "t": 35199,
       "pill": "Thinking考え中"
     },
     {
-      "t": 38419,
+      "t": 37656,
       "pill": "Speaking話しています"
     }
   ],
   "captions": [
     {
-      "t": 2386,
+      "t": 1680,
       "caps": "AIHey!"
     },
     {
-      "t": 3438,
+      "t": 2466,
       "caps": "AIHey!Good to see you. What's been going on with you lately?"
     },
     {
-      "t": 9691,
+      "t": 8977,
       "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。"
     },
     {
-      "t": 10691,
-      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview!"
+      "t": 9953,
+      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview today!"
     },
     {
-      "t": 14267,
-      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。"
+      "t": 13533,
+      "caps": "AIHey!Good to see you. What's been going on with you lately? | Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview today! | Youと待 って 質問 が あり ます。"
     },
     {
-      "t": 15198,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!"
+      "t": 14498,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview today! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!"
     },
     {
-      "t": 18386,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!What kind of job are you interviewing for today?"
+      "t": 17674,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview today! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview!What kind of job are you interviewing for today?"
     },
     {
-      "t": 22903,
-      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today?"
+      "t": 22231,
+      "caps": "Youは今日は 面接 の 練習 を お 願い し ます。 | AISure, I'd be happy to practice for your interview today! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today?"
     },
     {
-      "t": 37480,
-      "caps": "AISure, I'd be happy to practice for your interview! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。"
+      "t": 37141,
+      "caps": "AISure, I'd be happy to practice for your interview today! | Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の強み は 粘り 強さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3 割 短縮しま した。"
     },
     {
-      "t": 38419,
-      "caps": "Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。 | AIThat sounds like a really valuable skill. Can you tell me a little more about how you used that perseverance in that work improvement project?"
+      "t": 37656,
+      "caps": "Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の強み は 粘り 強さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3 割 短縮しま した。 | AIThat sounds like a really valuable skill!"
+    },
+    {
+      "t": 40447,
+      "caps": "Youと待 って 質問 が あり ます。 | AISure, I'd be happy to practice for your interview! What kind of job are you interviewing for today? | You私 の強み は 粘り 強さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3 割 短縮しま した。 | AIThat sounds like a really valuable skill!Can you tell me a little more about that experience and how you approached the process?"
     }
   ],
-  "hud": "latency · local\nturn p50/p95\t910 / 2941 ms\t< 700 / 1500 · n=3\nbarge-in stop\t43 ms\t< 150 · n=2\n→ listening\t0 ms\t< 100 · n=3\nmouth stop\t0 ms\t< 100 · n=2\nturns\t3 / 3\treconnects 0 · stale 0\nstt / ttft / ttfa\t0 / 524 / 90 ms\tp50 · n=1\nlip delay / frame\t20 / 32 ms\terrors 0",
+  "hud": "latency · local\nturn p50/p95\t905 / 2926 ms\t< 700 / 1500 · n=3\nbarge-in stop\t43 ms\t< 150 · n=2\n→ listening\t0 ms\t< 100 · n=3\nmouth stop\t0 ms\t< 100 · n=2\nturns\t3 / 3\treconnects 0 · stale 0\nstt / ttft / ttfa\t0 / 538 / 96 ms\tp50 · n=1\nlip delay / frame\t16 / 33 ms\terrors 0",
   "result": {
-    "overall": "78",
-    "text": "英会話 · 1分未満 · Local\n\n78\n\n受け答えは十分に伝わっています。\n\nFocus on using complete English sentences instead of fragmented phrases.\n\nいちばん効くのはここ\n\n「私 の 強み は 粘り強 さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3割 短縮しま した。」\n\nFocus on mastering subject-verb agreement and proper tense usage in your descriptions.\n\n85\n明瞭さ\n80\n具体性\n75\n構成\n90\n関連性\n65\n流暢さ\n気づいたこと（6）\n採点の根拠\n会話中に記録した気づき（0）\n会話の記録（7）\n目視評価と計測\nホームへ\nもう一度"
+    "overall": "75",
+    "text": "英会話 · 1分未満 · Local\n\n75\n\n受け答えは十分に伝わっています。\n\nFocus on using complete English sentences rather than fragmented phrases.\n\nいちばん効くのはここ\n\n「私 の強み は 粘り 強さ です、前職 で は 半年 かけ て 業務 改善 を 進め、処理 時間 を 3 割 短縮しま した。」\n\nFocus on correct English syntax, especially when linking actions and results.\n\n85\n明瞭さ\n80\n具体性\n70\n構成\n90\n関連性\n65\n流暢さ\n気づいたこと（6）\n採点の根拠\n会話中に記録した気づき（0）\n会話の記録（7）\n目視評価と計測\nホームへ\nもう一度"
   },
   "screenshots": [
     "gate7-home",

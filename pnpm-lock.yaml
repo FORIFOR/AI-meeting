@@ -35,6 +35,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@digital-go-jp/design-tokens':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@rcai/audio-core':
         specifier: workspace:*
         version: link:../../packages/audio-core
@@ -554,6 +557,9 @@ packages:
   '@daily-co/daily-js@0.92.2':
     resolution: {integrity: sha512-YuZGsBzKKfPFdKg2osTUrm53VkLoNdrtAyx/+R9MZrd1bJ4E2SC/ie3SugYaSpp30yzy/6qSLkH7dgLk5a8cvg==}
     engines: {node: '>=22.14.0'}
+
+  '@digital-go-jp/design-tokens@2.0.1':
+    resolution: {integrity: sha512-F0SWlZDghgWuD6AzD4IawL9PlO+GD2Ns8s72g9FvBSKcgDX3hxzB8fjW64PqqonHocEpLj7Lj+LGbkh6eSgZ0g==}
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
@@ -2504,6 +2510,8 @@ snapshots:
       bowser: 2.14.1
       dequal: 2.0.3
       events: 3.3.0
+
+  '@digital-go-jp/design-tokens@2.0.1': {}
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 

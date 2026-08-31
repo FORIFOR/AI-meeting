@@ -51,7 +51,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
         <p className="err" style={{ marginTop: 16 }}>評価を取得できませんでした: {outcome.evaluationError ?? "unknown"}</p>
       )}
       {evaluation && (outcome.fallbackUsed || outcome.evaluationError) && (
-        <p className="empty" style={{ fontSize: 12 }}>評価モデルに接続できなかったため、手元のヒューリスティック評価です。</p>
+        <p className="empty" >評価モデルに接続できなかったため、手元のヒューリスティック評価です。</p>
       )}
 
       {lead && (
@@ -108,7 +108,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
                     <div>{CRITERION_LABEL[c.key]?.[ja ? "ja" : "en"] ?? c.key}</div>
                     <div className="criterion__score">{Math.round(c.score)}</div>
                   </div>
-                  {c.explanation && <div style={{ fontSize: 13, color: "var(--fg-2)" }}>{c.explanation}</div>}
+                  {c.explanation && <div className="criterion__explain">{c.explanation}</div>}
                   {c.evidence.slice(0, 2).map((e, i) => (
                     <div className="criterion__quote" key={i}><small>該当の発話（{e.turnIndex + 1} 番目）</small>「{e.quote}」</div>
                   ))}
@@ -127,7 +127,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
                 <span>1回あたり {ev.speech.wordsPerTurn} {ja ? "字" : "words"}</span>
               </div>
             )}
-            {ev.warnings?.length ? <p className="empty" style={{ fontSize: 12 }}>評価モデルの引用のうち {ev.warnings.length} 件は発話と一致せず除外しました。</p> : null}
+            {ev.warnings?.length ? <p className="empty" >評価モデルの引用のうち {ev.warnings.length} 件は発話と一致せず除外しました。</p> : null}
           </div>
         </details>
       )}
@@ -259,8 +259,8 @@ function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
             <div className="gate__entry" key={i.id}>
               <small>{new Date(i.at).toLocaleTimeString()} · {i.avatarState}</small>
               <div>
-                <b>{i.reason}</b> <span style={{ color: "var(--cream-mute)", fontSize: 12 }}>{i.entries.length} entries · {i.userOptIn.audio ? "audio ✓" : "no media"}</span>
-                {i.note && <div style={{ fontSize: 12 }}>{i.note}</div>}
+                <b>{i.reason}</b> <span className="gate__meta">{i.entries.length} entries · {i.userOptIn.audio ? "audio ✓" : "no media"}</span>
+                {i.note && <div >{i.note}</div>}
               </div>
             </div>
           ))}
@@ -269,7 +269,7 @@ function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
       <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
         <button type="button" className="btn" onClick={() => void copy()}>レポートをコピー</button>
         {outcome.incidents.length > 0 && <button type="button" className="btn btn--ghost" onClick={() => void copyIncidents()}>incidents JSON をコピー</button>}
-        {msg && <span className="radio__meta">{msg}</span>}
+        {msg && <span className="hint">{msg}</span>}
       </div>
     </div>
   );
@@ -307,7 +307,7 @@ function HumanGateSummary(p: { sessionStartedAt: number; mode: string; character
           {observations.map((e, i) => (
             <div className="gate__entry" key={i}>
               <small>+{Math.max(0, Math.round((e.at - t0) / 1000))}s · {e.avatarState}</small>
-              <div><b>{e.tag}</b>{e.captions?.length ? <div style={{ color: "var(--cream-mute)", fontSize: 12 }}>{e.captions.join(" / ").slice(0, 160)}</div> : null}</div>
+              <div><b>{e.tag}</b>{e.captions?.length ? <div className="gate__meta">{e.captions.join(" / ").slice(0, 160)}</div> : null}</div>
             </div>
           ))}
         </div>
@@ -330,7 +330,7 @@ function HumanGateSummary(p: { sessionStartedAt: number; mode: string; character
         <button type="button" className="btn btn--primary" onClick={() => void submit()} disabled={!observations.length && !Object.keys(rating).length}>記録を保存</button>
         <button type="button" className="btn" onClick={() => void copy()}>JSON をコピー</button>
         <button type="button" className="btn btn--ghost" onClick={reset}>クリア</button>
-        {sent && <span className="radio__meta">{sent}</span>}
+        {sent && <span className="hint">{sent}</span>}
       </div>
     </div>
   );

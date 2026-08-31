@@ -86,7 +86,7 @@ export function Home(p: HomeProps) {
           <span className="row__chev">›</span>
         </button>
       ) : (
-        <p className="cont" style={{ color: "var(--fg-3)" }}>
+        <p className="cont cont--empty">
           <span>話しかければ、聞いている顔をする。</span>
         </p>
       )}
