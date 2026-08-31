@@ -9,6 +9,9 @@ import { PROTOCOL_VERSION, encodeAudioFrame, pcm16BytesToFloat32, type ServerMes
 import { SentenceChunker, endsSentence, stripMarkdown } from "./sentence.js";
 import { AsyncQueue } from "./queue.js";
 
+/** How much audio before `speech_start` is replayed into the recogniser (400 ms @ 16 kHz). */
+const PREROLL_SAMPLES = 6400;
+
 export { AsyncQueue } from "./queue.js";
 
 export interface SessionDeps {
@@ -109,6 +112,14 @@ export class ConversationSession {
   /** Last committed endpoint (for premature detection + text merge). */
   private lastEndpoint: { at: number; text: string; userHistoryIndex: number } | null = null;
   private pendingPrefix = "";
+  /**
+   * Onset pre-roll for the streaming path. Silero only reports `speech_start` after ~80 ms of speech
+   * plus its own window latency, and until then nothing was handed to the recogniser — so the first
+   * mora was silently dropped (「ゆいさん」 came back as 「ゆさん」, which is exactly the word the
+   * character is listening for). Keep the recent audio and replay it when the utterance opens.
+   */
+  private preroll: Float32Array[] = [];
+  private prerollSamples = 0;
   readonly sessionStats = { turns: 0, prematureEndpoints: 0, bargeIns: 0 };
 
   constructor(private readonly deps: SessionDeps) {
@@ -180,6 +191,7 @@ export class ConversationSession {
   private onAudioStreaming(samples: Float32Array, at: number): void {
     const stt = this.streamingStt!;
     if (this.utterance || this.deps.vad.speaking) stt.pushAudio(samples);
+    else this.rememberPreroll(samples);
     for (const ev of this.deps.vad.process(samples, at)) {
       if (ev.type === "speech_start") {
         if (this.state === "speaking" || this.state === "thinking") {
@@ -203,6 +215,7 @@ export class ConversationSession {
           this.utterance = { seq: ++this.utteranceSeq, startedAt: at, segments: [], segmentEndAt: at, timer: null, prefix: this.pendingPrefix };
           this.pendingPrefix = "";
           stt.start(this.language);
+          this.flushPreroll(stt);
           this.state = "listening";
           this.deps.send({ type: "user_speech_started" });
         }
@@ -215,6 +228,21 @@ export class ConversationSession {
         void this.evaluateEndpoint(u);
       }
     }
+  }
+
+  /** Ring buffer of the audio just before the VAD made up its mind (PREROLL_MS). */
+  private rememberPreroll(samples: Float32Array): void {
+    this.preroll.push(samples);
+    this.prerollSamples += samples.length;
+    while (this.prerollSamples > PREROLL_SAMPLES && this.preroll.length > 1) {
+      this.prerollSamples -= this.preroll.shift()!.length;
+    }
+  }
+
+  private flushPreroll(stt: { pushAudio(s: Float32Array): void }): void {
+    for (const chunk of this.preroll) stt.pushAudio(chunk);
+    this.preroll = [];
+    this.prerollSamples = 0;
   }
 
   private async evaluateEndpoint(u: Utterance): Promise<void> {
@@ -344,6 +372,8 @@ export class ConversationSession {
     this.abort = null;
     if (this.utterance?.timer) clearTimeout(this.utterance.timer);
     this.utterance = null;
+    this.preroll = [];
+    this.prerollSamples = 0;
     this.streamingStt?.reset();
     if (this.strictLocal) {
       this.deps.onStrictLocal?.(false); // exactly once per strict session (stop + ws close both call stop())
