@@ -28,7 +28,8 @@
     "reality:human": "node scripts/reality/human.mjs",
     "contrast": "node scripts/contrast-audit.mjs",
     "reality:meet:setup": "scripts/reality/meet-setup.sh start",
-    "reality:meet:stop": "scripts/reality/meet-setup.sh stop"
+    "reality:meet:stop": "scripts/reality/meet-setup.sh stop",
+    "reality:converse": "node scripts/reality/converse.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
