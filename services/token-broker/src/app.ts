@@ -235,7 +235,7 @@ export function createApp(deps: AppDeps): Hono {
   // Signed session lifecycle (Round 3 Gate 5)
   app.post("/api/meeting/session/activate", async (c) => {
     const body = await json<{ token?: string }>(c);
-    const r = activateBotPage(sessions, body.token, relay);
+    const r = activateBotPage(env, sessions, body.token, relay);
     return c.json(r.body, r.status as 200);
   });
   app.get("/api/meeting/session/:id", (c) => {

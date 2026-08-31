@@ -415,6 +415,7 @@ export class ConversationSession {
     if (abort.signal.aborted || genId !== this.activeGeneration) return;
     const finalText = stripMarkdown(full).trim();
     if (finalText) this.history.push({ role: "assistant", content: finalText });
+    this.deps.log?.(`reply "${finalText}"${spoke ? " (spoken)" : " (no audio)"}`);
     this.sendGen(genId, { type: "assistant_transcript", text: finalText, final: true });
     if (spoke) this.sendGen(genId, { type: "assistant_speech_ended" });
     this.reportMetrics(turn, genId);

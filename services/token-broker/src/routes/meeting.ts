@@ -78,6 +78,27 @@ function outputMediaPayload(env: BrokerEnv, token: string): Record<string, unkno
   return { camera: { kind: "webpage", config: { url: botPageUrl(env, token) } } };
 }
 
+/**
+ * Recall's streaming transcription only offers low latency for English; any other language_code is
+ * rejected with `invalid_request_data`. Our own STT runs locally on the raw audio anyway, so the
+ * Recall transcript is the record, not the conversation path — accuracy is the right trade here.
+ */
+/**
+ * Output Media bot variant. Live2D draws through WebGL, and Recall's default `web` variant — like
+ * `web_4_core` — has no WebGL at all (docs: Output Media → bot variants), so the canvas exists but paints
+ * nothing and the tile stays black. `web_gpu` is the only variant that supports it. It costs more per hour,
+ * hence the env override for deployments that use a non-WebGL renderer.
+ */
+export function botVariant(env: BrokerEnv): Record<string, string> {
+  const v = env.RECALL_BOT_VARIANT ?? "web_gpu";
+  return { zoom: v, google_meet: v, microsoft_teams: v };
+}
+
+export function streamingTranscript(language: string): Record<string, unknown> {
+  const mode = language === "en" ? "prioritize_low_latency" : "prioritize_accuracy";
+  return { recallai_streaming: { mode, language_code: language } };
+}
+
 export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetchImpl: typeof fetch, deps: MeetingDeps): Promise<RouteResult<Record<string, unknown>>> {
   if (!env.RECALL_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_RECALL_KEY" } };
   if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
@@ -117,12 +138,13 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
     bot_name: body.botName ?? "Yui",
     recording_config: {
       audio_mixed_raw: {},
-      transcript: { provider: { recallai_streaming: { mode: "prioritize_low_latency", language_code: language } } },
+      transcript: { provider: streamingTranscript(language) },
       realtime_endpoints: [{ type: "websocket", url: wsUrl, events: RECALL_EVENTS }],
       include_bot_in_recording: { audio: true },
     },
     metadata: { app: "rcai", mode, sessionId: session.id, ...(record ? { meetingRecordId: record.id } : {}) },
   };
+  if (mode === "output_media") payload.variant = botVariant(env);
   if (body.joinAt) payload.join_at = body.joinAt;
   let pageUrl: string | undefined;
   let botPageTokenExpiresAt: number | undefined;
@@ -166,7 +188,7 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
 }
 
 /** Bot page → broker: proves the page was loaded from a URL we issued; burns the nonce; returns the render config. */
-export function activateBotPage(sessions: MeetingSessionRegistry, token: string | undefined, relay: RelayRegistry): RouteResult<Record<string, unknown>> {
+export function activateBotPage(env: BrokerEnv, sessions: MeetingSessionRegistry, token: string | undefined, relay: RelayRegistry): RouteResult<Record<string, unknown>> {
   if (!token) return { status: 401, body: { error: "token required" } };
   const r = sessions.activateBotPage(token);
   if (!r.ok) return { status: 401, body: { error: "invalid_bot_page_token", detail: r.reason } };
@@ -184,6 +206,9 @@ export function activateBotPage(sessions: MeetingSessionRegistry, token: string 
       clientWsUrl: `${relay.clientUrl(s.botId)}?token=${encodeURIComponent(clientToken)}`,
       clientToken,
       activations: s.activations,
+      // The page runs inside the bot, where loopback is blocked: it must be told the public origins.
+      brokerUrl: env.RECALL_PUBLIC_URL ?? null,
+      agentUrl: env.RECALL_AGENT_PUBLIC_URL ?? null,
     },
   };
 }

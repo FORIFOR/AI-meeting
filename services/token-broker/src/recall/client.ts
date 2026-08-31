@@ -27,7 +27,7 @@ export class RecallApiError extends Error {
     /** Response body, truncated. Never contains our credentials (Recall echoes request fields only). */
     readonly detail: string,
   ) {
-    super(`recall ${status} ${path}`);
+    super(detail ? `recall ${status} ${path} ${detail}` : `recall ${status} ${path}`);
     this.name = "RecallApiError";
   }
 }

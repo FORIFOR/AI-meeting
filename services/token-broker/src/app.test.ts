@@ -179,7 +179,7 @@ describe("meeting (Recall) routes", () => {
     expect(body.meeting_url).toBe("https://meet.google.com/abc-defg-hij");
     expect(body.bot_name).toBe("Yui");
     expect(body.recording_config.audio_mixed_raw).toEqual({});
-    expect(body.recording_config.transcript.provider.recallai_streaming).toEqual({ mode: "prioritize_low_latency", language_code: "ja" });
+    expect(body.recording_config.transcript.provider.recallai_streaming).toEqual({ mode: "prioritize_accuracy", language_code: "ja" });
     const ep = body.recording_config.realtime_endpoints[0];
     expect(ep.type).toBe("websocket");
     expect(ep.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/recall\/relay\/[A-Za-z0-9_%.-]+\/$/);

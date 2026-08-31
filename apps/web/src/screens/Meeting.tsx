@@ -37,8 +37,19 @@ export function Meeting(p: MeetingProps) {
   const [avatarState, setAvatarState] = useState<AvatarState>("IDLE");
   const [muted, setMuted] = useState(false);
   const [activation, setActivation] = useState<{ sessionId: string; botId: string } | null>(null);
+  /** Guards the single-use activation against StrictMode's double effect invocation. */
+  const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
   const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string } | null>(null);
+  /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
+  const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
+  /**
+   * What the bot page can actually reach. The operator's health poll runs against loopback URLs the bot
+   * process blocks, so inside the bot every provider reads "unavailable" and routing falls back to a cloud
+   * engine that has no key — the character then renders but never speaks (BLOCKED_BY_OPENAI_KEY). Probing
+   * the public origins gives routing the truth: local is up, the cloud providers are not configured.
+   */
+  const [botAvailability, setBotAvailability] = useState<Availability | null>(null);
   const [lines, setLines] = useState<MeetingTranscriptLine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -61,7 +72,7 @@ export function Meeting(p: MeetingProps) {
     try {
       const c = new MeetingSessionController({
         settings: p.settings,
-        availability: p.availability ?? { openai: false, google: false, local: false },
+        availability: (isBot ? botAvailability : p.availability) ?? { openai: false, google: false, local: false },
         persona,
         character,
         meetingUrl: url,
@@ -69,7 +80,8 @@ export function Meeting(p: MeetingProps) {
         proactivity: (isBot ? (botConfig?.proactivity as Proactivity | undefined) : undefined) ?? proactivity,
         role,
         botToken: isBot ? p.botParams?.token : undefined,
-        botBrokerUrl: isBot ? p.botParams?.brokerUrl : undefined,
+        botBrokerUrl: isBot ? (botOrigins.brokerUrl ?? p.botParams?.brokerUrl) : undefined,
+        botAgentUrl: isBot ? botOrigins.agentUrl : undefined,
         botActivation: isBot && activation ? activation : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
@@ -103,27 +115,36 @@ export function Meeting(p: MeetingProps) {
   };
 
   // Bot page step 1: activate the signed single-use token with the broker; the render config comes back server-side.
+  // The token is single-use, so this must run EXACTLY once per page load. A ref guard — not the effect body —
+  // enforces that: React StrictMode invokes the effect twice in development, and a second activation of the same
+  // nonce is (correctly) refused as `replayed`, which would strand the bot page on an error it can never leave.
+  // For the same reason the in-flight result is applied even after cleanup: discarding it would lose the one
+  // activation the broker granted.
   useEffect(() => {
-    if (!isBot || activation || error) return;
+    if (!isBot || activation || error || activating.current) return;
     const token = p.botParams?.token ?? "";
     if (!token) { setError("BOT_PAGE_TOKEN_REQUIRED"); return; }
-    let alive = true;
+    activating.current = true;
     void (async () => {
       try {
         const m = await import("@rcai/connector-recall");
         const act = await m.activateBotPage(p.botParams?.brokerUrl ?? p.settings.brokerUrl, token);
-        if (!alive) return;
         setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine });
+        const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
+        setBotOrigins(origins);
+        if (origins.brokerUrl && origins.agentUrl) {
+          const { probe } = await import("../api/health.js");
+          const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode).catch(() => null);
+          if (h) { setBotAvailability(h.availability); note(`engines · local ${h.availability.local} · openai ${h.availability.openai} · google ${h.availability.google}`); }
+        }
         setActivation({ sessionId: act.sessionId, botId: act.botId });
         note(`activated · session ${act.sessionId.slice(0, 8)} · bot ${act.botId} · activation #${act.activations}`);
       } catch (e) {
-        if (!alive) return;
         const msg = e instanceof Error ? e.message : String(e);
-        setError(msg); // BOT_PAGE_ACTIVATION_401:replayed / expired / revoked → never start
+        setError(msg); // BOT_PAGE_ACTIVATION_401:expired / revoked → never start
         note(`activation refused: ${msg}`);
       }
     })();
-    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBot]);
 

@@ -30,6 +30,12 @@ export interface BotConfigFactory {
    * `null` means the broker cannot arm yet (missing public URLs) — the reservation stays as is.
    */
   arm(event: SchedulableEvent, meetingRecordId?: string): Record<string, unknown> | null;
+  /**
+   * Called once Recall has told us which bot the armed config produced. Binding the session to the bot id is
+   * what makes `POST /bots/:id/output_media/restart` reachable for calendar bots — without it that recovery
+   * path answers `unknown_or_ended_session`, which is exactly when it is needed most.
+   */
+  bind?(sessionId: string, botId: string): void;
 }
 
 export interface CalendarSyncDeps {
@@ -174,9 +180,12 @@ export class CalendarSync {
         continue;
       }
       try {
-        await client.scheduleBot(entry.eventId, entry.deduplicationKey, config);
+        const scheduled = await client.scheduleBot(entry.eventId, entry.deduplicationKey, config);
         calendarStore.markArmed(entry.eventId);
-        this.log({ op: "calendar.arm", event: entry.eventId });
+        const sessionId = (config.metadata as { sessionId?: string } | undefined)?.sessionId;
+        const botId = scheduled.bots?.find((b) => b.deduplication_key === entry.deduplicationKey)?.bot_id ?? scheduled.bots?.[0]?.bot_id;
+        if (sessionId && botId) botConfig.bind?.(sessionId, botId);
+        this.log({ op: "calendar.arm", event: entry.eventId, bot: botId ?? null });
         out.push({ eventId: entry.eventId, armed: true });
       } catch (e) {
         this.log({ op: "calendar.arm_failed", event: entry.eventId, error: reason(e) });

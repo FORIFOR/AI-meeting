@@ -1,7 +1,7 @@
 import type { SchedulableEvent } from "@rcai/meeting-core";
 import type { BrokerEnv } from "../env.js";
 import type { MeetingSessionRegistry } from "../meeting-session.js";
-import { RECALL_EVENTS, publicWsBase, type RelayRegistry } from "../routes/meeting.js";
+import { RECALL_EVENTS, botVariant, publicWsBase, streamingTranscript, type RelayRegistry } from "../routes/meeting.js";
 import type { BotConfigFactory } from "./calendarSync.js";
 
 /**
@@ -21,6 +21,10 @@ export function calendarBotConfig(env: BrokerEnv, sessions: MeetingSessionRegist
       return { bot_name: botName };
     },
 
+    bind(sessionId: string, botId: string): void {
+      sessions.bindBot(sessionId, botId);
+    },
+
     arm(event: SchedulableEvent, meetingRecordId?: string): Record<string, unknown> | null {
       const publicUrl = env.RECALL_PUBLIC_URL;
       const botPage = env.RECALL_BOT_PAGE_URL;
@@ -36,13 +40,14 @@ export function calendarBotConfig(env: BrokerEnv, sessions: MeetingSessionRegist
         bot_name: botName,
         recording_config: {
           audio_mixed_raw: {},
-          transcript: { provider: { recallai_streaming: { mode: "prioritize_low_latency", language_code: language } } },
+          transcript: { provider: streamingTranscript(language) },
           realtime_endpoints: [
             { type: "websocket", url: `${publicWsBase(publicUrl)}/api/meeting/recall/relay/${encodeURIComponent(relayToken)}/`, events: RECALL_EVENTS },
           ],
           include_bot_in_recording: { audio: true },
         },
         output_media: { camera: { kind: "webpage", config: { url: pageUrl } } },
+        variant: botVariant(env),
         metadata: {
           app: "rcai",
           mode: "output_media",

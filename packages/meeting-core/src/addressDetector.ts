@@ -49,7 +49,10 @@ export class AddressDetector {
     this.nameRe = new RegExp(alt, "i");
     // 「Yui、」「Yuiさん、」「ねえYui」「Hey Yui,」「Yui!」 at the start; 「…、Yui？」「…, Yui?」 at the end.
     // Either "<greeting> Name" or "Name<punctuation>" — a bare "Name <verb>" ("Yui said …") is narration, not a vocative.
-    this.vocativeStartRe = new RegExp(`^(?:(?:ねえ|ねぇ|なあ|hey|hi|ok|okay|えっと|あの)[\\s,、]*${alt}(?:さん|ちゃん|くん|先生)?\\b|${alt}(?:さん|ちゃん|くん|先生)?[,、。！!？?:：])`, "i");
+    // `\b` is ASCII-only: after a Japanese name (「ゆい」) it never matches, so 「ねえゆい、…」 — the most
+    // natural Japanese vocative — was read as narration. A boundary lookahead works for any script.
+    const boundary = "(?=[\\s,、。！!？?:：]|$)";
+    this.vocativeStartRe = new RegExp(`^(?:(?:ねえ|ねぇ|なあ|hey|hi|ok|okay|えっと|あの)[\\s,、]*${alt}(?:さん|ちゃん|くん|先生)?${boundary}|${alt}(?:さん|ちゃん|くん|先生)?[,、。！!？?:：])`, "i");
     this.vocativeEndRe = new RegExp(`[,、\\s]${alt}(?:さん|ちゃん)?[\\s。！!？?]*$`, "i");
     const ai = (opts.aiVocatives ?? DEFAULT_AI_VOCATIVES).map(escapeRe);
     this.aiRe = new RegExp(`(?:^|[\\s,、])(?:${ai.join("|")})(?:さん|ちゃん)?(?:[\\s,、。！!？?:：]|$)`, "i");

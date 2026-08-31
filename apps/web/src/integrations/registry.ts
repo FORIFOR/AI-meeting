@@ -133,6 +133,8 @@ export interface CharacterEntry {
   baseUrl: string;
   license?: string;
   defaultPersona?: string;
+  /** Alternative spellings the character answers to (Japanese readings of a romaji name). */
+  aliases?: string[];
 }
 
 export async function loadCharacterEntries(): Promise<{ entries: CharacterEntry[]; error?: string }> {

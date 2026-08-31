@@ -12,12 +12,19 @@ export interface CharacterEntry {
   defaultPersona: string;
   /** Short UI description. */
   description: string;
+  /**
+   * Other spellings the character answers to. Japanese speech recognition transcribes a romaji name
+   * phonetically (「ゆい」, not "Yui"), so without these the character never hears itself being addressed
+   * in a Japanese meeting and stays in OBSERVING forever.
+   */
+  aliases?: string[];
 }
 
 export const characters: CharacterEntry[] = [
   {
     id: "yui",
     name: "Yui",
+    aliases: ["ゆい", "ユイ", "結衣"],
     renderer: "live2d",
     baseUrl: "/characters/yui",
     license: "Live2D sample 'Hiyori' — Live2D Free Material License (dev only)",
@@ -27,6 +34,7 @@ export const characters: CharacterEntry[] = [
   {
     id: "haru",
     name: "Haru",
+    aliases: ["はる", "ハル", "春"],
     renderer: "live2d",
     baseUrl: "/characters/haru",
     license: "Live2D sample 'Haru' — Live2D Free Material License (dev only)",
@@ -36,6 +44,7 @@ export const characters: CharacterEntry[] = [
   {
     id: "kei",
     name: "Kei",
+    aliases: ["けい", "ケイ", "圭"],
     renderer: "live2d",
     baseUrl: "/characters/kei",
     license: "Live2D sample 'Kei_basic' (MotionSync sample) — Live2D Free Material License (dev only)",
@@ -45,6 +54,7 @@ export const characters: CharacterEntry[] = [
   {
     id: "reina",
     name: "Reina",
+    aliases: ["れいな", "レイナ", "礼奈"],
     renderer: "live2d",
     baseUrl: "/characters/reina",
     license: "Live2D sample 'Mao' — Live2D Free Material License (dev only)",

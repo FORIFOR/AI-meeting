@@ -42,6 +42,10 @@ export interface ActivateBotPageResponse {
   clientWsUrl: string;
   clientToken: string;
   activations: number;
+  /** Public broker origin for the bot page (loopback is blocked inside the bot). */
+  brokerUrl?: string | null;
+  /** Public agent origin for the bot page; null when the local stack is not exposed. */
+  agentUrl?: string | null;
 }
 
 export interface BotStatusResponse {

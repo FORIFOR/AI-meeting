@@ -7,6 +7,9 @@ import { ParticipationPolicy, type MeetingEvent, type MeetingSession, type Meeti
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
 import { decide, type Availability, type Settings } from "../state/settings.js";
 
+/** How long the pipeline waits for the AudioContext before mounting the avatar anyway. */
+const AUDIO_START_GRACE_MS = 2500;
+
 export interface MeetingTranscriptLine {
   id: number;
   speaker: string;
@@ -48,6 +51,11 @@ export interface MeetingInit {
   botToken?: string;
   /** bot role: broker public URL peeked from the token (the broker verifies the signature). */
   botBrokerUrl?: string;
+  /**
+   * Public agent origin for a bot page. Recall blocks loopback inside the Output Media process, so the
+   * operator's `ws://localhost:8788` is unreachable there and the character would never speak.
+   */
+  botAgentUrl?: string;
   /** bot role: activation already performed by the screen (tokens are single-use — never activate twice). */
   botActivation?: { sessionId: string; botId: string };
   connectorMode?: "output_media" | "relay";
@@ -86,7 +94,8 @@ export class MeetingSessionController {
 
   constructor(private readonly init: MeetingInit) {
     this.decision = decide(init.settings, init.availability);
-    const names = [init.displayName, init.character.name].filter(Boolean);
+    // Aliases matter in Japanese meetings: STT writes 「ゆい」, never "Yui".
+    const names = [init.displayName, init.character.name, ...(init.character.aliases ?? [])].filter(Boolean);
     this.policy = new ParticipationPolicy({ names, proactivity: init.proactivity });
     this.policy.onTransition((t) => init.handlers.onPolicy(t));
   }
@@ -168,24 +177,38 @@ export class MeetingSessionController {
   // ---- shared pipeline -------------------------------------------------------------------------
   private async startPipeline(o: { micFromMeeting: boolean }): Promise<void> {
     const { settings, persona, character, stage, handlers } = this.init;
+    // A bot page must talk to the public origins, never to the operator's loopback URLs.
+    const brokerUrl = this.init.botBrokerUrl ?? settings.brokerUrl;
+    const agentUrl = this.init.botAgentUrl ?? settings.agentUrl;
     const speaker = new SpeakerOutput();
     this.speaker = speaker;
-    await speaker.resume();
-    await speaker.whenReady();
+    // A meeting bot page is opened by Recall with no user gesture, so Chrome may hold the AudioContext
+    // suspended — and then BOTH `resume()` and the AudioWorklet load stay pending forever. Awaiting them
+    // unconditionally strands the whole pipeline before the avatar is ever mounted (observed in-call:
+    // Live2D never initialised, the tile stayed blank). Give audio a bounded head start, then continue;
+    // the tap attaches on its own as soon as the context is allowed to run.
+    await Promise.race([
+      (async () => {
+        await speaker.resume();
+        await speaker.whenReady();
+      })().catch(() => {}),
+      new Promise<void>((resolve) => setTimeout(resolve, AUDIO_START_GRACE_MS)),
+    ]);
+    void speaker.resume().catch(() => {});
     const runtime = new ConversationRuntime({ sink: speaker, localVad: true });
     this.runtime = runtime;
 
     const def = await this.resolveCharacter(character);
     this.character = def;
     if (stage) {
-      const avatar = await createAvatarProvider(character.renderer, { container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode });
+      const avatar = await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode: settings.privacyMode });
       this.avatar = avatar;
       await avatar.prepare(def);
       const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
       this.avatarRuntime = avatarRuntime;
       avatarRuntime.onStateChange((t) => handlers.onAvatarState?.(t));
       await avatar.start();
-      const planner = new RemoteSemanticPlanner(plannerUrl(this.decision.conversation, { brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode }), 1500);
+      const planner = new RemoteSemanticPlanner(plannerUrl(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode }), 1500);
       const behavior = new BehaviorEngine(avatarRuntime, { planner, mode: persona.mode, baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? "warm_positive", baseEmotionIntensity: 0.25 });
       this.behavior = behavior;
       behavior.start();
@@ -203,7 +226,7 @@ export class MeetingSessionController {
       runtime.attachMicStream(stream);
     }
 
-    const provider = await createConversationProvider(this.decision.conversation, { brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode });
+    const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode });
     const extra = `あなたはオンライン会議に参加している「${this.init.displayName}」です。会議の参加者に名前で呼ばれたときだけ、簡潔に（1〜2文で）答えます。呼ばれていない間は発言しません。`;
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra });
     // Meetings never auto-open: suppress the persona's opening line.

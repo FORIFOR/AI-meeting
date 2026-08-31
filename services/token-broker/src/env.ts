@@ -34,6 +34,14 @@ export interface BrokerEnv {
   RECALL_WEBHOOK_VERIFICATION_SECRET?: string;
   /** Display name of the meeting bot (calendar-scheduled bots reuse it). */
   RECALL_BOT_NAME?: string;
+  /** Output Media bot variant. Defaults to `web_gpu` — the only variant with WebGL, which Live2D needs. */
+  RECALL_BOT_VARIANT?: string;
+  /**
+   * Public URL of services/agent. Recall blocks localhost from the Output Media process, so a bot page
+   * cannot reach the loopback agent the operator UI uses — without this the meeting audio arrives but
+   * never reaches STT/LLM/TTS and the character stays silent.
+   */
+  RECALL_AGENT_PUBLIC_URL?: string;
   /** Language passed to async transcription ("auto" lets Recall detect it). */
   RECALL_TRANSCRIPT_LANGUAGE?: string;
   /** Override the durable store/queue directory (tests). */
