@@ -32,7 +32,8 @@
     "@rcai/provider-local": "workspace:*",
     "@rcai/provider-openai": "workspace:*",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "@rcai/connector-attendee": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

@@ -69,6 +69,30 @@ anonymous participants are **not supported** — stated, not discovered by the c
 | Empty account visible to operations | **PASS** — `/health` → `meeting.creditRefusedAt`. |
 | Auto top-up configured | Operator action (dashboard setting; not an API) |
 
+## Meeting providers
+
+The connector boundary exists so the meeting vendor is a decision, not an architecture. Two are
+implemented; which one is better is a measurement.
+
+| | Recall | Attendee |
+|---|---|---|
+| Character's voice out | Output Media (a web page as the camera) | the same socket the audio arrives on |
+| Avatar (Live2D needs WebGL) | `web_gpu` only, **$1.50/h** | web page as camera — **field unverified**, see below |
+| Base rate | $0.50/h | $0.50/h after 5 free hours |
+| Audio rate | 24 kHz out of the box | 8/16/**24** kHz — 24 matches our TTS, no resampling |
+| Verified here | join, avatar, transcripts, lifecycle, 30-min soaks | create-bot and the audio contract (unit-tested); **never run against a live meeting** |
+
+What is verified for Attendee comes from the API docs and the vendor's own example:
+`POST https://app.attendee.dev/api/v1/bots`, `Authorization: Token <key>`,
+`websocket_settings.audio { url, sample_rate }`, `realtime_audio.mixed` in and
+`realtime_audio.bot_output` out. What is **not** verified is `voice_agent_settings.url` — the field that
+would render the Live2D page as the bot's camera. It is sent only when `ATTENDEE_VOICE_AGENT_PAGE` is
+set, so an unknown field cannot break a join, and the avatar claim stays unproven until a real call.
+
+If Attendee runs the same avatar page without a GPU surcharge, the bot cost falls from ~$150 to ~$50 per
+100 hours. That is worth measuring before topping up Recall — and the free 5 hours cover the 10-minute
+smoke and the 30-minute gate roughly seven times over.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —

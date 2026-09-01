@@ -13,6 +13,8 @@ export class RelayHub {
   private pending = new Map<string, string[]>(); // botId → buffered messages before a client connects (bounded)
   private readonly maxPending = 50;
 
+  private readonly vendors = new Map<string, RelaySocket>();
+
   constructor(private readonly publicClientBase: string, private readonly now: () => number = Date.now) {}
 
   register(token: string): void {
@@ -81,6 +83,24 @@ export class RelayHub {
   }
 
   /**
+   * The vendor's own socket, so a client can talk back to it.
+   *
+   * Recall's realtime endpoint only ever sends; Attendee's is bidirectional — the character's audio goes
+   * back the same way it arrives. Keeping the socket here is what makes one relay serve both.
+   */
+  setVendor(botId: string, sock: RelaySocket | null): void {
+    if (sock) this.vendors.set(botId, sock);
+    else this.vendors.delete(botId);
+  }
+
+  sendToVendor(botId: string, raw: string): boolean {
+    const v = this.vendors.get(botId);
+    if (!v) return false;
+    v.send(raw);
+    return true;
+  }
+
+  /**
    * Push a message we generated (not one Recall sent) to this bot's clients. Bot status arrives by
    * webhook, and the page and the operator UI need it without asking Recall — the alternative is the
    * polling this design exists to remove.
@@ -109,6 +129,7 @@ export class RelayHub {
     }
     this.clients.delete(botId);
     this.pending.delete(botId);
+    this.vendors.delete(botId);
     for (const [tok, b] of this.tokens) if (b === botId) this.tokens.delete(tok);
   }
 }

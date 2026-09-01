@@ -504,3 +504,32 @@ describe("operations: an empty Recall account is visible before a user finds it"
     expect((await (await app.request("/health")).json()).meeting.creditRefusedAt).toBeTypeOf("number");
   });
 });
+
+describe("Attendee provider", () => {
+  it("creates a bot with a bidirectional audio socket at the rate our TTS already produces", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_1", state: "joining" })), calls),
+    });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui" });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ provider: "attendee", botId: "att_1", sampleRate: 24000 });
+    const req = calls.find((c) => c.url.endsWith("/api/v1/bots"))!;
+    expect((req.init!.headers as Record<string, string>).Authorization).toBe("Token ak");
+    const sent = JSON.parse(req.init!.body as string);
+    expect(sent.meeting_url).toBe("https://meet.google.com/abc-defg-hij");
+    expect(sent.websocket_settings.audio.sample_rate).toBe(24000);
+    expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
+    // The unverified avatar field is only sent when a deployment asks for it.
+    expect(sent.voice_agent_settings).toBeUndefined();
+  });
+
+  it("reports a missing key rather than pretending", async () => {
+    const app = createApp({ env: { RECALL_PUBLIC_URL: "https://t.example" } });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij" });
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("BLOCKED_BY_ATTENDEE_KEY");
+  });
+});

@@ -1,0 +1,13 @@
+{
+  "name": "@rcai/connector-attendee",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": {
+    "@rcai/audio-core": "workspace:*",
+    "@rcai/meeting-core": "workspace:*"
+  }
+}

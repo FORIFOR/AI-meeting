@@ -396,6 +396,11 @@ export function createApp(deps: AppDeps): Hono {
 
   // Persisted product output: the meetings the bot attended and their transcripts.
   /** Operational: how much bot time is being spent. Cached; safe to poll from a dashboard. */
+  app.post("/api/meeting/attendee/bots", async (c) => {
+    const { createAttendeeBot } = await import("./routes/attendee.js");
+    const r = await createAttendeeBot(env, await json(c), fetchImpl, { relay, sessions });
+    return c.json(r.body, r.status as 200);
+  });
   app.get("/api/recall/usage", async (c) => {
     const { recallUsage } = await import("./recall/balance.js");
     const u = await recallUsage(env, fetchImpl);

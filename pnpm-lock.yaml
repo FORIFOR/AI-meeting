@@ -65,6 +65,9 @@ importers:
       '@rcai/characters':
         specifier: workspace:*
         version: link:../../characters
+      '@rcai/connector-attendee':
+        specifier: workspace:*
+        version: link:../../connectors/attendee
       '@rcai/connector-recall':
         specifier: workspace:*
         version: link:../../connectors/recall
@@ -209,6 +212,15 @@ importers:
       '@rcai/avatar-core':
         specifier: workspace:*
         version: link:../packages/avatar-core
+
+  connectors/attendee:
+    dependencies:
+      '@rcai/audio-core':
+        specifier: workspace:*
+        version: link:../../packages/audio-core
+      '@rcai/meeting-core':
+        specifier: workspace:*
+        version: link:../../packages/meeting-core
 
   connectors/recall:
     dependencies:

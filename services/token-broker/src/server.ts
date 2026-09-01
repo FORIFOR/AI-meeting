@@ -59,11 +59,20 @@ server.on("upgrade", (req, socket, head) => {
         const s = sessions.byBot(botId);
         if (s) sessions.touch(s.id);
       });
+      relay.setVendor(botId, { send: (d) => ws.readyState === ws.OPEN && ws.send(d), close: () => ws.close() });
       const ping = setInterval(() => ws.ping(), 25_000); // keep tunnels/load balancers from idling out
-      ws.on("close", () => clearInterval(ping));
+      ws.on("close", () => {
+        clearInterval(ping);
+        relay.setVendor(botId, null);
+      });
     } else {
       const { botId, token } = auth;
       const remove = relay.addClient(botId, { send: (d) => ws.readyState === ws.OPEN && ws.send(d), close: () => ws.close() });
+      // Client → vendor: Attendee takes the character's audio back on the same socket it sends on.
+      ws.on("message", (data) => {
+        if (!sessions.verify(token, { role: ["client", "bot_page"], botId }).ok) return;
+        relay.sendToVendor(botId, data.toString());
+      });
       const guard = setInterval(() => {
         if (!sessions.verify(token, { role: ["client", "bot_page"], botId }).ok) ws.close(1008, "session expired or revoked");
       }, 10_000);

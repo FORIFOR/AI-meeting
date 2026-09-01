@@ -13,8 +13,9 @@ export type UpgradeAuth =
  */
 export function authorizeWebSocketUpgrade(rawUrl: string, sessions: MeetingSessionRegistry, relay: Pick<RelayHub, "botIdForToken" | "isValidToken">, now?: number): UpgradeAuth {
   const url = new URL(rawUrl, "http://localhost");
-  const relayMatch = url.pathname.match(/^\/api\/meeting\/recall\/relay\/([^/]+)\/?$/);
-  const clientMatch = url.pathname.match(/^\/api\/meeting\/recall\/client\/([^/]+)$/);
+  // One relay, two vendors: Recall pushes on its realtime endpoint, Attendee streams audio both ways.
+  const relayMatch = url.pathname.match(/^\/api\/meeting\/(?:recall\/relay|attendee\/audio)\/([^/]+)\/?$/);
+  const clientMatch = url.pathname.match(/^\/api\/meeting\/(?:recall|attendee)\/client\/([^/]+)$/);
   if (relayMatch) {
     const token = decodeURIComponent(relayMatch[1]!);
     const v = sessions.verify(token, { role: "relay", now });

@@ -176,13 +176,20 @@ export interface MeetingFactoryOptions {
 }
 
 /** Only Recall is implemented today; zoom_native / google_native are reserved ids on the contract. */
-export async function createMeetingConnector(id: "recall" | "zoom_native" | "google_native", o: MeetingFactoryOptions): Promise<MeetingConnectorLike> {
+export async function createMeetingConnector(id: "recall" | "attendee" | "zoom_native" | "google_native", o: MeetingFactoryOptions): Promise<MeetingConnectorLike> {
   if (o.privacyMode === "strict_local") throw new Error("BLOCKED_BY_STRICT_LOCAL: meeting connectors send audio to a cloud meeting service");
   switch (id) {
     case "recall": {
       const mod = await import("@rcai/connector-recall");
       const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string; mode?: "output_media" | "relay"; botPageQuery?: Record<string, string> }>>(mod, "RecallConnector", "BLOCKED_BY_CONNECTOR_RECALL");
       return new C({ brokerUrl: o.brokerUrl, mode: o.mode, botPageQuery: o.botPageQuery });
+    }
+    case "attendee": {
+      // Same contract, different economics: Attendee streams the character's audio back on the socket it
+      // sends on, so there is no clip encoding and no WebGL surcharge to pay for the avatar.
+      const mod = await import("@rcai/connector-attendee");
+      const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string }>>(mod, "AttendeeConnector", "BLOCKED_BY_CONNECTOR_ATTENDEE");
+      return new C({ brokerUrl: o.brokerUrl });
     }
     default:
       throw new Error(`BLOCKED_BY_CONNECTOR_${id.toUpperCase()}: not implemented`);
