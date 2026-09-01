@@ -13,6 +13,7 @@ import { SherpaOnlineSTT } from "./adapters/sherpa-online.js";
 import { EnergyVADAdapter, SileroVAD, type VADAdapter } from "./adapters/vad.js";
 import { OpenAICompatibleLLM } from "./adapters/llm.js";
 import { AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, type TTSAdapter } from "./adapters/tts.js";
+import { SmartTurnV3 } from "./adapters/turn.js";
 import { ConversationSession } from "./session.js";
 import { pcm16BytesToFloat32, type ClientMessage } from "./protocol.js";
 import { planWithLocalLlm } from "./planner.js";
@@ -28,6 +29,8 @@ export interface AgentRuntime {
   /** Round 3: effective STT mode after fallbacks ("baseline" keeps the Gate 6 path byte-for-byte). */
   sttMode: "baseline" | "incremental" | "online";
   createStreamingStt: (() => StreamingSTT) | null;
+  /** Acoustic turn-end model; null when the model has not been fetched or LOCAL_TURN=off. */
+  turn: SmartTurnV3 | null;
   /** Stronger recogniser used once per turn on the committed utterance (null when unavailable/disabled). */
   finalStt: STTAdapter | null;
 }
@@ -85,6 +88,18 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
   }
   if (sttMode !== "baseline" && !stt.ready) sttMode = "baseline";
   const pauseSec = cfg.pauseMinSilenceMs / 1000;
+  /**
+   * Acoustic turn-end. Loaded once and shared: the model is 8 MB and stateless, and a per-session copy
+   * would cost a second of load time at the worst possible moment.
+   */
+  let turn: SmartTurnV3 | null = null;
+  if (cfg.turn !== "off" && cfg.smartTurnModel) {
+    const t = new SmartTurnV3(cfg.smartTurnModel);
+    await t.init();
+    if (t.ready) turn = t;
+    else console.warn("[agent] BLOCKED_BY_SMART_TURN:", t.initError ?? "model did not load", "— endpointing stays silence + text only");
+  }
+
   const createStreamingStt: AgentRuntime["createStreamingStt"] =
     sttMode === "online" && online ? () => online!.clone() : sttMode === "incremental" ? () => new IncrementalOfflineSTT(stt, { intervalMs: cfg.sttIncrementalIntervalMs }) : null;
   return {
@@ -96,6 +111,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
     sttMode,
     createStreamingStt,
     finalStt,
+    turn,
     createVad: () =>
       probe.available
         ? new SileroVAD(cfg.sileroVadModel, { minSilenceSec: sttMode === "baseline" ? cfg.vadMinSilenceMs / 1000 : pauseSec })
@@ -139,6 +155,7 @@ export function createApp(rt: AgentRuntime): Hono {
       stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
       llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl },
       tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [] },
+      turn: { engine: rt.turn?.engine ?? null, ready: !!rt.turn?.ready },
       vad: { engine: rt.vadEngine },
     }),
   );
@@ -182,6 +199,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
       vad: rt.createVad(),
       llm: rt.llm,
       tts: rt.tts,
+      turn: rt.turn ?? undefined,
       send: (msg) => ws.readyState === ws.OPEN && ws.send(JSON.stringify(msg)),
       sendAudio: (frame) => ws.readyState === ws.OPEN && ws.send(frame, { binary: true }),
       nonLoopbackEndpoints: () => nonLoopbackEndpoints(rt.cfg),

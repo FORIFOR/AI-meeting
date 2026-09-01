@@ -66,6 +66,10 @@ export interface EndpointPolicyOptions {
   unknownSilenceMs?: number;
   /** Silence required when the text is clearly unfinished (ms). */
   incompleteSilenceMs?: number;
+  /** Below this, the acoustic model is saying "still talking" and the wait is extended. Default 0.3. */
+  acousticIncompleteBelow?: number;
+  /** Extra silence required while the acoustic model says the turn is unfinished (ms). Default 500. */
+  acousticHoldMs?: number;
   /** Hard cap: always end after this much silence (ms). */
   maxSilenceMs?: number;
   /** Adaptive offset added after a premature endpoint (ms), its cap, and the per-clean-turn decay. */
@@ -85,6 +89,16 @@ export interface EndpointInput {
   text: string;
   /** The tail of the transcript did not change between the last two decodes. */
   stable: boolean;
+  /**
+   * Acoustic turn-completeness, 0..1, from Smart Turn v3 — absent when the model is not loaded.
+   *
+   * It is only ever allowed to make the agent wait longer. Measured on a real meeting recording the
+   * model separates end-of-utterance from mid-utterance in the right direction but with low absolute
+   * values on far-field audio, so treating it as authority to cut early would trade a patient agent
+   * for one that interrupts. Used as a veto, a mis-calibrated model costs a little latency and
+   * nothing else.
+   */
+  acoustic?: number;
 }
 
 export interface EndpointDecision {
@@ -114,6 +128,8 @@ export class EndpointPolicy {
       decayMs: opts.decayMs ?? 20,
       decayAfterCleanTurns: opts.decayAfterCleanTurns ?? 3,
       language: opts.language ?? "ja",
+      acousticIncompleteBelow: opts.acousticIncompleteBelow ?? 0.3,
+      acousticHoldMs: opts.acousticHoldMs ?? 500,
     };
   }
 
@@ -142,7 +158,18 @@ export class EndpointPolicy {
   evaluate(input: EndpointInput): EndpointDecision {
     if (input.speaking) return { decision: "continue", reason: "speaking", waitMs: 0, requiredSilenceMs: 0, completeness: 0 };
     const req = this.requiredSilence(input.text, input.stable);
-    if (input.silenceMs >= this.o.maxSilenceMs) return { decision: "endpoint", reason: "max_silence", waitMs: 0, requiredSilenceMs: this.o.maxSilenceMs, completeness: req.completeness };
+    /**
+     * The acoustic model only ever buys time. 「えーっと、それは……」 is a complete-looking phrase with
+     * a pause in it, and text alone reads it as a finished turn — this is the case the model exists for.
+     * It cannot shorten a wait, so a wrong reading costs latency, never an interruption.
+     */
+    const holding = typeof input.acoustic === "number" && input.acoustic < this.o.acousticIncompleteBelow;
+    if (holding) {
+      req.ms = Math.min(this.o.maxSilenceMs + this.o.acousticHoldMs, req.ms + this.o.acousticHoldMs);
+      req.reason = `${req.reason}+acoustic_incomplete`;
+    }
+    const hardCap = this.o.maxSilenceMs + (holding ? this.o.acousticHoldMs : 0);
+    if (input.silenceMs >= hardCap) return { decision: "endpoint", reason: "max_silence", waitMs: 0, requiredSilenceMs: hardCap, completeness: req.completeness };
     if (input.silenceMs >= req.ms) return { decision: "endpoint", reason: req.reason, waitMs: 0, requiredSilenceMs: req.ms, completeness: req.completeness };
     const wait = Math.max(10, req.ms - input.silenceMs);
     const soft = req.completeness >= 0.8 && input.silenceMs >= req.ms * 0.6;

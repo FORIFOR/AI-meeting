@@ -14,18 +14,20 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@rcai/audio-core": "workspace:*",
-    "@rcai/conversation-core": "workspace:*",
-    "@rcai/provider-core": "workspace:*",
-    "@rcai/evaluation": "workspace:*",
-    "@rcai/behavior-engine": "workspace:*",
-    "hono": "4.13.5",
     "@hono/node-server": "latest",
-    "ws": "8.21.3",
-    "sherpa-onnx-node": "latest"
+    "@huggingface/transformers": "^4.2.0",
+    "@rcai/audio-core": "workspace:*",
+    "@rcai/behavior-engine": "workspace:*",
+    "@rcai/conversation-core": "workspace:*",
+    "@rcai/evaluation": "workspace:*",
+    "@rcai/provider-core": "workspace:*",
+    "hono": "4.13.5",
+    "onnxruntime-node": "^1.29.0",
+    "sherpa-onnx-node": "latest",
+    "ws": "8.21.3"
   },
   "devDependencies": {
-    "tsx": "latest",
-    "@types/ws": "latest"
+    "@types/ws": "latest",
+    "tsx": "latest"
   }
 }

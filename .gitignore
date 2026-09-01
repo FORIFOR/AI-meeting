@@ -25,3 +25,4 @@ docs/reports/telemetry/*.jsonl
 services/token-broker/data/
 vendor/mediapipe
 apps/web/public/mediapipe
+vendor/smart-turn

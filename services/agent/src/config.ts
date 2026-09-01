@@ -18,6 +18,10 @@ export interface AgentConfig {
   sayVoice: string;
   /** AVSpeechSynthesisVoice identifier for the resident daemon (tools/tts-daemon). */
   avspeechVoice: string;
+  /** Acoustic turn-end model; null when it has not been fetched (scripts/fetch-smart-turn.sh). */
+  smartTurnModel: string | null;
+  /** "smart" uses the model when it is present; "off" is silence-only endpointing. */
+  turn: "smart" | "off";
   /** Path to tools/tts-daemon/bin/rcai-tts-daemon (null when not built). */
   ttsDaemonPath: string | null;
   /** Silero VAD end-of-speech silence (ms) in baseline mode. Lower = faster turn end, more risk of splitting. */
@@ -72,6 +76,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",
     avspeechVoice: env.AVSPEECH_VOICE ?? "com.apple.voice.compact.ja-JP.Kyoko",
+    /** Acoustic turn-end model (Pipecat Smart Turn v3). Absent ⇒ silence-only endpointing. */
+    smartTurnModel:
+      env.SMART_TURN_MODEL ??
+      firstExisting([
+        path.resolve(process.cwd(), "../../vendor/smart-turn/smart-turn-v3.0.onnx"),
+        path.resolve(process.cwd(), "vendor/smart-turn/smart-turn-v3.0.onnx"),
+        path.join(HOME, "Projects/AI-meeting/vendor/smart-turn/smart-turn-v3.0.onnx"),
+      ]),
+    turn: (env.LOCAL_TURN as "smart" | "off") ?? "smart",
     ttsDaemonPath:
       env.RCAI_TTS_DAEMON ??
       firstExisting([

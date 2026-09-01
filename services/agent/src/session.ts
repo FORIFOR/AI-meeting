@@ -44,6 +44,8 @@ export interface SessionDeps {
   streamingStt?(): StreamingSTT;
   /** Endpoint policy options; the policy is enabled only when `streamingStt` is provided. */
   endpointing?: EndpointPolicyOptions;
+  /** Acoustic turn-end model. Absent ⇒ endpointing is silence + text only. */
+  turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
   prematureWindowMs?: number;
   /**
@@ -85,6 +87,9 @@ interface Utterance {
   seq: number;
   startedAt: number;
   segments: Float32Array[];
+  /** Last acoustic turn-completeness for this utterance, and when it was measured. */
+  acoustic?: number;
+  acousticAt?: number;
   /** Wall-clock end of the last VAD segment (pause start). */
   segmentEndAt: number;
   /** Timer that re-evaluates the endpoint as silence grows. */
@@ -288,7 +293,13 @@ export class ConversationSession {
     const stable = stt.isStable;
     const text = (u.prefix ? `${u.prefix} ` : "") + snap.text;
     const silenceMs = this.clock() - u.segmentEndAt;
-    const d = policy.evaluate({ speaking: this.deps.vad.speaking, silenceMs, text, stable });
+    /**
+     * Ask the acoustic model only once we are close to ending: it costs tens of milliseconds, and its
+     * answer matters only at the moment silence alone would have ended the turn.
+     */
+    const acoustic = silenceMs >= 200 ? await this.acousticCompleteness(u) : undefined;
+    if (this.utterance !== u) return;
+    const d = policy.evaluate({ speaking: this.deps.vad.speaking, silenceMs, text, stable, acoustic });
     this.deps.log?.(`endpoint? silence=${silenceMs}ms stt=${sttMs}ms reused=${snap.reused ? 1 : 0} "${snap.text.slice(-12)}" → ${d.decision}/${d.reason} need=${d.requiredSilenceMs}`);
     if (d.decision === "endpoint") {
       void this.commitTurn(u, text, { reason: d.reason, requiredSilenceMs: d.requiredSilenceMs, sttMs, reused: Boolean(snap.reused) });
@@ -298,10 +309,34 @@ export class ConversationSession {
       u.timer = null;
       if (this.utterance !== u) return;
       const silence = this.clock() - u.segmentEndAt;
-      const again = policy.evaluate({ speaking: this.deps.vad.speaking, silenceMs: silence, text, stable: true });
+      const again = policy.evaluate({ speaking: this.deps.vad.speaking, silenceMs: silence, text, stable: true, acoustic });
       if (again.decision === "endpoint") void this.commitTurn(u, text, { reason: again.reason, requiredSilenceMs: again.requiredSilenceMs, sttMs: 0, reused: true });
       else void this.evaluateEndpoint(u); // still waiting: re-evaluate later (max_silence is the hard cap)
     }, d.waitMs);
+  }
+
+  /**
+   * The acoustic view of "have they finished", over this utterance's own audio.
+   *
+   * Cached per evaluation round rather than per call: at 8 s of context the answer does not change
+   * between two checks 100 ms apart, and the model is the expensive part of the loop.
+   */
+  private async acousticCompleteness(u: Utterance): Promise<number | undefined> {
+    const turn = this.deps.turn;
+    if (!turn?.ready || !u.segments.length) return undefined;
+    if (u.acousticAt !== undefined && this.clock() - u.acousticAt < 400) return u.acoustic;
+    let total = 0;
+    for (const s of u.segments) total += s.length;
+    const audio = new Float32Array(total);
+    let off = 0;
+    for (const s of u.segments) {
+      audio.set(s, off);
+      off += s.length;
+    }
+    const r = await turn.predict(audio);
+    u.acoustic = r?.probability;
+    u.acousticAt = this.clock();
+    return u.acoustic;
   }
 
   /**

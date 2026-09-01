@@ -133,3 +133,34 @@ describe("IncrementalOfflineSTT", () => {
     expect(commonPrefix("abc", "xyz")).toBe("");
   });
 });
+
+describe("acoustic turn completeness", () => {
+  const p = () => new EndpointPolicy({ language: "ja" });
+
+  it("waits longer when the model says the person is still talking", () => {
+    const withoutModel = p().evaluate({ speaking: false, silenceMs: 400, text: "それは", stable: true });
+    const withModel = p().evaluate({ speaking: false, silenceMs: 400, text: "それは", stable: true, acoustic: 0.05 });
+    expect(withModel.requiredSilenceMs).toBeGreaterThan(withoutModel.requiredSilenceMs);
+    expect(withModel.reason).toMatch(/acoustic_incomplete/);
+  });
+
+  it("cannot make the agent cut in earlier than it would have", () => {
+    for (const acoustic of [0, 0.2, 0.5, 0.99]) {
+      const base = p().evaluate({ speaking: false, silenceMs: 100, text: "どう思う？", stable: true });
+      const withModel = p().evaluate({ speaking: false, silenceMs: 100, text: "どう思う？", stable: true, acoustic });
+      expect(withModel.requiredSilenceMs).toBeGreaterThanOrEqual(base.requiredSilenceMs);
+    }
+  });
+
+  it("a confident model still cannot hold the turn forever", () => {
+    const d = p().evaluate({ speaking: false, silenceMs: 5000, text: "それは", stable: true, acoustic: 0 });
+    expect(d.decision).toBe("endpoint");
+    expect(d.reason).toBe("max_silence");
+  });
+
+  it("changes nothing when the model is absent", () => {
+    const a = p().evaluate({ speaking: false, silenceMs: 400, text: "どう思う？", stable: true });
+    const b = p().evaluate({ speaking: false, silenceMs: 400, text: "どう思う？", stable: true, acoustic: undefined });
+    expect(b).toEqual(a);
+  });
+});
