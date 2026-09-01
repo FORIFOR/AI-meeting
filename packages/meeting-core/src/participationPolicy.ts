@@ -7,7 +7,20 @@ import { AddressDetector, type AddressDetection } from "./addressDetector.js";
  */
 export type ParticipationState = "OBSERVING" | "LISTENING" | "ADDRESSED" | "RESPONDING";
 
-export type Proactivity = "addressed_only" | "invited" | "active";
+/**
+ * How much the character needs before it speaks.
+ *
+ *   addressed_only  its name, used as a vocative or with a request
+ *   invited         also when the floor is opened to anyone (「誰か意見ある？」)
+ *   active          also a question nobody answered, once the room falls quiet
+ *   open            also ordinary conversation — it joins in without being called
+ *
+ * `open` is a different social contract, not a louder `active`: the character takes a turn in a
+ * conversation that was not directed at it. Companion calls want it; a meeting of colleagues usually
+ * does not. The cooldown and the consecutive cap still hold, and it still waits for the room to go
+ * quiet, so it takes turns rather than talking over people.
+ */
+export type Proactivity = "addressed_only" | "invited" | "active" | "open";
 
 export interface ParticipationPolicyOptions {
   names: string[];
@@ -20,6 +33,11 @@ export interface ParticipationPolicyOptions {
   silenceGapMs?: number;
   /** In "active" mode, respond to any question once the room has been silent this long (ms). Default 1800. */
   activeSilenceMs?: number;
+  /**
+   * In "open" mode, an utterance shorter than this many characters is treated as a backchannel
+   * (「うん」「はい」「Yeah.」) and does not earn a turn. Default 6.
+   */
+  openMinChars?: number;
   detector?: AddressDetector;
   /** Names that identify the character itself (its own transcript is ignored). */
   selfNames?: string[];
@@ -60,6 +78,7 @@ export class ParticipationPolicy {
       maxConsecutiveResponses: options.maxConsecutiveResponses ?? 2,
       silenceGapMs: options.silenceGapMs ?? 2500,
       activeSilenceMs: options.activeSilenceMs ?? 1800,
+      openMinChars: options.openMinChars ?? 6,
       selfNames: options.selfNames ?? options.names,
     };
     this.detector = options.detector ?? new AddressDetector({ names: options.names });
@@ -116,6 +135,14 @@ export class ParticipationPolicy {
     if (this.opts.proactivity === "active" && !explicitly && !inCooldown && !capped && /[？?]\s*$|ですか|ますか|でしょうか/.test(seg.text)) {
       this.pendingQuestion = { text: seg.text, at: now };
     }
+    /**
+     * "open": ordinary conversation earns a turn too. Held as a pending turn rather than taken here,
+     * so the character still waits for the room to go quiet instead of answering into someone's
+     * sentence — the difference between joining a conversation and interrupting one.
+     */
+    if (this.opts.proactivity === "open" && !explicitly && !inCooldown && !capped && seg.text.trim().length >= this.opts.openMinChars) {
+      this.pendingQuestion = { text: seg.text, at: now };
+    }
     return d;
   }
 
@@ -128,10 +155,17 @@ export class ParticipationPolicy {
   /** Time-based transitions; call periodically. */
   tick(now: number): void {
     if (this._state === "LISTENING" && now - this.lastSpeechAt > this.opts.silenceGapMs) {
-      if (this.pendingQuestion && this.opts.proactivity === "active" && now - this.pendingQuestion.at >= this.opts.activeSilenceMs) {
-        this.addressedBy = { text: this.pendingQuestion.text, detection: { addressed: false, invited: true, confidence: 0.5, reason: "unanswered question (active)" } };
+      const proactive = this.opts.proactivity === "active" || this.opts.proactivity === "open";
+      const inCooldown = now - this.lastResponseEndAt < this.opts.cooldownMs;
+      const capped = this.consecutive >= this.opts.maxConsecutiveResponses;
+      if (this.pendingQuestion && proactive && !inCooldown && !capped && now - this.pendingQuestion.at >= this.opts.activeSilenceMs) {
+        const open = this.opts.proactivity === "open";
+        this.addressedBy = {
+          text: this.pendingQuestion.text,
+          detection: { addressed: false, invited: true, confidence: 0.5, reason: open ? "joined the conversation (open)" : "unanswered question (active)" },
+        };
         this.pendingQuestion = null;
-        this.transition("ADDRESSED", now, "unanswered question");
+        this.transition("ADDRESSED", now, open ? "joined the conversation" : "unanswered question");
         return;
       }
       this.pendingQuestion = null;

@@ -5,6 +5,7 @@
  *
  *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:attendee:human      # 10-minute smoke
  *   MEET_URL=https://us02web.zoom.us/j/…?pwd=… pnpm reality:attendee:human         # same gate on Zoom
+ *   MEET_URL=... PROACTIVITY=open pnpm reality:attendee:human                      # joins in uncalled
  *   MEET_URL=... MINUTES=30 pnpm reality:attendee:human                            # commercial gate
  *
  * The avatar page runs inside Attendee as its voice agent, so the character is both seen and heard from
@@ -51,16 +52,22 @@ const CUES = [
  * which picks a cloud engine, and an account with no credit renders the character and never speaks.
  */
 const engine = process.env.ENGINE ?? "google";
+/**
+ * How much the character needs before it speaks. `addressed_only` is the product default; the gate can
+ * ask for more, and `open` is the setting that proves the voice path without depending on the
+ * recogniser getting a two-mora name right.
+ */
+const proactivity = process.env.PROACTIVITY ?? "addressed_only";
 const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({
     meetingUrl: url,
     botName: env.RECALL_BOT_NAME ?? "Yui",
-    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: env.RECALL_BOT_NAME ?? "Yui", language: "ja-JP", proactivity: "addressed_only" },
+    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: env.RECALL_BOT_NAME ?? "Yui", language: "ja-JP", proactivity },
   }),
 })).json();
 if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${created.detail ?? ""}`); process.exit(1); }
-console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}  platform=${platform}`);
+console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}  platform=${platform}  proactivity=${proactivity}`);
 console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
 
 /** Did the avatar page actually start? Asking a person whether they saw it is not evidence. */
@@ -71,7 +78,7 @@ const pageState = async () => {
   } catch { return {}; }
 };
 
-const policy = new ParticipationPolicy({ names, proactivity: "addressed_only" });
+const policy = new ParticipationPolicy({ names, proactivity });
 const stats = { heard: 0, transcripts: 0, addressed: 0, replies: 0, spokenMs: 0, suppressed: 0 };
 let meeting = null;
 

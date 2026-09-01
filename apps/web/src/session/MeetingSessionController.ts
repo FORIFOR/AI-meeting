@@ -127,7 +127,16 @@ export class MeetingSessionController {
     // Aliases matter in Japanese meetings: STT writes 「ゆい」, never "Yui".
     const names = [init.displayName, init.character.name, ...(init.character.aliases ?? [])].filter(Boolean);
     this.policy = new ParticipationPolicy({ names, proactivity: init.proactivity });
-    this.policy.onTransition((t) => init.handlers.onPolicy(t));
+    /**
+     * Answering is driven by the transition, not by the transcript that usually causes it. The
+     * proactive tiers ("active", "open") enter ADDRESSED from the timer — the room falling quiet is
+     * the trigger — and a transcript-only hook left those modes silent forever: the state machine said
+     * ADDRESSED and nothing ever asked the AI to speak.
+     */
+    this.policy.onTransition((t) => {
+      init.handlers.onPolicy(t);
+      if (t.to === "ADDRESSED") void this.answer();
+    });
   }
 
   get providerId(): ProviderId {
@@ -376,13 +385,12 @@ export class MeetingSessionController {
     const now = Date.now();
     const line: MeetingTranscriptLine = { id: ++this.lineId, speaker: speakerName ?? "?", text, final, at: now };
     this.init.handlers.onTranscript(line);
-    const before = this.policy.state;
     this.policy.onTranscript({ text, final, speakerName }, now);
     if (final) {
       this.recent.push({ speaker: line.speaker, text });
       while (this.recent.length > 12) this.recent.shift();
     }
-    if (before !== "ADDRESSED" && this.policy.state === "ADDRESSED") void this.answer();
+    // Entering ADDRESSED is handled by the transition listener, whatever caused it.
   }
 
   /** Hand the addressing utterance (plus recent context) to the AI as text — provider-agnostic. */

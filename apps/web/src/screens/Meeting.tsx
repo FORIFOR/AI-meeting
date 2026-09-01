@@ -225,6 +225,7 @@ export function Meeting(p: MeetingProps) {
             <option value="addressed_only">名前で呼ばれたときだけ（推奨）</option>
             <option value="invited">「誰か意見ある？」にも答える</option>
             <option value="active">未回答の質問にも自発的に答える</option>
+            <option value="open">呼ばれなくても会話に入る</option>
           </select>
         </div>
         <div className="field"><label>接続方式</label>
