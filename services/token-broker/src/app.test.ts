@@ -515,12 +515,13 @@ describe("Attendee provider", () => {
     const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui" });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toMatchObject({ provider: "attendee", botId: "att_1", sampleRate: 24000 });
+    expect(body).toMatchObject({ provider: "attendee", botId: "att_1", sampleRate: 16000 });
     const req = calls.find((c) => c.url.endsWith("/api/v1/bots"))!;
     expect((req.init!.headers as Record<string, string>).Authorization).toBe("Token ak");
     const sent = JSON.parse(req.init!.body as string);
     expect(sent.meeting_url).toBe("https://meet.google.com/abc-defg-hij");
-    expect(sent.websocket_settings.audio.sample_rate).toBe(24000);
+    // 16 kHz is what the agent's binary input is defined at; 24 kHz stretched every utterance.
+    expect(sent.websocket_settings.audio.sample_rate).toBe(16000);
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
     // The unverified avatar field is only sent when a deployment asks for it.
     expect(sent.voice_agent_settings).toBeUndefined();

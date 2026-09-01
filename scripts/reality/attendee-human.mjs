@@ -68,10 +68,8 @@ meeting.on("message", (raw) => {
     const m = outer.message ?? outer;
     if (m?.trigger !== "realtime_audio.mixed" || !m.data?.chunk) return;
     stats.heard++;
-    const pcm = Buffer.from(m.data.chunk, "base64");
-    const header = Buffer.alloc(12);
-    header.writeUInt32LE(m.data.sample_rate ?? created.sampleRate, 0);
-    agent.send(Buffer.concat([header, pcm]), { binary: true });
+    // The agent takes raw PCM16 mono at its own fixed rate — no header, and no other rate.
+    agent.send(Buffer.from(m.data.chunk, "base64"), { binary: true });
   } catch { /* ignore */ }
 });
 

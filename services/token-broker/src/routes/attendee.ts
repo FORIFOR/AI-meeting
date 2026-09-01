@@ -24,7 +24,7 @@ const ATTENDEE_BASE = "https://app.attendee.dev";
 export interface AttendeeJoinBody {
   meetingUrl: string;
   botName?: string;
-  /** 8000 | 16000 | 24000. Defaults to 24000 to match the local TTS. */
+  /** 8000 | 16000 | 24000. Defaults to 16000, which is what the agent accepts. */
   sampleRate?: number;
   botPageQuery?: Record<string, string>;
 }
@@ -51,7 +51,13 @@ export async function createAttendeeBot(
   if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
 
   const botName = body.botName ?? env.RECALL_BOT_NAME ?? "Yui";
-  const sampleRate = body.sampleRate ?? 24000;
+  /**
+   * 16 kHz, because that is the rate the local agent's binary input is defined at — raw PCM16 mono, no
+   * header. Sending 24 kHz "because the TTS produces it" stretched every utterance by half and the
+   * recogniser returned confident nonsense in the wrong language. The character's own voice leaves
+   * through the page, so its rate is a separate question.
+   */
+  const sampleRate = body.sampleRate ?? 16000;
   const session = deps.sessions.create({ meetingUrl: body.meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
