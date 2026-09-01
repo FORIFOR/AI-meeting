@@ -80,7 +80,7 @@ afterEach(() => vi.useRealTimers());
 describe("protocol helpers", () => {
   it("builds the v1beta WSS url with access_token and parses pcm rates", () => {
     expect(geminiWssUrl("v1beta", "auth_tokens/a b")).toBe(
-      "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?access_token=auth_tokens%2Fa%20b",
+      "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=auth_tokens%2Fa%20b",
     );
     expect(parsePcmRate("audio/pcm;rate=24000")).toBe(24000);
     expect(parsePcmRate("audio/pcm")).toBe(24000);
@@ -91,7 +91,8 @@ describe("GeminiLiveProvider", () => {
   it("fetches an ephemeral token from the broker, opens WSS and sends a correct setup", async () => {
     const { p, ws, events } = await connected();
     expect(tokenFetch).toHaveBeenCalledWith("http://localhost:8787/api/token/gemini", expect.objectContaining({ method: "POST" }));
-    expect(ws.url).toContain("v1beta.GenerativeService.BidiGenerateContent?access_token=auth_tokens%2Fabc123");
+    // An ephemeral token is only accepted on the constrained method; the plain one answers 1008.
+    expect(ws.url).toContain("v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=auth_tokens%2Fabc123");
     const setup = (ws.sent[0] as unknown as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
     expect(setup.model).toBe("models/gemini-2.5-flash-native-audio-preview-12-2025");
     expect(setup.generationConfig?.responseModalities).toEqual(["AUDIO"]);

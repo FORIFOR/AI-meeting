@@ -363,6 +363,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       for (const part of sc.modelTurn.parts) {
         if (part.inlineData?.mimeType?.startsWith("audio/pcm")) {
           this.handleAudioPart(part.inlineData.data, parsePcmRate(part.inlineData.mimeType), now);
+        } else if (part.thought) {
+          // The model's own reasoning, not speech. It reached the caption line as
+          // 「**Analyzing Anxious Communication**」 in front of the actual reply.
+          continue;
         } else if (part.text) {
           this.assistantTranscript += part.text;
           this.emit({ type: "assistant_transcript", text: part.text, final: false, gen: this.genCounter.stamp() });

@@ -11,6 +11,8 @@ export const GEMINI_OUTPUT_RATE = 24_000;
 
 export interface GeminiPart {
   text?: string;
+  /** Native-audio models emit their reasoning as ordinary text parts flagged this way. */
+  thought?: boolean;
   inlineData?: { mimeType: string; data: string };
   functionCall?: { id?: string; name: string; args?: Record<string, unknown> };
 }
@@ -85,8 +87,17 @@ export interface GeminiServerMessage {
   error?: { message?: string; code?: number };
 }
 
+/**
+ * Live endpoint for an EPHEMERAL token. The plain `BidiGenerateContent` method only accepts a real API
+ * key: an ephemeral token there is refused with 1008 "Method doesn't allow unregistered callers", which
+ * reads like a bad credential but is really the wrong method. Tokens carrying a `bidiGenerateContentSetup`
+ * constraint belong on `BidiGenerateContentConstrained`.
+ *
+ * Note the socket opens whatever you send — Google authenticates on the first frame — so a connectivity
+ * check that never sends `setup` will happily "pass" against the wrong endpoint.
+ */
 export function geminiWssUrl(apiVersion: "v1beta" | "v1alpha", ephemeralToken: string): string {
-  return `${GEMINI_WSS_BASE}.${apiVersion}.GenerativeService.BidiGenerateContent?access_token=${encodeURIComponent(ephemeralToken)}`;
+  return `${GEMINI_WSS_BASE}.${apiVersion}.GenerativeService.BidiGenerateContentConstrained?access_token=${encodeURIComponent(ephemeralToken)}`;
 }
 
 export function parsePcmRate(mimeType: string, fallback = GEMINI_OUTPUT_RATE): number {

@@ -81,7 +81,8 @@ describe("token broker", () => {
     expect(body.uses).toBe(1);
     expect(body.expireTime).toBe("2026-08-30T09:30:00.000Z");
     expect(body.newSessionExpireTime).toBe("2026-08-30T09:02:00.000Z");
-    expect(body.bidiGenerateContentSetup.model).toBe("models/gemini-2.5-flash-native-audio-preview-12-2025");
+    // No setup constraint: Google would use it INSTEAD of the client setup, dropping transcription and voice.
+    expect(body.bidiGenerateContentSetup).toBeUndefined();
   });
 
   it("/api/plan falls back to the heuristic without a key and uses the LLM when available", async () => {

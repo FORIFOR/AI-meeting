@@ -1,0 +1,826 @@
+{
+  "engine": "google",
+  "minutes": 3,
+  "character": "yui",
+  "mode": "free_talk",
+  "startedAt": "2026-09-01T01:22:46.952Z",
+  "verdict": "PASS",
+  "blocked": null,
+  "preflight": {
+    "broker": {
+      "ok": true,
+      "providers": {
+        "openai": true,
+        "google": true,
+        "livekit": false,
+        "heygen": false,
+        "tavus": false,
+        "recall": true
+      },
+      "meeting": {
+        "recall": true,
+        "recallPublicUrl": true,
+        "recallBotPageUrl": true,
+        "region": "ap-northeast-1",
+        "tokenSecret": "env"
+      }
+    },
+    "agent": {
+      "ok": true,
+      "strictLocalCapable": true,
+      "stt": {
+        "engine": "sherpa-onnx",
+        "ready": true,
+        "model": "sense_voice:sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+        "mode": "incremental",
+        "finalPass": "whisper-server",
+        "pauseMinSilenceMs": 200,
+        "endpoint": {
+          "minSilenceMs": 240,
+          "completeSilenceMs": 320,
+          "unknownSilenceMs": 520,
+          "incompleteSilenceMs": 800,
+          "maxSilenceMs": 900
+        }
+      },
+      "llm": {
+        "engine": "openai-compatible",
+        "ready": true,
+        "model": "gemma-4-E2B-it-Q4_K_M.gguf",
+        "url": "http://127.0.0.1:8080/v1"
+      },
+      "tts": {
+        "engine": "avspeech-daemon",
+        "ready": true,
+        "voice": "com.apple.voice.compact.ja-JP.Kyoko"
+      },
+      "vad": {
+        "engine": "silero-vad"
+      }
+    },
+    "blocked": null
+  },
+  "timeline": {
+    "seconds": 178.19089583333334,
+    "timeline": [
+      {
+        "index": 0,
+        "startSec": 3,
+        "endSec": 6.292458333333333,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 1,
+        "startSec": 10.339270833333334,
+        "endSec": 14.468458333333333,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 2,
+        "startSec": 18.716291666666667,
+        "endSec": 21.8181875,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 3,
+        "startSec": 29.7258125,
+        "endSec": 33.9229375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 4,
+        "startSec": 40.7190625,
+        "endSec": 43.63552083333333,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 5,
+        "startSec": 45.63552083333333,
+        "endSec": 48.512708333333336,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 6,
+        "startSec": 54.598479166666664,
+        "endSec": 57.385416666666664,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 7,
+        "startSec": 63.0075,
+        "endSec": 66.1655,
+        "text": "私は最近、ランニングを始めました。",
+        "kind": "turn"
+      },
+      {
+        "index": 8,
+        "startSec": 72.0304375,
+        "endSec": 75.79872916666666,
+        "text": "英語の勉強を続けるコツがあれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 9,
+        "startSec": 80.7584375,
+        "endSec": 84.71208333333334,
+        "text": "今日は天気がいいので、散歩に行こうと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 10,
+        "startSec": 86.71208333333334,
+        "endSec": 89.731125,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 11,
+        "startSec": 95.9444375,
+        "endSec": 100.20129166666666,
+        "text": "面接で緊張しないためには、どうすればいいでしょうか。",
+        "kind": "turn"
+      },
+      {
+        "index": 12,
+        "startSec": 107.12058333333333,
+        "endSec": 110.6569375,
+        "text": "先週、友人と京都に旅行に行きました。",
+        "kind": "turn"
+      },
+      {
+        "index": 13,
+        "startSec": 115.68820833333334,
+        "endSec": 118.67889583333333,
+        "text": "そのとき、とても美味しいお茶を飲みました。",
+        "kind": "turn"
+      },
+      {
+        "index": 14,
+        "startSec": 123.3026875,
+        "endSec": 126.3218125,
+        "text": "あなたの一番好きな季節はいつですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 15,
+        "startSec": 128.3218125,
+        "endSec": 130.67377083333332,
+        "text": "ちょっと待って、質問があります。",
+        "kind": "barge_in"
+      },
+      {
+        "index": 16,
+        "startSec": 137.730125,
+        "endSec": 141.55264583333334,
+        "text": "来月、新しい部署に異動することになりました。",
+        "kind": "turn"
+      },
+      {
+        "index": 17,
+        "startSec": 147.62625,
+        "endSec": 151.0015625,
+        "text": "少し不安ですが、頑張ってみようと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 18,
+        "startSec": 155.79010416666668,
+        "endSec": 159.7595625,
+        "text": "プレゼンの準備で何から始めればいいか迷っています。",
+        "kind": "turn"
+      },
+      {
+        "index": 19,
+        "startSec": 165.23139583333332,
+        "endSec": 168.14072916666666,
+        "text": "昨日の夜は、映画を見て過ごしました。",
+        "kind": "turn"
+      },
+      {
+        "index": 20,
+        "startSec": 170.14072916666666,
+        "endSec": 173.01791666666668,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "t": 1,
+      "pill": "Connecting接続中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": 0
+        },
+        "bargeIn": {
+          "ms": null,
+          "n": 0
+        },
+        "listening": {
+          "ms": null,
+          "n": 0
+        },
+        "mouthStop": {
+          "ms": null,
+          "n": 0
+        }
+      },
+      "transcript": 0
+    },
+    {
+      "t": 30240,
+      "pill": "Listening聞いています",
+      "hud": {
+        "turn": {
+          "p50": 3670,
+          "p95": 4114,
+          "n": 2
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 2
+        },
+        "listening": {
+          "ms": 43,
+          "n": 4
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 2
+        }
+      },
+      "transcript": 6
+    },
+    {
+      "t": 60410,
+      "pill": "Thinking考え中",
+      "hud": {
+        "turn": {
+          "p50": 3980,
+          "p95": 11159,
+          "n": 6
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 3
+        },
+        "listening": {
+          "ms": 43,
+          "n": 5
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 3
+        }
+      },
+      "transcript": 12
+    },
+    {
+      "t": 90607,
+      "pill": "Thinking考え中",
+      "hud": {
+        "turn": {
+          "p50": 3980,
+          "p95": 11159,
+          "n": 9
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 4
+        },
+        "listening": {
+          "ms": 43,
+          "n": 7
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 4
+        }
+      },
+      "transcript": 18
+    },
+    {
+      "t": 120839,
+      "pill": "Speaking話しています",
+      "hud": {
+        "turn": {
+          "p50": 3670,
+          "p95": 11159,
+          "n": 13
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 5
+        },
+        "listening": {
+          "ms": 43,
+          "n": 8
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 5
+        }
+      },
+      "transcript": 25
+    },
+    {
+      "t": 151022,
+      "pill": "Listening聞いています",
+      "hud": {
+        "turn": {
+          "p50": 1412,
+          "p95": 11159,
+          "n": 14
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 6
+        },
+        "listening": {
+          "ms": 43,
+          "n": 11
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 6
+        }
+      },
+      "transcript": 30
+    }
+  ],
+  "pills": [
+    {
+      "t": 1,
+      "pill": "Connecting接続中"
+    },
+    {
+      "t": 1529,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 3541,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 7058,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 11084,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 12095,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 15615,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 18639,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 22697,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 30240,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 33757,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 37272,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 44824,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 46332,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 49344,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 52858,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 54869,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 58396,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 63440,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 64455,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 68980,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 77035,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 77537,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 78543,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 85077,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 87089,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 90607,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 94624,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 96633,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 101193,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 102203,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 103717,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 111766,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 113273,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 118827,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 123858,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 127374,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 128885,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 131901,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 133913,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 138450,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 142471,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 148002,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 152031,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 153546,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 154550,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 156567,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 160599,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 165132,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 168164,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 169170,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 170683,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 172697,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 176724,
+      "pill": "Listening聞いています"
+    }
+  ],
+  "transcript": [
+    {
+      "t": 10582,
+      "role": "user",
+      "text": "こんにちは 。 今日 は よろしく お 願い し ます 。"
+    },
+    {
+      "t": 11084,
+      "role": "assistant",
+      "text": "**Initiating Communication Protocol**\n\nOkay, here's the deal: I'm gearing up to kick things off. Based on the instructions, the priority is delivering that specific Japanese phrase, so I'm setting aside the user's initial greeting. I'm aiming for a casual, warm tone as I launch into the conversation. Let's see how this goes.\n\n\nおつかれー！最近"
+    },
+    {
+      "t": 12095,
+      "role": "assistant",
+      "text": "どう？なんかあった？"
+    },
+    {
+      "t": 17628,
+      "role": "user",
+      "text": "最近 仕事 で 新しい プロジェクト が 始まっ た ん です 。"
+    },
+    {
+      "t": 19146,
+      "role": "assistant",
+      "text": "**Acknowledge New Project**\n\nI've registered the initiation of this new work project. My immediate response is a friendly acknowledgment and an open question to encourage further sharing. I'm keen to learn more, aiming for a supportive tone.\n\n\nへえ、そうなんだ!どんな"
+    },
+    {
+      "t": 22697,
+      "role": "assistant",
+      "text": "プロジェクトなの?"
+    },
+    {
+      "t": 32249,
+      "role": "user",
+      "text": "週末 は 何 を する の が お すすめ です か"
+    },
+    {
+      "t": 37272,
+      "role": "assistant",
+      "text": "**Considering Weekend Ideas**\n\nOkay, I'm thinking about the user's weekend inquiry. The relaxed tone definitely influences my approach. Since it's a casual request, I'm leaning towards suggesting some fun, laid-back activities. I want to offer relaxing things, and perhaps add a personal touch to keep the conversation going, so I'm considering what to recommend.\n\n\n**Refining Approach to Inquiry**\n\nNow, I'm adjusting my strategy based on the relaxed user tone. I've re-evaluated the user's friendly request, taking particular note of their casual, open-ended question. In response, I'm focusing on proposing fun, relaxed weekend activities in a friendly way, while also considering how to personalize the recommendations. I plan to incorporate personal touches or engaging follow-up questions to keep the friendly conversation flowing.\n\n\nうーん、最近はカフェ巡りとかいいかも。どんなこと好きなの?"
+    },
+    {
+      "t": 43317,
+      "role": "user",
+      "text": "実 は 昨日 少し 失敗 し て しまっ て 落ち込ん で い ます 。"
+    },
+    {
+      "t": 46332,
+      "role": "assistant",
+      "text": "**Assessing Emotional Context**\n\nI've noted the user's calm tone, but the explicit admission of feeling \"down\" due to a mistake is the core. I'm focusing on the contrast – the subdued delivery of a negative emotion. This is leading me to interpret their feeling as reflective sadness instead of intense distress, and this will shape my response to be supportive.\n\n\n**Interpreting Feelings and Context**\n\nI'm now focusing on the direct cause of the user's feeling \"down\": a mistake. I'm noting the user's calm tone, but the explicit link between their feeling and the mistake suggests a reflective sadness, not overwhelming distress. My approach, in the role of friend, remains supportive and empathetic, acknowledging the mistake as a shared human experience. I'll offer gentle encouragement and perspective.\n\n\nそっか、そういう時もあるよね。あんま気にしないで。"
+    },
+    {
+      "t": 52858,
+      "role": "user",
+      "text": "で も チーム の みんな が 助け て くれ まし た 。"
+    },
+    {
+      "t": 54869,
+      "role": "assistant",
+      "text": "！チームってそういう時に心強いよね。"
+    },
+    {
+      "t": 63440,
+      "role": "user",
+      "text": "すみ ませ ん 。 それ は どう いう 意味 です か ?"
+    },
+    {
+      "t": 68980,
+      "role": "assistant",
+      "text": "**Clarifying Misunderstandings**\n\nI sense the user is apologetic and seeking clarification, likely indicating a misunderstanding. Their direct question, \"What does that mean?\", coupled with the apologetic tone, suggests they need a more detailed explanation. I'll need to respond calmly and reassuringly to address this and ensure clarity.\n\n\n**Addressing User Inquiry**\n\nThe user's apologetic tone and direct question, \"What does that mean?\", strongly suggest a misunderstanding. I perceive their hesitancy, expressed through \"sumimasen\" and a query about the meaning of my previous statement, as a clear signal. I'm focusing on crafting a calm, reassuring response that clarifies my previous statement in a straightforward manner, and checking if that response actually addresses the root issue.\n\n\nああ、つまり、一人で抱え込まないで助け合えるってこと。"
+    },
+    {
+      "t": 77035,
+      "role": "user",
+      "text": "あなた は 音楽 を 聞く の は 好き です か ?"
+    },
+    {
+      "t": 78543,
+      "role": "assistant",
+      "text": "**Answering the Inquiry**\n\nI've registered the user's simple, unemotional inquiry about my musical preferences. Per the instructions, I'm adopting a friendly, casual persona. I'll respond affirmatively, expressing my enjoyment of music, and will try to steer the conversation into common musical interests with a follow-up question.\n\n\nうん、好き!どんなジャンル聞くの?"
+    },
+    {
+      "t": 84074,
+      "role": "user",
+      "text": "私 は 最近 ランニング を 始め まし た 。"
+    },
+    {
+      "t": 87089,
+      "role": "assistant",
+      "text": "**Acknowledging Recent Activity**\n\nI'm noting the user's recent foray into running with positivity. The Japanese phrase, \"私は最近ランニングを始めました,\" strongly suggests enjoyment. I want to build on that enthusiasm, offering encouragement and engaging further on this new development, in a suitable tone and style. I am keen to learn more to give relevant responses.\n\n\n**Considering User Positivity**\n\nI'm analyzing the user's positive statement about their new running routine. Their phrase, \"私は最近ランニングを始めました,\" reveals enthusiasm. I am considering the tone and intent, aiming to offer an encouraging and relevant response, while seeking more information to keep the discussion productive. I will formulate a supportive and engaged reply.\n\n\nへえ、すごい!何キロくらい走るの?"
+    },
+    {
+      "t": 93619,
+      "role": "user",
+      "text": "英語 の 勉強 を 続ける コツ が あれ ば 教え て ください 。"
+    },
+    {
+      "t": 96633,
+      "role": "assistant",
+      "text": "**Offering Encouragement & Advice**\n\nOkay, so I'm thinking I need to keep this response calm, as I perceive the user's intent as a genuine request for help with their English studies. I'll frame this as friendly advice, casually suggesting ways to integrate the language into daily routines. I feel that is the best approach, so I'll also try to keep it relatable and casual in style. I think this will be helpful.\n\n\n楽しみながら続けるのが一番かも。映画とか音楽とかどう?"
+    },
+    {
+      "t": 102203,
+      "role": "user",
+      "text": "今日 は 天気 が いい の で 散歩 に 行こう と 思い ます 。"
+    },
+    {
+      "t": 103717,
+      "role": "assistant",
+      "text": "気分転換になると思うよ。"
+    },
+    {
+      "t": 111255,
+      "role": "user",
+      "text": "あ 、 ごめん なさい 。 1 つ 聞い て も いい です か ?"
+    },
+    {
+      "t": 113273,
+      "role": "assistant",
+      "text": "**Assessing Request and Tone**\n\nI've noted the user's apologetic tone, particularly the \"gomen nasai.\" It indicates hesitancy, likely stemming from politeness or concern about interrupting. Their explicit \"sumimasen, hitotsu kiitemo ii desu ka?\" further underscores their cautious approach and need for reassurance. My next step will be to respond in a calm and friendly way to reassure them.\n\n\nもちろん！何?"
+    },
+    {
+      "t": 118827,
+      "role": "user",
+      "text": "面接 で 緊張 し ない ため に は どう すれ ば いい でしょう か ?"
+    },
+    {
+      "t": 123858,
+      "role": "assistant",
+      "text": "当たり前だから、あんま気にしなくていいよ。リラックスする方法見つけてみて。"
+    },
+    {
+      "t": 131398,
+      "role": "user",
+      "text": "先週 友人 と 京都 に 旅行 に 行き まし た 。"
+    },
+    {
+      "t": 133913,
+      "role": "assistant",
+      "text": "**Acknowledging Past Experiences**\n\nI've registered the user's description of their trip to Kyoto with a friend last week. The calm delivery indicates a factual recounting. I'm noting the phrasing, \"先週、友人と京都に旅行に行きました,\" and plan a positive response to encourage further sharing on the topic.\n\n\n**Analyzing User Statement**\n\nI'm now processing the implications of the user's calm tone during their statement about the Kyoto trip. The observed calmness strongly suggests a factual account, not necessarily one infused with strong emotion. I recognize the user's statement and am focusing on responding with appropriate interest to encourage further discussion. I believe a positive response will maintain a friendly rapport. I will soon formulate a question about the trip.\n\n\nええ、いいな!京都どうだった?"
+    },
+    {
+      "t": 138450,
+      "role": "user",
+      "text": "その 時 とても 美味しい お 茶 を 飲み まし た 。"
+    },
+    {
+      "t": 142471,
+      "role": "assistant",
+      "text": "京都のお茶格別だよね。"
+    },
+    {
+      "t": 152031,
+      "role": "user",
+      "text": "あなた の 1 好き な 季節 は いつ です か ? ちょっと 待っ て 質問 が あり ます 。"
+    },
+    {
+      "t": 154550,
+      "role": "assistant",
+      "text": "**Analyzing Anxious Communication**\n\nI've observed a clear anxious tone. The \"ちょっと待って\" and speech pace point to stress. Initially, there's a pivot from a casual question to a more urgent one, suggesting the user's question is linked to their anxiety. They feel some apprehension in asking.\n\n\n**Prioritizing Reassurance & Comfort**\n\nMy focus has shifted to immediate user needs. The observed anxiety, marked by hesitant speech and a quickly delivered request, necessitates a calming approach. I've decided to prioritize reassurance by offering a calm and friendly prompt. I want to build comfort and ensure they feel at ease before proceeding. This is my new focus.\n\n\nなになに?"
+    },
+    {
+      "t": 163623,
+      "role": "user",
+      "text": "来月 新しい 部署 に 移動 する こと に なり まし た 。"
+    },
+    {
+      "t": 166136,
+      "role": "assistant",
+      "text": "**Assessing Upcoming Transfer**\n\nI've noted the user's transfer announcement; it was delivered calmly, suggesting neutrality. The Japanese phrase confirms the intent: \"I will be transferring to a new department next month.\" My current assessment is that the user's affect implies this is a factual, measured statement about a coming change.\n\n\n**Evaluating Emotional State**\n\nI'm now focusing on the user's emotional state, given the transfer announcement. The calm tone remains a key factor. The Japanese phrase solidified that this is a factual statement. My thought is that such a neutral delivery indicates a balanced perspective toward an upcoming change. I'm considering that opportunities and challenges might be viewed equally. Next, I need to consider an appropriate response.\n\n\nそうなんだ!大きな変化だね。どんな気持ち?"
+    },
+    {
+      "t": 172697,
+      "role": "user",
+      "text": "少し 不安 です が 、 頑張っ て みよう と 思い ます 。"
+    },
+    {
+      "t": 176724,
+      "role": "assistant",
+      "text": "でも、きっと大丈夫!応援してる。"
+    }
+  ],
+  "toasts": [],
+  "consoleErrors": [
+    {
+      "t": 184180,
+      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+    }
+  ],
+  "pageErrors": [],
+  "httpErrors": [
+    {
+      "t": 184180,
+      "status": 502,
+      "url": "http://localhost:8787/api/evaluate"
+    }
+  ],
+  "reconnects": [],
+  "hudLast": "latency · google\nturn p50/p95\t3670 / 11159 ms\t< 700 / 1500 · n=17\nbarge-in stop\t43 ms\t< 150 · n=7\n→ listening\t43 ms\t< 100 · n=14\nmouth stop\t0 ms\t< 100 · n=7\nturns\t17 / 20\treconnects 0 · stale 0\nstt / ttft / ttfa\t– / – / – ms\tp50 · n=0\nlip delay / frame\t23 / 30 ms\terrors 0",
+  "result": {
+    "overall": "68"
+  },
+  "summary": {
+    "elapsedMs": 180240,
+    "survived": true,
+    "failReason": null,
+    "userUtterancesHeard": 17,
+    "assistantTurns": 19,
+    "answered": 17,
+    "answeredRatio": 1,
+    "expectedUtterancesFromWav": 21,
+    "speakingEpisodes": 17,
+    "turnLatency": {
+      "p50": 3670,
+      "p95": 11159,
+      "n": 17
+    },
+    "bargeInStop": {
+      "ms": 43,
+      "n": 7
+    },
+    "listeningReact": {
+      "ms": 43,
+      "n": 14
+    },
+    "mouthStop": {
+      "ms": 0,
+      "n": 7
+    },
+    "reconnectEvents": 0,
+    "toasts": 0,
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "httpErrors": 1,
+    "longestNoAssistantSpeechMs": 11075,
+    "replyChars": {
+      "min": 9,
+      "p50": 352,
+      "max": 869,
+      "avg": 392
+    },
+    "resultOverall": "68"
+  },
+  "wav": "/var/folders/qy/086ttpq57jsd36jnc1jffst00000gn/T/rcai-soak/soak-3m.wav",
+  "chrome": "Chrome/152.0.7977.65",
+  "sessionStartMs": 3652,
+  "endedAt": "2026-09-01T01:25:53.975Z"
+}
