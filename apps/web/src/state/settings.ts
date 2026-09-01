@@ -22,6 +22,12 @@ export interface Settings {
    * Absent means "use the character's own voice".
    */
   voices: Record<string, string>;
+  /**
+   * Prefer reacting to tone and expression over the lowest latency. Gemini's native-audio models are
+   * the only ones with affective dialog and proactive audio, and they are slower than flash-live —
+   * which is why this is a choice and not the default.
+   */
+  expressive: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cameraOn: false,
   captionsOn: true,
   voices: {},
+  expressive: false,
 };
 
 export type SettingsAction =
@@ -49,6 +56,7 @@ export type SettingsAction =
   | { type: "camera"; on: boolean }
   | { type: "captions"; on: boolean }
   | { type: "voice"; characterId: string; providerId: ProviderId; voiceId: string | undefined }
+  | { type: "expressive"; on: boolean }
   | { type: "reset" };
 
 /** strict_local (spec §6) forces the local engine and clears cloud overrides. */
@@ -79,6 +87,8 @@ export function settingsReducer(s: Settings, a: SettingsAction): Settings {
       return { ...s, cameraOn: a.on };
     case "captions":
       return { ...s, captionsOn: a.on };
+    case "expressive":
+      return { ...s, expressive: a.on };
     case "voice": {
       const voices = { ...s.voices };
       if (a.voiceId) voices[voiceKey(a.characterId, a.providerId)] = a.voiceId;

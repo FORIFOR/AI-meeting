@@ -31,7 +31,15 @@ export interface ProviderFactoryOptions {
   agentUrl: string;
   privacyMode: PrivacyMode;
   model?: string;
+  /**
+   * Prefer a model that reacts to how something was said, and may choose to say nothing, over the
+   * fastest one. Only Gemini's native-audio family has either; everywhere else it is ignored.
+   */
+  expressive?: boolean;
 }
+
+/** The Gemini live model that reacts to tone and can choose to stay quiet. Slower than flash-live. */
+export const GEMINI_EXPRESSIVE_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
 
 export async function createConversationProvider(id: ProviderId, o: ProviderFactoryOptions): Promise<RealtimeAIProvider> {
   switch (id) {
@@ -42,8 +50,16 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
     }
     case "google": {
       const mod = await import("@rcai/provider-gemini");
-      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string }>>(mod, "GeminiLiveProvider", "BLOCKED_BY_PROVIDER_GEMINI");
-      return new C({ brokerUrl: o.brokerUrl, model: o.model });
+      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; proactiveAudio?: boolean; enableAffectiveDialog?: boolean }>>(mod, "GeminiLiveProvider", "BLOCKED_BY_PROVIDER_GEMINI");
+      /**
+       * Two live families, one real trade-off. The flash-live models answer faster; only the
+       * native-audio ones take affective dialog (responding to *how* something was said) and proactive
+       * audio (the model deciding that the right response is none). Asking for the second is asking to
+       * be slower, so it is a choice rather than a default.
+       */
+      const affective = o.expressive === true;
+      const model = o.model ?? (affective ? GEMINI_EXPRESSIVE_MODEL : undefined);
+      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective });
     }
     case "local": {
       const mod = await import("@rcai/provider-local");

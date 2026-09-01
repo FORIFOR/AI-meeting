@@ -4,6 +4,8 @@ import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefini
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { ParticipationPolicy, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import type { VisualCue } from "@rcai/visual-core";
+import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
@@ -95,6 +97,9 @@ export class MeetingSessionController {
   private lineId = 0;
   /** Why the character cannot be seen, when it cannot be — reported once, and readable afterwards. */
   avatarFailure: string | null = null;
+  private visual: VisualPerceptionService | null = null;
+  /** The latest cue per participant, for the answer's context. Observations, never conclusions. */
+  private cues = new Map<string, VisualCue>();
 
   /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
@@ -280,6 +285,12 @@ export class MeetingSessionController {
       speaker.tap.subscribe((frame) => avatarRuntime.pushAudio(frame));
     }
 
+    /**
+     * The face model. Started after audio, never before: a meeting that can be heard but not watched
+     * still works, and the reverse does not. A failure to load is reported and the session continues.
+     */
+    void this.startVisual();
+
     runtime.on((e) => this.onConversationEvent(e));
 
     if (!o.micFromMeeting) {
@@ -291,8 +302,20 @@ export class MeetingSessionController {
       runtime.attachMicStream(stream);
     }
 
-    const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode });
-    const extra = `あなたはオンライン会議に参加している「${this.init.displayName}」です。会議の参加者に名前で呼ばれたときだけ、簡潔に（1〜2文で）答えます。呼ばれていない間は発言しません。`;
+    const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive });
+    /**
+     * The visual half of the instructions matters as much as the conversational half: a model handed
+     * face measurements will otherwise narrate them back as psychology — 「不安そうですね」 — to a real
+     * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
+     * diagnosis, and never something to say out loud.
+     */
+    const proactive = this.init.proactivity !== "addressed_only";
+    const extra =
+      `あなたはオンライン会議に参加している「${this.init.displayName}」です。簡潔に（1〜2文で）答えます。` +
+      (proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。") +
+      "一度話しかけられたら、その相手との会話が続く間は名前で呼ばれなくても応じます。" +
+      "カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測です。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。" +
+      "うなずきや首振りは、言葉がなくても返事として扱ってよい。";
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     config.providerOptions = { ...config.providerOptions, opening: undefined };
@@ -326,6 +349,9 @@ export class MeetingSessionController {
         break;
       case "error":
         this.init.handlers.onError(e.error.message, "MEETING");
+        break;
+      case "video_frame":
+        void this.onVideoFrame(e.participantId, e.jpegBase64, e.at);
         break;
       default:
         break;
@@ -399,6 +425,51 @@ export class MeetingSessionController {
     // Entering ADDRESSED is handled by the transition listener, whatever caused it.
   }
 
+  /** Loads the face model in the background; a failure is named, never silent, and never fatal. */
+  private async startVisual(): Promise<void> {
+    if (this.visual) return;
+    const v = new VisualPerceptionService();
+    this.visual = v;
+    await v.start();
+    if (!v.ready && v.blockedReason) this.init.handlers.onError(v.blockedReason, "VISUAL");
+  }
+
+  /**
+   * What the camera shows, as observations the model may respond to — never as conclusions about a
+   * person. "Smiling" is a fact about a face; "happy" is a claim about someone's mind, and a model
+   * told the second one will say it out loud to a person in a meeting. Only the participant the
+   * character is talking with is described, and only when the measurement is worth stating.
+   */
+  private visualContext(): string {
+    const engaged = this.policy.engagedWith?.participantId;
+    const cue = engaged ? this.cues.get(engaged) : undefined;
+    if (!cue || !cue.facePresent || cue.confidence < 0.6) return "";
+    const parts: string[] = [];
+    if (cue.nodded) parts.push("うなずいた");
+    if (cue.shookHead) parts.push("首を横に振った");
+    if (cue.tilted) parts.push("首をかしげている");
+    if (cue.smile > 0.5) parts.push("笑顔がある");
+    if (cue.browRaise > 0.6) parts.push("眉が上がっている");
+    if (cue.lookingForward < 0.35) parts.push("視線がそれている");
+    if (!parts.length) return "";
+    return `【見えていること（確実ではない観測。相手の心情を断定しないこと）】${parts.join("・")}`;
+  }
+
+  /**
+   * A webcam frame for one participant. The face model runs here, in the page, over Attendee's 2 fps
+   * stream: a nod is an answer, and a character that only hears words misses half of what a person
+   * says. A frame that cannot be measured is skipped rather than guessed at.
+   */
+  private async onVideoFrame(participantId: string, jpegBase64: string, at: number): Promise<void> {
+    if (!this.visual?.ready) return;
+    const cue = await this.visual.onFrame(participantId, jpegBase64, at);
+    if (!cue) return;
+    this.cues.set(participantId, cue);
+    // The avatar mirrors the room a little: a person smiling is met with a warmer face, not a report.
+    if (cue.smile > 0.55 && cue.confidence > 0.6) this.avatarRuntime?.setEmotion("warm_positive", Math.min(0.5, cue.smile));
+    this.policy.onVisualCue(cue, Date.now());
+  }
+
   /** Hand the addressing utterance (plus recent context) to the AI as text — provider-agnostic. */
   private async answer(): Promise<void> {
     const rt = this.runtime;
@@ -410,7 +481,11 @@ export class MeetingSessionController {
       return;
     }
     const context = this.recent.slice(0, -1).map((r) => `${r.speaker}: ${r.text}`).join("\n");
-    const prompt = `${context ? `【会議の直近の発言】\n${context}\n\n` : ""}【あなたへの質問】${by.speakerName ?? "参加者"}: ${by.text}\n\n短く（1〜2文で）答えてください。`;
+    const seen = this.visualContext();
+    const asked = by.text
+      ? `【あなたへの質問】${by.speakerName ?? "参加者"}: ${by.text}`
+      : `【言葉のない反応】${by.detection.reason}`;
+    const prompt = `${context ? `【会議の直近の発言】\n${context}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${asked}\n\n短く（1〜2文で）答えてください。`;
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });
@@ -470,6 +545,9 @@ export class MeetingSessionController {
     this.behavior?.stop();
     await this.runtime?.stop().catch(() => {});
     await this.mic?.stop().catch(() => {});
+    this.visual?.stop();
+    this.visual = null;
+    this.cues.clear();
     await this.avatarRuntime?.dispose().catch(() => {});
     await this.speaker?.close().catch(() => {});
     await this.session?.leave().catch(() => {});

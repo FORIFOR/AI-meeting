@@ -1,4 +1,5 @@
 import { AddressDetector, type AddressDetection } from "./addressDetector.js";
+import type { VisualCue } from "@rcai/visual-core";
 
 /**
  * ParticipationPolicy: the character never barges into a meeting.
@@ -51,6 +52,13 @@ export interface ParticipationPolicyOptions {
   silenceGapMs?: number;
   /** In "active" mode, respond to any question once the room has been silent this long (ms). Default 1800. */
   activeSilenceMs?: number;
+  /**
+   * Treat a clear visual reaction from the person the character is talking with as a turn: a nod is an
+   * answer, and a head shake or a tilt is a request to say it differently. Only inside an engaged
+   * conversation — reacting to a nod from someone who never spoke to the character is a machine
+   * watching a room, which is a different product and not this one. Default true.
+   */
+  visualTurns?: boolean;
   /**
    * In "open" mode, an utterance shorter than this many characters is treated as a backchannel
    * (「うん」「はい」「Yeah.」) and does not earn a turn. Default 6.
@@ -105,6 +113,7 @@ export class ParticipationPolicy {
       silenceGapMs: options.silenceGapMs ?? 2500,
       activeSilenceMs: options.activeSilenceMs ?? 1800,
       openMinChars: options.openMinChars ?? 6,
+      visualTurns: options.visualTurns ?? true,
       selfNames: options.selfNames ?? options.names,
       engagementTtlMs: options.engagementTtlMs ?? 90_000,
     };
@@ -213,6 +222,31 @@ export class ParticipationPolicy {
       this.pendingQuestion = { text: seg.text, at: now };
     }
     return d;
+  }
+
+  /**
+   * A visual reaction from the person the character is talking with.
+   *
+   * Silence is not always the absence of an answer: after 「Attendee に切り替えた方がいいです」 a nod is
+   * the reply, and waiting for words leaves the character talking into a pause that was never empty.
+   * The cue is an observation, so what it earns is a turn — never a conclusion about the person.
+   */
+  onVisualCue(cue: VisualCue, now: number): boolean {
+    if (!this.opts.visualTurns || !this.engagement) return false;
+    if (cue.participantId !== this.engagement.participantId) return false;
+    if (!cue.facePresent || cue.confidence < 0.6) return false;
+    if (this._state === "RESPONDING" || this._state === "ADDRESSED") return false;
+    if (now - this.lastResponseEndAt < this.opts.cooldownMs) return false;
+    if (this.consecutive >= this.opts.maxConsecutiveResponses) return false;
+    const reason = cue.nodded ? "nodded" : cue.shookHead ? "shook head" : cue.tilted && cue.lookingForward > 0.5 ? "head tilted" : null;
+    if (!reason) return false;
+    this.engage(cue.participantId, now);
+    this.addressedBy = {
+      text: "",
+      detection: { addressed: false, invited: true, confidence: Math.min(0.6, cue.confidence), reason: `visual: ${reason}` },
+    };
+    this.transition("ADDRESSED", now, `visual: ${reason}`);
+    return true;
   }
 
   /** Should the session forward audio / let the assistant answer now? */

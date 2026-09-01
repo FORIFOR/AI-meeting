@@ -42,7 +42,10 @@ class FakeWS implements WebSocketLike {
 
 const tokenFetch = vi.fn(async (url: string, init?: RequestInit) => {
   if (url.endsWith("/api/token/gemini")) {
-    return new Response(JSON.stringify({ token: "auth_tokens/abc123", expiresAt: Date.now() + 60_000, model: "gemini-3.1-flash-live-preview" }), { status: 200 });
+    // The broker echoes the model it minted the token for, which is how the provider learns whether it
+    // got the model it asked for — an operator pin can override the request.
+    const asked = init?.body ? (JSON.parse(String(init.body)) as { model?: string }).model : undefined;
+    return new Response(JSON.stringify({ token: "auth_tokens/abc123", expiresAt: Date.now() + 60_000, model: asked ?? "gemini-3.1-flash-live-preview" }), { status: 200 });
   }
   if (url.endsWith("/api/evaluate")) {
     const body = JSON.parse(String(init?.body));
@@ -115,8 +118,10 @@ describe("GeminiLiveProvider", () => {
     expect(ws.closed?.code).toBe(1000);
   });
 
-  it("exposes proactive audio + tools when configured", async () => {
-    const p = new GeminiLiveProvider({ brokerUrl: "http://b", fetchImpl: tokenFetch, wsFactory: (u) => new FakeWS(u), proactiveAudio: true, enableAffectiveDialog: false });
+  it("exposes proactive audio + tools when configured, on a model that has it", async () => {
+    // Proactive audio and affective dialog are native-audio-only. Sent to a flash-live model they come
+    // back as 1007 "invalid argument", which reads as a broken client rather than an unsupported option.
+    const p = new GeminiLiveProvider({ brokerUrl: "http://b", fetchImpl: tokenFetch, wsFactory: (u) => new FakeWS(u), proactiveAudio: true, enableAffectiveDialog: false, model: "gemini-2.5-flash-preview-native-audio-dialog" });
     await p.connect({ ...config, tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
     const ws = FakeWS.instances[0]!;
     const setup = (ws.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
@@ -124,6 +129,14 @@ describe("GeminiLiveProvider", () => {
     expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
     expect(setup.tools?.[0]?.functionDeclarations[0]?.name).toBe("lookup");
     expect(p.capabilities().extras?.proactiveAudio).toBe(true);
+  });
+
+  it("does not send native-audio-only options to a flash-live model", async () => {
+    const p = new GeminiLiveProvider({ brokerUrl: "http://b", fetchImpl: tokenFetch, wsFactory: (u) => new FakeWS(u), proactiveAudio: true, enableAffectiveDialog: true, model: "gemini-3.1-flash-live-preview" });
+    await p.connect(config);
+    const setup = (FakeWS.instances[0]!.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
+    expect(setup.proactivity).toBeUndefined();
+    expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
   });
 
   it("converts 48k frames to 16k PCM16 base64 chunks of 640 bytes and emits local VAD events", async () => {

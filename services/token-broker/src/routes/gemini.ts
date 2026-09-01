@@ -4,6 +4,21 @@ import type { RouteResult } from "./openai.js";
 export const GEMINI_AUTH_TOKENS_URL = "https://generativelanguage.googleapis.com/v1beta/auth_tokens";
 export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
 
+/**
+ * The model a session may ask for when the operator has not pinned one.
+ *
+ * Two live families, and the choice is a real trade-off rather than a version number: the flash-live
+ * models answer faster, the native-audio ones are the only ones that take affective dialog and
+ * proactive audio. A caller that wants the character to react to how something was said has to be
+ * able to ask for the second, and an allowlist keeps that from becoming "any string reaches Google".
+ */
+export const GEMINI_LIVE_MODELS = [
+  "gemini-3.1-flash-live-preview",
+  "gemini-2.5-flash-live-preview",
+  "gemini-2.5-flash-preview-native-audio-dialog",
+  "gemini-2.5-flash-native-audio-preview-09-2025",
+] as const;
+
 export interface GeminiTokenResponse {
   token: string;
   expiresAt: number;
@@ -19,7 +34,8 @@ export async function createGeminiEphemeralToken(env: BrokerEnv, req: { model?: 
   if (!env.GEMINI_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_GEMINI_KEY" } };
   // The operator's pin wins: the client asks for a model, the broker decides which one it is allowed to
   // have. Without this a deployment could not move models without shipping a new client build.
-  const model = env.GEMINI_LIVE_MODEL ?? req.model ?? DEFAULT_GEMINI_LIVE_MODEL;
+  const requested = req.model && (GEMINI_LIVE_MODELS as readonly string[]).includes(req.model) ? req.model : undefined;
+  const model = env.GEMINI_LIVE_MODEL ?? requested ?? DEFAULT_GEMINI_LIVE_MODEL;
   const expireTime = new Date(now() + 30 * 60_000).toISOString();
   const newSessionExpireTime = new Date(now() + 2 * 60_000).toISOString();
   const res = await fetchImpl(GEMINI_AUTH_TOKENS_URL, {

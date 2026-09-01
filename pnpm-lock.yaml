@@ -290,6 +290,9 @@ importers:
       '@rcai/conversation-core':
         specifier: workspace:*
         version: link:../conversation-core
+      '@rcai/visual-core':
+        specifier: workspace:*
+        version: link:../visual-core
 
   packages/observability:
     dependencies:

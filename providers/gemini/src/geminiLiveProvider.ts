@@ -256,7 +256,14 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         automaticActivityDetection: this.opts.automaticActivityDetection ?? { disabled: false, silenceDurationMs: 500, prefixPaddingMs: 100 },
       },
     };
-    if (this.opts.proactiveAudio) setup.proactivity = { proactiveAudio: true };
+    /**
+     * Proactive audio — the model deciding for itself that the right response is none — is the same
+     * native-audio-only family as affective dialog. Sent to a `*-flash-live-*` model it is rejected
+     * with 1007, which reads as a broken client rather than an unsupported option, so it is gated the
+     * same way. The trade-off is real and belongs to whoever picks the model: 3.1 Flash Live is the
+     * lower-latency one and has neither feature.
+     */
+    if (this.opts.proactiveAudio && nativeAudio) setup.proactivity = { proactiveAudio: true };
     if (config.tools?.length) {
       setup.tools = [{ functionDeclarations: config.tools.map((t) => ({ name: t.name, description: t.description, parameters: t.parameters })) }];
     }

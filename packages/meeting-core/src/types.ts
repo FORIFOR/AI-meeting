@@ -66,6 +66,8 @@ export type MeetingEvent =
   | { type: "speech"; participant: MeetingParticipant; active: boolean; at: number }
   /** Host muted / unmuted the character; outbound audio must pause while muted. */
   | { type: "audio_muted"; muted: boolean; at: number }
+  /** One participant's webcam frame, base64 JPEG (Attendee: 360p at 2 fps). */
+  | { type: "video_frame"; participantId: string; jpegBase64: string; at: number }
   | { type: "error"; error: Error };
 
 export type MeetingEventListener = (e: MeetingEvent) => void;

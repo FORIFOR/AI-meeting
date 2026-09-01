@@ -9,6 +9,8 @@
  */
 export const INBOUND_MIXED = "realtime_audio.mixed";
 export const INBOUND_PER_PARTICIPANT = "realtime_audio.per_participant";
+/** One participant's webcam frame, base64 JPEG. 360p is 2 fps (Attendee derives the rate from the resolution). */
+export const INBOUND_VIDEO = "realtime_video.per_participant";
 export const OUTBOUND_AUDIO = "realtime_audio.bot_output";
 
 export interface AttendeeAudioMessage {

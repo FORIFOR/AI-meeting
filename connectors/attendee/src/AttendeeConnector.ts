@@ -1,6 +1,6 @@
 import { createFrame, createResampler, float32ToInt16, INTERNAL_SAMPLE_RATE, type PCMFrame } from "@rcai/audio-core";
 import { detectPlatform, type JoinRequest, type MeetingConnector, type MeetingConnectorCapabilities, type MeetingEvent, type MeetingEventListener, type MeetingPlatform, type MeetingSession, type MeetingStatus } from "@rcai/meeting-core";
-import { decodeChunk, encodeChunk, INBOUND_MIXED, INBOUND_PER_PARTICIPANT, OUTBOUND_AUDIO, type AttendeeAudioMessage } from "./protocol.js";
+import { decodeChunk, encodeChunk, INBOUND_MIXED, INBOUND_PER_PARTICIPANT, INBOUND_VIDEO, OUTBOUND_AUDIO, type AttendeeAudioMessage } from "./protocol.js";
 
 export interface WebSocketLike {
   send(data: string): void;
@@ -117,13 +117,25 @@ class AttendeeSession implements MeetingSession {
     } catch {
       return;
     }
+    /**
+     * A webcam frame, not audio: the character reads nods and expressions from this. Emitted with the
+     * participant it belongs to, because a reaction only means something when you know whose it is.
+     */
+    if (msg?.trigger === INBOUND_VIDEO) {
+      const d = msg.data as { participant_uuid?: string; frame?: string } | undefined;
+      if (d?.frame && d.participant_uuid) {
+        this.emit({ type: "video_frame", participantId: d.participant_uuid, jpegBase64: d.frame, at: this.now() });
+      }
+      return;
+    }
     if (msg?.trigger !== INBOUND_MIXED && msg?.trigger !== INBOUND_PER_PARTICIPANT) return;
     const chunk = msg.data?.chunk;
     if (!chunk) return;
     const pcm16 = decodeChunk(chunk);
     const float = new Float32Array(pcm16.length);
     for (let i = 0; i < pcm16.length; i++) float[i] = pcm16[i]! / 0x8000;
-    this.emit({ type: "audio", frame: createFrame(float, msg.data?.sample_rate ?? this.sampleRate, this.now()) });
+    const participantId = (msg.data as { participant_uuid?: string } | undefined)?.participant_uuid;
+    this.emit({ type: "audio", frame: createFrame(float, msg.data?.sample_rate ?? this.sampleRate, this.now()), ...(participantId ? { participantId } : {}) });
   }
 
   status(): MeetingStatus {

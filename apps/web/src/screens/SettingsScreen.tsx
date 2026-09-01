@@ -66,6 +66,19 @@ export function SettingsScreen({ settings, dispatch, availability, agentHealth, 
           )}
           <div className="row">
             <span className="row__label">
+              表情や声色に反応する
+              <small>話し方に合わせて応答が変わり、黙っている判断もします。応答は少し遅くなります。</small>
+            </span>
+            <button
+              type="button"
+              className={`switch ${settings.expressive ? "is-on" : ""}`}
+              aria-pressed={settings.expressive}
+              disabled={strict}
+              onClick={() => dispatch({ type: "expressive", on: !settings.expressive })}
+            />
+          </div>
+          <div className="row">
+            <span className="row__label">
               完全ローカル
               <small>クラウドへ一切送信しません。</small>
             </span>
