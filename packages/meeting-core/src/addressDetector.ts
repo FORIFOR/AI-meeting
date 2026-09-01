@@ -36,6 +36,25 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Fold the text to the form the name is written in, before matching.
+ *
+ * A Japanese recogniser does not commit to one script for a short given name. In a real meeting the
+ * character was called by name six times and the transcript read 「ゆイ」 — hiragana then katakana, in
+ * one two-mora word. Matching literally, 「ゆイ」 is not 「ゆい」 and not 「ユイ」, so the character was
+ * never addressed and never spoke. Listing every mixed spelling as an alias is not a fix: there are
+ * 2^n of them for an n-mora name. Katakana folds to hiragana, width and case are normalised, and the
+ * spellings collapse to one.
+ */
+export function normalizeForMatch(text: string): string {
+  return text
+    .normalize("NFKC")
+    // U+30A1–U+30F6 are the katakana with hiragana counterparts 96 code points below; ー, ・ and the
+    // iteration marks have none and are left alone.
+    .replace(/[\u30A1-\u30F6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .toLowerCase();
+}
+
 export class AddressDetector {
   private readonly nameRe: RegExp;
   private readonly vocativeStartRe: RegExp;
@@ -43,7 +62,7 @@ export class AddressDetector {
   private readonly aiRe: RegExp;
 
   constructor(opts: AddressDetectorOptions) {
-    const names = opts.names.filter(Boolean).map(escapeRe);
+    const names = opts.names.filter(Boolean).map((n) => escapeRe(normalizeForMatch(n)));
     if (names.length === 0) throw new Error("AddressDetector needs at least one name");
     const alt = `(?:${names.join("|")})`;
     this.nameRe = new RegExp(alt, "i");
@@ -59,7 +78,7 @@ export class AddressDetector {
   }
 
   detect(rawText: string): AddressDetection {
-    const text = rawText.trim();
+    const text = normalizeForMatch(rawText.trim());
     if (!text) return { addressed: false, invited: false, confidence: 0, reason: "empty" };
     const hasName = this.nameRe.test(text);
     const hasAi = this.aiRe.test(text);
