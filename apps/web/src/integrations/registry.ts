@@ -92,9 +92,33 @@ export interface AvatarFactoryOptions {
   privacyMode?: "default" | "strict_local";
 }
 
+/** Renderers that cannot draw anything without a WebGL context. */
+const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm"];
+
+/**
+ * Is there a WebGL context to be had in this browser?
+ *
+ * Not a theoretical question: a meeting vendor runs our page in its own Chrome, and Attendee's webpage
+ * streamer launches it with `--disable-gpu` and no `--enable-unsafe-swiftshader`, which in current
+ * Chrome means no WebGL at all — measured, both flag sets, in `docs/commercial-gate.md`. Without this
+ * check the failure is a blank camera tile and a session that looks fine from every log we keep.
+ */
+export function webglAvailable(): boolean {
+  if (typeof document === "undefined") return true;
+  try {
+    const c = document.createElement("canvas");
+    return !!(c.getContext("webgl2") ?? c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
 export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryOptions): Promise<AvatarProvider> {
   const strict = o.privacyMode === "strict_local";
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
+  if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
+    throw new Error(`BLOCKED_BY_NO_WEBGL: ${renderer} needs a WebGL context and this browser has none (a meeting vendor's page browser may run with --disable-gpu)`);
+  }
   switch (renderer) {
     case "live2d": {
       const mod = await import("@rcai/avatar-live2d");

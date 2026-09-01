@@ -68,6 +68,8 @@ anonymous participants are **not supported** — stated, not discovered by the c
 | Missed webhook → reconcile → correct state | **PASS (automated)** — a dropped delivery leaves the record stale; reconcile puts it right and records `reconcile:<status>`; a reconcile that would move it backwards is refused. Still worth repeating once in a live call. |
 | Empty account visible to operations | **PASS** — `/health` → `meeting.creditRefusedAt`. |
 | Auto top-up configured | Operator action (dashboard setting; not an API) |
+| `ATTENDEE_WEBHOOK_SECRET` set | Operator action. The signing secret is **project-level and dashboard-only** — Attendee generates it server-side (`WebhookSecret`, Fernet-encrypted) and no API returns it. Copy it from `app.attendee.dev/projects/<project>/webhooks/` → **Copy Secret**. Until it is set, deliveries are recorded as unverified rather than silently trusted. |
+| Bot admitted within 15 minutes | Operational limit, not a bug: the bot-page token's TTL is 15 min (`TOKEN_TTL_MS.bot_page`). A bot left in the waiting room longer than that joins without its avatar page — and waiting-room time is billed. |
 
 ## Meeting providers
 
@@ -77,7 +79,7 @@ implemented; which one is better is a measurement.
 | | Recall | Attendee |
 |---|---|---|
 | Character's voice out | Output Media (a web page as the camera) | the same socket the audio arrives on |
-| Avatar (Live2D needs WebGL) | `web_gpu` only, **$1.50/h** | web page as camera — **field unverified**, see below |
+| Avatar (Live2D needs WebGL) | `web_gpu` only, **$1.50/h** | **not possible** — the streamer's Chrome runs `--disable-gpu` with no swiftshader override, so there is no WebGL context (measured). Voice-only. |
 | Base rate | $0.50/h | $0.50/h after 5 free hours |
 | Audio rate | 24 kHz out of the box | 8/16/**24** kHz — 24 matches our TTS, no resampling |
 | Verified here | join, avatar, transcripts, lifecycle, 30-min soaks | create-bot and the audio contract (unit-tested); **never run against a live meeting** |
@@ -85,13 +87,20 @@ implemented; which one is better is a measurement.
 What is verified for Attendee comes from the API docs and the vendor's own example:
 `POST https://app.attendee.dev/api/v1/bots`, `Authorization: Token <key>`,
 `websocket_settings.audio { url, sample_rate }`, `realtime_audio.mixed` in and
-`realtime_audio.bot_output` out. What is **not** verified is `voice_agent_settings.url` — the field that
-would render the Live2D page as the bot's camera. It is sent only when `ATTENDEE_VOICE_AGENT_PAGE` is
-set, so an unknown field cannot break a join, and the avatar claim stays unproven until a real call.
+`realtime_audio.bot_output` out. What is **not** verified is `voice_agent_settings` — the field that
+renders the Live2D page as the bot's camera. It is sent whenever `RECALL_BOT_PAGE_URL` is configured
+(and `ATTENDEE_VOICE_AGENT` is not `off`), always with `reserve_resources: true`, which is the switch
+Attendee actually reads. The avatar claim stays unproven until a real call.
 
-If Attendee runs the same avatar page without a GPU surcharge, the bot cost falls from ~$150 to ~$50 per
-100 hours. That is worth measuring before topping up Recall — and the free 5 hours cover the 10-minute
-smoke and the 30-minute gate roughly seven times over.
+The hoped-for saving was the avatar at the plain rate: ~$50 instead of ~$150 per 100 hours. The
+measurement says no — Attendee's streamer has no WebGL, so on Attendee the character is heard and not
+seen. That makes the two providers different products rather than a cheaper and a dearer one:
+
+- **Recall `web_gpu`, $1.50/h** — the character is seen and heard. The only avatar path today.
+- **Attendee, $0.50/h** — voice only. Legitimate for a meeting assistant; not for a character.
+
+Both still need the human gates below. Attendee's free 5 hours cover the 10-minute smoke and the
+30-minute gate roughly seven times over, which is why the voice path is measured there first.
 
 ## Known unverified — the next things likely to break
 
@@ -101,8 +110,8 @@ proved either way. None is theoretical; each has a specific failure mode.
 
 | # | Risk | Why it is plausible | How it will be settled |
 |---|---|---|---|
-| 1 | **AudioContext suspended inside Attendee's browser** | The page has no user gesture. This exact thing already stopped the character on Recall — the pipeline was rewritten so it cannot block, but "does not block" is not "makes sound". | `pnpm reality:attendee:verify <bot>` — the recording contains the character's voice or it does not. |
-| 2 | **No WebGL in Attendee's page browser** | Live2D needs it, and Recall's only variant that has it costs three times as much. Attendee's streamer browser is undocumented on this point. | `pnpm reality:attendee:verify <bot>` pulls a frame; the avatar is in it or it is not. |
+| 1 | ~~AudioContext suspended inside Attendee's browser~~ | **Answered from the vendor's source.** `bots/webpage_streamer/webpage_streamer.py` launches Chrome with `--autoplay-policy=no-user-gesture-required` and captures the page's own output (`alsasrc device=default`, S16LE mono 16 kHz) into the meeting. Audio needs no gesture there. Still to be seen once in a live recording. |
+| 2 | **No WebGL in Attendee's page browser — confirmed, and it is a product limit** | Same file: `--disable-gpu`, `--headless=new` commented out (Xvfb), and **no** `--enable-unsafe-swiftshader`. Reproduced locally with exactly those flags: `webgl2:false, webgl1:false`; adding `--enable-unsafe-swiftshader` alone turns it back on. Live2D cannot draw there. | Settled. The page now detects it (`webglAvailable`), reports `BLOCKED_BY_NO_WEBGL` as `AVATAR_NO_WEBGL`, and **keeps the voice** — a meeting is not lost over a camera. A live run should confirm the vendor's Linux Chrome behaves like the measurement. |
 | 3 | ~~No Attendee webhooks~~ | **Done.** `bot.state_change` is subscribed at create time and drives the record monotonically, signature verified against Attendee's canonical JSON (`X-Webhook-Signature`). Without `ATTENDEE_WEBHOOK_SECRET` a delivery is recorded as unverified rather than silently trusted. |
 | 4 | ~~Join notice unsent on Attendee~~ | **Done.** The first `joined_*` state triggers `send_chat_message` once per bot. |
 | 5 | ~~Attendee meetings absent from the record~~ | **Done.** The route creates an intent and the webhook advances it, so an Attendee meeting has the same lifecycle and screens as a Recall one. |

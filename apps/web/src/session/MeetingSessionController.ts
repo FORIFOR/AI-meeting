@@ -93,6 +93,21 @@ export class MeetingSessionController {
   private vad = new EnergyVAD();
   private recent: { speaker: string; text: string }[] = [];
   private lineId = 0;
+  /** Why the character cannot be seen, when it cannot be — reported once, and readable afterwards. */
+  avatarFailure: string | null = null;
+
+  /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
+  private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
+    try {
+      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.avatarFailure = message;
+      this.init.handlers.onError(message, message.startsWith("BLOCKED_BY_NO_WEBGL") ? "AVATAR_NO_WEBGL" : "AVATAR");
+      return null;
+    }
+  }
+
 
   /** Explicit choice (bot page / caller) first, then this browser's setting for the pair. */
   private voiceId(characterId?: string): string | undefined {
@@ -235,8 +250,14 @@ export class MeetingSessionController {
 
     const def = await this.resolveCharacter(character);
     this.character = def;
-    if (stage) {
-      const avatar = await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode: settings.privacyMode });
+    /**
+     * A missing avatar must not cost the meeting its voice. A meeting vendor runs this page in its own
+     * browser, and Attendee's launches Chrome with --disable-gpu and no swiftshader override, which in
+     * current Chrome means no WebGL and so no Live2D. Heard but not seen beats a session that refuses to
+     * start — provided the reason is reported instead of leaving a blank tile and clean logs.
+     */
+    const avatar = stage ? await this.createAvatar(character, stage, brokerUrl, settings.privacyMode) : null;
+    if (stage && avatar) {
       this.avatar = avatar;
       await avatar.prepare(def);
       const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
