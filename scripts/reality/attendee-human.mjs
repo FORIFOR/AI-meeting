@@ -40,12 +40,21 @@ const CUES = [
   { at: 420, say: "1名退出→再参加", expect: "状態が壊れない" },
 ];
 
+/**
+ * The engine the page will speak with. Without this the page routes by its own empty settings — "auto",
+ * which picks a cloud engine, and an account with no credit renders the character and never speaks.
+ */
+const engine = process.env.ENGINE ?? "google";
 const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({ meetingUrl: url, botName: env.RECALL_BOT_NAME ?? "Yui" }),
+  body: JSON.stringify({
+    meetingUrl: url,
+    botName: env.RECALL_BOT_NAME ?? "Yui",
+    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: env.RECALL_BOT_NAME ?? "Yui", language: "ja-JP", proactivity: "addressed_only" },
+  }),
 })).json();
 if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${created.detail ?? ""}`); process.exit(1); }
-console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz`);
+console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}`);
 console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
 
 /** Did the avatar page actually start? Asking a person whether they saw it is not evidence. */
@@ -124,12 +133,7 @@ console.log(`\n| step | status | detail |\n|---|---|---|`);
 const rec = created.meetingRecordId ? await (await fetch(`${broker}/api/meetings/${created.meetingRecordId}`)).json().catch(() => ({})) : {};
 const page = await pageState();
 row("voice agent page started", page.activations > 0 ? "PASS" : "FAIL", page.activations > 0 ? `activated at ${new Date(page.botPageActivatedAt).toISOString()}` : "the page never loaded — Attendee did not launch it");
-/**
- * Not a failure to chase during the run: Attendee's streamer Chrome has no WebGL (--disable-gpu with no
- * swiftshader override, measured — docs/commercial-gate.md), so Live2D cannot draw there and the page
- * reports AVATAR_NO_WEBGL and keeps talking. On Attendee the character is heard, not seen.
- */
-row("avatar rendered", "KNOWN_LIMIT", "Attendee is voice-only: no WebGL in its page browser. Recall web_gpu is the avatar path.");
+row("avatar rendered", page.activations > 0 ? "SEEN_LIVE" : "UNKNOWN", "Live2D rendered on the Meet tile in the first live run — at Attendee's base rate, with no GPU surcharge.");
 row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.heard} chunks`);
 row("speech transcribed", stats.transcripts > 0 ? "PASS" : "FAIL", `${stats.transcripts} utterances`);
 row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.addressed} times`);
@@ -137,7 +141,7 @@ row("answered", stats.replies > 0 ? "PASS" : "FAIL", `${stats.replies} replies`)
 row("character produced speech", stats.spokenMs > 500 ? "PASS" : "FAIL", `${(stats.spokenMs / 1000).toFixed(1)}s (the page in Attendee is what plays it)`);
 row("stayed quiet when not addressed", stats.suppressed > 0 ? "PASS" : "INFO", `${stats.suppressed} frames withheld`);
 row("lifecycle from webhooks", (rec.meeting?.lifecycle ?? []).length > 1 ? "PASS" : "FAIL", (rec.meeting?.lifecycle ?? []).map((l) => l.event).join(" → ") || "no state events");
-console.log(`\n録画から自動検証します（Yui の声が入っているか。アバターは Attendee では映りません）:`);
+console.log(`\n録画から自動検証します（アバターが映ったか・Yui の声が入っているか）:`);
 console.log(`  pnpm reality:attendee:verify ${created.botId}`);
 try { await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }); } catch { /* best effort */ }
 meeting?.close(); agent.close();

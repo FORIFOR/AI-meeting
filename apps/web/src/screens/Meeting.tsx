@@ -3,7 +3,7 @@ import type { Persona } from "@rcai/persona-core";
 import type { MeetingStatus, ParticipationState, Proactivity } from "@rcai/meeting-core";
 import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
-import type { Availability, Settings } from "../state/settings.js";
+import { settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
 import { MeetingSessionController, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
 import { pillFor } from "../session/pill.js";
 
@@ -75,8 +75,15 @@ export function Meeting(p: MeetingProps) {
     setBusy(true);
     setError(null);
     try {
+      /**
+       * The operator's engine travels in the bot-page URL, and until now the page stored it and then
+       * routed by its own empty settings — "auto", which prefers a cloud engine. A bot page whose
+       * OpenAI account has no credit then renders the character and never speaks (429, in-call).
+       * The choice that was made when the bot was created is the one that must be used.
+       */
+      const settings = isBot ? settingsForBotPage(p.settings, botConfig?.engine) : p.settings;
       const c = new MeetingSessionController({
-        settings: p.settings,
+        settings,
         availability: (isBot ? botAvailability : p.availability) ?? { openai: false, google: false, local: false },
         persona,
         character,

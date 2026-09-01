@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS, chosenVoice, decide, loadSettings, saveSettings, settingsReducer } from "./settings.js";
+import { DEFAULT_SETTINGS, chosenVoice, decide, loadSettings, saveSettings, settingsForBotPage, settingsReducer } from "./settings.js";
+
+describe("a page running inside a meeting bot", () => {
+  it("routes with the engine the bot was created with, not its own empty settings", () => {
+    // Observed in-call: the page kept "auto", picked OpenAI, and the account had no credit — the
+    // character rendered and never spoke (429).
+    expect(decide(DEFAULT_SETTINGS).conversation).toBe("openai");
+    expect(decide(settingsForBotPage(DEFAULT_SETTINGS, "google")).conversation).toBe("google");
+    expect(decide(settingsForBotPage(DEFAULT_SETTINGS, "local")).conversation).toBe("local");
+  });
+  it("ignores an engine it does not know rather than trusting the URL", () => {
+    expect(settingsForBotPage(DEFAULT_SETTINGS, "sonnet")).toEqual(DEFAULT_SETTINGS);
+    expect(settingsForBotPage(DEFAULT_SETTINGS, undefined)).toEqual(DEFAULT_SETTINGS);
+  });
+});
 
 describe("voice choice", () => {
   it("is kept per character and per provider — the ids live in different namespaces", () => {

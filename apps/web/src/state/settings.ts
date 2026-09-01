@@ -100,6 +100,19 @@ export function chosenVoice(s: Settings, characterId: string | undefined, provid
   return s.voices?.[voiceKey(characterId, providerId)];
 }
 
+/**
+ * Settings for a page running inside a meeting bot.
+ *
+ * The engine chosen when the bot was created travels in the bot-page URL. The page has its own empty
+ * storage, so routing by its own settings means "auto" — which prefers a cloud engine, and an account
+ * with no credit renders the character and never speaks (observed in-call: OpenAI 429, silent bot).
+ * An engine the app does not know is ignored rather than trusted.
+ */
+export function settingsForBotPage(base: Settings, engine: string | undefined): Settings {
+  const known: EngineSelection[] = ["auto", "openai", "google", "local"];
+  return engine && known.includes(engine as EngineSelection) ? { ...base, engine: engine as EngineSelection } : base;
+}
+
 export interface Availability {
   openai: boolean;
   google: boolean;
