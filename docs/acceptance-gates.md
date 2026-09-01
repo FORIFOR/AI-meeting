@@ -121,7 +121,41 @@ no human in the loop.
   return 502 at the end of both runs. Quota is now reported as `BLOCKED_BY_OPENAI_QUOTA` (503) rather
   than a generic upstream failure; the result screen still falls back to the heuristic evaluator.
 
-### Meeting: address → answer (still open)
+### Meeting: address → answer
+
+`pnpm reality:address` — **PASS**, no meeting and no bot required. The real `ParticipationPolicy` is fed
+real transcript segments and whatever it decides runs through the real agent:
+
+| step | result |
+|---|---|
+| address detection (7 lines, 3 addressed) | 7/7 classified correctly |
+| answered when addressed | 3/3 |
+| spoke | 10.3 s @ 22050 Hz, peak 34 % |
+| stayed quiet otherwise | 3 replies for 3 addresses |
+
+```
+✓ [ignored ] では、今日の議題を確認しましょう。
+✓ [answered] ゆいさん、聞こえていますか。            → はい、聞こえています。 (1807 ms)
+✓ [answered] ゆいさん、今日の会議の進め方は？        → 今日の進め方は効率的だと思います。 (3718 ms)
+✓ [ignored ] ゆいがそう言ってた気がする。             ← third-person mention, correctly ignored
+✓ [answered] ゆいさん、来週までにやることを？        → 来週までに、資料の最終確認と…
+```
+
+The first attempt failed 2 of 3 addresses, and the policy was right: it does not answer twice in a row
+without someone else speaking (`maxConsecutiveResponses`) and holds a cooldown after answering. A script
+that talks the way a meeting does passes.
+
+**Not covered**: Recall's own delivery of those segments in a live call, which needs a bot, which needs
+credit on the workspace (see below).
+
+### Recall credits exhausted
+
+`insufficient_credit_balance` — the $5 free grant is spent (2-core 0.92 h, GPU 2.97 h). The GPU hours are
+the `web_gpu` variant Live2D requires at $1.50/h, spent during this session's debugging. `pnpm
+reality:meet:live` is written and ready: it sends the character in and a second Recall bot that speaks
+synthesised Japanese through Output Audio, so the live hop needs credit, not a person.
+
+### Meeting: address → answer (superseded)
 
 The character only speaks when it hears its name, and in a meeting that name arrives on Recall's in-bot
 transcript socket, which exists only inside a bot. To make the path exercisable — and because a single
