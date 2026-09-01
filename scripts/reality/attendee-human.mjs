@@ -4,6 +4,7 @@
  *   real meeting → human voice → Attendee → our STT → address detection → AI → TTS → Attendee → heard
  *
  *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:attendee:human      # 10-minute smoke
+ *   MEET_URL=https://us02web.zoom.us/j/…?pwd=… pnpm reality:attendee:human         # same gate on Zoom
  *   MEET_URL=... MINUTES=30 pnpm reality:attendee:human                            # commercial gate
  *
  * The avatar page runs inside Attendee as its voice agent, so the character is both seen and heard from
@@ -16,7 +17,7 @@
  */
 import { createRequire } from "node:module";
 import { loadEnv } from "./lib.mjs";
-import { ParticipationPolicy } from "../../packages/meeting-core/src/index.js";
+import { ParticipationPolicy, detectPlatform } from "../../packages/meeting-core/src/index.js";
 
 const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
 const WebSocket = require("ws");
@@ -27,7 +28,12 @@ const broker = process.env.BROKER_URL ?? "http://localhost:8787";
 const agentUrl = process.env.AGENT_URL ?? "ws://127.0.0.1:8788/session";
 const minutes = Number(process.env.MINUTES ?? 10);
 const names = (process.env.CHARACTER_NAMES ?? "Yui,ゆい,ユイ,結衣").split(",");
-if (!url || !/^https:\/\/meet\.google\.com\//.test(url)) { console.log("BLOCKED_BY_MEET_URL"); process.exit(2); }
+/**
+ * Any platform the vendor carries, not just Meet. The gate refused every non-Meet URL, so Zoom could
+ * not be exercised even though both connectors advertise it — a gate that cannot run is not a pass.
+ */
+const platform = detectPlatform(url ?? "");
+if (!url || platform === "unknown") { console.log(`BLOCKED_BY_MEET_URL: set MEET_URL to a Google Meet, Zoom or Teams link (got ${url ?? "nothing"})`); process.exit(2); }
 if (!env.ATTENDEE_API_KEY) { console.log("BLOCKED_BY_ATTENDEE_KEY"); process.exit(2); }
 
 const CUES = [
@@ -54,7 +60,7 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   }),
 })).json();
 if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${created.detail ?? ""}`); process.exit(1); }
-console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}`);
+console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}  platform=${platform}`);
 console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
 
 /** Did the avatar page actually start? Asking a person whether they saw it is not evidence. */
