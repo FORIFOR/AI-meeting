@@ -5,7 +5,7 @@ import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { ParticipationPolicy, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
-import { decide, type Availability, type Settings } from "../state/settings.js";
+import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
 /** How long the pipeline waits for the AudioContext before mounting the avatar anyway. */
 const AUDIO_START_GRACE_MS = 2500;
@@ -60,6 +60,11 @@ export interface MeetingInit {
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
   attendeeAttach?: { botId: string; clientWsUrl: string };
+  /**
+   * Voice chosen by the operator. The bot page has its own empty settings storage, so the choice
+   * only survives the trip when it is carried explicitly (bot role) rather than read from settings.
+   */
+  voiceId?: string;
   /** bot role: activation already performed by the screen (tokens are single-use — never activate twice). */
   botActivation?: { sessionId: string; botId: string };
   connectorMode?: "output_media" | "relay";
@@ -88,6 +93,12 @@ export class MeetingSessionController {
   private vad = new EnergyVAD();
   private recent: { speaker: string; text: string }[] = [];
   private lineId = 0;
+
+  /** Explicit choice (bot page / caller) first, then this browser's setting for the pair. */
+  private voiceId(characterId?: string): string | undefined {
+    return this.init.voiceId ?? chosenVoice(this.init.settings, characterId ?? this.init.character.id, this.decision.conversation);
+  }
+
   private forwarding = false;
   private policyTimer: ReturnType<typeof setInterval> | null = null;
   private decision: ReturnType<typeof decide>;
@@ -152,7 +163,7 @@ export class MeetingSessionController {
       brokerUrl: settings.brokerUrl,
       privacyMode: settings.privacyMode,
       mode,
-      botPageQuery: { character: character.id, persona: persona.id, engine: this.decision.conversation, name: displayName, proactivity: this.init.proactivity, language: persona.language },
+      botPageQuery: { character: character.id, persona: persona.id, engine: this.decision.conversation, name: displayName, proactivity: this.init.proactivity, language: persona.language, ...(this.voiceId() ? { voice: this.voiceId()! } : {}) },
     });
     const session = await connector.join({ meetingUrl, displayName, privacyMode: settings.privacyMode, language: persona.language.split("-")[0] });
     this.session = session;
@@ -252,7 +263,7 @@ export class MeetingSessionController {
 
     const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode });
     const extra = `あなたはオンライン会議に参加している「${this.init.displayName}」です。会議の参加者に名前で呼ばれたときだけ、簡潔に（1〜2文で）答えます。呼ばれていない間は発言しません。`;
-    const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra });
+    const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     config.providerOptions = { ...config.providerOptions, opening: undefined };
     await runtime.start(provider, config);

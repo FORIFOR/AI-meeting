@@ -1,3 +1,4 @@
+import { resolveVoice } from "./voices.js";
 import { conversationPolicyFor, renderPolicy, type ConversationPolicy, type PrivacyMode, type SessionConfig } from "@rcai/conversation-core";
 import type { CharacterDefinition } from "@rcai/avatar-core";
 import type { Persona, SpeakingStyle } from "./persona.js";
@@ -56,11 +57,13 @@ export interface CreateSessionConfigInput extends BuildPromptInput {
   privacyMode: PrivacyMode;
   character?: CharacterDefinition | null;
   model?: string;
+  /** The user's chosen voice; falls back to the character's own when unset or unknown. */
+  voiceId?: string;
 }
 
 /** Glue used by the app: persona + character + provider → SessionConfig (never contains secrets). */
 export function createSessionConfig(input: CreateSessionConfigInput): SessionConfig {
-  const voice = input.character?.voice.voices[input.providerId];
+  const voice = resolveVoice(input.providerId, input.character?.voice.voices[input.providerId], input.voiceId);
   return {
     systemPrompt: buildSystemPrompt(input),
     mode: input.persona.mode,

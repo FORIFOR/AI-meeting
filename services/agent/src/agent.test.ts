@@ -170,8 +170,10 @@ class FakeLLM implements LLMAdapter {
 class FakeTTS implements TTSAdapter {
   engine = "fake"; ready = true; voice = "v";
   calls: string[] = [];
-  async synthesize(text: string, signal?: AbortSignal) {
+  voiceCalls: (string | undefined)[] = [];
+  async synthesize(text: string, signal?: AbortSignal, voice?: string) {
     this.calls.push(text);
+    this.voiceCalls.push(voice);
     await new Promise((r, rej) => { const t = setTimeout(r, 5); signal?.addEventListener("abort", () => { clearTimeout(t); rej(new Error("aborted")); }); });
     return { sampleRate: 16000, pcm16: new Int16Array(16000) }; // 1 s per sentence
   }
@@ -204,6 +206,21 @@ describe("ConversationSession", () => {
     expect(audio.length).toBe(20); // 2 sentences × 1 s / 100 ms chunks
     expect(decodeAudioFrame(audio[0]!).sampleRate).toBe(16000);
     expect(s.state).toBe("idle");
+  });
+  it("speaks with the voice the user chose for the session", async () => {
+    const { s, sent, tts } = makeSession();
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", voice: "com.apple.eloquence.ja-JP.Flo" });
+    void s.onText("こんにちは");
+    await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
+    expect(tts.voiceCalls.length).toBeGreaterThan(0);
+    expect(new Set(tts.voiceCalls)).toEqual(new Set(["com.apple.eloquence.ja-JP.Flo"]));
+  });
+  it("keeps the engine's own voice when the user chose none", async () => {
+    const { s, sent, tts } = makeSession();
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    void s.onText("こんにちは");
+    await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
+    expect(new Set(tts.voiceCalls)).toEqual(new Set([undefined]));
   });
   it("barge-in aborts LLM/TTS, stops audio and emits interrupted", async () => {
     const { s, sent, audio, vad, tts } = makeSession(new FakeLLM("一つ目の理由は春が暖かいこと。二つ目は花が咲くこと。三つ目は新しい出会いがあること。四つ目もあるよ。", 15));

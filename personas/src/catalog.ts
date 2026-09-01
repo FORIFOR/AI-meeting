@@ -13,11 +13,12 @@ import salesCustomerJa from "../sales/sales_customer_ja.json";
 import tutorJa from "../tutor/tutor_ja.json";
 import friendJa from "../free_talk/friend_ja.json";
 import careerCoachJa from "../career/career_coach_ja.json";
+import companionJa from "../companion/companion_ja.json";
 
 const RAW: unknown[] = [
   interviewerJa, interviewerEn,
   englishFreeTalk, englishTravel, englishBusiness, englishInterview, englishDaily, englishPronunciation, englishBeginner,
-  salesCustomerJa, tutorJa, friendJa, careerCoachJa,
+  salesCustomerJa, tutorJa, friendJa, careerCoachJa, companionJa,
 ];
 
 /** All bundled personas, validated at module load (spec §18: Character ≠ Personality). */
@@ -28,6 +29,7 @@ export const personasByMode: Record<ConversationMode, Persona[]> = {
   interview: personas.filter((p) => p.mode === "interview"),
   english_lesson: personas.filter((p) => p.mode === "english_lesson"),
   sales_roleplay: personas.filter((p) => p.mode === "sales_roleplay"),
+  companion: personas.filter((p) => p.mode === "companion"),
   tutor: personas.filter((p) => p.mode === "tutor"),
   career: personas.filter((p) => p.mode === "career"),
 };
@@ -50,4 +52,5 @@ export const DEFAULT_PERSONA_ID: Record<ConversationMode, string> = {
   sales_roleplay: "sales_customer_ja",
   tutor: "tutor_ja",
   career: "career_coach_ja",
+  companion: "companion_ja",
 };

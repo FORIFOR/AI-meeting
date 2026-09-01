@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { ProviderId } from "@rcai/conversation-core";
 import type { AutoPolicy, EngineSelection, Role } from "@rcai/provider-core";
-import { POLICY_LABEL, PROVIDER_LABEL, ROLE_LABEL, decide, type Availability, type Settings, type SettingsAction } from "../state/settings.js";
+import { VOICE_OPTIONS, localVoiceOptions } from "@rcai/persona-core";
+import { POLICY_LABEL, PROVIDER_LABEL, ROLE_LABEL, chosenVoice, decide, type Availability, type Settings, type SettingsAction } from "../state/settings.js";
 import type { CharacterEntry } from "../integrations/registry.js";
 
 const ENGINES: { id: EngineSelection; ja: string }[] = [
@@ -17,18 +18,21 @@ export interface SettingsProps {
   settings: Settings;
   dispatch: (a: SettingsAction) => void;
   availability: Availability | null;
+  /** Local voices depend on the machine; the agent reports the ones actually installed. */
+  agentHealth?: { tts?: { voices?: string[] } } | null;
   characters: CharacterEntry[];
   onCharacter: () => void;
   onBack: () => void;
 }
 
 /** Grouped rows — no cards, no explanatory paragraphs. Level 3 lives under 詳細設定. */
-export function SettingsScreen({ settings, dispatch, availability, characters, onCharacter, onBack }: SettingsProps) {
+export function SettingsScreen({ settings, dispatch, availability, agentHealth, characters, onCharacter, onBack }: SettingsProps) {
   const [broker, setBroker] = useState(settings.brokerUrl);
   const [agent, setAgent] = useState(settings.agentUrl);
   const strict = settings.privacyMode === "strict_local";
   const character = characters.find((c) => c.id === settings.characterId) ?? characters[0];
   const decision = decide(settings, availability ?? undefined);
+  const voiceOptions = decision.conversation === "local" ? localVoiceOptions(agentHealth?.tts?.voices) : VOICE_OPTIONS[decision.conversation];
 
   return (
     <div className="page">
@@ -77,6 +81,25 @@ export function SettingsScreen({ settings, dispatch, availability, characters, o
             <span className="row__label">{character?.name ?? "—"}</span>
             <span className="row__value">変更 <span className="row__chev">›</span></span>
           </button>
+          <div className="row">
+            <span className="row__label">
+              声
+              <small>{PROVIDER_LABEL[decision.conversation]} で話すときの声。</small>
+            </span>
+            <span className="row__value">
+              <select
+                className="select"
+                value={chosenVoice(settings, character?.id, decision.conversation) ?? ""}
+                onChange={(e) => character && dispatch({ type: "voice", characterId: character.id, providerId: decision.conversation, voiceId: e.target.value || undefined })}
+                disabled={!character}
+              >
+                <option value="">このキャラクターの声</option>
+                {voiceOptions.map((v) => (
+                  <option key={v.id} value={v.id}>{v.label} — {v.note}</option>
+                ))}
+              </select>
+            </span>
+          </div>
         </div>
       </div>
 

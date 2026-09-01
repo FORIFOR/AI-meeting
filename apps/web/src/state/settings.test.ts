@@ -1,5 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS, decide, loadSettings, saveSettings, settingsReducer } from "./settings.js";
+import { DEFAULT_SETTINGS, chosenVoice, decide, loadSettings, saveSettings, settingsReducer } from "./settings.js";
+
+describe("voice choice", () => {
+  it("is kept per character and per provider — the ids live in different namespaces", () => {
+    let s = settingsReducer(DEFAULT_SETTINGS, { type: "voice", characterId: "yui", providerId: "openai", voiceId: "cedar" });
+    s = settingsReducer(s, { type: "voice", characterId: "yui", providerId: "google", voiceId: "Aoede" });
+    s = settingsReducer(s, { type: "voice", characterId: "haru", providerId: "openai", voiceId: "sage" });
+    expect(chosenVoice(s, "yui", "openai")).toBe("cedar");
+    expect(chosenVoice(s, "yui", "google")).toBe("Aoede");
+    expect(chosenVoice(s, "haru", "openai")).toBe("sage");
+    expect(chosenVoice(s, "kei", "openai")).toBeUndefined();
+  });
+  it("clears back to the character's own voice", () => {
+    let s = settingsReducer(DEFAULT_SETTINGS, { type: "voice", characterId: "yui", providerId: "openai", voiceId: "cedar" });
+    s = settingsReducer(s, { type: "voice", characterId: "yui", providerId: "openai", voiceId: undefined });
+    expect(chosenVoice(s, "yui", "openai")).toBeUndefined();
+  });
+});
 
 describe("settingsReducer", () => {
   it("switches engine and advanced overrides", () => {

@@ -13,6 +13,7 @@ export const PRODUCTS: { mode: ConversationMode; kana: string; name: string; des
   { mode: "sales_roleplay", kana: "Sales Roleplay", name: "営業ロープレ", desc: "顧客役と商談。反論への返し方を試す。" },
   { mode: "tutor", kana: "Tutor", name: "学習", desc: "問いかけで理解を確かめながら進める。" },
   { mode: "career", kana: "Career", name: "キャリア相談", desc: "話しながら考えを整理する。" },
+  { mode: "companion", kana: "Companion", name: "寄り添い", desc: "評価も助言もしない。近しい相手として、ただ聞く。" },
 ];
 
 export const MODE_NAME: Record<string, string> = Object.fromEntries(PRODUCTS.map((p) => [p.mode, p.name]));

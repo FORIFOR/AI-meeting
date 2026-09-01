@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import type { CharacterEntry } from "../integrations/registry.js";
-import type { Settings, SettingsAction } from "../state/settings.js";
+import { VOICE_OPTIONS, localVoiceOptions } from "@rcai/persona-core";
+import { chosenVoice, decide, type Settings, type SettingsAction } from "../state/settings.js";
 import { PRODUCTS } from "./Home.jsx";
 
 export interface SetupProps {
@@ -11,6 +12,8 @@ export interface SetupProps {
   characters: CharacterEntry[];
   settings: Settings;
   dispatch: (a: SettingsAction) => void;
+  /** Local voices depend on the machine; the agent reports the ones actually installed. */
+  agent?: { tts?: { voices?: string[] } } | null;
   onBack: () => void;
   onCharacter: () => void;
   onStart: (persona: Persona, params: Record<string, string>) => void;
@@ -28,6 +31,9 @@ export function Setup(p: SetupProps) {
     return v;
   }, [persona, params]);
   const character = p.characters.find((c) => c.id === p.settings.characterId) ?? p.characters[0];
+  // The voice belongs next to "who am I talking to", not buried in settings — it is chosen at the same moment.
+  const providerId = decide(p.settings).conversation;
+  const voiceOptions = providerId === "local" ? localVoiceOptions(p.agent?.tts?.voices) : VOICE_OPTIONS[providerId];
 
   if (!persona) {
     return (
@@ -82,6 +88,22 @@ export function Setup(p: SetupProps) {
           <span className="row__label">{partnerLabel}</span>
           <span className="row__value">{character?.name ?? "—"} <span className="row__chev">›</span></span>
         </button>
+        <div className="row">
+          <span className="row__label">声</span>
+          <span className="row__value">
+            <select
+              className="select"
+              value={chosenVoice(p.settings, character?.id, providerId) ?? ""}
+              onChange={(e) => character && p.dispatch({ type: "voice", characterId: character.id, providerId, voiceId: e.target.value || undefined })}
+              disabled={!character}
+            >
+              <option value="">{character?.name ?? "この相手"}の声</option>
+              {voiceOptions.map((v) => (
+                <option key={v.id} value={v.id}>{v.label} — {v.note}</option>
+              ))}
+            </select>
+          </span>
+        </div>
       </div>
 
       <div className="page__actions">

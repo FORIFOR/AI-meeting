@@ -9,7 +9,9 @@ export type ConversationMode =
   | "english_lesson"
   | "sales_roleplay"
   | "tutor"
-  | "career";
+  | "career"
+  /** Personal, unstructured conversation with someone close — company rather than practice. */
+  | "companion";
 
 export interface TurnHistoryItem {
   role: "user" | "assistant";

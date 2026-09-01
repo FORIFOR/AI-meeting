@@ -15,13 +15,16 @@ export interface TTSAdapter {
   readonly engine: string;
   readonly ready: boolean;
   readonly voice: string;
-  synthesize(text: string, signal?: AbortSignal): Promise<TTSResult>;
+  /** Voices this engine can actually use on this machine (undefined = unknown). */
+  readonly voices?: string[];
+  /** `voice` overrides the adapter's configured voice for this utterance (the user's choice). */
+  synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult>;
   /**
    * Optional streaming path: audio chunks are yielded as the engine produces them, so playback
    * can start before the whole phrase is synthesized. The request must be issued when this is
    * called (not when iteration starts) so a caller can queue the next phrase early.
    */
-  synthesizeStream?(text: string, signal?: AbortSignal): AsyncIterable<TTSResult>;
+  synthesizeStream?(text: string, signal?: AbortSignal, voice?: string): AsyncIterable<TTSResult>;
 }
 
 /** macOS `say` — dev/fallback TTS; no network, ships with the OS. ~0.65–0.77 s fixed spawn/file overhead per call. */
@@ -34,9 +37,9 @@ export class SayTTS implements TTSAdapter {
     this.ready = process.platform === "darwin";
   }
 
-  async synthesize(text: string, signal?: AbortSignal): Promise<TTSResult> {
+  async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
     const file = path.join(os.tmpdir(), `rcai-say-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.wav`);
-    const args = ["-v", this.voice, `--data-format=LEI16@${this.sampleRate}`, "-o", file];
+    const args = ["-v", voice || this.voice, `--data-format=LEI16@${this.sampleRate}`, "-o", file];
     if (this.rate) args.push("-r", String(this.rate));
     args.push(text);
     await new Promise<void>((resolve, reject) => {
@@ -92,6 +95,15 @@ export class DaemonRecordParser {
   }
 }
 
+/**
+ * The UI offers voices by name ("Kyoko"); AVSpeech wants an identifier. An unknown identifier makes the
+ * daemon fall back to the default ja-JP voice, so a wrong guess degrades rather than fails.
+ */
+export function avSpeechVoiceId(voice?: string): string | undefined {
+  if (!voice) return undefined;
+  return voice.includes(".") ? voice : `com.apple.voice.compact.ja-JP.${voice}`;
+}
+
 export interface AVSpeechDaemonOptions {
   binaryPath: string;
   voice?: string; // AVSpeechSynthesisVoice identifier
@@ -108,6 +120,8 @@ export class AVSpeechDaemonTTS implements TTSAdapter {
   readonly engine = "avspeech-daemon";
   ready = false;
   readonly voice: string;
+  /** Filled from the daemon's pong: the ja voices installed on this Mac, so the UI never offers a missing one. */
+  voices: string[] = [];
   private child: ChildProcessWithoutNullStreams | null = null;
   private parser = new DaemonRecordParser();
   private queues = new Map<number, { q: AsyncQueue<TTSResult>; sampleRate: number; done: boolean }>();
@@ -159,6 +173,10 @@ export class AVSpeechDaemonTTS implements TTSAdapter {
 
   private onRecord(rec: DaemonRecord): void {
     if (rec.id === 0 && rec.kind === 0) {
+      try {
+        const p = JSON.parse(new TextDecoder().decode(rec.payload)) as { voices?: string[] };
+        if (Array.isArray(p.voices)) this.voices = p.voices;
+      } catch { /* pong without a voice list */ }
       this.pending.get(0)?.(true);
       this.pending.delete(0);
       return;
@@ -186,7 +204,7 @@ export class AVSpeechDaemonTTS implements TTSAdapter {
     }
   }
 
-  synthesizeStream(text: string, signal?: AbortSignal): AsyncIterable<TTSResult> {
+  synthesizeStream(text: string, signal?: AbortSignal, voice?: string): AsyncIterable<TTSResult> {
     const id = this.nextId++;
     const q = new AsyncQueue<TTSResult>();
     const entry = { q, sampleRate: 22050, done: false };
@@ -207,7 +225,7 @@ export class AVSpeechDaemonTTS implements TTSAdapter {
         this.queues.delete(id);
         throw new Error("tts daemon not running");
       }
-      this.child.stdin.write(JSON.stringify({ id, text, voice: this.voice, rate: this.opts.rate ?? 0.5, pitch: this.opts.pitch }) + "\n");
+      this.child.stdin.write(JSON.stringify({ id, text, voice: avSpeechVoiceId(voice) ?? this.voice, rate: this.opts.rate ?? 0.5, pitch: this.opts.pitch }) + "\n");
     }
     const self = this;
     return {
@@ -222,11 +240,11 @@ export class AVSpeechDaemonTTS implements TTSAdapter {
     };
   }
 
-  async synthesize(text: string, signal?: AbortSignal): Promise<TTSResult> {
+  async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
     const parts: Int16Array[] = [];
     let sampleRate = 22050;
     let total = 0;
-    for await (const c of this.synthesizeStream(text, signal)) {
+    for await (const c of this.synthesizeStream(text, signal, voice)) {
       parts.push(c.pcm16);
       sampleRate = c.sampleRate;
       total += c.pcm16.length;

@@ -6,7 +6,7 @@ import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefini
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { createAvatarProvider, createConversationProvider, createEvaluator, createHeuristicEvaluator, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
-import { decide, type Availability, type Settings } from "../state/settings.js";
+import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 import { EvaluationSidecar, type DeferredFeedback } from "./sidecar.js";
 import { SessionObserver, createTelemetrySender, type SessionReport } from "@rcai/observability";
 import { IncidentRecorder, submitIncident, saveIncidentMeta, type IncidentOptIn, type PresenceIncident } from "./IncidentRecorder.js";
@@ -243,7 +243,7 @@ export class SessionController {
     // 8. AI provider (routed) + session config (persona + character + policy; no secrets).
     const provider = await createConversationProvider(this.decision.conversation, this.factoryOptions);
     this.checkpoint();
-    const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params });
+    const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
     await runtime.start(provider, config);
     this.checkpoint();
     runtime.attachMicStream(stream);

@@ -11,7 +11,7 @@ export interface AgentHealth {
   strictLocalCapable?: boolean;
   stt: { engine: string; ready: boolean };
   llm: { engine: string; ready: boolean; model?: string };
-  tts: { engine: string; ready: boolean };
+  tts: { engine: string; ready: boolean; voice?: string; voices?: string[] };
 }
 
 export function agentHttpUrl(agentUrl: string): string {

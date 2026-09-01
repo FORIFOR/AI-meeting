@@ -74,7 +74,7 @@ import { getActiveSession } from "./activeSession.js";
 
 function makeController() {
   return new SessionController({
-    settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: false, characterId: "c", cameraOn: false, captionsOn: true },
+    settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "strict_local", showHud: false, characterId: "c", cameraOn: false, captionsOn: true, voices: {} },
     availability: { openai: false, google: false, local: true },
     persona: { id: "p", name: "P", mode: "free_talk", systemPrompt: "x", language: "ja-JP", speakingStyle: { speed: "normal", energy: 0.5, politeness: "casual", sentenceLength: "short" }, turnPolicy: { maxSentences: 2, allowSilenceMs: 2000, backchannel: true, interruptible: true, correctionPolicy: "none" }, motionProfile: "m" },
     character: { id: "c", name: "C", renderer: "canvas", baseUrl: "/c" },

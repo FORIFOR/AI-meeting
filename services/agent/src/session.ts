@@ -141,10 +141,14 @@ export class ConversationSession {
     this.clock = deps.clock ?? (() => Date.now());
   }
 
+  /** Voice chosen by the user for this session; undefined keeps the adapter's configured voice. */
+  private voice?: string;
+
   start(config: SessionConfig): void {
     this.systemPrompt = config.systemPrompt;
     this.language = config.language ?? "ja-JP";
     this.strictLocal = config.privacyMode === "strict_local";
+    this.voice = config.voice;
     if (this.strictLocal) {
       const bad = this.deps.nonLoopbackEndpoints?.() ?? [];
       if (bad.length) {
@@ -565,10 +569,10 @@ export class ConversationSession {
   /** Wrap an adapter into a chunk stream (streaming adapters yield as they synthesize). */
   private ttsStream(text: string, signal: AbortSignal): AsyncIterable<TTSResult> {
     const tts = this.deps.tts;
-    if (tts.synthesizeStream) return tts.synthesizeStream(text, signal);
+    if (tts.synthesizeStream) return tts.synthesizeStream(text, signal, this.voice);
     // The request is issued now (lookahead); a rejection before iteration (e.g. abort) must not
     // surface as an unhandled promise rejection, so it is captured and re-thrown to the consumer.
-    const p = tts.synthesize(text, signal).then((r) => ({ ok: true as const, r }), (err: unknown) => ({ ok: false as const, err }));
+    const p = tts.synthesize(text, signal, this.voice).then((r) => ({ ok: true as const, r }), (err: unknown) => ({ ok: false as const, err }));
     return {
       async *[Symbol.asyncIterator]() {
         const res = await p;

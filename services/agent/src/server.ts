@@ -138,7 +138,7 @@ export function createApp(rt: AgentRuntime): Hono {
       strictLocalCapable: true,
       stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
       llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl },
-      tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice },
+      tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [] },
       vad: { engine: rt.vadEngine },
     }),
   );

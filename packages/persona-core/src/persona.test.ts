@@ -50,4 +50,9 @@ describe("persona", () => {
     expect(cfg.personaId).toBe("interviewer_ja");
     expect(JSON.stringify(cfg)).not.toMatch(/api[_-]?key/i);
   });
+  it("lets the user's chosen voice win over the character's default", () => {
+    const character = { manifest: { id: "yui", name: "Yui", renderer: "live2d" as const, defaultPersona: "x", supportedLanguages: ["ja-JP"], motionProfile: "m", voiceProfiles: [] }, baseUrl: "/c/yui", model: "m", expressions: {}, motions: {}, voice: { characterId: "yui", voices: { openai: "marin", google: "Kore", local: "Kyoko" } } };
+    expect(createSessionConfig({ persona: interviewer, providerId: "google", privacyMode: "default", character, voiceId: "Aoede" }).voice).toBe("Aoede");
+    expect(createSessionConfig({ persona: interviewer, providerId: "google", privacyMode: "default", character, voiceId: undefined }).voice).toBe("Kore");
+  });
 });

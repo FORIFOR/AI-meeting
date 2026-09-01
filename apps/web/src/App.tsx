@@ -180,6 +180,7 @@ export function App() {
           settings={settings}
           dispatch={dispatch}
           availability={availability}
+          agentHealth={agent}
           characters={characters}
           onCharacter={() => setScreen({ name: "character", back: "settings" })}
           onBack={() => setScreen({ name: "home" })}
@@ -211,6 +212,7 @@ export function App() {
       )}
       {screen.name === "setup" && (
         <Setup
+          agent={agent}
           mode={screen.mode}
           personas={personasByMode.get(screen.mode) ?? []}
           characters={characters}

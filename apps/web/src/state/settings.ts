@@ -15,6 +15,13 @@ export interface Settings {
   inputDeviceId?: string;
   outputDeviceId?: string;
   captionsOn: boolean;
+  /**
+   * Chosen voice per character and provider, keyed "characterId:providerId".
+   * The voice ids belong to different namespaces per provider, and the same character
+   * reads as a different person in each, so the choice is stored per pair rather than globally.
+   * Absent means "use the character's own voice".
+   */
+  voices: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   characterId: "",
   cameraOn: false,
   captionsOn: true,
+  voices: {},
 };
 
 export type SettingsAction =
@@ -40,6 +48,7 @@ export type SettingsAction =
   | { type: "urls"; brokerUrl?: string; agentUrl?: string }
   | { type: "camera"; on: boolean }
   | { type: "captions"; on: boolean }
+  | { type: "voice"; characterId: string; providerId: ProviderId; voiceId: string | undefined }
   | { type: "reset" };
 
 /** strict_local (spec §6) forces the local engine and clears cloud overrides. */
@@ -70,9 +79,25 @@ export function settingsReducer(s: Settings, a: SettingsAction): Settings {
       return { ...s, cameraOn: a.on };
     case "captions":
       return { ...s, captionsOn: a.on };
+    case "voice": {
+      const voices = { ...s.voices };
+      if (a.voiceId) voices[voiceKey(a.characterId, a.providerId)] = a.voiceId;
+      else delete voices[voiceKey(a.characterId, a.providerId)];
+      return { ...s, voices };
+    }
     case "reset":
       return { ...DEFAULT_SETTINGS };
   }
+}
+
+export function voiceKey(characterId: string, providerId: ProviderId): string {
+  return `${characterId}:${providerId}`;
+}
+
+/** The voice the user chose for this character on this provider, if any. */
+export function chosenVoice(s: Settings, characterId: string | undefined, providerId: ProviderId): string | undefined {
+  if (!characterId) return undefined;
+  return s.voices?.[voiceKey(characterId, providerId)];
 }
 
 export interface Availability {
@@ -110,7 +135,7 @@ export function loadSettings(storage: Pick<Storage, "getItem"> | null = typeof l
     const parsed = JSON.parse(raw) as Partial<Settings>;
     const clean: Partial<Settings> = {};
     for (const [k, v] of Object.entries(parsed)) if (!FORBIDDEN.test(k)) (clean as Record<string, unknown>)[k] = v;
-    return { ...DEFAULT_SETTINGS, ...clean, advanced: { ...(clean.advanced ?? {}) } };
+    return { ...DEFAULT_SETTINGS, ...clean, advanced: { ...(clean.advanced ?? {}) }, voices: { ...(clean.voices ?? {}) } };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

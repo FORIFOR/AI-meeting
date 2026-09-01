@@ -50,7 +50,7 @@ export interface Persona {
 
 export class PersonaValidationError extends Error {}
 
-const MODES: ConversationMode[] = ["free_talk", "interview", "english_lesson", "sales_roleplay", "tutor", "career"];
+const MODES: ConversationMode[] = ["free_talk", "interview", "english_lesson", "sales_roleplay", "tutor", "career", "companion"];
 
 export function validatePersona(raw: unknown): Persona {
   const p = raw as Partial<Persona>;

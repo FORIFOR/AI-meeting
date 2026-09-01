@@ -128,6 +128,14 @@ alone (labels + switch position + text), controls are ≥ 44px high.
 | Result | one 720px column | same column, score row wraps 2×2 |
 | Settings / Meeting | label→value rows | value wraps under the label |
 
+## 6.5 用途・相手・声の変更
+
+三つとも Level 1 で変えられる。用途は Home の行（面接練習 / 英会話 / 雑談 / 営業ロープレ / 学習 / キャリア相談 / 寄り添い）、
+相手は Character 画面、声は Setup と Settings の「声」行。声はキャラクターとプロバイダーの組ごとに保存され
+（`Settings.voices["<characterId>:<providerId>"]`）、未選択ならキャラクター既定の声のまま。ローカルの声一覧は
+機械依存なので、agent の `/health` が実際に入っている voice を返し、UI はそれを並べる（届かなければ組み込みの一覧）。
+会議でも同じ選択が効くよう、bot ページには `voice` クエリで持ち込む。
+
 ## 7. Screens captured
 
 `docs/reports/img/ui/` — 01 home · 02 character · 03 setup · 04 listening · 05 thinking · 06 speaking · 07 session sheet · 08 result · 09 settings · 10 mobile conversation.

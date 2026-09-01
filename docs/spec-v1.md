@@ -1,7 +1,7 @@
 # Realtime Character AI Platform
 ## 実装仕様書 v1.0
 
-**対象:** AI面接練習 / 英会話 / 営業ロープレ / AI家庭教師 / 雑談 / キャリア相談  
+**対象:** AI面接練習 / 英会話 / 営業ロープレ / AI家庭教師 / 雑談 / キャリア相談 / 寄り添い（companion）  
 **基本思想:** キャラクターと「会話している」体験を最優先する。  
 **AI:** OpenAI / Google Gemini / Localを実行時切替可能。  
 **Avatar:** Live2Dを主力、VRM 3D、実写Avatarを追加Providerとして提供。

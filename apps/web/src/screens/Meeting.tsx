@@ -40,7 +40,7 @@ export function Meeting(p: MeetingProps) {
   /** Guards the single-use activation against StrictMode's double effect invocation. */
   const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
-  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string } | null>(null);
+  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string } | null>(null);
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
@@ -88,6 +88,7 @@ export function Meeting(p: MeetingProps) {
         botBrokerUrl: isBot ? (botOrigins.brokerUrl ?? p.botParams?.brokerUrl) : undefined,
         botAgentUrl: isBot ? botOrigins.agentUrl : undefined,
         botActivation: isBot && activation ? activation : undefined,
+        voiceId: isBot ? botConfig?.voice : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
@@ -145,7 +146,7 @@ export function Meeting(p: MeetingProps) {
       try {
         const m = await import("@rcai/connector-recall");
         const act = await m.activateBotPage(p.botParams?.brokerUrl ?? p.settings.brokerUrl, token);
-        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider });
+        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice });
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
