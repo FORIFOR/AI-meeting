@@ -56,6 +56,11 @@ export async function createAttendeeBot(
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
 
+  const pageToken = env.RECALL_BOT_PAGE_URL ? deps.sessions.issue(session.id, "bot_page", { brokerPublicUrl: publicUrl }) : null;
+  const botPageUrl = pageToken
+    ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
+    : undefined;
+
   const payload: Record<string, unknown> = {
     meeting_url: body.meetingUrl,
     bot_name: botName,
@@ -68,7 +73,13 @@ export async function createAttendeeBot(
    * we have exercised — the audio path above is verified, this is not. It is sent only when a deployment
    * asks for it, so an unknown field cannot break the join.
    */
-  if (env.ATTENDEE_VOICE_AGENT_PAGE) payload.voice_agent_settings = { url: env.ATTENDEE_VOICE_AGENT_PAGE };
+  /**
+   * The avatar page as the bot's camera. Attendee runs it in its own browser and streams the page's audio
+   * and video into the meeting — the same shape as Recall's Output Media, so the character is seen and
+   * heard from one place. Meeting audio reaches that page over our relay, not getUserMedia, because the
+   * page is a voice agent rather than the bot itself.
+   */
+  if (botPageUrl && env.ATTENDEE_VOICE_AGENT !== "off") payload.voice_agent_settings = { url: botPageUrl };
 
   const res = await fetchImpl(`${ATTENDEE_BASE}/api/v1/bots`, {
     method: "POST",
@@ -90,10 +101,6 @@ export async function createAttendeeBot(
    * that is actually verified. Rendering the page as the bot's camera is the unproven part
    * (`voice_agent_settings`), so the character can be heard long before it can be seen.
    */
-  const pageToken = env.RECALL_BOT_PAGE_URL ? deps.sessions.issue(session.id, "bot_page", { brokerPublicUrl: publicUrl }) : null;
-  const botPageUrl = pageToken
-    ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
-    : undefined;
   return {
     status: 200,
     body: {

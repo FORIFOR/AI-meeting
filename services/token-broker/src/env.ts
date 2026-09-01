@@ -46,8 +46,8 @@ export interface BrokerEnv {
   RECALL_ADMIN_TOKEN?: string;
   /** Attendee (app.attendee.dev) — the second meeting provider. */
   ATTENDEE_API_KEY?: string;
-  /** Avatar page rendered as the Attendee bot's camera; unverified against the API. */
-  ATTENDEE_VOICE_AGENT_PAGE?: string;
+  /** "off" to send the Attendee bot in without the avatar page (audio only). */
+  ATTENDEE_VOICE_AGENT?: string;
   /**
    * Public URL of services/agent. Recall blocks localhost from the Output Media process, so a bot page
    * cannot reach the loopback agent the operator UI uses — without this the meeting audio arrives but

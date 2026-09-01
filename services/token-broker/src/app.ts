@@ -326,7 +326,7 @@ export function createApp(deps: AppDeps): Hono {
     const r = await outputRecallAudio(env, c.req.param("id"), await json<{ kind?: string; b64_data?: string }>(c), fetchImpl);
     return c.json(r.body, r.status as 200);
   });
-  app.get("/api/meeting/recall/relay-status/:id", (c) => c.json({ botId: c.req.param("id"), clients: relay.clientCount(c.req.param("id")) }));
+  app.get("/api/meeting/recall/relay-status/:id", (c) => c.json({ botId: c.req.param("id"), ...relay.stats(c.req.param("id")) }));
 
   // ---- Calendar V2 -----------------------------------------------------------------------------
   /**

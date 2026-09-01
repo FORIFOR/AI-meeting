@@ -90,6 +90,9 @@ export function Meeting(p: MeetingProps) {
         botActivation: isBot && activation ? activation : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
+        // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
+        // than through getUserMedia, and the page's own speaker is what Attendee streams back.
+        attendeeAttach: botConfig?.provider === "attendee" && relayWsUrl.current ? { botId: activation?.botId ?? "", clientWsUrl: relayWsUrl.current } : undefined,
         botTranscriptFeed: role === "bot" ? (cb) => {
           // Two sources for the same transcripts: the bot's own socket, and the broker relay Recall also
           // delivers to. Either alone is a single point of failure for a character that only answers when

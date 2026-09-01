@@ -42,6 +42,14 @@ export class AttendeeConnector implements MeetingConnector {
     };
   }
 
+  /**
+   * Attach to a bot that already exists — the avatar page runs *inside* Attendee as the voice agent, so
+   * it must not create a second bot; it joins the audio feed of the one carrying it.
+   */
+  attach(o: { botId: string; clientWsUrl: string; sampleRate?: number; platform?: MeetingPlatform }): MeetingSession {
+    return new AttendeeSession(o.botId, o.platform ?? "google_meet", o.clientWsUrl, o.sampleRate ?? 24000, this.opts);
+  }
+
   async join(req: JoinRequest): Promise<MeetingSession> {
     const fetchImpl = this.opts.fetchImpl ?? fetch;
     const res = await fetchImpl(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/meeting/attendee/bots`, {

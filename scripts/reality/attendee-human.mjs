@@ -6,8 +6,9 @@
  *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:attendee:human      # 10-minute smoke
  *   MEET_URL=... MINUTES=30 pnpm reality:attendee:human                            # commercial gate
  *
- * Audio only. Attendee's audio socket is the part verified against the API; rendering the avatar page as
- * the bot's camera is not, so the character is heard here and not yet seen — stated rather than implied.
+ * The avatar page runs inside Attendee as its voice agent, so the character is both seen and heard from
+ * one place, and meeting audio reaches that page over our relay. This harness observes the same relay to
+ * score what happened; the page is what actually talks.
  *
  * The character answers only when addressed: the agent hears everything (it has to, or it would never
  * hear its own name), and its reply reaches the meeting only while the participation policy says it was
@@ -80,10 +81,13 @@ agent.on("message", (data, isBinary) => {
     const b = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const rate = b.readUInt32LE(0);
     const body = b.subarray(12);
+    /**
+     * Observation only. The avatar page inside Attendee is what speaks; sending the same audio from here
+     * as well would put the character in the meeting twice, half a second apart.
+     */
     const speaking = policy.state === "ADDRESSED" || policy.state === "RESPONDING";
     if (!speaking) { stats.suppressed++; return; }
     stats.spokenMs += (body.length / 2 / rate) * 1000;
-    if (meeting?.readyState === meeting?.OPEN) meeting.send(JSON.stringify({ trigger: "realtime_audio.bot_output", data: { chunk: body.toString("base64"), sample_rate: rate } }));
     return;
   }
   const msg = JSON.parse(data.toString());
@@ -115,10 +119,10 @@ row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.hear
 row("speech transcribed", stats.transcripts > 0 ? "PASS" : "FAIL", `${stats.transcripts} utterances`);
 row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.addressed} times`);
 row("answered", stats.replies > 0 ? "PASS" : "FAIL", `${stats.replies} replies`);
-row("voice sent to the meeting", stats.spokenMs > 500 ? "PASS" : "FAIL", `${(stats.spokenMs / 1000).toFixed(1)}s`);
+row("character produced speech", stats.spokenMs > 500 ? "PASS" : "FAIL", `${(stats.spokenMs / 1000).toFixed(1)}s (the page in Attendee is what plays it)`);
 row("stayed quiet when not addressed", stats.suppressed > 0 ? "PASS" : "INFO", `${stats.suppressed} frames withheld`);
 row("heard by a person", "HUMAN", "Yui の声が実際に聞こえたか");
-row("avatar visible", "N/A", "音声のみ — Attendee のページ埋め込みは未検証");
+row("avatar visible", "HUMAN", "Yui のタイルに Live2D が映ったか（Attendee webpage streamer）");
 console.log(`\nHUMAN 行はあなたの判断です。`);
 try { await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }); } catch { /* best effort */ }
 meeting?.close(); agent.close();

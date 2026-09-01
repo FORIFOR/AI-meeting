@@ -58,6 +58,8 @@ export interface MeetingInit {
   botAgentUrl?: string;
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
+  /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
+  attendeeAttach?: { botId: string; clientWsUrl: string };
   /** bot role: activation already performed by the screen (tokens are single-use — never activate twice). */
   botActivation?: { sessionId: string; botId: string };
   connectorMode?: "output_media" | "relay";
@@ -175,6 +177,20 @@ export class MeetingSessionController {
     }
     handlers.onActivated?.(this.activated);
     this.meetingStatus = "in_call";
+    const attach = this.init.attendeeAttach;
+    if (attach) {
+      /**
+       * Attendee is carrying this page as its voice agent, so meeting audio comes over the relay and the
+       * character's voice leaves through the page's own speaker, which Attendee streams. Pushing audio
+       * back over the socket as well would double it.
+       */
+      const { AttendeeConnector } = await import("@rcai/connector-attendee");
+      const session = new AttendeeConnector({ brokerUrl: this.init.botBrokerUrl ?? settings.brokerUrl }).attach({ botId: attach.botId || this.activated.botId, clientWsUrl: attach.clientWsUrl });
+      this.session = session as unknown as typeof this.session;
+      session.onEvent((e) => this.onMeetingEvent(e));
+      await this.startPipeline({ micFromMeeting: true });
+      return;
+    }
     await this.startPipeline({ micFromMeeting: false });
     const feed = this.init.botTranscriptFeed;
     if (feed) {

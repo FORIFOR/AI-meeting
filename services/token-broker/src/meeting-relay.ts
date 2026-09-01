@@ -14,6 +14,9 @@ export class RelayHub {
   private readonly maxPending = 50;
 
   private readonly vendors = new Map<string, RelaySocket>();
+  /** Counters, so "the socket connected but nothing arrived" is answerable without a rerun. */
+  private readonly received = new Map<string, number>();
+  private readonly malformed = new Map<string, number>();
 
   constructor(private readonly publicClientBase: string, private readonly now: () => number = Date.now) {}
 
@@ -64,8 +67,11 @@ export class RelayHub {
     try {
       message = JSON.parse(raw);
     } catch {
+      // A vendor that sends binary or non-JSON would otherwise vanish here without a trace.
+      this.malformed.set(botId, (this.malformed.get(botId) ?? 0) + 1);
       return 0;
     }
+    this.received.set(botId, (this.received.get(botId) ?? 0) + 1);
     const wrapped = JSON.stringify({ relay: { botId, receivedAt: this.now() }, message });
     const set = this.clients.get(botId);
     if (!set || set.size === 0) {
@@ -111,6 +117,16 @@ export class RelayHub {
     const wrapped = JSON.stringify({ relay: { botId, receivedAt: this.now() }, message });
     for (const s of set) s.send(wrapped);
     return set.size;
+  }
+
+  /** What this bot's relay has actually seen: forwarded, unparseable, and who is listening. */
+  stats(botId: string): { received: number; malformed: number; clients: number; vendor: boolean } {
+    return {
+      received: this.received.get(botId) ?? 0,
+      malformed: this.malformed.get(botId) ?? 0,
+      clients: this.clients.get(botId)?.size ?? 0,
+      vendor: this.vendors.has(botId),
+    };
   }
 
   clientCount(botId: string): number {
