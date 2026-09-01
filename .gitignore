@@ -23,3 +23,5 @@ docs/reports/human/*.jsonl
 docs/reports/human/incidents/*/
 docs/reports/telemetry/*.jsonl
 services/token-broker/data/
+vendor/mediapipe
+apps/web/public/mediapipe

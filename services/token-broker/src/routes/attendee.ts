@@ -71,11 +71,34 @@ export async function createAttendeeBot(
 
   const record = deps.store?.createIntent({ meetingUrl: body.meetingUrl, botName, source: "attendee" }) ?? null;
 
+  /**
+   * Per-speaker streams, on their own sockets because Attendee wants one URL per stream type.
+   *
+   *   mixed audio         what the character hears — one stream, everyone in it
+   *   per-participant     who is speaking, and their webcam at 2 fps
+   *
+   * The mixed stream stays the character's ears: splitting the AI's input per speaker is a separate
+   * change. These carry identity and visual cues, which is what a conversation needs to know whose
+   * turn it is and whether the person it is talking to just nodded.
+   */
+  const participantAudioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
+  const participantVideoToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
+  deps.relay.register(participantAudioToken);
+  deps.relay.register(participantVideoToken);
+
+  const wsBase = publicWsBase(publicUrl);
   const payload: Record<string, unknown> = {
     meeting_url: body.meetingUrl,
     bot_name: botName,
     websocket_settings: {
-      audio: { url: `${publicWsBase(publicUrl)}/api/meeting/attendee/audio/${encodeURIComponent(audioToken)}`, sample_rate: sampleRate },
+      audio: { url: `${wsBase}/api/meeting/attendee/audio/${encodeURIComponent(audioToken)}`, sample_rate: sampleRate },
+      per_participant_audio: { url: `${wsBase}/api/meeting/attendee/participant-audio/${encodeURIComponent(participantAudioToken)}`, sample_rate: sampleRate },
+      /**
+       * 360p is 2 fps at JPEG quality 70 (Attendee picks the framerate from the resolution), which is
+       * what a nod detector needs and far less than a face model can use. Screenshare is off: it is a
+       * different problem and a much larger frame.
+       */
+      per_participant_video: { url: `${wsBase}/api/meeting/attendee/participant-video/${encodeURIComponent(participantVideoToken)}`, webcam_resolution: "360p", screenshare_resolution: "none" },
     },
     /**
      * State comes from here and nowhere else. Without it an Attendee bot that fails to join is invisible:
@@ -120,6 +143,8 @@ export async function createAttendeeBot(
   deps.sessions.bindBot(session.id, botId);
   if (record) deps.store!.update(record.id, { botId, status: "joining_call" }, "bot_created");
   deps.relay.bind(audioToken, botId);
+  deps.relay.bind(participantAudioToken, botId);
+  deps.relay.bind(participantVideoToken, botId);
   const clientToken = deps.sessions.issue(session.id, "client");
   /**
    * The avatar page runs on our side, not inside the bot: only audio crosses to Attendee, on the socket

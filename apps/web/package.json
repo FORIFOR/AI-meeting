@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@digital-go-jp/design-tokens": "^2.0.1",
+    "@mediapipe/tasks-vision": "1.0.1",
     "@rcai/audio-core": "workspace:*",
     "@rcai/avatar-canvas": "workspace:*",
     "@rcai/avatar-core": "workspace:*",
@@ -20,6 +21,7 @@
     "@rcai/avatar-vrm": "workspace:*",
     "@rcai/behavior-engine": "workspace:*",
     "@rcai/characters": "workspace:*",
+    "@rcai/connector-attendee": "workspace:*",
     "@rcai/connector-recall": "workspace:*",
     "@rcai/conversation-core": "workspace:*",
     "@rcai/evaluation": "workspace:*",
@@ -33,7 +35,7 @@
     "@rcai/provider-openai": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "@rcai/connector-attendee": "workspace:*"
+    "@rcai/visual-core": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

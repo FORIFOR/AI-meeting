@@ -76,8 +76,10 @@ export class RelayHub {
     const set = this.clients.get(botId);
     if (!set || set.size === 0) {
       const buf = this.pending.get(botId) ?? [];
-      // Only keep non-audio events while nobody listens (audio is useless late).
-      if (!(message as { event?: string }).event?.startsWith("audio_")) {
+      // Only keep events that are still worth something late: audio and video frames are not.
+      const m = message as { event?: string; trigger?: string };
+      const perishable = m.event?.startsWith("audio_") || m.trigger?.startsWith("realtime_audio.") || m.trigger?.startsWith("realtime_video.");
+      if (!perishable) {
         buf.push(wrapped);
         while (buf.length > this.maxPending) buf.shift();
         this.pending.set(botId, buf);

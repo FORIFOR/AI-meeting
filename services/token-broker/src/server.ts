@@ -47,8 +47,8 @@ server.on("upgrade", (req, socket, head) => {
   }
   wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
     if (auth.kind === "relay") {
-      const { token, botId } = auth;
-      console.log(`[token-broker] recall relay connected bot=${botId.slice(0, 8)}…`);
+      const { token, botId, stream } = auth;
+      console.log(`[token-broker] relay connected bot=${botId.slice(0, 8)}… stream=${stream}`);
       ws.on("message", (data) => {
         // Re-check on every message: revoke/end must cut the feed immediately.
         if (!sessions.verify(token, { role: "relay", botId }).ok) {
@@ -59,11 +59,13 @@ server.on("upgrade", (req, socket, head) => {
         const s = sessions.byBot(botId);
         if (s) sessions.touch(s.id);
       });
-      relay.setVendor(botId, { send: (d) => ws.readyState === ws.OPEN && ws.send(d), close: () => ws.close() });
+      // Only the bidirectional stream is the vendor: the per-participant sockets are receive-only,
+      // and registering one of them would send the character's voice into a socket nobody reads.
+      if (stream === "mixed") relay.setVendor(botId, { send: (d) => ws.readyState === ws.OPEN && ws.send(d), close: () => ws.close() });
       const ping = setInterval(() => ws.ping(), 25_000); // keep tunnels/load balancers from idling out
       ws.on("close", () => {
         clearInterval(ping);
-        relay.setVendor(botId, null);
+        if (stream === "mixed") relay.setVendor(botId, null);
       });
     } else {
       const { botId, token } = auth;
