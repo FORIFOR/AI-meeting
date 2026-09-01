@@ -93,6 +93,24 @@ If Attendee runs the same avatar page without a GPU surcharge, the bot cost fall
 100 hours. That is worth measuring before topping up Recall — and the free 5 hours cover the 10-minute
 smoke and the 30-minute gate roughly seven times over.
 
+## Known unverified — the next things likely to break
+
+Two live runs, two bugs that only a live run could show (a sample rate, and a flag
+whose absence produced no error). These are the ones I can name but have not yet
+proved either way. None is theoretical; each has a specific failure mode.
+
+| # | Risk | Why it is plausible | How it will be settled |
+|---|---|---|---|
+| 1 | **AudioContext suspended inside Attendee's browser** | The page has no user gesture. This exact thing already stopped the character on Recall — the pipeline was rewritten so it cannot block, but "does not block" is not "makes sound". | Next live run: the recording will contain the character's voice, or it will not. |
+| 2 | **No WebGL in Attendee's page browser** | Live2D needs it, and Recall's only variant that has it costs three times as much. Attendee's streamer browser is undocumented on this point. | Next live run: pull a frame from the recording and look. |
+| 3 | **No Attendee webhooks** | Bot state for Attendee comes from nowhere — the webhook-authoritative design covers Recall only. A bot that fails to join is currently invisible. | Wire Attendee's webhooks, or state stays unknown. |
+| 4 | **Join notice unsent on Attendee** | The consent notice is Recall's `chat.on_bot_join`. Attendee has `send_chat_message`, which nothing calls. | Participants are currently *not* told on Attendee. Must be fixed before any customer meeting. |
+| 5 | **Attendee bot state never reaches the meeting record** | `/api/meetings` only knows about Recall bots, so an Attendee meeting has no lifecycle, no transcript record, no result screen. | Not started. |
+
+Fixed after the second live run: the harness called a leave route that did not exist,
+so a bot in a meeting that stayed open would have kept running and billing. A 404 on
+cleanup looks exactly like success when nobody checks.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —

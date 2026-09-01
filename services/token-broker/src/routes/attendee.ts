@@ -133,3 +133,25 @@ export async function createAttendeeBot(
 /** Attendee's own message shapes, so callers do not have to guess them. */
 export const ATTENDEE_INBOUND_TRIGGER = "realtime_audio.mixed";
 export const ATTENDEE_OUTBOUND_TRIGGER = "realtime_audio.bot_output";
+
+/**
+ * Remove the bot from the meeting.
+ *
+ * A bot that is not told to leave keeps running — and waiting-room and in-call time are both billed — so
+ * a harness or a UI that can start one must be able to stop it. The first version of this file could
+ * only create; the test harness called a leave route that did not exist and nothing said so, because a
+ * 404 on cleanup looks exactly like success when nobody checks.
+ */
+export async function leaveAttendeeBot(env: BrokerEnv, botId: string, fetchImpl: typeof fetch, deps: AttendeeDeps): Promise<RouteResult<Record<string, unknown>>> {
+  if (!env.ATTENDEE_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_ATTENDEE_KEY" } };
+  const res = await fetchImpl(`${ATTENDEE_BASE}/api/v1/bots/${encodeURIComponent(botId)}/leave`, {
+    method: "POST",
+    headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, "content-type": "application/json" },
+  });
+  const detail = await res.text();
+  const session = deps.sessions.byBot(botId);
+  if (session) deps.sessions.end(session.id, "left");
+  deps.relay.dropBot?.(botId);
+  if (!res.ok) return { status: 502, body: { error: "attendee_leave_failed", detail: detail.slice(0, 300) } };
+  return { status: 200, body: { ok: true } };
+}

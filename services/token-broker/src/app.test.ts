@@ -549,3 +549,18 @@ describe("Attendee voice agent page", () => {
     expect(sent.voice_agent_settings.reserve_resources).toBe(true);
   });
 });
+
+describe("Attendee cleanup", () => {
+  it("can stop a bot it started — waiting-room and in-call time are both billed", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response("{}"), calls),
+    });
+    const res = await post(app, "/api/meeting/attendee/bots/att_9/leave", {});
+    expect(res.status).toBe(200);
+    const req = calls.at(-1)!;
+    expect(req.url).toBe("https://app.attendee.dev/api/v1/bots/att_9/leave");
+    expect(req.init!.method).toBe("POST");
+  });
+});

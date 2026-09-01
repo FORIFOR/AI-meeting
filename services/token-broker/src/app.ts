@@ -401,6 +401,11 @@ export function createApp(deps: AppDeps): Hono {
     const r = await createAttendeeBot(env, await json(c), fetchImpl, { relay, sessions });
     return c.json(r.body, r.status as 200);
   });
+  app.post("/api/meeting/attendee/bots/:id/leave", async (c) => {
+    const { leaveAttendeeBot } = await import("./routes/attendee.js");
+    const r = await leaveAttendeeBot(env, c.req.param("id"), fetchImpl, { relay, sessions });
+    return c.json(r.body, r.status as 200);
+  });
   app.get("/api/recall/usage", async (c) => {
     const { recallUsage } = await import("./recall/balance.js");
     const u = await recallUsage(env, fetchImpl);
