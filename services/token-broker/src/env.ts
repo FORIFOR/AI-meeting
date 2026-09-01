@@ -48,6 +48,8 @@ export interface BrokerEnv {
   ATTENDEE_API_KEY?: string;
   /** "off" to send the Attendee bot in without the avatar page (audio only). */
   ATTENDEE_VOICE_AGENT?: string;
+  /** Signs Attendee webhooks; without it deliveries are recorded as unverified. */
+  ATTENDEE_WEBHOOK_SECRET?: string;
   /**
    * Public URL of services/agent. Recall blocks localhost from the Output Media process, so a bot page
    * cannot reach the loopback agent the operator UI uses — without this the meeting audio arrives but

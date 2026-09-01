@@ -32,6 +32,8 @@ export interface AttendeeJoinBody {
 export interface AttendeeDeps {
   relay: RelayRegistry & { clientUrl(botId: string): string };
   sessions: MeetingSessionRegistry;
+  /** Durable record, so an Attendee meeting has a lifecycle and a result screen like a Recall one. */
+  store?: { createIntent(o: { meetingUrl: string; botName?: string; source?: string }): { id: string }; update(id: string, patch: Record<string, unknown>, event?: string): unknown };
 }
 
 export interface RouteResult<T> {
@@ -67,12 +69,19 @@ export async function createAttendeeBot(
     ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
     : undefined;
 
+  const record = deps.store?.createIntent({ meetingUrl: body.meetingUrl, botName, source: "attendee" }) ?? null;
+
   const payload: Record<string, unknown> = {
     meeting_url: body.meetingUrl,
     bot_name: botName,
     websocket_settings: {
       audio: { url: `${publicWsBase(publicUrl)}/api/meeting/attendee/audio/${encodeURIComponent(audioToken)}`, sample_rate: sampleRate },
     },
+    /**
+     * State comes from here and nowhere else. Without it an Attendee bot that fails to join is invisible:
+     * no lifecycle, no error, no way to tell "waiting to be admitted" from "was refused".
+     */
+    webhooks: [{ url: `${publicUrl.replace(/\/$/, "")}/api/attendee/webhooks`, triggers: ["bot.state_change"] }],
   };
   /**
    * The avatar page as the bot's camera. Taken from Attendee's voice-agent guidance rather than a field
@@ -103,11 +112,13 @@ export async function createAttendeeBot(
   const text = await res.text();
   if (!res.ok) {
     deps.sessions.end(session.id, "create_failed");
+    if (record) deps.store!.update(record.id, { status: "create_failed" }, "create_failed");
     return { status: res.status === 402 ? 402 : 502, body: { error: res.status === 402 ? "BLOCKED_BY_ATTENDEE_CREDIT" : "attendee_create_bot_failed", detail: text.slice(0, 300) } };
   }
   const bot = JSON.parse(text) as { id?: string; state?: string };
   const botId = bot.id ?? "";
   deps.sessions.bindBot(session.id, botId);
+  if (record) deps.store!.update(record.id, { botId, status: "joining_call" }, "bot_created");
   deps.relay.bind(audioToken, botId);
   const clientToken = deps.sessions.issue(session.id, "client");
   /**
@@ -126,6 +137,7 @@ export async function createAttendeeBot(
       clientWsUrl: `${deps.relay.clientUrl(botId)}?token=${encodeURIComponent(clientToken)}`,
       clientToken,
       botPageUrl,
+      meetingRecordId: record?.id,
     },
   };
 }

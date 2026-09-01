@@ -398,8 +398,29 @@ export function createApp(deps: AppDeps): Hono {
   /** Operational: how much bot time is being spent. Cached; safe to poll from a dashboard. */
   app.post("/api/meeting/attendee/bots", async (c) => {
     const { createAttendeeBot } = await import("./routes/attendee.js");
-    const r = await createAttendeeBot(env, await json(c), fetchImpl, { relay, sessions });
+    const r = await createAttendeeBot(env, await json(c), fetchImpl, { relay, sessions, store });
+    if ((r.body as { error?: string }).error === "BLOCKED_BY_ATTENDEE_CREDIT") lastCreditRefusalAt = now();
     return c.json(r.body, r.status as 200);
+  });
+
+  /**
+   * Attendee's bot state. Verified, then applied monotonically like Recall's — a late delivery must not
+   * drag a live meeting backwards. Without a configured secret the signature cannot be checked, so the
+   * delivery is recorded as unverified rather than silently trusted.
+   */
+  app.post("/api/attendee/webhooks", async (c) => {
+    const { handleAttendeeWebhook, sendAttendeeJoinNotice, verifyAttendeeSignature } = await import("./routes/attendeeWebhooks.js");
+    const payload = await json<Record<string, unknown>>(c);
+    const secret = env.ATTENDEE_WEBHOOK_SECRET;
+    const verified = secret ? verifyAttendeeSignature(payload, c.req.header("x-webhook-signature"), secret) : null;
+    if (verified === false) return c.json({ error: "invalid_signature" }, 401);
+    const r = handleAttendeeWebhook(payload, {
+      store,
+      log: (l) => console.log("[attendee]", JSON.stringify({ ...l, verified })),
+      onBotStatus: (st) => relay.broadcast(st.botId, { event: "bot.status_change", data: { data: { code: st.status, sub_code: st.subCode } } }),
+      onJoined: (botId) => void sendAttendeeJoinNotice(env, botId, fetchImpl).then((sent) => console.log("[attendee]", JSON.stringify({ at: "join_notice", botId, sent }))),
+    });
+    return c.json(r);
   });
   app.post("/api/meeting/attendee/bots/:id/leave", async (c) => {
     const { leaveAttendeeBot } = await import("./routes/attendee.js");

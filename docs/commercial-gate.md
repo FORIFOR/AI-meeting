@@ -101,11 +101,11 @@ proved either way. None is theoretical; each has a specific failure mode.
 
 | # | Risk | Why it is plausible | How it will be settled |
 |---|---|---|---|
-| 1 | **AudioContext suspended inside Attendee's browser** | The page has no user gesture. This exact thing already stopped the character on Recall — the pipeline was rewritten so it cannot block, but "does not block" is not "makes sound". | Next live run: the recording will contain the character's voice, or it will not. |
-| 2 | **No WebGL in Attendee's page browser** | Live2D needs it, and Recall's only variant that has it costs three times as much. Attendee's streamer browser is undocumented on this point. | Next live run: pull a frame from the recording and look. |
-| 3 | **No Attendee webhooks** | Bot state for Attendee comes from nowhere — the webhook-authoritative design covers Recall only. A bot that fails to join is currently invisible. | Wire Attendee's webhooks, or state stays unknown. |
-| 4 | **Join notice unsent on Attendee** | The consent notice is Recall's `chat.on_bot_join`. Attendee has `send_chat_message`, which nothing calls. | Participants are currently *not* told on Attendee. Must be fixed before any customer meeting. |
-| 5 | **Attendee bot state never reaches the meeting record** | `/api/meetings` only knows about Recall bots, so an Attendee meeting has no lifecycle, no transcript record, no result screen. | Not started. |
+| 1 | **AudioContext suspended inside Attendee's browser** | The page has no user gesture. This exact thing already stopped the character on Recall — the pipeline was rewritten so it cannot block, but "does not block" is not "makes sound". | `pnpm reality:attendee:verify <bot>` — the recording contains the character's voice or it does not. |
+| 2 | **No WebGL in Attendee's page browser** | Live2D needs it, and Recall's only variant that has it costs three times as much. Attendee's streamer browser is undocumented on this point. | `pnpm reality:attendee:verify <bot>` pulls a frame; the avatar is in it or it is not. |
+| 3 | ~~No Attendee webhooks~~ | **Done.** `bot.state_change` is subscribed at create time and drives the record monotonically, signature verified against Attendee's canonical JSON (`X-Webhook-Signature`). Without `ATTENDEE_WEBHOOK_SECRET` a delivery is recorded as unverified rather than silently trusted. |
+| 4 | ~~Join notice unsent on Attendee~~ | **Done.** The first `joined_*` state triggers `send_chat_message` once per bot. |
+| 5 | ~~Attendee meetings absent from the record~~ | **Done.** The route creates an intent and the webhook advances it, so an Attendee meeting has the same lifecycle and screens as a Recall one. |
 
 Fixed after the second live run: the harness called a leave route that did not exist,
 so a bot in a meeting that stayed open would have kept running and billing. A 404 on

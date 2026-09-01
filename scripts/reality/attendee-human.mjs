@@ -121,6 +121,7 @@ await at(minutes * 60);
 
 const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
 console.log(`\n| step | status | detail |\n|---|---|---|`);
+const rec = created.meetingRecordId ? await (await fetch(`${broker}/api/meetings/${created.meetingRecordId}`)).json().catch(() => ({})) : {};
 const page = await pageState();
 row("avatar page started", page.activations > 0 ? "PASS" : "FAIL", page.activations > 0 ? `activated at ${new Date(page.botPageActivatedAt).toISOString()}` : "the page never loaded — Attendee did not launch it");
 row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.heard} chunks`);
@@ -129,9 +130,9 @@ row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.address
 row("answered", stats.replies > 0 ? "PASS" : "FAIL", `${stats.replies} replies`);
 row("character produced speech", stats.spokenMs > 500 ? "PASS" : "FAIL", `${(stats.spokenMs / 1000).toFixed(1)}s (the page in Attendee is what plays it)`);
 row("stayed quiet when not addressed", stats.suppressed > 0 ? "PASS" : "INFO", `${stats.suppressed} frames withheld`);
-row("heard by a person", "HUMAN", "Yui の声が実際に聞こえたか");
-row("avatar visible", "HUMAN", "Yui のタイルに Live2D が映ったか（Attendee webpage streamer）");
-console.log(`\nHUMAN 行はあなたの判断です。`);
+row("lifecycle from webhooks", (rec.meeting?.lifecycle ?? []).length > 1 ? "PASS" : "FAIL", (rec.meeting?.lifecycle ?? []).map((l) => l.event).join(" → ") || "no state events");
+console.log(`\n録画から自動検証します（アバターが映ったか・Yui の声が入っているか）:`);
+console.log(`  pnpm reality:attendee:verify ${created.botId}`);
 try { await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }); } catch { /* best effort */ }
 meeting?.close(); agent.close();
 process.exit(0);

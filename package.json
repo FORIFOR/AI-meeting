@@ -33,7 +33,8 @@
     "reality:meet:live": "node scripts/reality/meet-live.mjs",
     "reality:address": "tsx scripts/reality/meeting-address.mjs",
     "reality:meet:human": "node scripts/reality/meet-human.mjs",
-    "reality:attendee:human": "tsx scripts/reality/attendee-human.mjs"
+    "reality:attendee:human": "tsx scripts/reality/attendee-human.mjs",
+    "reality:attendee:verify": "node scripts/reality/attendee-verify.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
