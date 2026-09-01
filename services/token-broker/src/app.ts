@@ -173,6 +173,18 @@ export function createApp(deps: AppDeps): Hono {
      * sent the UI looking for a provider outage that never happened. Checked after the key guards, so a
      * missing credential still reports as BLOCKED_BY_*, which the acceptance gates read.
      */
+    /**
+     * An exhausted account is not an outage. Reporting 429/quota as 502 sent the UI (and the soak
+     * report) looking for a provider failure when the answer was "add credits" — the result screen
+     * still falls back to the heuristic, but the reason has to be legible.
+     */
+    const evaluationFailure = (e: unknown, provider: "OPENAI" | "GEMINI") => {
+      const detail = String((e as Error).message ?? e);
+      const quota = /\b429\b|insufficient_quota|credit_balance_exhausted|RESOURCE_EXHAUSTED|quota/i.test(detail);
+      return quota
+        ? ({ body: { error: `BLOCKED_BY_${provider}_QUOTA`, detail }, status: 503 } as const)
+        : ({ body: { error: "evaluation_failed", detail }, status: 502 } as const);
+    };
     const badInput = (): string[] => (["mode", "transcript", "timing"] as const).filter((k) => body.input?.[k] === undefined);
     const mod = await loadEvaluationModule();
     if (body.providerId === "google") {
@@ -183,7 +195,8 @@ export function createApp(deps: AppDeps): Hono {
       try {
         return c.json(await mod.evaluateWithGemini({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_EVAL_MODEL ?? "gemini-2.5-flash", fetch: fetchImpl }, body.input));
       } catch (e) {
-        return c.json({ error: "evaluation_failed", detail: String((e as Error).message) }, 502);
+        const f = evaluationFailure(e, "GEMINI");
+        return c.json(f.body, f.status);
       }
     }
     if (!env.OPENAI_API_KEY) return c.json({ error: "BLOCKED_BY_OPENAI_KEY" }, 503);
@@ -193,7 +206,8 @@ export function createApp(deps: AppDeps): Hono {
     try {
       return c.json(await mod.evaluateWithOpenAICompatible({ baseUrl: "https://api.openai.com/v1", apiKey: env.OPENAI_API_KEY, model: env.OPENAI_EVAL_MODEL ?? "gpt-4.1-mini", fetch: fetchImpl }, body.input));
     } catch (e) {
-      return c.json({ error: "evaluation_failed", detail: String((e as Error).message) }, 502);
+      const f = evaluationFailure(e, "OPENAI");
+      return c.json(f.body, f.status);
     }
   });
 

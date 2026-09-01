@@ -98,25 +98,25 @@ Re-verified after fixes: `pnpm gate` (typecheck 20/20, 124 tests, build) and the
 | Gate | Verdict | Evidence |
 |---|---|---|
 | OpenAI Realtime, 30-minute soak | **PASS** | `docs/reports/soak/openai-2026-09-01T00-25-47.json` — survived 30.0 min, 199 assistant turns, 100 % answered, turn latency p50 1495 ms / p95 1948 ms (n=207), barge-in → audio stop 43 ms (n=123), 0 toasts / 0 page errors |
-| Gemini Live | **BLOCKED_BY_GEMINI_EPHEMERAL_TOKEN** | The Live socket refuses every ephemeral token this key can mint; the raw key is accepted. See below. |
+| Gemini Live, 30-minute soak | **PASS** | `docs/reports/soak/google-2026-09-01T01-34-39.json` — survived 30.0 min, 151 assistant turns, 100 % answered, turn latency p50 3985 ms / p95 8929 ms (n=149), one `goAway` rotation at 542 s reconnected and the conversation continued to 1798 s |
 
-### BLOCKED_BY_GEMINI_EPHEMERAL_TOKEN
+Both were driven by `scripts/reality/cloud.mjs` against the real APIs with a synthesised microphone —
+no human in the loop.
 
-Minting works (`POST v1beta/auth_tokens` → 200, `auth_tokens/…`), but `BidiGenerateContent` rejects the
-token on the first message:
+### What the real APIs exposed that mocks never would
 
-| credential | result |
-|---|---|
-| real `GEMINI_API_KEY` as `?key=` | `setupComplete` — endpoint, model and key are all fine |
-| ephemeral `?access_token=` (v1beta, v1alpha, full name and bare id) | 1008 *Method doesn't allow unregistered callers* |
-| ephemeral `Authorization: Token` | 1008 |
-| ephemeral `x-goog-api-key` | 1007 *API key not valid* |
+- `response.cancel` with nothing in flight ends an OpenAI session; `speakingResponse` was also never
+  released, so after the first reply the provider believed a response was open forever.
+- An ephemeral Gemini token is only accepted on `BidiGenerateContentConstrained`. The socket **opens**
+  with any credential — Google authenticates on the first frame — so every "it connected" check passed
+  against an endpoint that could never work.
+- A token's `bidiGenerateContentSetup` is used **instead of** the client setup, silently dropping
+  `inputAudioTranscription`: the model answered but no user speech was ever transcribed.
+- Native-audio models emit reasoning as `thought` text parts, which went straight into the captions.
 
-Note the socket **opens** with any credential — Google only authenticates on the first frame, so an
-"it connected" check proves nothing here.
+### Open
 
-The key in use is not an AI Studio `AIza…` key, and ephemeral tokens minted from it appear not to be
-honoured by the Live API. Two ways forward, both the user's call:
-1. an AI Studio API key, or
-2. proxy the Live socket through the broker, so the key stays server-side (spec §26 forbids shipping it
-   to the client, which is why the raw key is not simply used from the browser).
+- **Gemini latency**: p50 3985 ms against OpenAI's 1495 ms. Not investigated.
+- **OpenAI credits are exhausted** (`credit_balance_exhausted`), which is what made `/api/evaluate`
+  return 502 at the end of both runs. Quota is now reported as `BLOCKED_BY_OPENAI_QUOTA` (503) rather
+  than a generic upstream failure; the result screen still falls back to the heuristic evaluator.

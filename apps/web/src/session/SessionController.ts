@@ -222,7 +222,9 @@ export class SessionController {
       observer.handleEvent(e);
       recorder.recordEvent(e);
       if (e.type === "interrupted" || e.type === "assistant_speech_ended") this.syncLatencyNotes();
-      if (e.type === "error") handlers.onError(e.error.message, "PROVIDER");
+      // A provider that says "rotating, reconnecting" is doing its job; only a failure the user can act
+      // on becomes a toast. Non-fatal notices stay in the incident record, which is where they belong.
+      if (e.type === "error" && e.fatal !== false) handlers.onError(e.error.message, "PROVIDER");
       handlers.onEvent(e);
     });
 
