@@ -363,7 +363,8 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
    * marked cancelled so its late events (deltas, done, buffer stops) are dropped by the mapper.
    */
   async interrupt(): Promise<void> {
-    this.send({ type: "response.cancel" });
+    // Only cancel something that exists: cancelling nothing is an error the session does not survive.
+    if (this.mapper.hasActiveResponse) this.send({ type: "response.cancel" });
     this.send({ type: "output_audio_buffer.clear" });
     this.mapper.markCancelled();
   }

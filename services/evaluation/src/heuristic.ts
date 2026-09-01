@@ -45,9 +45,13 @@ const WEIGHTS: Record<EvaluationProfile, Dimensions> = {
   free_talk: { clarity: 0.3, specificity: 0.05, structure: 0.05, relevance: 0.2, fluency: 0.4 },
 };
 
-/** Explicit language wins; the transcript is only consulted when the language tag is unknown. */
-export function isJapanese(language: string, sample = ""): boolean {
-  const l = language.toLowerCase();
+/**
+ * Explicit language wins; the transcript is only consulted when the language tag is unknown — which
+ * includes it being absent. A missing tag is a normal input, not a crash (a session evaluated without
+ * one used to return 502 and lose the whole result screen).
+ */
+export function isJapanese(language: string | undefined, sample = ""): boolean {
+  const l = (language ?? "").toLowerCase();
   if (l.startsWith("ja")) return true;
   if (l.startsWith("en")) return false;
   return /[぀-ヿ一-鿿]/.test(sample);

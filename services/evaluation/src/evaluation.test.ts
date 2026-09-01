@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SessionRecord } from "@rcai/conversation-core";
 import type { EvaluationInput } from "@rcai/provider-core";
 import { sessionRecordToEvaluationInput, resolveProfile } from "./record.js";
-import { HeuristicEvaluator, evaluateHeuristically, englishDeferredNotes, tokens } from "./heuristic.js";
+import { HeuristicEvaluator, evaluateHeuristically, englishDeferredNotes, tokens, isJapanese} from "./heuristic.js";
 import { buildEvaluationPrompt, parseEvaluationResult, EvaluationParseError, EVALUATION_JSON_SCHEMA } from "./prompt.js";
 import { evaluateWithOpenAICompatible, evaluateWithGemini, EvaluationError } from "./llm.js";
 import { EvaluationSidecar } from "./sidecar.js";
@@ -301,5 +301,14 @@ describe("evidence-based evaluation", () => {
     expect(w.length).toBe(1);
     expect(speechMetrics(input(GOOD), true).interruptions).toBe(0);
     expect(questionBreakdown(input(GOOD), true)[0]!.star.result).toBe(true);
+  });
+});
+
+describe("isJapanese with a missing language tag", () => {
+  it("falls back to the transcript instead of throwing", () => {
+    // A session evaluated without a language tag used to crash the broker with 502 and lose the result screen.
+    expect(isJapanese(undefined, "こんにちは")).toBe(true);
+    expect(isJapanese(undefined, "hello there")).toBe(false);
+    expect(isJapanese("")).toBe(false);
   });
 });

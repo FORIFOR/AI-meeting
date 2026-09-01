@@ -133,11 +133,16 @@ describe("OpenAIRealtimeProvider", () => {
 
     // server events through the data channel
     pc.dc.onmessage?.({ data: JSON.stringify({ type: "input_audio_buffer.speech_started" }) } as MessageEvent<string>);
-    pc.dc.onmessage?.({ data: JSON.stringify({ type: "output_audio_buffer.started" }) } as MessageEvent<string>);
-    expect(events.slice(1).map(stripGen)).toEqual([{ type: "user_speech_started", at: 42 }, { type: "assistant_speech_started", at: 42 }]);
+    pc.dc.onmessage?.({ data: JSON.stringify({ type: "response.created", response: { id: "resp_1" } }) } as MessageEvent<string>);
+    pc.dc.onmessage?.({ data: JSON.stringify({ type: "output_audio_buffer.started", response_id: "resp_1" }) } as MessageEvent<string>);
+    expect(events.slice(1).map(stripGen)).toEqual([{ type: "user_speech_started", at: 42 }, { type: "assistant_thinking" }, { type: "assistant_speech_started", at: 42 }]);
 
     await p.interrupt();
     expect(pc.dc.sent.slice(-2).map((m) => m.type)).toEqual(["response.cancel", "output_audio_buffer.clear"]);
+    // Nothing in flight now: cancelling again would be answered with "Cancellation failed: no active
+    // response found", which the session does not survive.
+    await p.interrupt();
+    expect(pc.dc.sent.slice(-1).map((m) => m.type)).toEqual(["output_audio_buffer.clear"]);
     await p.sendText("こんにちは");
     const item = pc.dc.sent.find((m) => m.type === "conversation.item.create") as { item: { content: { type: string; text: string }[] } };
     expect(item.item.content[0]).toEqual({ type: "input_text", text: "こんにちは" });

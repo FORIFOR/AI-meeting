@@ -40,6 +40,17 @@ export class OpenAIEventMapper {
     return this.speaking;
   }
 
+  /**
+   * Whether a response is in flight. `response.cancel` with nothing to cancel is answered with
+   * "Cancellation failed: no active response found", which surfaces as a provider error and ends the
+   * session — so a barge-in that lands between responses must not send it.
+   */
+  get hasActiveResponse(): boolean {
+    // Only the server's response lifecycle counts. Audio keeps playing locally after `response.done`,
+    // so "still speaking" is not the same as "still cancellable".
+    return this.activeResponse !== null;
+  }
+
   /** The current generation stamp (for providers that synthesise events, e.g. safety timers). */
   get generation(): GenerationRef {
     return this.counter.current();
@@ -59,6 +70,7 @@ export class OpenAIEventMapper {
     if (responseId) this.cancelled.add(responseId);
     const gen = this.counter.current();
     if (responseId === this.activeResponse) this.activeResponse = null;
+    if (responseId === this.speakingResponse) this.speakingResponse = null;
     return gen;
   }
 
@@ -113,12 +125,15 @@ export class OpenAIEventMapper {
       case "output_audio_buffer.stopped": {
         const was = this.speaking;
         this.speaking = false;
-        return was ? [{ type: "assistant_speech_ended", at, gen: this.stamp(raw.response_id ?? this.speakingResponse ?? undefined) }] : [];
+        const gen = this.stamp(raw.response_id ?? this.speakingResponse ?? undefined);
+        this.speakingResponse = null; // the response is over; nothing left to cancel
+        return was ? [{ type: "assistant_speech_ended", at, gen }] : [];
       }
       case "output_audio_buffer.cleared": {
         this.speaking = false;
         const gen = this.stamp(raw.response_id ?? this.speakingResponse ?? undefined);
         this.markCancelled(raw.response_id ?? this.speakingResponse ?? this.activeResponse);
+        this.speakingResponse = null;
         return [{ type: "interrupted", at, gen }];
       }
       case "response.output_audio_transcript.delta":
@@ -157,11 +172,17 @@ export class OpenAIEventMapper {
           return this.speaking ? [] : [{ type: "interrupted", at, gen }];
         }
         if (id === this.activeResponse) this.activeResponse = null;
+        if (id && id === this.speakingResponse) this.speakingResponse = null;
         if (raw.response?.status === "failed") return [{ type: "error", error: new Error(raw.response.status_details?.reason ?? "response failed") }];
         return [];
       }
-      case "error":
-        return [{ type: "error", error: new Error(raw.error?.message ?? "openai realtime error"), fatal: raw.error?.type === "invalid_request_error" && raw.error?.code === "session_expired" }];
+      case "error": {
+        const message = raw.error?.message ?? "openai realtime error";
+        // A cancel that raced the end of a response changes nothing and must not reach the user as an
+        // error — surfacing it ended sessions that were working perfectly.
+        if (/no active response found/i.test(message)) return [];
+        return [{ type: "error", error: new Error(message), fatal: raw.error?.type === "invalid_request_error" && raw.error?.code === "session_expired" }];
+      }
       default:
         return [];
     }

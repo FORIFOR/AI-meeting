@@ -168,10 +168,18 @@ export function createApp(deps: AppDeps): Hono {
   app.post("/api/evaluate", async (c) => {
     const body = await json<{ providerId?: "openai" | "google"; input?: EvaluationInput }>(c);
     if (!body.input) return c.json({ error: "input required" }, 400);
+    /**
+     * A malformed request is the caller's mistake (400), not an upstream failure (502) — returning 502
+     * sent the UI looking for a provider outage that never happened. Checked after the key guards, so a
+     * missing credential still reports as BLOCKED_BY_*, which the acceptance gates read.
+     */
+    const badInput = (): string[] => (["mode", "transcript", "timing"] as const).filter((k) => body.input?.[k] === undefined);
     const mod = await loadEvaluationModule();
     if (body.providerId === "google") {
       if (!env.GEMINI_API_KEY) return c.json({ error: "BLOCKED_BY_GEMINI_KEY" }, 503);
       if (!mod.evaluateWithGemini) return c.json({ ...fallbackHeuristic(body.input), evaluatedBy: "heuristic-fallback" });
+      const badG = badInput();
+      if (badG.length) return c.json({ error: "invalid_input", detail: `missing: ${badG.join(", ")}` }, 400);
       try {
         return c.json(await mod.evaluateWithGemini({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_EVAL_MODEL ?? "gemini-2.5-flash", fetch: fetchImpl }, body.input));
       } catch (e) {
@@ -180,6 +188,8 @@ export function createApp(deps: AppDeps): Hono {
     }
     if (!env.OPENAI_API_KEY) return c.json({ error: "BLOCKED_BY_OPENAI_KEY" }, 503);
     if (!mod.evaluateWithOpenAICompatible) return c.json({ ...fallbackHeuristic(body.input), evaluatedBy: "heuristic-fallback" });
+    const badO = badInput();
+    if (badO.length) return c.json({ error: "invalid_input", detail: `missing: ${badO.join(", ")}` }, 400);
     try {
       return c.json(await mod.evaluateWithOpenAICompatible({ baseUrl: "https://api.openai.com/v1", apiKey: env.OPENAI_API_KEY, model: env.OPENAI_EVAL_MODEL ?? "gpt-4.1-mini", fetch: fetchImpl }, body.input));
     } catch (e) {
