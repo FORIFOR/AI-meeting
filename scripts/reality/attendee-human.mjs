@@ -48,6 +48,14 @@ if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${cre
 console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz`);
 console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
 
+/** Did the avatar page actually start? Asking a person whether they saw it is not evidence. */
+const pageState = async () => {
+  try {
+    const r = await fetch(`${broker}/api/meeting/session/${created.sessionId}`, { headers: { authorization: `Bearer ${created.clientToken}` } });
+    return await r.json();
+  } catch { return {}; }
+};
+
 const policy = new ParticipationPolicy({ names, proactivity: "addressed_only" });
 const stats = { heard: 0, transcripts: 0, addressed: 0, replies: 0, spokenMs: 0, suppressed: 0 };
 let meeting = null;
@@ -113,6 +121,8 @@ await at(minutes * 60);
 
 const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
 console.log(`\n| step | status | detail |\n|---|---|---|`);
+const page = await pageState();
+row("avatar page started", page.activations > 0 ? "PASS" : "FAIL", page.activations > 0 ? `activated at ${new Date(page.botPageActivatedAt).toISOString()}` : "the page never loaded — Attendee did not launch it");
 row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.heard} chunks`);
 row("speech transcribed", stats.transcripts > 0 ? "PASS" : "FAIL", `${stats.transcripts} utterances`);
 row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.addressed} times`);

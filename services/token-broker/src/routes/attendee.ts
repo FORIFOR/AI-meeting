@@ -85,7 +85,15 @@ export async function createAttendeeBot(
    * heard from one place. Meeting audio reaches that page over our relay, not getUserMedia, because the
    * page is a voice agent rather than the bot itself.
    */
-  if (botPageUrl && env.ATTENDEE_VOICE_AGENT !== "off") payload.voice_agent_settings = { url: botPageUrl };
+  if (botPageUrl && env.ATTENDEE_VOICE_AGENT !== "off") {
+    /**
+     * `reserve_resources` is the switch, not `url`. Attendee only launches the webpage streamer when it
+     * is true (`should_launch_webpage_streamer`), and without it the URL is simply stored: the bot joins,
+     * records, and never renders or speaks — which is exactly what a first live run looked like, with no
+     * error anywhere to say so.
+     */
+    payload.voice_agent_settings = { url: botPageUrl, reserve_resources: true };
+  }
 
   const res = await fetchImpl(`${ATTENDEE_BASE}/api/v1/bots`, {
     method: "POST",

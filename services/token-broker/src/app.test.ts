@@ -523,8 +523,8 @@ describe("Attendee provider", () => {
     // 16 kHz is what the agent's binary input is defined at; 24 kHz stretched every utterance.
     expect(sent.websocket_settings.audio.sample_rate).toBe(16000);
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
-    // The unverified avatar field is only sent when a deployment asks for it.
-    expect(sent.voice_agent_settings).toBeUndefined();
+    // Attendee launches the page only when reserve_resources is true; the url alone is stored and ignored.
+    expect(sent.voice_agent_settings).toBeUndefined(); // no bot page URL configured in this test
   });
 
   it("reports a missing key rather than pretending", async () => {
@@ -532,5 +532,20 @@ describe("Attendee provider", () => {
     const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij" });
     expect(res.status).toBe(503);
     expect((await res.json()).error).toBe("BLOCKED_BY_ATTENDEE_KEY");
+  });
+});
+
+describe("Attendee voice agent page", () => {
+  it("asks Attendee to actually launch the page, not just store its URL", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_2", state: "joining" })), calls),
+    });
+    await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui" });
+    const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
+    expect(sent.voice_agent_settings.url).toMatch(/^https:\/\/web\.example\/\?rcai_bot=1&token=/);
+    // Without this the bot joins, records, and silently never renders or speaks.
+    expect(sent.voice_agent_settings.reserve_resources).toBe(true);
   });
 });
