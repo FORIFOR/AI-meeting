@@ -72,7 +72,16 @@ export function createApp(deps: AppDeps): Hono {
   const meetingDeps = { relay, sessions, store };
   const queue = deps.queue ?? new WebhookQueue({ dir: env.RECALL_DATA_DIR ? `${env.RECALL_DATA_DIR}/queue` : undefined, now });
   const recallClient = () => new RecallClient({ apiKey: env.RECALL_API_KEY!, region: env.RECALL_REGION ?? "us-west-2", fetchImpl });
-  const webhookDeps = () => ({ store, client: recallClient(), transcriptLanguage: env.RECALL_TRANSCRIPT_LANGUAGE ?? "auto", log: (l: Record<string, unknown>) => console.log("[recall]", JSON.stringify(l)) });
+  const webhookDeps = () => ({
+    store,
+    client: recallClient(),
+    transcriptLanguage: env.RECALL_TRANSCRIPT_LANGUAGE ?? "auto",
+    log: (l: Record<string, unknown>) => console.log("[recall]", JSON.stringify(l)),
+    // Push the state to whoever is connected, so nothing in the product has to ask Recall for it.
+    onBotStatus: (st: { botId: string | null; status: string | null; subCode: string | null; event: string }) => {
+      if (st.botId) relay.broadcast(st.botId, { event: "bot.status_change", data: { data: { code: st.status, sub_code: st.subCode } } });
+    },
+  });
 
   // ---- Calendar V2 (scheduling from the user's calendar) ---------------------------------------
   const calendarLog = (l: Record<string, unknown>) => console.log("[recall.calendar]", JSON.stringify(l));
@@ -250,7 +259,31 @@ export function createApp(deps: AppDeps): Hono {
     const r = await createRecallBot(env, await json<CreateBotBody>(c), fetchImpl, meetingDeps);
     return c.json(r.body, r.status as 200);
   });
+  /**
+   * Diagnostic and reconciliation only.
+   *
+   * Product state comes from webhooks. This asks Recall directly, which is what you want when a delivery
+   * was missed and a meeting is stuck — and exactly what you do not want on a timer. Behind an admin
+   * token so it cannot quietly become the product path again; without `RECALL_ADMIN_TOKEN` set it stays
+   * open for local development.
+   */
+  const adminOnly = (c: { req: { header(n: string): string | undefined } }) =>
+    !env.RECALL_ADMIN_TOKEN || c.req.header("x-admin-token") === env.RECALL_ADMIN_TOKEN;
+  app.post("/api/meeting/recall/bots/:id/reconcile", async (c) => {
+    if (!adminOnly(c)) return c.json({ error: "admin_token_required" }, 403);
+    const r = await getRecallBot(env, c.req.param("id"), fetchImpl, meetingDeps);
+    const body = r.body as { code?: string; subCode?: string | null };
+    const rec = store.list(200).find((m) => m.botId === c.req.param("id"));
+    if (rec && body.code) {
+      const { shouldApplyStatus } = await import("./recall/botState.js");
+      const apply = shouldApplyStatus(rec.status, body.code);
+      if (apply) store.update(rec.id, { status: body.code as never, statusSubCode: body.subCode ?? null }, `reconcile:${body.code}`);
+      return c.json({ ...body, reconciled: apply, meetingId: rec.id });
+    }
+    return c.json({ ...body, reconciled: false });
+  });
   app.get("/api/meeting/recall/bots/:id", async (c) => {
+    if (!adminOnly(c)) return c.json({ error: "admin_token_required" }, 403);
     const r = await getRecallBot(env, c.req.param("id"), fetchImpl, meetingDeps);
     return c.json(r.body, r.status as 200);
   });

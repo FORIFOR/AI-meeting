@@ -42,6 +42,8 @@ export interface BrokerEnv {
   RECALL_JOIN_NOTICE?: string;
   /** Output Audio is a transport test, not the conversational path. "1" re-enables the endpoint. */
   RECALL_ALLOW_OUTPUT_AUDIO?: string;
+  /** Guards the diagnostic bot GET and manual reconcile so they stay out of the product path. */
+  RECALL_ADMIN_TOKEN?: string;
   /**
    * Public URL of services/agent. Recall blocks localhost from the Output Media process, so a bot page
    * cannot reach the loopback agent the operator UI uses — without this the meeting audio arrives but

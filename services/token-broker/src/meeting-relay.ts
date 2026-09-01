@@ -80,6 +80,19 @@ export class RelayHub {
     return set.size;
   }
 
+  /**
+   * Push a message we generated (not one Recall sent) to this bot's clients. Bot status arrives by
+   * webhook, and the page and the operator UI need it without asking Recall — the alternative is the
+   * polling this design exists to remove.
+   */
+  broadcast(botId: string, message: unknown): number {
+    const set = this.clients.get(botId);
+    if (!set || set.size === 0) return 0;
+    const wrapped = JSON.stringify({ relay: { botId, receivedAt: this.now() }, message });
+    for (const s of set) s.send(wrapped);
+    return set.size;
+  }
+
   clientCount(botId: string): number {
     return this.clients.get(botId)?.size ?? 0;
   }

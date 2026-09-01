@@ -22,7 +22,7 @@ class FakeWs implements WebSocketLike {
 
 const created = (mode: "relay" | "output_media" = "relay", status = "joining_call"): CreateBotResponse => ({ botId: "bot_fixture", sessionId: "sid1", status, mode, clientWsUrl: "ws://localhost:8787/api/meeting/recall/client/bot_fixture?token=t", clientToken: "t", region: "us-west-2" });
 
-function harness(opts: { mode?: "relay" | "output_media"; status?: string; fetch?: (url: string, init?: RequestInit) => Response | Promise<Response> } = {}) {
+function harness(opts: { mode?: "relay" | "output_media"; status?: string; pollIntervalMs?: number; fetch?: (url: string, init?: RequestInit) => Response | Promise<Response> } = {}) {
   vi.useFakeTimers();
   vi.setSystemTime(1_000_000);
   FakeWs.all = [];
@@ -31,7 +31,7 @@ function harness(opts: { mode?: "relay" | "output_media"; status?: string; fetch
     calls.push({ url, init });
     return opts.fetch ? await opts.fetch(url, init) : new Response(JSON.stringify(pollFixtures.in_call), { status: 200 });
   }) as unknown as typeof fetch;
-  const session = new RecallSession(created(opts.mode, opts.status), "google_meet", { brokerUrl: "http://localhost:8787", mode: opts.mode ?? "relay", wsFactory: (u) => new FakeWs(u), pollIntervalMs: 100_000, clock: () => Date.now(), lifecycle: { reconnectBaseMs: 100, reconnectMaxDelayMs: 400, reconnectTimeoutMs: 3000 }, outputMediaActivationTimeoutMs: 2000, mp3Encoder: async () => new Uint8Array([1, 2, 3]) }, fetchImpl);
+  const session = new RecallSession(created(opts.mode, opts.status), "google_meet", { brokerUrl: "http://localhost:8787", mode: opts.mode ?? "relay", wsFactory: (u) => new FakeWs(u), pollIntervalMs: opts.pollIntervalMs ?? 100_000, clock: () => Date.now(), lifecycle: { reconnectBaseMs: 100, reconnectMaxDelayMs: 400, reconnectTimeoutMs: 3000 }, outputMediaActivationTimeoutMs: 2000, mp3Encoder: async () => new Uint8Array([1, 2, 3]) }, fetchImpl);
   const events: string[] = [];
   session.onEvent((e) => events.push(e.type === "status" ? `status:${e.status}` : e.type === "audio_muted" ? `muted:${e.muted}` : e.type === "left" ? `left:${e.reason}` : e.type));
   return { session, events, calls };
@@ -196,6 +196,18 @@ describe("RecallSession output media watchdog", () => {
     apply(session, "left_on_request");
     expect(session.status()).toBe("left");
     expect(events.filter((e) => e.startsWith("left:")).length).toBe(1);
+    vi.useRealTimers();
+  });
+});
+
+describe("bot state without polling", () => {
+  it("moves on a relay-pushed status change, with no status request", () => {
+    // The broker forwards Recall's webhook down the relay; the product never asks Recall itself.
+    const { session, events, calls } = harness({ pollIntervalMs: 0 }); // the production default
+    session.start();
+    session.onRelayMessage(JSON.stringify({ relay: { botId: "bot_fixture" }, message: { event: "bot.status_change", data: { data: { code: "in_call_recording", sub_code: null } } } }));
+    expect(events.some((e) => e.startsWith("status:"))).toBe(true);
+    expect(calls.filter((c) => /\/api\/meeting\/recall\/bots\/[^/]+$/.test(c.url))).toHaveLength(0);
     vi.useRealTimers();
   });
 });

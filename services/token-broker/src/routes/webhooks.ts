@@ -1,5 +1,6 @@
 import type { RecallClient } from "../recall/client.js";
 import type { Job } from "../recall/queue.js";
+import { observation, rankOf, shouldApplyStatus, type BotStateObservation } from "../recall/botState.js";
 import { toReadableTranscript, type MeetingStatus, type MeetingStore } from "../recall/store.js";
 
 /**
@@ -56,6 +57,11 @@ export interface WebhookDeps {
   /** Language for async transcription; "auto" lets Recall detect it. */
   transcriptLanguage?: string;
   log?: (line: Record<string, unknown>) => void;
+  /**
+   * Pushed to connected clients so the bot page and the operator UI learn the state from the webhook
+   * instead of polling. Without this, "no polling" would just mean "no state".
+   */
+  onBotStatus?: (s: { botId: string | null; status: string | null; subCode: string | null; event: string }) => void;
 }
 
 /** Locate the meeting record a webhook belongs to, using our own metadata first. */
@@ -95,10 +101,23 @@ export async function handleWebhookJob(job: Job, deps: WebhookDeps): Promise<voi
   if (event.startsWith("bot.")) {
     const status = BOT_STATUS[event];
     const subCode = env.data?.data?.sub_code ?? null;
+    const botId = env.data?.bot?.id ?? null;
+    const receivedAt = Date.now();
+    /**
+     * Webhooks are the only thing that moves product state, so a late or repeated delivery must not undo a
+     * live meeting. The event is recorded either way — what was skipped is as diagnostic as what was not.
+     */
+    const apply = !status ? false : rec ? shouldApplyStatus(rec.status, status) : false;
+    const reason: BotStateObservation["reason"] = !rec ? "no_record" : !status ? "unknown_status" : apply ? "applied" : rankOf(status) === rankOf(rec.status) ? "duplicate" : "out_of_order";
     if (rec) {
-      store.update(rec.id, { ...(status ? { status } : {}), statusSubCode: subCode, ...(env.data?.bot?.id ? { botId: env.data.bot.id } : {}) }, event);
+      store.update(
+        rec.id,
+        { ...(apply && status ? { status } : {}), ...(apply ? { statusSubCode: subCode } : {}), ...(botId ? { botId } : {}) },
+        apply ? event : `${event}:${reason}`,
+      );
     }
-    log({ event, meeting: rec?.id ?? null, subCode });
+    log(observation({ botId, meetingId: rec?.id ?? null, eventId: job.id ?? null, event, status: status ?? null, subCode, receivedAt, applied: apply, reason, updatedAt: env.data?.data?.updated_at ?? null }) as unknown as Record<string, unknown>);
+    deps.onBotStatus?.({ botId, status: status ?? null, subCode, event });
     return;
   }
 

@@ -31,7 +31,8 @@
     "reality:meet:stop": "scripts/reality/meet-setup.sh stop",
     "reality:converse": "node scripts/reality/converse.mjs",
     "reality:meet:live": "node scripts/reality/meet-live.mjs",
-    "reality:address": "tsx scripts/reality/meeting-address.mjs"
+    "reality:address": "tsx scripts/reality/meeting-address.mjs",
+    "reality:meet:human": "node scripts/reality/meet-human.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

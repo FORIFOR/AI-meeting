@@ -421,3 +421,26 @@ describe("incidents + telemetry (Round 3 Gate 6/7)", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("COMMERCIAL-GATE-04: webhook is the only product state source", () => {
+  const envFor = () => ({ RECALL_API_KEY: "rk", RECALL_REGION: "ap-northeast-1", RECALL_WEBHOOK_VERIFICATION_SECRET: "" });
+
+  it("a repeated delivery and a late earlier one leave the state alone", async () => {
+    const { shouldApplyStatus } = await import("./recall/botState.js");
+    expect(shouldApplyStatus("in_call_recording", "in_call_recording")).toBe(false);
+    expect(shouldApplyStatus("in_call_recording", "in_waiting_room")).toBe(false);
+    expect(shouldApplyStatus("in_waiting_room", "in_call_recording")).toBe(true);
+  });
+
+  it("an unsigned webhook is refused before the body is read", async () => {
+    const app = createApp({ env: { ...envFor(), RECALL_WEBHOOK_VERIFICATION_SECRET: "whsec_" + Buffer.from("k").toString("base64") } });
+    const res = await app.request("/api/recall/webhooks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "bot.done" }) });
+    expect([401, 403]).toContain(res.status);
+  });
+
+  it("the diagnostic bot GET and reconcile need the admin token", async () => {
+    const app = createApp({ env: { ...envFor(), RECALL_ADMIN_TOKEN: "secret" } });
+    expect((await app.request("/api/meeting/recall/bots/bot1")).status).toBe(403);
+    expect((await app.request("/api/meeting/recall/bots/bot1/reconcile", { method: "POST" })).status).toBe(403);
+  });
+});

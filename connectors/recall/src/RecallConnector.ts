@@ -146,13 +146,21 @@ export class RecallSession implements MeetingSession {
     return () => this.listeners.delete(cb);
   }
 
-  /** Opens the relay socket and starts status polling + lifecycle ticks. */
+  /**
+   * Opens the relay socket and starts lifecycle ticks.
+   *
+   * Bot state arrives on the relay as `bot.status_change`, pushed by the broker when Recall's webhook
+   * lands — the product never polls. `pollIntervalMs` is a diagnostic escape hatch for a deployment
+   * whose webhooks are not reachable yet; leave it unset in production.
+   */
   start(): void {
     this.openSocket();
-    const every = this.opts.pollIntervalMs ?? 3000;
-    this.pollTimer = this.timers.setInterval(() => void this.poll(), every);
+    const every = this.opts.pollIntervalMs ?? 0;
+    if (every > 0) {
+      this.pollTimer = this.timers.setInterval(() => void this.poll(), every);
+      void this.poll();
+    }
     this.tickTimer = this.timers.setInterval(() => this.tick(), 1000);
-    void this.poll();
   }
 
   /** Host muted / unmuted the character (from the bot page or an operator). */
@@ -291,6 +299,12 @@ export class RecallSession implements MeetingSession {
         const raw = (d as unknown as Record<string, unknown> | null) ?? {};
         const muted = raw.muted ?? raw.audio_muted ?? raw.is_muted;
         if (p?.is_self === true && typeof muted === "boolean") this.setAudioMuted(muted);
+        return;
+      }
+      case "bot.status_change": {
+        // The broker forwards this from the webhook, so state moves without anyone asking Recall.
+        const st = (d ?? {}) as { code?: string; sub_code?: string | null };
+        if (st.code) this.applyStatus(st.code, st.sub_code ?? undefined);
         return;
       }
       case "participant_events.speech_on":
