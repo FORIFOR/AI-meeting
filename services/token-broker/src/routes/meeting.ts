@@ -89,6 +89,38 @@ function outputMediaPayload(env: BrokerEnv, token: string): Record<string, unkno
  * nothing and the tile stays black. `web_gpu` is the only variant that supports it. It costs more per hour,
  * hence the env override for deployments that use a non-WebGL renderer.
  */
+/**
+ * Commercial join path for Google Meet.
+ *
+ * A default Recall bot joins anonymously, so it needs the host to let it in — and a Workspace that
+ * refuses anonymous participants will not even show it the door (`google_meet_organisation_restricted`,
+ * `google_meet_knocking_disabled`). An authenticated bot signs in with a Google account; put that
+ * account on the calendar invite and it skips the waiting room entirely.
+ *
+ * Requires a dedicated Google Workspace with org-wide SSO, which is the operator's to provision — see
+ * docs/acceptance-gates.md. Absent the env var the bot stays anonymous, which is fine for open meetings.
+ */
+export function googleMeetConfig(env: BrokerEnv): Record<string, unknown> | undefined {
+  const group = env.RECALL_GOOGLE_LOGIN_GROUP_ID;
+  return group ? { google_login_group_id: group } : undefined;
+}
+
+/**
+ * What the bot says in the meeting chat as it joins.
+ *
+ * Participants are entitled to know that a machine is listening, transcribing and writing notes before
+ * it does any of it — Meet asks humans for that consent, and a bot should not be the exception. Shape per
+ * Create Bot `chat.on_bot_join`; not yet exercised against the live API (workspace out of credit), which
+ * is recorded in the gates rather than assumed.
+ */
+export function joinNotice(env: BrokerEnv): Record<string, unknown> | undefined {
+  if (env.RECALL_JOIN_NOTICE === "off") return undefined;
+  const name = env.RECALL_BOT_NAME ?? "Yui";
+  const message = env.RECALL_JOIN_NOTICE ??
+    `${name}（AIアシスタント）が参加しました。この会議では AI による音声処理・文字起こし・議事録生成を行います。停止をご希望の場合は主催者にお知らせください。`;
+  return { on_bot_join: { send_to: "everyone", message } };
+}
+
 export function botVariant(env: BrokerEnv): Record<string, string> {
   const v = env.RECALL_BOT_VARIANT ?? "web_gpu";
   return { zoom: v, google_meet: v, microsoft_teams: v };
@@ -145,6 +177,10 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
     metadata: { app: "rcai", mode, sessionId: session.id, ...(record ? { meetingRecordId: record.id } : {}) },
   };
   if (mode === "output_media") payload.variant = botVariant(env);
+  const gmeet = googleMeetConfig(env);
+  if (gmeet) payload.google_meet = gmeet;
+  const notice = joinNotice(env);
+  if (notice) payload.chat = notice;
   if (body.joinAt) payload.join_at = body.joinAt;
   let pageUrl: string | undefined;
   let botPageTokenExpiresAt: number | undefined;
@@ -163,6 +199,18 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
     sessions.end(session.id, "create_failed");
     if (record) store!.update(record.id, { status: "create_failed" }, "create_failed");
     const detail = e instanceof RecallApiError ? e.detail : String((e as Error).message).slice(0, 200);
+    const status = e instanceof RecallApiError ? e.status : 0;
+    /**
+     * An empty balance and a full region are operational states with different answers — "top up" and
+     * "schedule earlier" — and neither is an upstream failure. Recall answers 402 for the first and 507
+     * for the second; reporting both as 502 sends whoever is on call looking for an outage.
+     */
+    if (status === 402 || /insufficient_credit_balance/.test(detail)) {
+      return { status: 402, body: { error: "BLOCKED_BY_RECALL_CREDIT", detail } };
+    }
+    if (status === 507) {
+      return { status: 503, body: { error: "BLOCKED_BY_RECALL_CAPACITY", detail: "no bot capacity right now — schedule with join_at at least 10 minutes ahead" } };
+    }
     return { status: 502, body: { error: "recall_create_bot_failed", detail } };
   }
   sessions.bindBot(session.id, bot.id);
@@ -300,8 +348,17 @@ export async function restartOutputMedia(env: BrokerEnv, botId: string, fetchImp
   return { status: 200, body: { ok: true, restarts: s.outputMediaRestarts } };
 }
 
+/**
+ * Recall's own guidance is that Output Audio suits short announcements, not conversation: a reply has to
+ * be encoded and posted as a whole clip, which is the opposite of what a live exchange needs. The
+ * character speaks through Output Media. This endpoint stays for transport tests and one-off notices, and
+ * is off unless a deployment says otherwise.
+ */
 export async function outputRecallAudio(env: BrokerEnv, botId: string, body: { kind?: string; b64_data?: string }, fetchImpl: typeof fetch): Promise<RouteResult<{ ok: true }>> {
   if (!env.RECALL_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_RECALL_KEY" } };
+  if (env.RECALL_ALLOW_OUTPUT_AUDIO !== "1") {
+    return { status: 409, body: { error: "OUTPUT_AUDIO_DISABLED", detail: "conversational audio goes through Output Media; set RECALL_ALLOW_OUTPUT_AUDIO=1 for transport tests" } as never };
+  }
   if (body.kind !== "mp3" || !body.b64_data) return { status: 400, body: { error: "kind must be mp3 with b64_data" } };
   const res = await fetchImpl(`${recallBase(env)}/bot/${encodeURIComponent(botId)}/output_audio/`, {
     method: "POST",

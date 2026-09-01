@@ -195,7 +195,15 @@ describe("meeting (Recall) routes", () => {
     const left = await post(app, "/api/meeting/recall/bots/bot42/leave", {});
     expect(left.status).toBe(200);
     expect(calls.at(-1)!.url).toBe("https://ap-northeast-1.recall.ai/api/v1/bot/bot42/leave_call/");
-    const bad = await post(app, "/api/meeting/recall/bots/bot42/output_audio", { kind: "wav" });
+    // Conversational audio goes through Output Media; Output Audio is off unless a deployment opts in.
+    const off = await post(app, "/api/meeting/recall/bots/bot42/output_audio", { kind: "mp3", b64_data: "AA==" });
+    expect(off.status).toBe(409);
+    expect((await off.json()).error).toBe("OUTPUT_AUDIO_DISABLED");
+    const allowed = createApp({
+      env: { RECALL_API_KEY: "rk", RECALL_REGION: "ap-northeast-1", RECALL_ALLOW_OUTPUT_AUDIO: "1" },
+      fetch: mockFetch(() => new Response("{}")),
+    });
+    const bad = await post(allowed, "/api/meeting/recall/bots/bot42/output_audio", { kind: "wav" });
     expect(bad.status).toBe(400);
   });
 });

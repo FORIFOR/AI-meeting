@@ -353,6 +353,12 @@ export function createApp(deps: AppDeps): Hono {
   });
 
   // Persisted product output: the meetings the bot attended and their transcripts.
+  /** Operational: how much bot time is being spent. Cached; safe to poll from a dashboard. */
+  app.get("/api/recall/usage", async (c) => {
+    const { recallUsage } = await import("./recall/balance.js");
+    const u = await recallUsage(env, fetchImpl);
+    return c.json(u, "error" in u ? 503 : 200);
+  });
   app.get("/api/meetings", (c) => c.json({ meetings: store.list(Number(c.req.query("limit") ?? 100)) }));
   app.get("/api/meetings/:id", (c) => {
     const rec = store.get(c.req.param("id"));

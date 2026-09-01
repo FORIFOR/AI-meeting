@@ -1,7 +1,7 @@
 import type { SchedulableEvent } from "@rcai/meeting-core";
 import type { BrokerEnv } from "../env.js";
 import type { MeetingSessionRegistry } from "../meeting-session.js";
-import { RECALL_EVENTS, botVariant, publicWsBase, streamingTranscript, type RelayRegistry } from "../routes/meeting.js";
+import { RECALL_EVENTS, botVariant, googleMeetConfig, joinNotice, publicWsBase, streamingTranscript, type RelayRegistry } from "../routes/meeting.js";
 import type { BotConfigFactory } from "./calendarSync.js";
 
 /**
@@ -18,7 +18,11 @@ export function calendarBotConfig(env: BrokerEnv, sessions: MeetingSessionRegist
 
   return {
     reserve(): Record<string, unknown> {
-      return { bot_name: botName };
+      // The commercial join path belongs on the reservation too: a scheduled bot is the one most likely
+      // to meet a Workspace that refuses anonymous participants.
+      const gmeet = googleMeetConfig(env);
+      const notice = joinNotice(env);
+      return { bot_name: botName, ...(gmeet ? { google_meet: gmeet } : {}), ...(notice ? { chat: notice } : {}) };
     },
 
     bind(sessionId: string, botId: string): void {
@@ -48,6 +52,8 @@ export function calendarBotConfig(env: BrokerEnv, sessions: MeetingSessionRegist
         },
         output_media: { camera: { kind: "webpage", config: { url: pageUrl } } },
         variant: botVariant(env),
+        ...(googleMeetConfig(env) ? { google_meet: googleMeetConfig(env) } : {}),
+        ...(joinNotice(env) ? { chat: joinNotice(env) } : {}),
         metadata: {
           app: "rcai",
           mode: "output_media",

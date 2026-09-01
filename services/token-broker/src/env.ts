@@ -36,6 +36,12 @@ export interface BrokerEnv {
   RECALL_BOT_NAME?: string;
   /** Output Media bot variant. Defaults to `web_gpu` — the only variant with WebGL, which Live2D needs. */
   RECALL_BOT_VARIANT?: string;
+  /** Google login group for authenticated Meet bots — required by meetings that refuse anonymous joins. */
+  RECALL_GOOGLE_LOGIN_GROUP_ID?: string;
+  /** What the bot posts in the meeting chat on join; "off" to send nothing (not recommended). */
+  RECALL_JOIN_NOTICE?: string;
+  /** Output Audio is a transport test, not the conversational path. "1" re-enables the endpoint. */
+  RECALL_ALLOW_OUTPUT_AUDIO?: string;
   /**
    * Public URL of services/agent. Recall blocks localhost from the Output Media process, so a bot page
    * cannot reach the loopback agent the operator UI uses — without this the meeting audio arrives but
