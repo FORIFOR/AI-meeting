@@ -2,7 +2,7 @@ import type { BrokerEnv } from "../env.js";
 import type { RouteResult } from "./openai.js";
 
 export const GEMINI_AUTH_TOKENS_URL = "https://generativelanguage.googleapis.com/v1beta/auth_tokens";
-export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
 
 export interface GeminiTokenResponse {
   token: string;
@@ -17,7 +17,9 @@ export interface GeminiTokenResponse {
  */
 export async function createGeminiEphemeralToken(env: BrokerEnv, req: { model?: string }, fetchImpl: typeof fetch, now: () => number = Date.now): Promise<RouteResult<GeminiTokenResponse>> {
   if (!env.GEMINI_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_GEMINI_KEY" } };
-  const model = req.model ?? env.GEMINI_LIVE_MODEL ?? DEFAULT_GEMINI_LIVE_MODEL;
+  // The operator's pin wins: the client asks for a model, the broker decides which one it is allowed to
+  // have. Without this a deployment could not move models without shipping a new client build.
+  const model = env.GEMINI_LIVE_MODEL ?? req.model ?? DEFAULT_GEMINI_LIVE_MODEL;
   const expireTime = new Date(now() + 30 * 60_000).toISOString();
   const newSessionExpireTime = new Date(now() + 2 * 60_000).toISOString();
   const res = await fetchImpl(GEMINI_AUTH_TOKENS_URL, {

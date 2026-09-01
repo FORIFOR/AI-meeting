@@ -232,7 +232,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   buildSetup(model: string, config: SessionConfig): GeminiSetup {
     const policy = conversationPolicyFor(config.language);
     const instructions = geminiPromptAdapter.adapt(config.systemPrompt, policy);
-    const nativeAudio = /native-audio|live/i.test(model);
+    // "native audio" is the `*-native-audio-*` family. The newer `*-flash-live-*` models are not part of
+    // it and do not take the same options.
+    const nativeAudio = /native-audio/i.test(model);
     const setup: GeminiSetup = {
       model: model.startsWith("models/") ? model : `models/${model}`,
       generationConfig: {
@@ -242,7 +244,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
           // Native-audio models auto-detect language (docs); languageCode is only sent for half-cascade models.
           ...(nativeAudio ? {} : { languageCode: config.language }),
         },
-        ...(this.opts.enableAffectiveDialog ?? true ? { enableAffectiveDialog: true } : {}),
+        // Affective dialog is a native-audio feature: the newer live models reject the field outright
+        // (1007 "Request contains an invalid argument"), which looks like a broken setup rather than an
+        // unsupported option.
+        ...(nativeAudio && (this.opts.enableAffectiveDialog ?? true) ? { enableAffectiveDialog: true } : {}),
       },
       systemInstruction: { parts: [{ text: instructions }] },
       inputAudioTranscription: {},

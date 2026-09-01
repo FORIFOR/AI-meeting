@@ -5,7 +5,12 @@
  */
 
 export const GEMINI_WSS_BASE = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage";
-export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+/**
+ * Measured on the same 3-minute spoken soak: this model answers at p50 1144 ms / p95 1414 ms with 21/21
+ * utterances heard, against 3985 / 8929 ms and 18/21 for `gemini-2.5-flash-native-audio-preview-12-2025`.
+ * Latency was never the transport — it was the model.
+ */
+export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
 export const GEMINI_INPUT_RATE = 16_000;
 export const GEMINI_OUTPUT_RATE = 24_000;
 

@@ -42,7 +42,7 @@ class FakeWS implements WebSocketLike {
 
 const tokenFetch = vi.fn(async (url: string, init?: RequestInit) => {
   if (url.endsWith("/api/token/gemini")) {
-    return new Response(JSON.stringify({ token: "auth_tokens/abc123", expiresAt: Date.now() + 60_000, model: "gemini-2.5-flash-native-audio-preview-12-2025" }), { status: 200 });
+    return new Response(JSON.stringify({ token: "auth_tokens/abc123", expiresAt: Date.now() + 60_000, model: "gemini-3.1-flash-live-preview" }), { status: 200 });
   }
   if (url.endsWith("/api/evaluate")) {
     const body = JSON.parse(String(init?.body));
@@ -94,11 +94,13 @@ describe("GeminiLiveProvider", () => {
     // An ephemeral token is only accepted on the constrained method; the plain one answers 1008.
     expect(ws.url).toContain("v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=auth_tokens%2Fabc123");
     const setup = (ws.sent[0] as unknown as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
-    expect(setup.model).toBe("models/gemini-2.5-flash-native-audio-preview-12-2025");
+    expect(setup.model).toBe("models/gemini-3.1-flash-live-preview");
     expect(setup.generationConfig?.responseModalities).toEqual(["AUDIO"]);
     expect(setup.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Kore");
-    expect(setup.generationConfig?.speechConfig?.languageCode).toBeUndefined(); // native-audio auto-detects
-    expect(setup.generationConfig?.enableAffectiveDialog).toBe(true);
+    // The live models are not the native-audio family: they take an explicit languageCode and reject
+    // enableAffectiveDialog outright (1007), so neither is sent the way it is for native audio.
+    expect(setup.generationConfig?.speechConfig?.languageCode).toBe("ja-JP");
+    expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
     expect(setup.inputAudioTranscription).toEqual({});
     expect(setup.outputAudioTranscription).toEqual({});
     expect(setup.realtimeInputConfig?.automaticActivityDetection?.disabled).toBe(false);
@@ -283,5 +285,18 @@ describe("GeminiLiveProvider reconnection", () => {
     expect(errs[errs.length - 1]!.fatal).toBe(true);
     expect(events[events.length - 1]).toEqual({ type: "session_closed", reason: "reconnect exhausted" });
     expect(p.diagnostics.reconnectFailures).toBe(2);
+  });
+});
+
+describe("setup per model family", () => {
+  it("keeps affective dialog and language auto-detection for native audio only", () => {
+    const p = new GeminiLiveProvider({ brokerUrl: "http://b" });
+    const native = p.buildSetup("gemini-2.5-flash-native-audio-preview-12-2025", config);
+    expect(native.generationConfig?.enableAffectiveDialog).toBe(true);
+    expect(native.generationConfig?.speechConfig?.languageCode).toBeUndefined();
+
+    const live = p.buildSetup("gemini-3.1-flash-live-preview", config);
+    expect(live.generationConfig?.enableAffectiveDialog).toBeUndefined();
+    expect(live.generationConfig?.speechConfig?.languageCode).toBe("ja-JP");
   });
 });

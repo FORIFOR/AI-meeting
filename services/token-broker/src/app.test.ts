@@ -73,7 +73,7 @@ describe("token broker", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.token).toBe("auth_tokens/abc");
-    expect(json.model).toBe("gemini-2.5-flash-native-audio-preview-12-2025");
+    expect(json.model).toBe("gemini-3.1-flash-live-preview");
     expect(json.expiresAt).toBe(Date.parse("2026-08-30T10:00:00Z"));
     expect(calls[0]!.url).toBe("https://generativelanguage.googleapis.com/v1beta/auth_tokens");
     expect((calls[0]!.init!.headers as Record<string, string>)["x-goog-api-key"]).toBe("gk-test");
