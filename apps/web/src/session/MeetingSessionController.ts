@@ -56,6 +56,8 @@ export interface MeetingInit {
    * operator's `ws://localhost:8788` is unreachable there and the character would never speak.
    */
   botAgentUrl?: string;
+  /** Meeting vendor: "recall" (default) or "attendee". */
+  meetingProvider?: "recall" | "attendee";
   /** bot role: activation already performed by the screen (tokens are single-use — never activate twice). */
   botActivation?: { sessionId: string; botId: string };
   connectorMode?: "output_media" | "relay";
@@ -138,7 +140,13 @@ export class MeetingSessionController {
   private async startOperator(): Promise<void> {
     const { settings, character, persona, meetingUrl, displayName, handlers, connectorMode } = this.init;
     const mode = connectorMode ?? "output_media";
-    const connector = await createMeetingConnector("recall", {
+    /**
+     * Which meeting vendor carries this call. The rest of this file does not care — that is what the
+     * connector boundary is for — but Attendee streams the character's audio back on the socket it sends
+     * on, so it runs the relay path where the conversation lives here rather than inside the bot.
+     */
+    const provider = (this.init.meetingProvider ?? "recall") as "recall" | "attendee";
+    const connector = await createMeetingConnector(provider, {
       brokerUrl: settings.brokerUrl,
       privacyMode: settings.privacyMode,
       mode,

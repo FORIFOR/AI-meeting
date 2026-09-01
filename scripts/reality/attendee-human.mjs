@@ -1,0 +1,125 @@
+/**
+ * The product path, on Attendee, with real people: the one thing nothing else here proves.
+ *
+ *   real meeting → human voice → Attendee → our STT → address detection → AI → TTS → Attendee → heard
+ *
+ *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:attendee:human      # 10-minute smoke
+ *   MEET_URL=... MINUTES=30 pnpm reality:attendee:human                            # commercial gate
+ *
+ * Audio only. Attendee's audio socket is the part verified against the API; rendering the avatar page as
+ * the bot's camera is not, so the character is heard here and not yet seen — stated rather than implied.
+ *
+ * The character answers only when addressed: the agent hears everything (it has to, or it would never
+ * hear its own name), and its reply reaches the meeting only while the participation policy says it was
+ * spoken to.
+ */
+import { createRequire } from "node:module";
+import { loadEnv } from "./lib.mjs";
+import { ParticipationPolicy } from "../../packages/meeting-core/src/index.js";
+
+const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
+const WebSocket = require("ws");
+
+const env = loadEnv();
+const url = process.env.MEET_URL;
+const broker = process.env.BROKER_URL ?? "http://localhost:8787";
+const agentUrl = process.env.AGENT_URL ?? "ws://127.0.0.1:8788/session";
+const minutes = Number(process.env.MINUTES ?? 10);
+const names = (process.env.CHARACTER_NAMES ?? "Yui,ゆい,ユイ,結衣").split(",");
+if (!url || !/^https:\/\/meet\.google\.com\//.test(url)) { console.log("BLOCKED_BY_MEET_URL"); process.exit(2); }
+if (!env.ATTENDEE_API_KEY) { console.log("BLOCKED_BY_ATTENDEE_KEY"); process.exit(2); }
+
+const CUES = [
+  { at: 60, say: "「ゆい、今日の予定を教えて」", expect: "答える" },
+  { at: 120, say: "「ゆいが昨日そう言ってた」（三人称）", expect: "答えない" },
+  { at: 180, say: "人A「ゆい、これはどう？」→ 答え始めたら人Bが割り込む", expect: "AIが止まる" },
+  { at: 240, say: "人Aと人Bだけで30秒会話", expect: "割り込まない" },
+  { at: 300, say: "「ゆい、今どう思う？」", expect: "答える" },
+  { at: 360, say: "全員30秒黙る", expect: "勝手に話さない" },
+  { at: 420, say: "1名退出→再参加", expect: "状態が壊れない" },
+];
+
+const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ meetingUrl: url, botName: env.RECALL_BOT_NAME ?? "Yui" }),
+})).json();
+if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${created.detail ?? ""}`); process.exit(1); }
+console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz`);
+console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
+
+const policy = new ParticipationPolicy({ names, proactivity: "addressed_only" });
+const stats = { heard: 0, transcripts: 0, addressed: 0, replies: 0, spokenMs: 0, suppressed: 0 };
+let meeting = null;
+
+const agent = new WebSocket(agentUrl);
+await new Promise((r) => agent.on("open", r));
+agent.send(JSON.stringify({ type: "start", config: {
+  systemPrompt: `あなたはオンライン会議に同席しているキャラクター「${env.RECALL_BOT_NAME ?? "Yui"}」です。名前で呼ばれたときだけ、1〜2文で簡潔に日本語で答えます。`,
+  mode: "free_talk", language: "ja-JP", privacyMode: "default", characterId: "yui", personaId: "friendly",
+}}));
+
+/** The meeting: audio in, audio out, on one socket. */
+meeting = new WebSocket(created.clientWsUrl);
+meeting.on("open", () => console.log("   [attendee] audio socket open"));
+meeting.on("message", (raw) => {
+  try {
+    const outer = JSON.parse(String(raw));
+    const m = outer.message ?? outer;
+    if (m?.trigger !== "realtime_audio.mixed" || !m.data?.chunk) return;
+    stats.heard++;
+    const pcm = Buffer.from(m.data.chunk, "base64");
+    const header = Buffer.alloc(12);
+    header.writeUInt32LE(m.data.sample_rate ?? created.sampleRate, 0);
+    agent.send(Buffer.concat([header, pcm]), { binary: true });
+  } catch { /* ignore */ }
+});
+
+agent.on("message", (data, isBinary) => {
+  if (isBinary) {
+    // The character's voice. It reaches the meeting only while it has actually been addressed.
+    const b = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const rate = b.readUInt32LE(0);
+    const body = b.subarray(12);
+    const speaking = policy.state === "ADDRESSED" || policy.state === "RESPONDING";
+    if (!speaking) { stats.suppressed++; return; }
+    stats.spokenMs += (body.length / 2 / rate) * 1000;
+    if (meeting?.readyState === meeting?.OPEN) meeting.send(JSON.stringify({ trigger: "realtime_audio.bot_output", data: { chunk: body.toString("base64"), sample_rate: rate } }));
+    return;
+  }
+  const msg = JSON.parse(data.toString());
+  if (msg.type === "user_transcript" && msg.final) {
+    stats.transcripts++;
+    const before = policy.state;
+    policy.onTranscript({ text: msg.text, final: true, speakerName: "participant" }, Date.now());
+    const nowAddressed = before !== "ADDRESSED" && policy.state === "ADDRESSED";
+    if (nowAddressed) stats.addressed++;
+    console.log(`   [聞こえた] ${msg.text}${nowAddressed ? "   → 呼ばれた" : ""}`);
+  } else if (msg.type === "assistant_transcript" && msg.final) {
+    stats.replies++;
+    console.log(`   [Yui] ${msg.text}`);
+    policy.onAssistantDone(Date.now());
+  }
+});
+
+const t0 = Date.now();
+const at = (s) => new Promise((r) => setTimeout(r, Math.max(0, t0 + s * 1000 - Date.now())));
+for (const cue of CUES.filter((c) => c.at < minutes * 60 - 60)) {
+  await at(cue.at);
+  console.log(`\n${String(Math.floor(cue.at / 60)).padStart(2, "0")}:${String(cue.at % 60).padStart(2, "0")}  ${cue.say}\n        期待: ${cue.expect}`);
+}
+await at(minutes * 60);
+
+const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
+console.log(`\n| step | status | detail |\n|---|---|---|`);
+row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.heard} chunks`);
+row("speech transcribed", stats.transcripts > 0 ? "PASS" : "FAIL", `${stats.transcripts} utterances`);
+row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.addressed} times`);
+row("answered", stats.replies > 0 ? "PASS" : "FAIL", `${stats.replies} replies`);
+row("voice sent to the meeting", stats.spokenMs > 500 ? "PASS" : "FAIL", `${(stats.spokenMs / 1000).toFixed(1)}s`);
+row("stayed quiet when not addressed", stats.suppressed > 0 ? "PASS" : "INFO", `${stats.suppressed} frames withheld`);
+row("heard by a person", "HUMAN", "Yui の声が実際に聞こえたか");
+row("avatar visible", "N/A", "音声のみ — Attendee のページ埋め込みは未検証");
+console.log(`\nHUMAN 行はあなたの判断です。`);
+try { await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }); } catch { /* best effort */ }
+meeting?.close(); agent.close();
+process.exit(0);

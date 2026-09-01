@@ -52,7 +52,7 @@ export async function createAttendeeBot(
 
   const botName = body.botName ?? env.RECALL_BOT_NAME ?? "Yui";
   const sampleRate = body.sampleRate ?? 24000;
-  const session = deps.sessions.create({ meetingUrl: body.meetingUrl, botName, mode: "relay", botPageQuery: body.botPageQuery });
+  const session = deps.sessions.create({ meetingUrl: body.meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
 
@@ -85,6 +85,15 @@ export async function createAttendeeBot(
   deps.sessions.bindBot(session.id, botId);
   deps.relay.bind(audioToken, botId);
   const clientToken = deps.sessions.issue(session.id, "client");
+  /**
+   * The avatar page runs on our side, not inside the bot: only audio crosses to Attendee, on the socket
+   * that is actually verified. Rendering the page as the bot's camera is the unproven part
+   * (`voice_agent_settings`), so the character can be heard long before it can be seen.
+   */
+  const pageToken = env.RECALL_BOT_PAGE_URL ? deps.sessions.issue(session.id, "bot_page", { brokerPublicUrl: publicUrl }) : null;
+  const botPageUrl = pageToken
+    ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
+    : undefined;
   return {
     status: 200,
     body: {
@@ -95,6 +104,7 @@ export async function createAttendeeBot(
       sampleRate,
       clientWsUrl: `${deps.relay.clientUrl(botId)}?token=${encodeURIComponent(clientToken)}`,
       clientToken,
+      botPageUrl,
     },
   };
 }
