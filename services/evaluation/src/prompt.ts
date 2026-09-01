@@ -89,6 +89,9 @@ export interface EvaluationPrompt {
   user: string;
 }
 
+/** Most recent transcript lines handed to the evaluator; older ones are summarised away. */
+const MAX_TRANSCRIPT_LINES = 160;
+
 /** Spec §21: Evaluator prompt built from transcript + timing + interruptions (never audio). */
 export function buildEvaluationPrompt(input: EvaluationInput): EvaluationPrompt {
   const profile = resolveProfile(input);
@@ -105,7 +108,18 @@ export function buildEvaluationPrompt(input: EvaluationInput): EvaluationPrompt 
 
   const t = input.timing;
   const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((s, v) => s + v, 0) / xs.length) : null);
-  const lines = input.transcript.map((x, i) => `[${i}] ${x.role === "user" ? "USER" : "AI"}${x.interrupted ? " (interrupted)" : ""}: ${x.text}`);
+  /**
+   * A 30-minute session is ~400 lines; sending all of them made the request large enough that the
+   * evaluator call failed and the whole result screen was lost to a 502. Keep the most recent window and
+   * say so. Line numbers stay the ORIGINAL indices, because `evidence[].turnIndex` is validated against
+   * `input.transcript` — renumbering would invalidate every quote.
+   */
+  const shown = input.transcript.length > MAX_TRANSCRIPT_LINES ? input.transcript.length - MAX_TRANSCRIPT_LINES : 0;
+  const lines = input.transcript
+    .map((x, i) => ({ x, i }))
+    .slice(shown)
+    .map(({ x, i }) => `[${i}] ${x.role === "user" ? "USER" : "AI"}${x.interrupted ? " (interrupted)" : ""}: ${x.text}`);
+  if (shown > 0) lines.unshift(ja ? `（前半 ${shown} 行は省略。以下は直近の会話）` : `(${shown} earlier lines omitted; the most recent exchange follows)`);
   const meta = [
     `mode=${input.mode}`,
     `profile=${profile}`,

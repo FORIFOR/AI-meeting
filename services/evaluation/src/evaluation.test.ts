@@ -312,3 +312,18 @@ describe("isJapanese with a missing language tag", () => {
     expect(isJapanese("")).toBe(false);
   });
 });
+
+describe("evaluator prompt with a long session", () => {
+  it("keeps a bounded window and preserves original turn indices", async () => {
+    const { buildEvaluationPrompt } = await import("./prompt.js");
+    const transcript = Array.from({ length: 400 }, (_, i) => ({ role: (i % 2 ? "assistant" : "user") as "user" | "assistant", text: `発話${i}` }));
+    const { user } = buildEvaluationPrompt({
+      mode: "free_talk", language: "ja-JP", transcript,
+      timing: { responseLatenciesMs: [], userSilencesMs: [], userSpeechDurationsMs: [], assistantSpeechDurationsMs: [] },
+      interruptions: { byUser: 0, byAssistant: 0 },
+    });
+    expect(user).toContain("前半 240 行は省略");
+    expect(user).toContain("[399]");   // original index, so evidence turnIndex stays valid
+    expect(user).not.toContain("[100]");
+  });
+});

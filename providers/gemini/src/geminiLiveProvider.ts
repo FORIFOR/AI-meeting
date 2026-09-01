@@ -174,6 +174,16 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   }
 
   private openSocket(url: string, model: string, config: SessionConfig): Promise<void> {
+    // Enough to tell an auth problem from a wrong endpoint without ever printing the credential.
+    const where = (() => {
+      try {
+        const u = new URL(url);
+        const cred = u.searchParams.get("access_token") ?? u.searchParams.get("key");
+        return `${u.pathname.split(".").slice(-3, -1).join(".")} cred=${cred ? `${cred.split("/")[0]}/…(${cred.length})` : "NONE"}`;
+      } catch {
+        return "unparseable url";
+      }
+    })();
     const factory = this.opts.wsFactory ?? ((u: string) => new WebSocket(u) as unknown as WebSocketLike);
     const ws = factory(url);
     this.ws = ws;
@@ -205,7 +215,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         if (this.setupDone) this.emit({ type: "error", error: new Error("Gemini Live websocket error") });
       };
       ws.onclose = (ev) => {
-        done(new Error(`Gemini Live socket closed before setup (${ev?.code ?? ""} ${ev?.reason ?? ""})`.trim()));
+        done(new Error(`Gemini Live socket closed before setup [${where}] (${ev?.code ?? ""} ${ev?.reason ?? ""})`.trim()));
         if (this.ws !== ws) return; // stale socket (already replaced by a reconnect)
         this.ws = null;
         if (this.closing || !this.setupDone || this.reconnecting) return;

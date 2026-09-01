@@ -92,3 +92,31 @@ Re-verified after fixes: `pnpm gate` (typecheck 20/20, 124 tests, build) and the
 - Gate B Character (10 min): never mouth-only · never frozen while listening · natural blink · no repeated nod · head/eyes/body move · mouth stops at speech end
 - Gate C LipSync (50 JP sentences): あいうえお · numbers · English words · names · long · fast · questions
 - Gate D Provider: same persona on OpenAI / Google / Local with unchanged character UI
+
+## Cloud reality gates (2026-09-01)
+
+| Gate | Verdict | Evidence |
+|---|---|---|
+| OpenAI Realtime, 30-minute soak | **PASS** | `docs/reports/soak/openai-2026-09-01T00-25-47.json` — survived 30.0 min, 199 assistant turns, 100 % answered, turn latency p50 1495 ms / p95 1948 ms (n=207), barge-in → audio stop 43 ms (n=123), 0 toasts / 0 page errors |
+| Gemini Live | **BLOCKED_BY_GEMINI_EPHEMERAL_TOKEN** | The Live socket refuses every ephemeral token this key can mint; the raw key is accepted. See below. |
+
+### BLOCKED_BY_GEMINI_EPHEMERAL_TOKEN
+
+Minting works (`POST v1beta/auth_tokens` → 200, `auth_tokens/…`), but `BidiGenerateContent` rejects the
+token on the first message:
+
+| credential | result |
+|---|---|
+| real `GEMINI_API_KEY` as `?key=` | `setupComplete` — endpoint, model and key are all fine |
+| ephemeral `?access_token=` (v1beta, v1alpha, full name and bare id) | 1008 *Method doesn't allow unregistered callers* |
+| ephemeral `Authorization: Token` | 1008 |
+| ephemeral `x-goog-api-key` | 1007 *API key not valid* |
+
+Note the socket **opens** with any credential — Google only authenticates on the first frame, so an
+"it connected" check proves nothing here.
+
+The key in use is not an AI Studio `AIza…` key, and ephemeral tokens minted from it appear not to be
+honoured by the Live API. Two ways forward, both the user's call:
+1. an AI Studio API key, or
+2. proxy the Live socket through the broker, so the key stays server-side (spec §26 forbids shipping it
+   to the client, which is why the raw key is not simply used from the browser).
