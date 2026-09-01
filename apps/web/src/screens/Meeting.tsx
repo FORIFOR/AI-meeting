@@ -44,6 +44,11 @@ export function Meeting(p: MeetingProps) {
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
+   * Broker relay socket for this bot — the second transcript source (see botTranscriptFeed). A ref, not
+   * state: `start()` captures it in a closure, and a render-timing miss silently costs the redundancy.
+   */
+  const relayWsUrl = useRef<string | undefined>(undefined);
+  /**
    * What the bot page can actually reach. The operator's health poll runs against loopback URLs the bot
    * process blocks, so inside the bot every provider reads "unavailable" and routing falls back to a cloud
    * engine that has no key — the character then renders but never speaks (BLOCKED_BY_OPENAI_KEY). Probing
@@ -86,9 +91,17 @@ export function Meeting(p: MeetingProps) {
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         botTranscriptFeed: role === "bot" ? (cb) => {
-          let stop: (() => void) | null = null;
-          void import("@rcai/connector-recall").then((m) => { stop = m.connectBotTranscript(cb); });
-          return () => stop?.();
+          // Two sources for the same transcripts: the bot's own socket, and the broker relay Recall also
+          // delivers to. Either alone is a single point of failure for a character that only answers when
+          // it is addressed — and the in-bot socket exists only inside a bot, so on its own the path can
+          // never be exercised outside a real call.
+          const stops: (() => void)[] = [];
+          void import("@rcai/connector-recall").then((m) => {
+            const once = m.dedupeTranscript(cb);
+            stops.push(m.connectBotTranscript(once));
+            if (relayWsUrl.current) stops.push(m.connectRelayTranscript(relayWsUrl.current, once));
+          });
+          return () => { for (const s of stops) s(); };
         } : undefined,
         handlers: {
           onStatus: (s, d) => { setStatus(s); note(`${STATUS_JA[s]}${d ? ` · ${d}` : ""}`); },
@@ -132,6 +145,7 @@ export function Meeting(p: MeetingProps) {
         setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine });
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
+        relayWsUrl.current = act.clientWsUrl;
         if (origins.brokerUrl && origins.agentUrl) {
           const { probe } = await import("../api/health.js");
           const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode).catch(() => null);

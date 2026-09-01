@@ -130,3 +130,33 @@ describe("helpers", () => {
     expect(parseBotPageParams(`?rcai_bot=1&token=${payload}.sig`)).toMatchObject({ token: `${payload}.sig`, botId: "b9", brokerUrl: "https://broker.example" });
   });
 });
+
+describe("bot page transcript sources", () => {
+  it("reads Recall transcripts out of the relay envelope", async () => {
+    const { connectRelayTranscript } = await import("./botPage.js");
+    const seen: { text: string; final: boolean; speakerName: string | null }[] = [];
+    let sock: { onmessage?: (e: { data: string }) => void; onclose?: () => void; close(): void } | null = null;
+    const stop = connectRelayTranscript("ws://broker/relay", (e) => seen.push({ text: e.text, final: e.final, speakerName: e.speakerName }), (() => {
+      sock = { close() {} };
+      return sock as unknown as WebSocket;
+    }) as (u: string) => WebSocket);
+    const send = (o: unknown) => sock!.onmessage?.({ data: JSON.stringify(o) });
+    send({ relay: { botId: "b" }, message: { event: "transcript.data", data: { data: { words: [{ text: "ゆいさん" }, { text: "聞こえてる？" }], participant: { id: 7, name: "shuhei" } } } } });
+    send({ relay: { botId: "b" }, message: { event: "audio_mixed_raw.data", data: {} } });
+    expect(seen).toEqual([{ text: "ゆいさん聞こえてる？", final: true, speakerName: "shuhei" }]);
+    stop();
+  });
+
+  it("acts once on a line that arrives from both sources", async () => {
+    const { dedupeTranscript } = await import("./botPage.js");
+    const seen: string[] = [];
+    let now = 0;
+    const once = dedupeTranscript((e) => seen.push(e.text), 5000, () => now);
+    once({ text: "ゆいさん、聞こえてる？", final: true, speakerName: null });
+    once({ text: "ゆいさん、聞こえてる？", final: true, speakerName: null }); // the other source
+    once({ text: "ゆいさん、聞こえてる？", final: false, speakerName: null }); // a partial is its own event
+    now = 6000;
+    once({ text: "ゆいさん、聞こえてる？", final: true, speakerName: null }); // outside the window: said again
+    expect(seen).toHaveLength(3);
+  });
+});

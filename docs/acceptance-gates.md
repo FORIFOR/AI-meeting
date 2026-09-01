@@ -120,3 +120,18 @@ no human in the loop.
 - **OpenAI credits are exhausted** (`credit_balance_exhausted`), which is what made `/api/evaluate`
   return 502 at the end of both runs. Quota is now reported as `BLOCKED_BY_OPENAI_QUOTA` (503) rather
   than a generic upstream failure; the result screen still falls back to the heuristic evaluator.
+
+### Meeting: address → answer (still open)
+
+The character only speaks when it hears its name, and in a meeting that name arrives on Recall's in-bot
+transcript socket, which exists only inside a bot. To make the path exercisable — and because a single
+transcript source is a single point of failure for the one thing that makes the character speak — the bot
+page now also subscribes to the broker relay, which Recall feeds the same `transcript.data`.
+
+What is proven: the relay parsing and the two-source de-duplication (unit tests); the relay client
+endpoint accepts a subscriber and reports it (`clients: 1` while a probe is connected); a transcript
+injected into the relay's inbound side reaches the broker.
+
+What is NOT proven: the bot page actually opening that second subscription. In a headless run the page
+activates (`activations: 1`) but never appears as a relay client, so the address → answer hop is still
+unverified outside a real call. Do not read the code being present as the path working.

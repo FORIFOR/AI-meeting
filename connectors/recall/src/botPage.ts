@@ -122,3 +122,65 @@ export function connectBotTranscript(onEvent: (e: BotTranscriptEvent) => void, w
     ws?.close();
   };
 }
+
+/** Shape shared by Recall's in-bot socket and the relay envelope, reduced to what a caller needs. */
+function toTranscriptEvent(t: { words?: { text: string }[]; participant?: { id?: number; name?: string | null }; is_final?: boolean } | undefined, partialHint: boolean): BotTranscriptEvent | null {
+  const words = t?.words ?? [];
+  if (!words.length) return null;
+  const text = words.map((w) => w.text).join(" ").replace(/([぀-ヿ一-鿿])\s+(?=[぀-ヿ一-鿿])/g, "$1").trim();
+  if (!text) return null;
+  const partial = partialHint || t?.is_final === false;
+  return { text, final: !partial, speakerName: t?.participant?.name ?? null, participantId: t?.participant?.id !== undefined ? String(t.participant.id) : undefined };
+}
+
+/**
+ * The same transcripts, from the broker relay instead of the bot's own socket.
+ *
+ * Recall delivers `transcript.data` to BOTH the in-bot websocket and the realtime endpoint the broker
+ * registers, and the bot page needs the redundancy: the in-bot socket is the single thing standing
+ * between a meeting and a character that answers, and it exists only inside a bot — which also made the
+ * whole path impossible to exercise outside a real call.
+ */
+export function connectRelayTranscript(clientWsUrl: string, onEvent: (e: BotTranscriptEvent) => void, wsFactory: (url: string) => WebSocket = (u) => new WebSocket(u)): () => void {
+  let ws: WebSocket | null = null;
+  let closed = false;
+  const open = () => {
+    if (closed) return;
+    ws = wsFactory(clientWsUrl);
+    ws.onmessage = (ev) => {
+      try {
+        const outer = JSON.parse(String(ev.data)) as { message?: { event?: string; data?: { data?: { words?: { text: string }[]; participant?: { id?: number; name?: string | null } } } } };
+        const event = outer.message?.event;
+        if (event !== "transcript.data" && event !== "transcript.partial_data") return;
+        const e = toTranscriptEvent(outer.message?.data?.data, event === "transcript.partial_data");
+        if (e) onEvent(e);
+      } catch {
+        /* ignore */
+      }
+    };
+    ws.onclose = () => {
+      if (!closed) setTimeout(open, 2000);
+    };
+  };
+  open();
+  return () => {
+    closed = true;
+    ws?.close();
+  };
+}
+
+/**
+ * Wraps a transcript handler so the same line arriving from two sources is acted on once. Keyed on the
+ * text and its finality, because a partial and the final of the same words are different events.
+ */
+export function dedupeTranscript(onEvent: (e: BotTranscriptEvent) => void, windowMs = 5000, now: () => number = Date.now): (e: BotTranscriptEvent) => void {
+  const seen = new Map<string, number>();
+  return (e) => {
+    const at = now();
+    for (const [k, t] of seen) if (at - t > windowMs) seen.delete(k);
+    const key = `${e.final ? "f" : "p"}:${e.text}`;
+    if (seen.has(key)) return;
+    seen.set(key, at);
+    onEvent(e);
+  };
+}

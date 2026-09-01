@@ -12,7 +12,7 @@ import { planWithOpenAI } from "./routes/plan.js";
 import { recordFeedback, type FeedbackEntry } from "./routes/feedback.js";
 import { recordIncident, type IncidentBody } from "./routes/incidents.js";
 import { recordTelemetry } from "./routes/telemetry.js";
-import { activateBotPage, createRecallBot, getMeetingSession, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
+import { publicWsBase, activateBotPage, createRecallBot, getMeetingSession, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
 import { RelayHub } from "./meeting-relay.js";
 import { MeetingSessionRegistry } from "./meeting-session.js";
 import { fallbackHeuristic, loadEvaluationModule } from "./evaluation-bridge.js";
@@ -57,7 +57,13 @@ export function createApp(deps: AppDeps): Hono {
   const env = deps.env;
   const fetchImpl = deps.fetch ?? fetch;
   const now = deps.now ?? Date.now;
-  const relay = deps.relay ?? new RelayHub(deps.clientWsBase ?? `ws://localhost:${env.PORT ?? 8787}`, now);
+  /**
+   * The relay's client URL is handed to the bot page, which runs inside Recall's browser where loopback
+   * is blocked — a localhost base there is unreachable by construction. Prefer the public origin whenever
+   * the meeting connector is configured.
+   */
+  const clientWsBase = deps.clientWsBase ?? (env.RECALL_PUBLIC_URL ? publicWsBase(env.RECALL_PUBLIC_URL) : `ws://localhost:${env.PORT ?? 8787}`);
+  const relay = deps.relay ?? new RelayHub(clientWsBase, now);
   const sessions = deps.sessions ?? new MeetingSessionRegistry(env.MEETING_TOKEN_SECRET, now);
   const app = new Hono();
 

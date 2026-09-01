@@ -4,12 +4,18 @@ import { WebSocketServer, type WebSocket } from "ws";
 import { createApp } from "./app.js";
 import { loadEnv } from "./env.js";
 import { RelayHub } from "./meeting-relay.js";
+import { publicWsBase } from "./routes/meeting.js";
 import { MeetingSessionRegistry } from "./meeting-session.js";
 import { authorizeWebSocketUpgrade } from "./meeting-ws-auth.js";
 
 const env = loadEnv();
 const port = Number(env.PORT ?? 8787);
-const relay = new RelayHub(`ws://localhost:${port}`);
+/**
+ * The relay's client URL is handed to the bot page, which runs inside Recall's browser where loopback is
+ * blocked — a localhost base is unreachable there by construction. Use the public origin when the meeting
+ * connector is configured.
+ */
+const relay = new RelayHub(env.RECALL_PUBLIC_URL ? publicWsBase(env.RECALL_PUBLIC_URL) : `ws://localhost:${port}`);
 const sessions = new MeetingSessionRegistry(env.MEETING_TOKEN_SECRET);
 if (sessions.secretSource === "ephemeral") console.warn("[token-broker] MEETING_TOKEN_SECRET not set — using an ephemeral secret (meeting tokens are invalid after restart)");
 const app = createApp({ env, relay, sessions });
