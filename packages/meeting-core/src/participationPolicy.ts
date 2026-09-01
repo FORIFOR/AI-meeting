@@ -8,6 +8,24 @@ import { AddressDetector, type AddressDetection } from "./addressDetector.js";
 export type ParticipationState = "OBSERVING" | "LISTENING" | "ADDRESSED" | "RESPONDING";
 
 /**
+ * Whether the character is currently in a conversation, and with whom.
+ *
+ * Addressing answers "was this turn for me". Engagement answers "am I still in this". Without the
+ * second layer every single turn has to carry the name — 「ゆい、なんで？」「ゆい、例えば？」 — which
+ * nobody does when talking to a person. Once someone calls the character by name, their following
+ * turns count as addressed until the conversation moves on.
+ */
+export type EngagementState = "PASSIVE" | "ENGAGED";
+
+export interface Engagement {
+  /** Who the character is talking with. Identity first, display name as the fallback. */
+  participantId: string;
+  startedAt: number;
+  lastTurnAt: number;
+  expiresAt: number;
+}
+
+/**
  * How much the character needs before it speaks.
  *
  *   addressed_only  its name, used as a vocative or with a request
@@ -41,6 +59,13 @@ export interface ParticipationPolicyOptions {
   detector?: AddressDetector;
   /** Names that identify the character itself (its own transcript is ignored). */
   selfNames?: string[];
+  /**
+   * How long a conversation stays open without a turn from the person the character is talking with.
+   * Default 90 s: long enough that a pause, a sip of coffee or someone else's aside does not end it,
+   * short enough that a meeting which has moved on does not leave the character believing it is
+   * still in a conversation. 0 disables the layer entirely (every turn needs the name again).
+   */
+  engagementTtlMs?: number;
 }
 
 export interface TranscriptSegment {
@@ -69,6 +94,7 @@ export class ParticipationPolicy {
   private listeners = new Set<(t: PolicyTransition) => void>();
   /** The utterance that triggered ADDRESSED (for the assistant's context). */
   addressedBy: { text: string; speakerName?: string | null; detection: AddressDetection } | null = null;
+  private engagement: Engagement | null = null;
 
   constructor(options: ParticipationPolicyOptions) {
     this.opts = {
@@ -80,6 +106,7 @@ export class ParticipationPolicy {
       activeSilenceMs: options.activeSilenceMs ?? 1800,
       openMinChars: options.openMinChars ?? 6,
       selfNames: options.selfNames ?? options.names,
+      engagementTtlMs: options.engagementTtlMs ?? 90_000,
     };
     this.detector = options.detector ?? new AddressDetector({ names: options.names });
   }
@@ -106,6 +133,34 @@ export class ParticipationPolicy {
     }
   }
 
+  /** Who the character is in conversation with, if anyone. */
+  get engagedWith(): Engagement | null {
+    return this.engagement;
+  }
+
+  get engagementState(): EngagementState {
+    return this.engagement ? "ENGAGED" : "PASSIVE";
+  }
+
+  /** Stable-ish identity for a speaker: the vendor's id when there is one, the display name otherwise. */
+  private speakerKey(seg: TranscriptSegment): string | null {
+    return seg.participantId ?? (seg.speakerName ? `name:${seg.speakerName}` : null);
+  }
+
+  private engage(key: string | null, now: number): void {
+    if (!key || this.opts.engagementTtlMs <= 0) return;
+    this.engagement = {
+      participantId: key,
+      startedAt: this.engagement?.participantId === key ? this.engagement.startedAt : now,
+      lastTurnAt: now,
+      expiresAt: now + this.opts.engagementTtlMs,
+    };
+  }
+
+  private expireEngagement(now: number): void {
+    if (this.engagement && now >= this.engagement.expiresAt) this.engagement = null;
+  }
+
   onTranscript(seg: TranscriptSegment, now: number): AddressDetection | null {
     if (this.isSelf(seg.speakerName)) return null;
     this.lastSpeechAt = now;
@@ -124,12 +179,26 @@ export class ParticipationPolicy {
       // Another participant was addressed / normal chatter → the character is not "on".
       this.consecutive = 0;
     }
-    const explicitly = d.addressed;
+    this.expireEngagement(now);
+    const key = this.speakerKey(seg);
+    /**
+     * A follow-up from the person the character is already talking with. Not a name match, and
+     * deliberately not a proactivity tier either: this is the same conversation continuing.
+     *
+     * Any utterance where the detector saw the name but read it as talk *about* the character
+     * (「ゆいがそう言ってた」) is excluded: mid-conversation, describing the character to someone else
+     * is the one case where the name appearing means the opposite of a turn. A backchannel earns
+     * nothing either.
+     */
+    const engagedFollowUp =
+      !!this.engagement && !!key && this.engagement.participantId === key && !d.addressed && !d.reason.startsWith("name mentioned") && seg.text.trim().length >= 2;
+    const explicitly = d.addressed || engagedFollowUp;
     const invited = d.invited && (this.opts.proactivity === "invited" || this.opts.proactivity === "active");
     if ((explicitly || invited) && !inCooldown && !capped) {
       this.addressedBy = { text: seg.text, speakerName: seg.speakerName, detection: d };
       this.pendingQuestion = null;
-      if (this._state !== "ADDRESSED") this.transition("ADDRESSED", now, explicitly ? d.reason : "invited");
+      this.engage(key, now);
+      if (this._state !== "ADDRESSED") this.transition("ADDRESSED", now, engagedFollowUp && !d.addressed ? "engaged follow-up" : explicitly ? d.reason : "invited");
       return d;
     }
     if (this.opts.proactivity === "active" && !explicitly && !inCooldown && !capped && /[？?]\s*$|ですか|ますか|でしょうか/.test(seg.text)) {
@@ -154,6 +223,7 @@ export class ParticipationPolicy {
 
   /** Time-based transitions; call periodically. */
   tick(now: number): void {
+    this.expireEngagement(now);
     if (this._state === "LISTENING" && now - this.lastSpeechAt > this.opts.silenceGapMs) {
       const proactive = this.opts.proactivity === "active" || this.opts.proactivity === "open";
       const inCooldown = now - this.lastResponseEndAt < this.opts.cooldownMs;
@@ -190,6 +260,7 @@ export class ParticipationPolicy {
   reset(now: number): void {
     this.addressedBy = null;
     this.pendingQuestion = null;
+    this.engagement = null;
     this.transition("OBSERVING", now, "reset");
   }
 

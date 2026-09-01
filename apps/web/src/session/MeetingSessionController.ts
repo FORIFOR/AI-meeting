@@ -71,7 +71,7 @@ export interface MeetingInit {
   stage: HTMLElement | null;
   handlers: MeetingHandlers;
   /** bot role only: transcript feed from the bot's own data websocket (injected for tests). */
-  botTranscriptFeed?: (cb: (e: { text: string; final: boolean; speakerName: string | null }) => void) => () => void;
+  botTranscriptFeed?: (cb: (e: { text: string; final: boolean; speakerName: string | null; participantId?: string }) => void) => () => void;
 }
 
 /**
@@ -229,7 +229,7 @@ export class MeetingSessionController {
     await this.startPipeline({ micFromMeeting: false });
     const feed = this.init.botTranscriptFeed;
     if (feed) {
-      this.stopFeed = feed((e) => this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null));
+      this.stopFeed = feed((e) => this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId));
     }
   }
 
@@ -318,7 +318,7 @@ export class MeetingSessionController {
         this.onMeetingAudio(e.frame);
         break;
       case "transcript":
-        this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null);
+        this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId);
         break;
       case "speech":
         this.policy.onSpeechActivity(e.active, now, e.participant.name);
@@ -381,11 +381,17 @@ export class MeetingSessionController {
     }
   }
 
-  onMeetingTranscript(text: string, final: boolean, speakerName: string | null): void {
+  /**
+   * `participantId` is what keeps a conversation attached to one person: the engagement layer answers
+   * follow-ups from whoever called the character, and only from them. A display name is the fallback
+   * when the vendor gives no id — two people called 「田中」 would share one conversation, which is
+   * still better than every turn needing the name again.
+   */
+  onMeetingTranscript(text: string, final: boolean, speakerName: string | null, participantId?: string): void {
     const now = Date.now();
     const line: MeetingTranscriptLine = { id: ++this.lineId, speaker: speakerName ?? "?", text, final, at: now };
     this.init.handlers.onTranscript(line);
-    this.policy.onTranscript({ text, final, speakerName }, now);
+    this.policy.onTranscript({ text, final, speakerName, participantId }, now);
     if (final) {
       this.recent.push({ speaker: line.speaker, text });
       while (this.recent.length > 12) this.recent.shift();
