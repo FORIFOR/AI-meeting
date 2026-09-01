@@ -129,3 +129,20 @@ describe("clockLabel", () => {
     expect(clockLabel(undefined)).toBe("");
   });
 });
+
+describe("failure reasons an operator can act on", () => {
+  it("names the meeting setting instead of the generic line", () => {
+    const s = failureSentence({ status: "bot.fatal", statusSubCode: "google_meet_knocking_disabled", hasTranscript: false })!;
+    expect(s).toContain("ノック");
+    expect(s).toContain("カレンダー招待"); // the fix, not just the symptom
+  });
+
+  it("falls back to the generic line when Recall gave no reason", () => {
+    expect(failureSentence({ status: "bot.fatal", hasTranscript: false })).toBe("この会議には参加できませんでした。");
+  });
+
+  it("still says something for a sub code we have never seen", () => {
+    const s = failureSentence({ status: "bot.fatal", statusSubCode: "google_meet_brand_new_thing", hasTranscript: false })!;
+    expect(s).toContain("google_meet_brand_new_thing");
+  });
+});

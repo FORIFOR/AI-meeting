@@ -444,3 +444,63 @@ describe("COMMERCIAL-GATE-04: webhook is the only product state source", () => {
     expect((await app.request("/api/meeting/recall/bots/bot1/reconcile", { method: "POST" })).status).toBe(403);
   });
 });
+
+describe("operations: a missed webhook is recoverable", () => {
+  it("a dropped delivery leaves the meeting stale, and reconcile puts it right", async () => {
+    const calls: { url: string }[] = [];
+    const app = createApp({
+      env: { RECALL_API_KEY: "rk", RECALL_REGION: "ap-northeast-1", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example" },
+      fetch: mockFetch((url: string) => {
+        if (url.endsWith("/api/v1/bot/")) return new Response(JSON.stringify({ id: "botR", status_changes: [{ code: "joining_call" }] }));
+        // Recall's truth: the bot is recording. The webhook that said so never arrived.
+        if (url.endsWith("/api/v1/bot/botR/")) return new Response(JSON.stringify({ id: "botR", status_changes: [{ code: "joining_call" }, { code: "in_call_recording", sub_code: null, created_at: "t" }] }));
+        return new Response("{}");
+      }, calls),
+    });
+    const created = await (await post(app, "/api/meeting/recall/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui", mode: "relay" })).json();
+    const before = await (await app.request(`/api/meetings/${created.meetingRecordId}`)).json();
+    expect(before.meeting.status).not.toBe("in_call_recording");
+
+    const rec = await (await app.request("/api/meeting/recall/bots/botR/reconcile", { method: "POST" })).json();
+    expect(rec.reconciled).toBe(true);
+    const after = await (await app.request(`/api/meetings/${created.meetingRecordId}`)).json();
+    expect(after.meeting.status).toBe("in_call_recording");
+    expect(after.meeting.lifecycle.at(-1).event).toBe("reconcile:in_call_recording");
+  });
+
+  it("reconcile never drags a meeting backwards", async () => {
+    const app = createApp({
+      env: { RECALL_API_KEY: "rk", RECALL_REGION: "ap-northeast-1", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example" },
+      fetch: mockFetch((url: string) => {
+        if (url.endsWith("/api/v1/bot/")) return new Response(JSON.stringify({ id: "botS", status_changes: [{ code: "joining_call" }] }));
+        // Recall answers with a state older than the one we already reached.
+        if (url.endsWith("/api/v1/bot/botS/")) return new Response(JSON.stringify({ id: "botS", status_changes: [{ code: "in_waiting_room", sub_code: null, created_at: "t" }] }));
+        return new Response("{}");
+      }),
+    });
+    const created = await (await post(app, "/api/meeting/recall/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui", mode: "relay" })).json();
+    await app.request("/api/meeting/recall/bots/botS/reconcile", { method: "POST" }); // to in_waiting_room
+    const first = await (await app.request(`/api/meetings/${created.meetingRecordId}`)).json();
+    expect(first.meeting.status).toBe("in_waiting_room");
+    const again = await (await app.request("/api/meeting/recall/bots/botS/reconcile", { method: "POST" })).json();
+    expect(again.reconciled).toBe(false); // already there; nothing to apply
+  });
+});
+
+describe("operations: an empty Recall account is visible before a user finds it", () => {
+  it("health reports when a bot was last refused for credit", async () => {
+    const app = createApp({
+      env: { RECALL_API_KEY: "rk", RECALL_REGION: "ap-northeast-1", RECALL_PUBLIC_URL: "https://t.example", RECALL_BOT_PAGE_URL: "https://w.example" },
+      fetch: mockFetch((url: string) =>
+        url.endsWith("/api/v1/bot/")
+          ? new Response(JSON.stringify({ code: "insufficient_credit_balance", detail: "Insufficient credit balance to add a bot." }), { status: 402 })
+          : new Response("{}"),
+      ),
+    });
+    expect((await (await app.request("/health")).json()).meeting.creditRefusedAt).toBeNull();
+    const created = await post(app, "/api/meeting/recall/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui", mode: "relay" });
+    expect(created.status).toBe(402);
+    expect((await created.json()).error).toBe("BLOCKED_BY_RECALL_CREDIT");
+    expect((await (await app.request("/health")).json()).meeting.creditRefusedAt).toBeTypeOf("number");
+  });
+});

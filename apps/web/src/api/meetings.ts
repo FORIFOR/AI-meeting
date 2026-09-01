@@ -1,3 +1,4 @@
+import { describeBotFailure } from "@rcai/meeting-core";
 import { readError } from "./health.js";
 
 /**
@@ -126,9 +127,19 @@ export function statusJa(status: string): string {
   return STATUS_JA[status] ?? STATUS_JA[status.replace(/^bot\./, "")] ?? "状態を確認中";
 }
 
-/** One plain sentence for a lifecycle or transcript failure — never a code dump. */
+/**
+ * One plain sentence for a lifecycle or transcript failure — never a code dump.
+ *
+ * When Recall told us *why*, say that instead of the generic line: "参加できませんでした" leaves an
+ * operator with nowhere to go, while "この会議はノックが無効です" points straight at the setting.
+ */
 export function failureSentence(m: Pick<MeetingRecord, "status" | "statusSubCode" | "hasTranscript">): string | null {
   const s = m.status.replace(/^bot\./, "");
+  const failed = s === "failed" || s === "fatal" || s === "denied" || s === "removed";
+  if (failed && m.statusSubCode) {
+    const f = describeBotFailure(m.statusSubCode);
+    return f.action ? `${f.message} ${f.action}` : f.message;
+  }
   if (s === "failed" || s === "fatal") return "この会議には参加できませんでした。";
   if (s === "denied") return "ホストが入室を承認しなかったため参加できませんでした。";
   if (s === "removed") return "会議中にホストが退出させたため、途中までの記録です。";

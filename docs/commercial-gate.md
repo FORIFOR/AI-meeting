@@ -17,10 +17,10 @@ The gates are split, because they gate different promises:
 | 1 | Conversational audio on Output Media | **PASS** | The character has always spoken through Output Media. Output Audio is now refused unless `RECALL_ALLOW_OUTPUT_AUDIO=1`, so the announcement endpoint cannot become the conversational path by accident. |
 | 2 | Bot reserved ≥10 min ahead via Calendar V2 | **PASS** | Reserved when the event first syncs, armed ~12 min before; `decideEvent` refuses anything starting within 10 minutes (`starts_too_soon`). |
 | 3 | Webhook-authoritative bot state | **PASS (code)** | See COMMERCIAL-GATE-04 below. |
-| 4 | Fatal sub-codes as operator-readable errors | **PASS** | `describeBotFailure` covers `google_meet_bot_blocked`, `knocking_disabled`, `organisation_restricted`, `login_not_available` and the rest, and never blanks out on a code Recall adds later. |
+| 4 | Fatal sub-codes as operator-readable errors | **PASS** | `describeBotFailure` covers `google_meet_bot_blocked`, `knocking_disabled`, `organisation_restricted`, `login_not_available` and the rest, never blanks out on a code Recall adds later, and the meetings screen shows the reason **and the fix** rather than 「参加できませんでした」. |
 | 5 | Participants told an AI is listening | **PASS (code), UNVERIFIED LIVE** | `chat.on_bot_join` notice; shape from Recall's reference, never exercised — the workspace ran out of credit first. Confirmed by a human in the smoke gate. |
 | 6 | 402 / 507 are operational states, not outages | **PASS** | `BLOCKED_BY_RECALL_CREDIT` and `BLOCKED_BY_RECALL_CAPACITY`. |
-| 7 | Usage visible | **PARTIAL** | `GET /api/recall/usage` reports billed bot hours. The public API does not expose remaining credit; the signals that exist are the 402 and dashboard auto top-up. |
+| 7 | Usage visible, empty account visible | **PASS** | `GET /api/recall/usage` reports billed bot hours (`bot_total` is seconds — 14053.27 matched 3.90 billed hours). Remaining credit is not exposed by the API, so `/health` carries `meeting.creditRefusedAt`: the first refusal is visible to operations instead of waiting for a user whose meeting did not happen. Auto top-up remains a dashboard setting. |
 | 8 | **10-minute smoke with real people** | **BLOCKER** | `pnpm reality:meet:human`. Never run — needs Recall credit. |
 | 9 | **30-minute reality gate with real people** | **BLOCKER** | `MINUTES=30 pnpm reality:meet:human`, after #8 passes. |
 | 10 | Two-bot run is a transport test only | **PASS** | `reality:meet:live` is labelled as such and does not stand in for #8 or #9. |
@@ -47,8 +47,8 @@ and the direct GET survives as an admin tool** — otherwise one dropped deliver
 | Reconcile not reachable from normal use | **PASS** | Not called by any product code path. |
 | Traceable without secrets | **PASS** | One line per delivery: bot id, meeting id, event id, event, status, sub-code, received-at, transition latency, applied, reason. |
 
-Still to prove in a live call: that a missed delivery, reconciled, actually recovers the meeting. That is
-part of the operations gate below.
+Proved automatically: a dropped delivery leaves the record stale, reconcile recovers it, and a reconcile
+that would move the state backwards is refused. Worth repeating once in a live call.
 
 ## Authenticated Enterprise (separate release)
 
@@ -65,9 +65,9 @@ anonymous participants are **not supported** — stated, not discovered by the c
 
 | Item | State |
 |---|---|
-| Missed webhook → reconcile → correct state, in a live call | Not started |
+| Missed webhook → reconcile → correct state | **PASS (automated)** — a dropped delivery leaves the record stale; reconcile puts it right and records `reconcile:<status>`; a reconcile that would move it backwards is refused. Still worth repeating once in a live call. |
+| Empty account visible to operations | **PASS** — `/health` → `meeting.creditRefusedAt`. |
 | Auto top-up configured | Operator action (dashboard setting; not an API) |
-| Usage alerting | `GET /api/recall/usage` exists; no alerting yet |
 
 ## Cost, because it is a production requirement
 

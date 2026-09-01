@@ -10,6 +10,11 @@
  *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:meet:live
  *
  * A host still admits two participants — the character, and the speaker. That is Meet doing its job.
+ *
+ * TRANSPORT TEST ONLY. It proves audio and transcripts move through Meet; it does not stand in for
+ * `pnpm reality:meet:human`, which is the gate. The speaker bot uses Output Audio — short pre-recorded
+ * clips, which is what Recall says that endpoint is for — so it needs RECALL_ALLOW_OUTPUT_AUDIO=1 on the
+ * broker. The character's own conversational audio never goes through it.
  */
 import { execFileSync } from "node:child_process";
 import { spawn } from "node:child_process";

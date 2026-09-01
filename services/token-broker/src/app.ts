@@ -72,6 +72,12 @@ export function createApp(deps: AppDeps): Hono {
   const meetingDeps = { relay, sessions, store };
   const queue = deps.queue ?? new WebhookQueue({ dir: env.RECALL_DATA_DIR ? `${env.RECALL_DATA_DIR}/queue` : undefined, now });
   const recallClient = () => new RecallClient({ apiKey: env.RECALL_API_KEY!, region: env.RECALL_REGION ?? "us-west-2", fetchImpl });
+  /**
+   * The last time Recall refused a bot for want of credit. The balance is not exposed by the API, so
+   * without this the first anyone hears of an empty account is a user whose meeting did not happen.
+   */
+  let lastCreditRefusalAt: number | null = null;
+
   const webhookDeps = () => ({
     store,
     client: recallClient(),
@@ -154,6 +160,8 @@ export function createApp(deps: AppDeps): Hono {
       },
       meeting: {
         recall: Boolean(env.RECALL_API_KEY),
+        // Operational, not diagnostic: an empty Recall account looks like an outage from the outside.
+        creditRefusedAt: lastCreditRefusalAt,
         recallPublicUrl: Boolean(env.RECALL_PUBLIC_URL),
         recallBotPageUrl: Boolean(env.RECALL_BOT_PAGE_URL),
         region: env.RECALL_REGION ?? "us-west-2",
@@ -257,6 +265,7 @@ export function createApp(deps: AppDeps): Hono {
   // ---- Meeting bots (Recall.ai) — the API key never leaves this process -------------------------
   app.post("/api/meeting/recall/bots", async (c) => {
     const r = await createRecallBot(env, await json<CreateBotBody>(c), fetchImpl, meetingDeps);
+    if ((r.body as { error?: string }).error === "BLOCKED_BY_RECALL_CREDIT") lastCreditRefusalAt = now();
     return c.json(r.body, r.status as 200);
   });
   /**
