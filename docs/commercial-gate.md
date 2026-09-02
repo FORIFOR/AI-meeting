@@ -21,9 +21,64 @@ The gates are split, because they gate different promises:
 | 5 | Participants told an AI is listening | **PASS (code), UNVERIFIED LIVE** | `chat.on_bot_join` notice; shape from Recall's reference, never exercised — the workspace ran out of credit first. Confirmed by a human in the smoke gate. |
 | 6 | 402 / 507 are operational states, not outages | **PASS** | `BLOCKED_BY_RECALL_CREDIT` and `BLOCKED_BY_RECALL_CAPACITY`. |
 | 7 | Usage visible, empty account visible | **PASS** | `GET /api/recall/usage` reports billed bot hours (`bot_total` is seconds — 14053.27 matched 3.90 billed hours). Remaining credit is not exposed by the API, so `/health` carries `meeting.creditRefusedAt`: the first refusal is visible to operations instead of waiting for a user whose meeting did not happen. Auto top-up remains a dashboard setting. |
-| 8 | **10-minute smoke with real people** | **BLOCKER** | Two attempts on Attendee, 2026-09-02. Both reached the meeting: admitted, avatar rendered, webhook lifecycle complete, audio and transcripts flowing. **Attempt 1** (`bot_hnPC8GruiRzkHXQ2`) aborted at ~3 min — the page routed to OpenAI, no credit, seen and silent (429 in-call). **Attempt 2** (`bot_q21wV6BfaY1hHiq4`, Gemini) ran the full 10 minutes: page started, 56,266 audio chunks, 45 utterances, lifecycle PASS — and `addressed by name` **0**, so `character produced speech` **0.0 s**. The person did call the name six times; the recogniser wrote 「ゆイ」 and the matcher is literal. Both causes fixed and measured against that meeting's own transcripts (0 → 2 addressed). **Attempt 5** (`bot_GKv9mtW9nPLoM0S1`, local engine, `addressed_only`, 10 min): admitted, lifecycle PASS, 28,619 chunks relayed — and the voice-agent page never started on Attendee's side, so the room heard nothing; Attendee's own transcript has 2 utterances, one speaker. Not reproducible here: the same page, broker and agent through the same three tunnels reach the call in 18.8 s in `reality:attendee:sim` (2026-09-03). Two things that run found with that meeting's recording as input, both fixed: the arrival greeting was dropped whenever the room was not silent at +1.5 s (it now waits for the next silence, and survives the page cutting off unsanctioned generations), and the recording itself carries almost no speech — 57 bursts, 71 s in 534 s, mostly ≤1 s — so the phone microphone through Meet's noise suppression is what the recogniser heard. Re-run required, with a real microphone. |
+| 8 | **10-minute smoke with real people** | **AUTOMATED PASS 7/7 (2026-09-03) — real-people run still owed** | The five attempts of 2026-09-02 are kept below (「Gate #8 — attempts with a person」). Since then the gate has been run unattended: `pnpm reality:attendee:auto` sends the character and a second Attendee bot (「Tester」, listening, 1080p recording) into the same Meet room, the Tester speaks a scripted Japanese scenario through `say`, and the page's own events are scored per cue. **Run 15** (`bot_od48D1guEA1G8K66` / `bot_Qcy82rOEQ7LTlSwM`, local engine, `addressed_only`, Gemini 3.5 flash-lite as the LLM): greet PASS (greeting at T0−17.6 s, 170 audio frames, before the Tester was in the room), chat PASS (two people talking, turn=0), ask1 PASS (「ゆイ、今日の予定を教えて。」 → vocative, 5.1 s heard by the Tester), third PASS (third-person mention, no turn), bargein PASS (cut after 1 frame, silent for the 1.5–5 s after the cut-in), ask2 PASS (「ゆイ、今どう思う？」 → 2.6 s heard), silence PASS (turn=0). 28,840 chunks heard, 13 transcripts, five sanctioned LLM calls and no unsanctioned draft. Runs 10–14 and what each one fixed are in the section below. What this does **not** prove: a person's microphone through Meet's noise suppression, and ten minutes of unscripted talk — that is the run this row is named after, and it is still owed. |
 | 9 | **30-minute reality gate with real people** | **BLOCKER** | `MINUTES=30 pnpm reality:meet:human`, after #8 passes. |
 | 10 | Two-bot run is a transport test only | **PASS** | `reality:meet:live` is labelled as such and does not stand in for #8 or #9. |
+
+## Gate #8 — attempts with a person (2026-09-02)
+
+Two attempts on Attendee. Both reached the meeting: admitted, avatar rendered, webhook lifecycle complete, audio and
+transcripts flowing. **Attempt 1** (`bot_hnPC8GruiRzkHXQ2`) aborted at ~3 min — the page routed to OpenAI, no credit,
+seen and silent (429 in-call). **Attempt 2** (`bot_q21wV6BfaY1hHiq4`, Gemini) ran the full 10 minutes: page started,
+56,266 audio chunks, 45 utterances, lifecycle PASS — and `addressed by name` **0**, so `character produced speech`
+**0.0 s**. The person did call the name six times; the recogniser wrote 「ゆイ」 and the matcher is literal. Both causes
+fixed and measured against that meeting's own transcripts (0 → 2 addressed). **Attempt 5** (`bot_GKv9mtW9nPLoM0S1`,
+local engine, `addressed_only`, 10 min): admitted, lifecycle PASS, 28,619 chunks relayed — and the voice-agent page
+never started on Attendee's side, so the room heard nothing; Attendee's own transcript has 2 utterances, one speaker.
+Two things that run found with its recording as input, both fixed: the arrival greeting was dropped whenever the room
+was not silent at +1.5 s, and the recording carries almost no speech — 57 bursts, 71 s in 534 s, mostly ≤1 s — so the
+phone microphone through Meet's noise suppression is what the recogniser heard.
+
+## Gate #8 — unattended runs in the real room (2026-09-03)
+
+`pnpm reality:attendee:auto` (`scripts/reality/attendee-auto.mjs`). The character joins as 「Yui」 (bot page through the
+three cloudflared tunnels: web, broker, agent); a second Attendee bot 「Tester」 joins the same room, records at 1080p and
+plays a scripted scenario through macOS `say`. The host admits both. Scoring uses the bot page's own events, relayed to
+the broker (`GET /api/meeting/session/:id` → `pageEvents`, `pageHeartbeat`) — `turn` (reason + text), `greeting`,
+`spoke` (audio frames actually sent), `interrupted` — plus how many seconds of the character the Tester's recording
+contains in each window.
+
+| cue (T0+s) | Tester says | expected | Run 15 |
+|---|---|---|---|
+| greet (join) | — | greets on arrival | PASS — greeting @−17.6 s, 170 frames |
+| chat (25) | two people talking, no name | stays quiet | PASS — turn=0 |
+| ask1 (65) | 「ゆい、今日の予定を教えて」 | answers | PASS — vocative, 5.1 s heard |
+| third (105) | 「ゆいが昨日そう言ってたよね」 | stays quiet | PASS — turn=0 |
+| bargein (145) | 「ゆい、これはどう思う？」, then a second voice cuts in 「ちょっと待って、その前に…」 | stops | PASS — interrupted after 1 frame, 0.0 s audible after the cut |
+| ask2 (190) | 「ゆい、今どう思う？」 | answers | PASS — vocative, 2.6 s heard |
+| silence (230) | — | stays quiet | PASS — turn=0 |
+
+Environment: local engine (SenseVoice incremental STT, silero VAD, Supertonic int8 TTS), LLM `gemini-3.5-flash-lite`
+through the OpenAI-compatible endpoint with `LOCAL_LLM_REASONING=minimal` (`gemini-3.1-flash-lite` ran out of daily
+quota; `gemini-2.5-flash-lite` is 404 for new users; 3.5 rejects `reasoning_effort: "none"` with 400).
+Latencies on the three answered turns: first token 0.63–0.85 s, total 1.3–2.2 s.
+
+What the runs found, in order (each fixed in the commit named, then re-run):
+
+| run | result | what was wrong | fix |
+|---|---|---|---|
+| 10 | greet FAIL | the page greeted into an agent socket that was not open yet; a turn nobody answered kept the floor | `027e5db` — `runtimeReady` gate, 20 s answer watchdog, `released` event |
+| 11–12 | void | LLM 404 (`gemini-2.5-flash-lite`), then 400 (`reasoning_effort: "none"` on 3.5) | model + `LOCAL_LLM_REASONING=minimal`; the leftover bots were told to leave |
+| 13 | greet FAIL, ask2 FAIL | a 200 ms noise onset dropped the thinking-phase turn; the recogniser wrote 「つい今どう思う？」 and the vocative did not match | `d5aacd2` — 600 ms barge-in confirmation while thinking on the bot page; `soundalikes` (い/うい/つい/ゆ at an utterance onset, question or request only) on the character |
+| 14 | greet FAIL (scoring), noise follow-ups | greeting happened 25.9 s before T0 and was judged from T0; 「你。」「Great.」「Okay。」 counted as engaged follow-ups | `3b7fe0c` — greet judged from its own event; `isFollowUpWorthy` rejects backchannels and one-word noise |
+| 15 | **7/7 PASS** | — | — |
+
+Also from the runs: the agent is now `autoRespond: false` on a meeting page — it transcribes, and only the page's
+sanctioned `text` turn generates (`ab73149`), so an unsanctioned draft can no longer be cut mid-sentence by the page.
+
+Still open from Run 15: the model echoes the misspelt name (「ゆイ、お疲れ様！」) — the answer prompt should say the
+transcript may misspell the name and not to repeat it. And the row above stays owed a person: a real microphone,
+unscripted, ten minutes.
 
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
