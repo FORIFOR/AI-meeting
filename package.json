@@ -35,7 +35,8 @@
     "reality:meet:human": "node scripts/reality/meet-human.mjs",
     "reality:attendee:human": "tsx scripts/reality/attendee-human.mjs",
     "reality:attendee:verify": "node scripts/reality/attendee-verify.mjs",
-    "reality:attendee:sim": "node scripts/reality/attendee-sim.mjs"
+    "reality:attendee:sim": "node scripts/reality/attendee-sim.mjs",
+    "reality:conversation": "tsx scripts/reality/conversation-eval.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

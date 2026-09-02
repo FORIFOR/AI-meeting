@@ -548,3 +548,32 @@ describe("what the character remembers saying", () => {
     expect(last.some((m) => m.role === "assistant" && m.content.length > 0)).toBe(true);
   });
 });
+
+describe("what the character remembers from earlier in the conversation", () => {
+  it("keeps a running note of what scrolled out of the window and shows it to the model", async () => {
+    const seen: ChatMessage[][] = [];
+    class RecordingLLM extends FakeLLM {
+      override async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
+        seen.push([...m]);
+        yield* super.stream(m, opts);
+      }
+      override async complete() { return "- 相手は週末に京都へ行った"; }
+    }
+    const sent: ServerMessage[] = [];
+    const llm = new RecordingLLM("そうなんだ！");
+    const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm, tts: new FakeTTS(), send: (m) => sent.push(m), sendAudio: () => {}, leadMs: 100000, chunkMs: 100, historyChars: 60 });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await s.onText("週末に京都に行ってきたんだよ。抹茶のパフェを食べた。");
+    for (const line of ["犬を飼ってて、モモっていうの。", "柴犬で三歳。", "明日は面談なんだ。", "ちょっと緊張する。", "でも頑張る。", "それでさ。", "うん。", "そうそう。", "ところで週末どこ行ったか覚えてる？"]) {
+      await s.onText(line);
+    }
+    await new Promise((r) => setTimeout(r, 20));
+    const last = seen[seen.length - 1]!;
+    // 京都 has long left the verbatim window …
+    expect(last.some((m) => m.role === "user" && m.content.includes("京都"))).toBe(false);
+    // … but the model still sees it, as the character's notes.
+    expect(last[0]!.role).toBe("system");
+    expect(last[0]!.content).toContain("京都");
+    expect(last[1]!.role).toBe("user");
+  }, 20000);
+});

@@ -3,6 +3,7 @@ import type { STTAdapter } from "./adapters/stt.js";
 import type { StreamingSTT } from "./adapters/stt-streaming.js";
 import type { VADAdapter } from "./adapters/vad.js";
 import { EndpointPolicy, type EndpointPolicyOptions } from "./endpointing.js";
+import { ConversationMemory } from "./memory.js";
 import type { ChatMessage, LLMAdapter } from "./adapters/llm.js";
 import type { TTSAdapter, TTSResult } from "./adapters/tts.js";
 import { PROTOCOL_VERSION, encodeAudioFrame, pcm16BytesToFloat32, type ServerMessage, type WireGen } from "./protocol.js";
@@ -36,6 +37,12 @@ export interface SessionDeps {
   chunkMs?: number;
   /** LLM max tokens per reply. Default 120 (replies are 1–3 sentences by policy). */
   maxTokens?: number;
+  /**
+   * Characters of recent conversation the model sees verbatim; older turns are folded into notes
+   * (see ConversationMemory). Default 2400 — sized for a 4k-context local model; a cloud model can
+   * take far more.
+   */
+  historyChars?: number;
   log?: (msg: string) => void;
   /** Called with the per-turn breakdown after each assistant turn (also sent to the client). */
   onMetrics?(turn: TurnMetrics): void;
@@ -115,6 +122,7 @@ interface Utterance {
 export class ConversationSession {
   state: SessionState = "idle";
   private history: ChatMessage[] = [];
+  private memory = new ConversationMemory({ recentChars: 2400 });
   private systemPrompt = "";
   private language = "ja-JP";
   private strictLocal = false;
@@ -220,6 +228,7 @@ export class ConversationSession {
       this.deps.onStrictLocal?.(true);
     }
     this.history = [];
+    this.memory = new ConversationMemory({ recentChars: this.deps.historyChars ?? 2400, language: this.language });
     this.started = true;
     if (this.deps.streamingStt) {
       this.streamingStt = this.deps.streamingStt();
@@ -515,12 +524,16 @@ export class ConversationSession {
 
   updateContext(ctx: ConversationContext): void {
     this.systemPrompt = ctx.systemPrompt;
-    if (ctx.history) this.history = ctx.history.map((h) => ({ role: h.role, content: h.text }));
+    if (ctx.history) {
+      this.history = ctx.history.map((h) => ({ role: h.role, content: h.text }));
+      this.memory.reset();
+    }
   }
 
   stop(): void {
     this.abort?.abort();
     this.abort = null;
+    this.memory.cancelFold();
     if (this.utterance?.timer) clearTimeout(this.utterance.timer);
     this.utterance = null;
     this.preroll = [];
@@ -564,7 +577,8 @@ export class ConversationSession {
     const genId = this.beginGeneration(true);
     this.sendGen(genId, { type: "assistant_thinking" });
     this.history.push({ role: "user", content: userText });
-    const messages: ChatMessage[] = [{ role: "system", content: this.systemPrompt }, ...this.history.slice(-12)];
+    this.memory.cancelFold(); // the model belongs to the reply now; the fold picks up again afterwards
+    const messages = this.memory.compose(this.systemPrompt, this.history);
     const chunker = new SentenceChunker();
     const queue = new AsyncQueue<string>();
     let full = "";
@@ -634,6 +648,8 @@ export class ConversationSession {
       if (said && this.history[this.history.length - 1]?.role !== "assistant") {
         this.history.push({ role: "assistant", content: said });
       }
+      // The model is idle while the voice speaks: fold what scrolled out of the window into the notes.
+      void this.memory.fold(this.deps.llm, this.deps.log);
     }
     const spoke = await speakTask;
     if (abort.signal.aborted || genId !== this.activeGeneration) return;

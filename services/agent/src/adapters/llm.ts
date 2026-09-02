@@ -118,7 +118,7 @@ export class OpenAICompatibleLLM implements LLMAdapter {
       method: "POST",
       headers: this.headers(),
       signal: opts.signal,
-      body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: opts.maxTokens ?? 400, temperature: opts.temperature ?? 0.2, ...(opts.json ? { response_format: { type: "json_object" } } : {}) }),
+      body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: opts.maxTokens ?? 400, temperature: opts.temperature ?? 0.2, ...(opts.json ? { response_format: { type: "json_object" } } : {}), ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}) }),
     });
     if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };

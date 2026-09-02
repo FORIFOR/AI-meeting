@@ -174,6 +174,47 @@ and on the same recording where the local recogniser reads 「ゆイ、今 ど�
 So: 3.1 flash-live for the app, local for meetings, and 2.5 native-audio only when reacting to *how*
 something was said is worth three seconds of waiting for it.
 
+## Whether the character can hold a conversation (measured 2026-09-02)
+
+The meeting path proves the character is heard. `pnpm reality:conversation` asks whether it is worth
+listening to: a 20-turn text-driven evening chat against the running agent (`scripts/reality/scenarios/friend-evening.json`
+— a project at work, a weekend in Kyoto, a dog, a 1on1), each reply waited for until its speech ends,
+scored for length, questions asked, backchannel-only replies, mid-conversation greetings, and nine
+keyword checks that need the character to have *listened* — 「私が週末どこに行ったか覚えてる？」 ten
+turns after Kyoto was mentioned. Reports land in `docs/reports/conversation/`.
+
+The first run found the defect: the model was handed the last 12 messages and nothing else, so after
+six exchanges the character had no evening. 「ごめん！どこ行ったんだっけ？」 is a scripted friend,
+not a friend.
+
+`ConversationMemory` (`services/agent/src/memory.ts`) replaces the slice. Recent turns stay verbatim
+up to a character budget (2400 for the 4k-context local model, 12000 for a cloud endpoint,
+`LOCAL_LLM_HISTORY_CHARS`); what scrolls out is folded in the background into a running note —
+「【これまでの会話で分かっていること】」 — appended to the one system message, with a line telling the
+character these are its own memories and not a script. The fold uses the session's own LLM adapter, so
+`strict_local` still transmits nothing. Two things measured on the way there and kept out of the
+product: notes as a *second* system message changed the character (five-sentence replies, 「君」, an
+invented 「あの写真を見せてもらった時」, 8 of 20 replies timing out) — one system message, notes last;
+and a window that slides every turn defeats llama.cpp's prefix cache (first token 130 ms → 1.2 s on
+every turn), so the window is cut to half its budget at once and pays one cold prompt per half-window.
+
+| configuration | memory checks | reply p50 | questions | first audio p50 | timeouts |
+|---|---|---|---|---|---|
+| before — last 12 messages, cloud | **6 / 9** (Kyoto, the app renewal and the project all gone) | 40 chars · 3 sentences | 85 % | 403 ms | 0 |
+| after — cloud, 12000-char window (all verbatim) | **8 / 9** | 41 · 3 | 75 % | 402 ms | 0 |
+| after — cloud, window forced to 600 to exercise the fold | **8 / 9** (recalled from notes) | 34 · 2 | 80 % | 402 ms | 0 |
+| after — **fully local** gemma-4-E2B, 600-char window | **8 / 9** (「ごめん、ちょっと忘れてたかも。…京都旅行だったかな？」) | 36 · 2 | 65 % | 763 ms | 0 |
+
+The one that still fails, in every configuration, is `recalls_project`: asked for advice at turn 9 the
+character gives good generic advice without naming the project. That is a model-quality miss, not a
+memory one, and the check is a keyword check. Reply length needed no change: the 28-character p50 seen
+earlier came from the disjointed soak recording and its barge-ins, not from the persona.
+
+On the local model the fold costs what it costs — 3.5–5.9 s of background generation on the single
+slot, and the next turn's prompt is cold (0.9–1.3 s to first token, twice in twenty turns). A second
+slot (`llama-server -np 2` with a larger `-c`) would take the fold off the conversation's cache; not
+done, because the two cold turns were not what made the run feel slow.
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

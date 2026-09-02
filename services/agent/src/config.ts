@@ -15,6 +15,8 @@ export interface AgentConfig {
   llmModel: string;
   llmKey: string;
   llmReasoning: string;
+  /** Characters of recent conversation kept verbatim in front of the model (older turns become notes). */
+  llmHistoryChars: number;
   tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
   sbv2Url: string;
   sayVoice: string;
@@ -91,6 +93,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     llmKey: env.LOCAL_LLM_KEY ?? "",
     /** "none" for a thinking model that has to hold a conversation; unset for servers without it. */
     llmReasoning: env.LOCAL_LLM_REASONING ?? "",
+    /**
+     * A local llama.cpp runs with a 4k context, so recent turns get 2400 characters there; a cloud
+     * endpoint has room for the whole evening. Either way, what scrolls out is folded into notes.
+     */
+    llmHistoryChars: Number(env.LOCAL_LLM_HISTORY_CHARS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 2400 : 12000)),
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",

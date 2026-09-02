@@ -229,6 +229,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
       streamingStt: rt.createStreamingStt ?? undefined,
       finalStt: rt.finalStt,
       endpointing: rt.cfg.endpoint,
+      historyChars: rt.cfg.llmHistoryChars,
       onStrictLocal: (active) => {
         strictSessions += active ? 1 : -1;
         setStrictEgressBlock(strictSessions > 0);
