@@ -39,7 +39,7 @@ export interface ProviderFactoryOptions {
 }
 
 /** The Gemini live model that reacts to tone and can choose to stay quiet. Slower than flash-live. */
-export const GEMINI_EXPRESSIVE_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+export const GEMINI_EXPRESSIVE_MODEL = "gemini-2.5-flash-native-audio-latest";
 
 export async function createConversationProvider(id: ProviderId, o: ProviderFactoryOptions): Promise<RealtimeAIProvider> {
   switch (id) {

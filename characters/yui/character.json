@@ -135,7 +135,7 @@
   "voice": {
     "voices": {
       "openai": "marin",
-      "google": "Kore",
+      "google": "Zephyr",
       "local": "Kyoko"
     },
     "style": {

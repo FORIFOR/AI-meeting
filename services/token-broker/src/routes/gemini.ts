@@ -11,11 +11,16 @@ export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
  * models answer faster, the native-audio ones are the only ones that take affective dialog and
  * proactive audio. A caller that wants the character to react to how something was said has to be
  * able to ask for the second, and an allowlist keeps that from becoming "any string reaches Google".
+ *
+ * These ids come from the account's own `models.list` filtered to `bidiGenerateContent`, not from
+ * documentation: an earlier version of this list contained two names that read plausibly and did not
+ * exist, and a wrong name here fails as `1008 ... not supported for bidiGenerateContent` at the first
+ * frame, long after the token was minted and everything looked fine.
  */
 export const GEMINI_LIVE_MODELS = [
   "gemini-3.1-flash-live-preview",
-  "gemini-2.5-flash-live-preview",
-  "gemini-2.5-flash-preview-native-audio-dialog",
+  "gemini-2.5-flash-native-audio-latest",
+  "gemini-2.5-flash-native-audio-preview-12-2025",
   "gemini-2.5-flash-native-audio-preview-09-2025",
 ] as const;
 

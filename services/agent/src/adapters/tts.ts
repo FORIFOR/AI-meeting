@@ -84,11 +84,13 @@ export class SupertonicTTS implements TTSAdapter {
   private styles = new Map<string, unknown>();
   private loadStyle: ((paths: string[], verbose: boolean) => unknown) | null = null;
   initError: string | null = null;
+  /** Which weights were actually loaded, so /health does not have to be believed. */
+  precision: "float" | "int8" = "float";
 
   constructor(
     private readonly dir: string,
     voice = "F1",
-    private readonly opts: { language?: string; steps?: number; speed?: number } = {},
+    private readonly opts: { language?: string; steps?: number; speed?: number; precision?: "float" | "int8" } = {},
   ) {
     this.voice = this.voices.includes(voice) ? voice : "F1";
   }
@@ -100,7 +102,12 @@ export class SupertonicTTS implements TTSAdapter {
         loadTextToSpeech(onnxDir: string, useGpu: boolean): Promise<NonNullable<SupertonicTTS["tts"]>>;
         loadVoiceStyle(paths: string[], verbose: boolean): unknown;
       };
-      this.tts = await helper.loadTextToSpeech(path.join(this.dir, "onnx"), false);
+      // int8 when it has been built, float otherwise: a missing quantised build is a reason to be
+      // slower, never a reason to have no voice.
+      const int8 = path.join(this.dir, "onnx-int8");
+      const onnxDir = this.opts.precision === "int8" && fsSync.existsSync(path.join(int8, "vocoder.onnx")) ? int8 : path.join(this.dir, "onnx");
+      this.precision = onnxDir === int8 ? "int8" : "float";
+      this.tts = await helper.loadTextToSpeech(onnxDir, false);
       this.loadStyle = helper.loadVoiceStyle;
       this.ready = true;
     } catch (err) {

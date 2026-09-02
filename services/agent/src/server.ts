@@ -136,7 +136,7 @@ export async function selectTts(cfg: AgentConfig): Promise<TTSAdapter> {
    * against the resident daemon's 60 ms to first audio — a quality choice, not a default one.
    */
   if (cfg.tts === "supertonic" && cfg.supertonicDir) {
-    const s3 = new SupertonicTTS(cfg.supertonicDir, cfg.supertonicVoice, { steps: cfg.supertonicSteps, speed: cfg.supertonicSpeed });
+    const s3 = new SupertonicTTS(cfg.supertonicDir, cfg.supertonicVoice, { steps: cfg.supertonicSteps, speed: cfg.supertonicSpeed, precision: cfg.supertonicPrecision });
     await s3.init();
     if (s3.ready) return s3;
     console.warn("[agent] BLOCKED_BY_SUPERTONIC:", s3.initError ?? "weights not found — run scripts/fetch-supertonic.sh", "— falling back");
@@ -177,7 +177,7 @@ export function createApp(rt: AgentRuntime): Hono {
       strictLocalCapable: true,
       stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
       llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl },
-      tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [] },
+      tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [], precision: (rt.tts as { precision?: string }).precision },
       turn: { engine: rt.turn?.engine ?? null, ready: !!rt.turn?.ready },
       vad: { engine: rt.vadEngine },
     }),

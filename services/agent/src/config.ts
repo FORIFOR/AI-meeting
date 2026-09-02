@@ -24,6 +24,7 @@ export interface AgentConfig {
   supertonicVoice: string;
   supertonicSteps: number;
   supertonicSpeed: number;
+  supertonicPrecision: "float" | "int8";
   /** "Speaker — Style" as AivisSpeech names it; empty means the engine's first style. */
   aivisVoice: string;
   /** Acoustic turn-end model; null when it has not been fetched (scripts/fetch-smart-turn.sh). */
@@ -103,6 +104,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      */
     supertonicSteps: Number(env.SUPERTONIC_STEPS ?? 4),
     supertonicSpeed: Number(env.SUPERTONIC_SPEED ?? 1.05),
+    /**
+     * "int8" halves synthesis time (1120 ms → 569 ms for the same 3.4 s) and the models drop from
+     * 297 MB to 76 MB. Built locally by scripts/quantize-supertonic.sh — there is no int8 release —
+     * and falls back to float when it has not been built.
+     */
+    supertonicPrecision: (env.SUPERTONIC_PRECISION as "float" | "int8") ?? "float",
     aivisVoice: env.AIVIS_VOICE ?? "",
     /** Acoustic turn-end model (Pipecat Smart Turn v3). Absent ⇒ silence-only endpointing. */
     smartTurnModel:
