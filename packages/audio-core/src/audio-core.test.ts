@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AudioNormalizer, OutboundAudioConverter } from "./normalizer.js";
 import { createResampler } from "./resample.js";
+import type { PCMFrame } from "./types.js";
 import { base64Pcm16ToFloat32, float32ToBase64Pcm16, float32ToInt16, int16ToFloat32, rms } from "./pcm.js";
 import { EnergyVAD } from "./vad.js";
 import { LatencyTracker } from "./metrics.js";
@@ -146,5 +147,33 @@ describe("LatencyTracker", () => {
     tracker.mark("avatar_listening");
     expect(tracker.summary("listening_react").count).toBe(0);
     expect(tracker.discarded.listening_react).toBe(1);
+  });
+});
+
+describe("OutboundAudioConverter follows the frames' own rate", () => {
+  const frame = (samples: number, sampleRate: number): PCMFrame => ({
+    data: Float32Array.from({ length: samples }, (_, i) => Math.sin((2 * Math.PI * 300 * i) / sampleRate) * 0.5),
+    sampleRate,
+    timestamp: 0,
+    channels: 1,
+  });
+
+  it("keeps a second of audio a second long, whatever rate it arrives at", () => {
+    for (const rate of [16000, 24000, 48000]) {
+      const c = new OutboundAudioConverter({ targetRate: 16000, chunkMs: 20 });
+      let samples = 0;
+      // one second, in 100 ms frames
+      for (let i = 0; i < 10; i++) for (const chunk of c.push(frame(rate / 10, rate))) samples += chunk.length;
+      // 16 kHz target: a second is 16000 samples, give or take one 20 ms chunk of buffering.
+      expect(Math.abs(samples - 16000), `rate ${rate} produced ${samples}`).toBeLessThanOrEqual(320);
+    }
+  });
+
+  it("survives a rate change mid-stream instead of shredding what follows", () => {
+    const c = new OutboundAudioConverter({ targetRate: 16000, chunkMs: 20 });
+    for (let i = 0; i < 5; i++) c.push(frame(4800, 48000));
+    let samples = 0;
+    for (let i = 0; i < 10; i++) for (const chunk of c.push(frame(1600, 16000))) samples += chunk.length;
+    expect(Math.abs(samples - 16000)).toBeLessThanOrEqual(320);
   });
 });

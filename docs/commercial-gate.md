@@ -111,6 +111,40 @@ participation policy and, optionally, the conversational model.
 | It runs inside Attendee | **Not verified.** No live run has carried a webcam frame yet. |
 | Acoustic turn-end costs no latency | **Measured** — first-audio 221–344 ms with the model off, 235–322 ms with it on, same harness. |
 
+## The meeting path, without a meeting (2026-09-02)
+
+`pnpm reality:attendee:sim` runs the whole path against a stand-in that speaks Attendee's REST API and
+its three websockets, and launches the bot page the way Attendee launches it. Everything between the
+broker and the character is production code; what is simulated is the vendor.
+
+It found five defects in one afternoon, all of them invisible from outside and none of them reachable
+without a meeting until now:
+
+| # | Defect | Why nothing said so |
+|---|---|---|
+| 1 | **Deadlock on any vendor without its own transcripts.** Audio was gated on "have we been addressed", and on Attendee the only recogniser is the AI's — so no audio, no transcript, never addressed, no audio. | Every counter looked healthy. The character sat in the meeting thinking. |
+| 2 | **The outbound converter ignored the frame's sample rate**, assuming 48 kHz. Attendee sends 16 kHz, so one sample in three became the whole signal. | No error. The recogniser received confident nonsense, at a third of real time. |
+| 3 | **An explicit engine choice was silently served by another vendor** when a health probe failed. A bot page asking for the local agent was handed a cloud account with no credit. | This is the 429 that killed the first live run. |
+| 4 | **The character was pushed into the meeting twice** — once through the page's speaker, which the vendor captures, and again down the socket. | 332 duplicate chunks in one run; in a call it would have been an echo nobody could explain. |
+| 5 | **A bot page reports nothing.** No operator, no UI, no logs. | Three separate failures were diagnosed by rebuilding to add a log line. There is now a heartbeat. |
+
+Final state of the run: every row passes, and the character speaks for 9.7 s.
+
+| step | result |
+|---|---|
+| broker asks for all three sockets | PASS |
+| vendor sockets accepted | PASS (mixed, per-participant audio, per-participant video) |
+| voice agent page launched and reached the call | PASS (38 s to ready) |
+| page ran without errors | PASS |
+| **character spoke** | **PASS — 244 buffers, 9.7 s** |
+| did not also push it back down the socket | PASS |
+| relay carried the streams | PASS (450 messages, 0 malformed) |
+| transcripts, engagement | 5 utterances, ENGAGED → COOLDOWN → ENGAGED |
+
+What this still does not prove: Attendee's own browser and its ALSA capture, its scheduling, a real
+meeting's audio, and a second human. It proves everything downstream of them, which is where every
+failure so far has actually been.
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

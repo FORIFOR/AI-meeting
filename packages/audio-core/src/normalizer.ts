@@ -46,22 +46,39 @@ export interface OutboundConverterOptions {
 }
 
 /**
- * Converts internal 48k frames to a provider's input format (Int16 chunks at target rate).
+ * Converts frames to a provider's input format (Int16 chunks at target rate).
  * Used at the provider adapter boundary so the app never reasons about provider rates.
+ *
+ * The source rate comes from the frames, not from a constructor argument. Microphone frames are 48 kHz,
+ * but a meeting's audio arrives at whatever the vendor sends — 16 kHz from Attendee — and a converter
+ * that assumed 48 kHz treated one sample in three as the whole signal. Nothing errored: the character
+ * simply never understood a word, in a live meeting, with full-looking counters at every hop.
  */
 export class OutboundAudioConverter {
   private resampler: Resampler;
+  private sourceRate: number;
   private pending: Float32Array[] = [];
   private pendingLen = 0;
   private readonly chunkSamples: number;
 
   constructor(private readonly opts: OutboundConverterOptions, sourceRate = INTERNAL_SAMPLE_RATE) {
+    this.sourceRate = sourceRate;
     this.resampler = createResampler(sourceRate, opts.targetRate);
     this.chunkSamples = Math.round(((opts.chunkMs ?? 20) / 1000) * opts.targetRate);
   }
 
+  /** Follow the frames. A rate change mid-stream is a new source, so anything half-converted is dropped. */
+  private retune(rate: number): void {
+    if (!rate || rate === this.sourceRate) return;
+    this.sourceRate = rate;
+    this.resampler = createResampler(rate, this.opts.targetRate);
+    this.pending = [];
+    this.pendingLen = 0;
+  }
+
   /** Push an internal frame; returns zero or more Int16 chunks ready to send. */
   push(frame: PCMFrame): Int16Array[] {
+    this.retune(frame.sampleRate);
     const data = this.resampler.process(frame.data);
     this.pending.push(data);
     this.pendingLen += data.length;

@@ -19,7 +19,12 @@ import { publicWsBase, type RelayRegistry } from "./meeting.js";
  * WebGL. If Attendee runs the same avatar page without a GPU surcharge, the bot cost falls by roughly
  * two thirds. Which one is better is a measurement, not an opinion — hence the same gates run on both.
  */
-const ATTENDEE_BASE = "https://app.attendee.dev";
+/**
+ * Overridable so the whole path can be exercised without a live meeting: a local stand-in speaks the
+ * same API and the same websocket protocol, and everything between the broker and the bot page is the
+ * real thing. Attendee's own example reads the same variable.
+ */
+const attendeeBase = (env: BrokerEnv): string => env.ATTENDEE_API_BASE_URL ?? "https://app.attendee.dev";
 
 export interface AttendeeJoinBody {
   meetingUrl: string;
@@ -127,7 +132,7 @@ export async function createAttendeeBot(
     payload.voice_agent_settings = { url: botPageUrl, reserve_resources: true };
   }
 
-  const res = await fetchImpl(`${ATTENDEE_BASE}/api/v1/bots`, {
+  const res = await fetchImpl(`${attendeeBase(env)}/api/v1/bots`, {
     method: "POST",
     headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify(payload),
@@ -181,7 +186,7 @@ export const ATTENDEE_OUTBOUND_TRIGGER = "realtime_audio.bot_output";
  */
 export async function leaveAttendeeBot(env: BrokerEnv, botId: string, fetchImpl: typeof fetch, deps: AttendeeDeps): Promise<RouteResult<Record<string, unknown>>> {
   if (!env.ATTENDEE_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_ATTENDEE_KEY" } };
-  const res = await fetchImpl(`${ATTENDEE_BASE}/api/v1/bots/${encodeURIComponent(botId)}/leave`, {
+  const res = await fetchImpl(`${attendeeBase(env)}/api/v1/bots/${encodeURIComponent(botId)}/leave`, {
     method: "POST",
     headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, "content-type": "application/json" },
   });

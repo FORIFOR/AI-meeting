@@ -112,6 +112,16 @@ export class MeetingSessionController {
   /** The latest cue per participant, for the answer's context. Observations, never conclusions. */
   private cues = new Map<string, VisualCue>();
   private lastVisionAt = -Infinity;
+  /** Who spoke most recently, from the per-participant audio stream — the AI's transcripts carry no name. */
+  private heardAnything = false;
+  private sawTranscript = false;
+  private heard = 0;
+  private forwarded = 0;
+  private transcripts = 0;
+  private spokeFrames = 0;
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
+  private lastSpeaker: string | null = null;
+  private lastSpeakerId: string | undefined;
 
   /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
@@ -195,6 +205,17 @@ export class MeetingSessionController {
     if (role === "operator") await this.startOperator();
     else await this.startBotPage();
     this.policyTimer = setInterval(() => this.policy.tick(Date.now()), 250);
+    /**
+     * A bot page runs unattended inside a vendor's browser. Every failure so far has been "which hop
+     * went quiet", and answering it has needed a rebuild each time. One line every five seconds costs
+     * nothing and answers it from the logs the vendor already keeps.
+     */
+    this.heartbeat = setInterval(() => {
+      console.log("[rcai:bot] " + JSON.stringify({
+        heard: this.heard, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
+        state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
+      }));
+    }, 5000);
     handlers.onStatus(this.session?.status() ?? "in_call");
   }
 
@@ -367,12 +388,21 @@ export class MeetingSessionController {
         this.setMuted(e.muted);
         break;
       case "audio":
+        /**
+         * Per-participant audio is how a conversation gets attached to a person on a vendor whose
+         * transcripts carry no name: whoever's stream this frame came from is who is speaking.
+         */
+        if (e.participantId) this.lastSpeakerId = e.participantId;
         this.onMeetingAudio(e.frame);
         break;
       case "transcript":
         this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId);
         break;
       case "speech":
+        if (e.active) {
+          this.lastSpeaker = e.participant.name ?? null;
+          this.lastSpeakerId = e.participant.id;
+        }
         this.policy.onSpeechActivity(e.active, now, e.participant.name);
         if (!this.forwarding) this.avatarRuntime?.handleEvent({ type: e.active ? "user_speech_started" : "user_speech_ended", at: now });
         break;
@@ -419,20 +449,51 @@ export class MeetingSessionController {
     else this.setMuted(muted);
   }
 
-  /** Meeting audio (48 kHz). Gated: the AI only hears it while the policy allows. */
+  /**
+   * Does anything except the AI transcribe this meeting?
+   *
+   * Recall's bot has its own transcript socket, so the policy can hear the character's name without the
+   * AI hearing anything. Attendee has no such stream — the only recogniser in the path is the AI's own.
+   * Gating audio on "have we been addressed" there is a deadlock: no audio, so no transcript, so never
+   * addressed, so no audio. It cost a live meeting to find, and the character sat there thinking.
+   */
+  private get hasExternalTranscripts(): boolean {
+    // Not "was a feed passed in": a bot page always gets one, and on Attendee it never yields anything
+    // because Attendee has no transcript stream. Keying on the callback made the deadlock survive the
+    // fix for it.
+    return this.init.meetingProvider !== "attendee" && !!this.init.botTranscriptFeed;
+  }
+
+  /**
+   * Meeting audio (48 kHz).
+   *
+   * When something else transcribes the room, the AI is kept deaf until it is spoken to — cheaper, and
+   * it cannot answer a conversation it was not part of. When the AI is the only recogniser it hears
+   * everything, because it has to hear its own name, and what the *meeting* hears is gated instead
+   * (`assistant_audio` below).
+   */
   onMeetingAudio(frame: PCMFrame): void {
+    /**
+     * Three separate live failures have come down to "did the character hear anything at all", and a
+     * bot page has no operator to ask. One line, once, is cheap and has paid for itself.
+     */
+    this.heard++;
+    if (!this.heardAnything) {
+      this.heardAnything = true;
+      console.log("[rcai:bot] first meeting audio", JSON.stringify({ rate: frame.sampleRate, samples: frame.data.length }));
+    }
     const level = dbfs(rms(frame.data));
     this.behavior?.reportUserAudio(Math.max(0, Math.min(1, (level + 50) / 35)), frame.timestamp);
-    const allowed = this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING";
+    const allowed = this.hasExternalTranscripts ? this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING" : true;
     if (allowed !== this.forwarding) this.forwarding = allowed;
-    if (allowed) {
-      this.runtime?.pushMicFrame(frame);
-      return;
-    }
-    // Observing: keep the avatar alive with local VAD → LISTENING micro-motion, but never feed the AI.
+    // The avatar stays alive either way: a character that freezes while someone talks looks broken.
     for (const ev of this.vad.process(frame)) {
       this.policy.onSpeechActivity(ev.type === "speech_start", frame.timestamp);
       this.avatarRuntime?.handleEvent({ type: ev.type === "speech_start" ? "user_speech_started" : "user_speech_ended", at: frame.timestamp });
+    }
+    if (allowed) {
+      this.forwarded++;
+      this.runtime?.pushMicFrame(frame);
     }
   }
 
@@ -443,6 +504,11 @@ export class MeetingSessionController {
    * still better than every turn needing the name again.
    */
   onMeetingTranscript(text: string, final: boolean, speakerName: string | null, participantId?: string): void {
+    if (final) this.transcripts++;
+    if (final && !this.sawTranscript) {
+      this.sawTranscript = true;
+      console.log("[rcai:bot] first transcript", JSON.stringify({ text: text.slice(0, 40), speakerName, participantId }));
+    }
     const now = Date.now();
     const line: MeetingTranscriptLine = { id: ++this.lineId, speaker: speakerName ?? "?", text, final, at: now };
     this.init.handlers.onTranscript(line);
@@ -552,11 +618,35 @@ export class MeetingSessionController {
     this.behavior?.handleEvent(e);
     this.init.handlers.onEvent?.(e);
     switch (e.type) {
+      case "user_transcript":
+        /**
+         * The AI's recogniser is the only one on this path, so its transcripts are what the policy
+         * hears. Shown as a meeting line too — otherwise the operator sees a character answering
+         * something nobody can read.
+         */
+        if (!this.hasExternalTranscripts && e.final !== false && e.text.trim()) {
+          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.lastSpeakerId);
+        }
+        break;
       case "assistant_speech_started":
         this.policy.markResponding(now);
         break;
       case "assistant_audio":
-        if (this.outboundAllowed) this.session?.pushOutboundAudio(e.frame);
+        /**
+         * The character generates an answer for every utterance when it is its own recogniser — a
+         * local agent is a full conversation loop and does not know about participation policy. The
+         * meeting hears it only when the policy says it was actually spoken to; otherwise it is
+         * thinking out loud, which is not the same thing as taking a turn.
+         */
+        /**
+         * When the vendor is running this page as its voice agent it captures the page's own speaker,
+         * so pushing the same audio back down the socket puts the character in the meeting twice, half
+         * a second apart. Measured: 332 duplicate chunks in one run of the offline harness.
+         */
+        if (this.outboundAllowed && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
+          this.spokeFrames++;
+          if (!this.init.attendeeAttach) this.session?.pushOutboundAudio(e.frame);
+        }
         break;
       case "assistant_transcript":
         if (e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
@@ -605,6 +695,8 @@ export class MeetingSessionController {
     this.behavior?.stop();
     await this.runtime?.stop().catch(() => {});
     await this.mic?.stop().catch(() => {});
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = null;
     this.visual?.stop();
     this.visual = null;
     this.cues.clear();

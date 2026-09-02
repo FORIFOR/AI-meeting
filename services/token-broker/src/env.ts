@@ -10,6 +10,8 @@ export interface BrokerEnv {
   OPENAI_EVAL_MODEL?: string;
   GEMINI_API_KEY?: string;
   GEMINI_LIVE_MODEL?: string;
+  /** Attendee API base; overridden only to run the whole path against a local stand-in. */
+  ATTENDEE_API_BASE_URL?: string;
   GEMINI_EVAL_MODEL?: string;
   LIVEKIT_URL?: string;
   LIVEKIT_API_KEY?: string;

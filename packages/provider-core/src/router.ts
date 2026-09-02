@@ -61,9 +61,19 @@ export function resolveRouting(config: RouterConfig): RoutingDecision {
     return base;
   }
 
+  /**
+   * Availability moves a choice the app made for itself, never one someone made on purpose.
+   *
+   * "auto" means "pick for me", and a provider that is not up is a bad pick. An explicit engine, or an
+   * explicit per-role override, is an instruction — and quietly serving it from a different vendor is
+   * how a bot page asked for the local agent, was given a cloud account with no credit, and sat in a
+   * meeting saying nothing. A health probe fails for its own reasons; a tunnel hiccup is not consent to
+   * switch vendors. When an explicit choice is genuinely unavailable, the provider fails by name.
+   */
   if (config.available && config.available.length > 0) {
     const avail = new Set(config.available);
     for (const role of Object.keys(base) as Role[]) {
+      if (config.engine !== "auto" || config.advanced?.[role]) continue;
       if (!avail.has(base[role])) {
         const alt = FALLBACK_ORDER[role].find((p) => avail.has(p));
         if (alt) base[role] = alt;

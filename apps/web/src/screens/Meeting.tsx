@@ -104,6 +104,9 @@ export function Meeting(p: MeetingProps) {
         voiceId: isBot ? botConfig?.voice : undefined,
         vision: (isBot ? botConfig?.vision : vision) === "model",
         visualCues: (isBot ? botConfig?.vision : vision) !== "off",
+        // Which vendor is carrying this call. The bot page learns it from its own URL; without it the
+        // page cannot know that Attendee sends no transcripts and must listen for itself.
+        meetingProvider: (isBot ? botConfig?.provider : undefined) === "attendee" ? "attendee" : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
@@ -133,11 +136,23 @@ export function Meeting(p: MeetingProps) {
           onAvatarState: (t) => setAvatarState(t.to),
           onMuted: (m) => { setMuted(m); note(m ? "ホストにミュートされました（発話を保留）" : "ミュート解除"); },
           onActivated: (a) => { setActivation(a); note(`bot page activated · session ${a.sessionId.slice(0, 8)} · bot ${a.botId}`); },
-          onError: (m, code) => { setError(`${code ? `${code}: ` : ""}${m}`); note(`error ${m}`); },
+          onError: (m, code) => {
+            const line = `${code ? `${code}: ` : ""}${m}`;
+            setError(line);
+            note(`error ${m}`);
+            /**
+             * A bot page has no operator looking at it — it is a browser inside a meeting vendor. An
+             * error that only reaches React state is an error nobody will ever read, which is how a
+             * character comes back from a call having silently done nothing.
+             */
+            if (isBot) console.error("[rcai:bot]", line);
+          },
         },
       });
       ctrl.current = c;
+      if (isBot) console.log("[rcai:bot] starting", JSON.stringify({ engine: settings.engine, character: character?.id, persona: persona?.id, provider: botConfig?.provider, vision, proactivity: (isBot ? botConfig?.proactivity : proactivity) ?? proactivity, relay: !!relayWsUrl.current, agent: botOrigins.agentUrl ?? null }));
       await c.start();
+      if (isBot) console.log("[rcai:bot] started", c.providerId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       note(`error ${e instanceof Error ? e.message : String(e)}`);
