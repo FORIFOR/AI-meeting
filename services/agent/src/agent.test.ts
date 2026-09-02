@@ -10,7 +10,7 @@ import { EnergyVADAdapter, type VADAdapter, type VADAdapterEvent } from "./adapt
 import { AsyncQueue, ConversationSession } from "./session.js";
 import type { ServerMessage } from "./protocol.js";
 import type { LLMAdapter } from "./adapters/llm.js";
-import type { TTSAdapter } from "./adapters/tts.js";
+import { AivisSpeechTTS, type TTSAdapter } from "./adapters/tts.js";
 import type { STTAdapter } from "./adapters/stt.js";
 
 describe("protocol framing", () => {
@@ -402,3 +402,59 @@ describe("non-streaming TTS lookahead abort", () => {
     expect(sent.some((m) => m.type === "interrupted")).toBe(true);
   });
 });
+
+describe("AivisSpeech", () => {
+  const speakers = [
+    { name: "Anneli", styles: [{ name: "ノーマル", id: 888753760 }, { name: "怒り", id: 888753762 }] },
+    { name: "つくよみちゃん", styles: [{ name: "れいせい", id: 606865152 }] },
+  ];
+
+  function engine(handler: (url: string, init?: RequestInit) => Response) {
+    return new AivisSpeechTTS("http://127.0.0.1:10101", "", (async (u: string, i?: RequestInit) => handler(String(u), i)) as unknown as typeof fetch);
+  }
+
+  it("lists every style as a voice a caller can ask for", async () => {
+    const a = engine((url) => (url.endsWith("/speakers") ? new Response(JSON.stringify(speakers)) : new Response("", { status: 404 })));
+    await a.init();
+    expect(a.ready).toBe(true);
+    expect(a.voices).toEqual(["Anneli — ノーマル", "Anneli — 怒り", "つくよみちゃん — れいせい"]);
+    expect(a.voice).toBe("Anneli — ノーマル"); // an unset voice takes the first real one
+  });
+
+  it("asks for the style the user chose, and never edits the query", async () => {
+    const seen: string[] = [];
+    let sentBody = "";
+    const a = engine((url, init) => {
+      seen.push(url);
+      if (url.endsWith("/speakers")) return new Response(JSON.stringify(speakers));
+      if (url.includes("/audio_query")) return new Response('{"accent_phrases":[],"speedScale":1}');
+      sentBody = String(init?.body);
+      return new Response(wavBytes(), { status: 200 });
+    });
+    await a.init();
+    const r = await a.synthesize("こんにちは", undefined, "つくよみちゃん — れいせい");
+    expect(seen.some((u) => u.includes("/audio_query") && u.includes("speaker=606865152"))).toBe(true);
+    expect(seen.some((u) => u.includes("/synthesis?speaker=606865152"))).toBe(true);
+    // The engine's own docs say editing the query is where VOICEVOX compatibility ends.
+    expect(sentBody).toBe('{"accent_phrases":[],"speedScale":1}');
+    expect(r.pcm16.length).toBeGreaterThan(0);
+  });
+
+  it("is simply not ready when the engine is not running", async () => {
+    const a = engine(() => { throw new Error("ECONNREFUSED"); });
+    await a.init();
+    expect(a.ready).toBe(false);
+  });
+});
+
+/** Minimal 16-bit mono WAV so the adapter has something to parse. */
+function wavBytes(sampleRate = 24000, samples = 240): ArrayBuffer {
+  const buf = new ArrayBuffer(44 + samples * 2);
+  const v = new DataView(buf);
+  const ascii = (off: string, s: string) => [...s].forEach((c, i) => v.setUint8(Number(off) + i, c.charCodeAt(0)));
+  ascii("0", "RIFF"); v.setUint32(4, 36 + samples * 2, true); ascii("8", "WAVE");
+  ascii("12", "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  ascii("36", "data"); v.setUint32(40, samples * 2, true);
+  return buf;
+}

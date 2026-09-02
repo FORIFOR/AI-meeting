@@ -71,11 +71,13 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
       proactivity,
       // cues: read the webcam in the page only. model: also send frames to the provider. off: neither.
       vision: process.env.VISION ?? "cues",
+      // The character's voice. Unset keeps the character's own; the ids are the provider's.
+      ...(process.env.VOICE ? { voice: process.env.VOICE } : {}),
     },
   }),
 })).json();
 if (!created.botId) { console.log(`FAIL: ${created.error ?? "join failed"} ${created.detail ?? ""}`); process.exit(1); }
-console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}  platform=${platform}  proactivity=${proactivity}  vision=${process.env.VISION ?? "cues"}`);
+console.log(`\n=== ${minutes} 分 実人間 Gate (Attendee) ===\nbot ${created.botId}  ${created.sampleRate}Hz  engine=${engine}  platform=${platform}  proactivity=${proactivity}  vision=${process.env.VISION ?? "cues"}  voice=${process.env.VOICE ?? "(character default)"}`);
 console.log(`>>> Meet で「${env.RECALL_BOT_NAME ?? "Yui"}」の参加を承認してください。\n`);
 
 /** Did the avatar page actually start? Asking a person whether they saw it is not evidence. */

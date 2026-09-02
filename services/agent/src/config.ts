@@ -13,11 +13,14 @@ export interface AgentConfig {
   whisperServerUrl: string;
   llmUrl: string;
   llmModel: string;
-  tts: "say" | "sbv2" | "avspeech" | "auto";
+  tts: "say" | "sbv2" | "avspeech" | "aivis" | "auto";
   sbv2Url: string;
   sayVoice: string;
   /** AVSpeechSynthesisVoice identifier for the resident daemon (tools/tts-daemon). */
   avspeechVoice: string;
+  aivisUrl: string;
+  /** "Speaker — Style" as AivisSpeech names it; empty means the engine's first style. */
+  aivisVoice: string;
   /** Acoustic turn-end model; null when it has not been fetched (scripts/fetch-smart-turn.sh). */
   smartTurnModel: string | null;
   /** "smart" uses the model when it is present; "off" is silence-only endpointing. */
@@ -76,6 +79,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",
     avspeechVoice: env.AVSPEECH_VOICE ?? "com.apple.voice.compact.ja-JP.Kyoko",
+    /** AivisSpeech Engine (VOICEVOX-compatible, local). Absent ⇒ BLOCKED_BY_AIVIS_SERVER and a fallback. */
+    aivisUrl: env.AIVIS_URL ?? "http://127.0.0.1:10101",
+    aivisVoice: env.AIVIS_VOICE ?? "",
     /** Acoustic turn-end model (Pipecat Smart Turn v3). Absent ⇒ silence-only endpointing. */
     smartTurnModel:
       env.SMART_TURN_MODEL ??

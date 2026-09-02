@@ -62,6 +62,74 @@ export class SayTTS implements TTSAdapter {
   }
 }
 
+/**
+ * AivisSpeech — a local Japanese TTS built for character voices.
+ *
+ * macOS's voices read text; they do not act. For a character people are supposed to enjoy talking to,
+ * that difference is the product. AivisSpeech runs on this machine (nothing leaves it), speaks
+ * VOICEVOX's HTTP API, and ships voices that sound like someone rather than something.
+ *
+ * Two calls per utterance: `/audio_query` turns text into synthesis parameters, `/synthesis` renders
+ * them. The query is passed through untouched — the engine's own docs warn that editing it is where
+ * VOICEVOX compatibility stops being compatible.
+ */
+export class AivisSpeechTTS implements TTSAdapter {
+  readonly engine = "aivis-speech";
+  ready = false;
+  voice: string;
+  voices: string[] = [];
+  /** Style id per "Speaker — Style" label, so a caller can ask for a voice by name. */
+  private styleIds = new Map<string, number>();
+
+  constructor(private readonly baseUrl = "http://127.0.0.1:10101", voice = "", private readonly fetchImpl: typeof fetch = fetch) {
+    this.voice = voice;
+  }
+
+  async init(): Promise<void> {
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/speakers`, { signal: AbortSignal.timeout(3000) });
+      if (!res.ok) return;
+      const speakers = (await res.json()) as { name: string; styles: { name: string; id: number }[] }[];
+      for (const sp of speakers) {
+        for (const st of sp.styles ?? []) {
+          const label = `${sp.name} — ${st.name}`;
+          this.styleIds.set(label, st.id);
+          this.voices.push(label);
+        }
+      }
+      if (!this.voices.length) return;
+      // An unknown configured voice is not a reason to fail: the first style is a real voice.
+      if (!this.styleIds.has(this.voice)) this.voice = this.voices[0]!;
+      this.ready = true;
+    } catch {
+      // Not installed, not running, or a different engine on the port.
+      this.ready = false;
+    }
+  }
+
+  private idFor(voice?: string): number {
+    const key = voice && this.styleIds.has(voice) ? voice : this.voice;
+    return this.styleIds.get(key) ?? 0;
+  }
+
+  async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
+    const base = this.baseUrl.replace(/\/$/, "");
+    const speaker = this.idFor(voice);
+    const q = await this.fetchImpl(`${base}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`, { method: "POST", signal });
+    if (!q.ok) throw new Error(`aivis audio_query ${q.status}`);
+    const query = await q.text(); // passed through untouched: editing it is where compatibility ends
+    const res = await this.fetchImpl(`${base}/synthesis?speaker=${speaker}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "audio/wav" },
+      body: query,
+      signal,
+    });
+    if (!res.ok) throw new Error(`aivis synthesis ${res.status}`);
+    const wav = parseWav(new Uint8Array(await res.arrayBuffer()));
+    return { sampleRate: wav.sampleRate, pcm16: wav.pcm16 };
+  }
+}
+
 // ---- resident AVSpeechSynthesizer daemon (tools/tts-daemon) -----------------------------------
 
 /** One record of the daemon's stdout framing: [uint32 LE id][uint8 kind][uint32 LE len][payload]. */

@@ -12,7 +12,7 @@ import { IncrementalOfflineSTT, type StreamingSTT } from "./adapters/stt-streami
 import { SherpaOnlineSTT } from "./adapters/sherpa-online.js";
 import { EnergyVADAdapter, SileroVAD, type VADAdapter } from "./adapters/vad.js";
 import { OpenAICompatibleLLM } from "./adapters/llm.js";
-import { AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, type TTSAdapter } from "./adapters/tts.js";
+import { AivisSpeechTTS, AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, type TTSAdapter } from "./adapters/tts.js";
 import { SmartTurnV3 } from "./adapters/turn.js";
 import { ConversationSession } from "./session.js";
 import { pcm16BytesToFloat32, type ClientMessage } from "./protocol.js";
@@ -124,6 +124,17 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
  * `auto` prefers the daemon when built; explicit engines fall back only when unavailable.
  */
 export async function selectTts(cfg: AgentConfig): Promise<TTSAdapter> {
+  /**
+   * AivisSpeech first when it is there. The macOS voices read a sentence; a character has to sound
+   * like someone, and that difference is most of what people react to. It is local either way, so
+   * preferring it costs no privacy — only the engine being installed and running.
+   */
+  if (cfg.tts === "aivis" || cfg.tts === "auto") {
+    const a = new AivisSpeechTTS(cfg.aivisUrl, cfg.aivisVoice);
+    await a.init();
+    if (a.ready) return a;
+    if (cfg.tts === "aivis") console.warn("[agent] BLOCKED_BY_AIVIS_SERVER: no AivisSpeech Engine at", cfg.aivisUrl, "— falling back");
+  }
   if (cfg.tts === "sbv2") {
     const s = new StyleBertVits2TTS(cfg.sbv2Url);
     await s.init();
