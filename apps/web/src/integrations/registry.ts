@@ -65,7 +65,15 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
        */
       const affective = o.expressive === true;
       const model = o.model ?? (affective ? GEMINI_EXPRESSIVE_MODEL : undefined);
-      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective });
+      /**
+       * `enableAffectiveDialog` is left undefined rather than false when the setting is off, so the
+       * provider's own rule applies: on for the native-audio family, absent everywhere else. Sending
+       * `false` was a trap — an operator who pins the native-audio model pays 3–5× the latency for it
+       * and would have had the one feature that justifies the cost explicitly switched off.
+       * Proactive audio stays opt-in: a model deciding not to answer is a behaviour change, not a
+       * quality setting.
+       */
+      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective ? true : undefined });
     }
     case "local": {
       const mod = await import("@rcai/provider-local");

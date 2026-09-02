@@ -313,3 +313,24 @@ describe("setup per model family", () => {
     expect(live.generationConfig?.speechConfig?.languageCode).toBe("ja-JP");
   });
 });
+
+describe("the operator pins the native-audio model", () => {
+  /**
+   * Native audio costs 3–5× the latency of flash-live. The only thing that buys is reacting to how
+   * something was said — so it must be on by default there, and an app that has not asked for it must
+   * not switch it off.
+   */
+  it("keeps affective dialog on when the app says nothing about it", async () => {
+    const p = new GeminiLiveProvider({ brokerUrl: "http://b", fetchImpl: tokenFetch, wsFactory: (u) => new FakeWS(u), model: "gemini-2.5-flash-native-audio-latest" });
+    await p.connect(config);
+    const setup = (FakeWS.instances[0]!.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
+    expect(setup.generationConfig?.enableAffectiveDialog).toBe(true);
+  });
+
+  it("still lets it be turned off deliberately", async () => {
+    const p = new GeminiLiveProvider({ brokerUrl: "http://b", fetchImpl: tokenFetch, wsFactory: (u) => new FakeWS(u), model: "gemini-2.5-flash-native-audio-latest", enableAffectiveDialog: false });
+    await p.connect(config);
+    const setup = (FakeWS.instances[0]!.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
+    expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
+  });
+});
