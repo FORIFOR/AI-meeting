@@ -142,6 +142,9 @@ export class MeetingSessionController {
   private forwarded = 0;
   private transcripts = 0;
   private spokeFrames = 0;
+  /** The current sanctioned reply, as the provider transcribed it and as seconds of audio actually sent. */
+  private spokeText = "";
+  private spokeSeconds = 0;
   /**
    * Did the policy decide to take this turn?
    *
@@ -451,6 +454,10 @@ export class MeetingSessionController {
       `あなたはオンライン会議に参加している「${this.init.displayName}」です。簡潔に（1〜2文で）答えます。` +
       (proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。") +
       "一度話しかけられたら、その相手との会話が続く間は名前で呼ばれなくても応じます。" +
+      // The recogniser writes the name as it hears it — 「ゆイ」「うい」 — and the model repeated that
+      // spelling back to the room (Gate #8 run 15: 「ゆイ、お疲れ様！」). Answers do not begin with the
+      // name at all; the room already knows who is talking.
+      "発言は音声認識の書き起こしなので、あなたの名前が「ゆイ」「うい」のように別の表記になっていることがあります。それは呼びかけの聞き間違いです。返答であなた自身の名前や、相手が使った表記を繰り返さないでください。" +
       "カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測です。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。" +
       "うなずきや首振りは、言葉がなくても返事として扱ってよい。";
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
@@ -812,6 +819,8 @@ export class MeetingSessionController {
         this.clearAnswerWatchdog();
         this.policy.markResponding(now);
         if (this.init.role === "bot") this.report("speaking", { state: this.policy.state });
+        this.spokeText = "";
+        this.spokeSeconds = 0;
         break;
       case "assistant_audio":
         /**
@@ -836,15 +845,20 @@ export class MeetingSessionController {
          */
         if (this.outboundAllowed && this.sanctioned && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
           this.spokeFrames++;
+          this.spokeSeconds += e.frame.data.length / e.frame.sampleRate;
           if (!this.init.attendeeAttach || this.init.outboundPath !== "page") this.session?.pushOutboundAudio(e.frame);
         }
         break;
       case "assistant_transcript":
+        // Phrases arrive as partials while they play; the final carries the whole reply and replaces them.
+        if (this.sanctioned) this.spokeText = e.final !== false ? e.text : this.spokeText + e.text;
         if (e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
         break;
       case "assistant_speech_ended":
         void this.session?.endOutboundUtterance?.();
-        if (this.init.role === "bot" && this.sanctioned) this.report("spoke", { frames: this.spokeFrames });
+        // What was said and how much audio it took: the unattended gate reads the text for a parroted
+        // name and the seconds against what the room actually heard (a stretch means underruns).
+        if (this.init.role === "bot" && this.sanctioned) this.report("spoke", { frames: this.spokeFrames, seconds: Math.round(this.spokeSeconds * 100) / 100, text: this.spokeText.slice(0, 200) });
         this.clearAnswerWatchdog();
         this.sanctioned = false;
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);

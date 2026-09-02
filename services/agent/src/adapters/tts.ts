@@ -171,8 +171,52 @@ export class SupertonicTTS implements TTSAdapter {
     const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts!.sampleRate));
     const pcm16 = new Int16Array(used);
     for (let i = 0; i < used; i++) pcm16[i] = Math.max(-32768, Math.min(32767, Math.round(wav[i]! * 32767)));
-    return { sampleRate: this.tts!.sampleRate, pcm16 };
+    return { sampleRate: this.tts!.sampleRate, pcm16: trimSilence(guardPeaks(pcm16), this.tts!.sampleRate) };
   }
+}
+
+/**
+ * The model pads every phrase with silence — measured for F1: 270–570 ms before the first sound and
+ * 490–610 ms after the last. The session speaks phrase by phrase, so in a two-phrase reply the room
+ * heard 1.1 s of nothing between 「お疲れ様！」 and 「今日の予定は」 (Gate #8 run 15, 1060 ms in the
+ * Tester's recording), and every reply began with up to half a second of silence counted as
+ * "first audio". A short lead is kept so a phrase does not start on a click; the trailing pause is
+ * left at the length of a comma, and the next phrase brings its own.
+ */
+export function trimSilence(pcm16: Int16Array, sampleRate: number, opts: { keepLeadMs?: number; keepTrailMs?: number; floor?: number } = {}): Int16Array {
+  const keepLead = Math.round(((opts.keepLeadMs ?? 60) / 1000) * sampleRate);
+  const keepTrail = Math.round(((opts.keepTrailMs ?? 150) / 1000) * sampleRate);
+  const floor = (opts.floor ?? 0.005) * 32768; // RMS over 10 ms, ≈ −46 dBFS
+  const win = Math.max(1, Math.round(sampleRate / 100));
+  const loud = (from: number): boolean => {
+    let sum = 0;
+    const to = Math.min(pcm16.length, from + win);
+    for (let i = from; i < to; i++) sum += pcm16[i]! * pcm16[i]!;
+    return Math.sqrt(sum / Math.max(1, to - from)) > floor;
+  };
+  let first = -1;
+  for (let i = 0; i < pcm16.length; i += win) if (loud(i)) { first = i; break; }
+  if (first < 0) return pcm16; // nothing audible: leave it to the caller's own judgement
+  let last = pcm16.length;
+  for (let i = pcm16.length - win; i > first; i -= win) if (loud(i)) { last = Math.min(pcm16.length, i + win); break; }
+  const start = Math.max(0, first - keepLead);
+  const end = Math.min(pcm16.length, last + keepTrail);
+  return start === 0 && end === pcm16.length ? pcm16 : pcm16.subarray(start, end);
+}
+
+/**
+ * Few denoising steps leave the waveform hot: at `steps: 2` the same sentence came out ~10 dB louder
+ * than at 8 and clipped 248 samples. Meet's own processing then makes that audible as grit. Peaks
+ * above the ceiling scale the whole phrase down — a gain, not a limiter, so nothing pumps.
+ */
+export function guardPeaks(pcm16: Int16Array, ceiling = 0.95): Int16Array {
+  let peak = 0;
+  for (let i = 0; i < pcm16.length; i++) peak = Math.max(peak, Math.abs(pcm16[i]!));
+  const limit = ceiling * 32767;
+  if (peak <= limit) return pcm16;
+  const g = limit / peak;
+  for (let i = 0; i < pcm16.length; i++) pcm16[i] = Math.round(pcm16[i]! * g);
+  return pcm16;
 }
 
 /**

@@ -8,6 +8,7 @@
  *
  *   MEET_URL=https://meet.google.com/xxx-xxxx-xxx pnpm reality:attendee:auto
  *   MEET_URL=... ENGINE=local PROACTIVITY=addressed_only pnpm reality:attendee:auto
+ *   MEET_URL=... PREFLIGHT_ONLY=1 pnpm reality:attendee:auto     # only the agent check, no bots
  *
  * What a person still has to do: admit both bots (Meet knocks unless the room is open). Everything
  * after that — the cues, the interruption, the scoring, the frames — is this script.
@@ -16,6 +17,12 @@
  *   - the page's own reports (turn / greeting / speaking / spoke / interrupted / fps), via the broker
  *   - the Tester's ears: room audio energy on its relay socket, timed against each cue
  *   - the Tester's recording and transcript afterwards: Yui's tile at 1080p, Yui's utterances by name
+ *
+ * Before anyone is billed, the agent is asked one text turn over its own socket: runs 11 and 12 were
+ * void because the LLM answered 404 and then 400, discovered only after both bots had been admitted.
+ *
+ * Besides behaviour, each answer is judged as sound: what the Tester heard is compared with what the
+ * page sent (a stretch means underruns), scanned for gaps and clipping, and read for a parroted name.
  */
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -44,6 +51,43 @@ if (!env.ATTENDEE_API_KEY) { console.log("BLOCKED_BY_ATTENDEE_KEY"); process.exi
 for (const tool of ["ffmpeg", "say"]) {
   try { execFileSync("which", [tool], { stdio: "pipe" }); } catch { console.log(`BLOCKED_BY_TOOL: ${tool} is not on PATH (the Tester's voice is macOS \`say\` rendered to mp3)`); process.exit(2); }
 }
+
+/**
+ * One text turn through the running agent — the same process, model, key and request shape the bot
+ * page will use. A 404 model, a rejected `reasoning_effort`, an exhausted quota: all of them answer
+ * here in a few seconds instead of as silence in a room with two admitted bots.
+ */
+const PREFLIGHT_S = Number(process.env.PREFLIGHT_TIMEOUT ?? 25);
+async function preflightAgent() {
+  if (engine !== "local") return { ok: true, note: `engine=${engine}: not routed through services/agent` };
+  const agentUrl = process.env.AGENT_URL ?? "ws://127.0.0.1:8788/session";
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    let sock;
+    const done = (r) => { clearTimeout(timer); try { sock?.close(); } catch { /* closing */ } resolve(r); };
+    const timer = setTimeout(() => done({ ok: false, error: `no reply from ${agentUrl} in ${PREFLIGHT_S}s` }), PREFLIGHT_S * 1000);
+    try { sock = new WebSocket(agentUrl); } catch (err) { return done({ ok: false, error: `${agentUrl}: ${err.message}` }); }
+    sock.on("error", (err) => done({ ok: false, error: `${agentUrl}: ${err.message}` }));
+    sock.on("open", () => {
+      sock.send(JSON.stringify({ type: "start", config: {
+        systemPrompt: "あなたは会議に同席しているキャラクターです。日本語で一言だけ答えてください。",
+        mode: "free_talk", language: "ja-JP", privacyMode: "default", characterId: process.env.CHARACTER_ID ?? "yui", personaId: "friendly",
+      } }));
+    });
+    sock.on("message", (data, isBinary) => {
+      if (isBinary) return;
+      let m;
+      try { m = JSON.parse(data.toString()); } catch { return; }
+      if (m.type === "ready") sock.send(JSON.stringify({ type: "text", text: "聞こえてる？一言だけ返して。" }));
+      else if (m.type === "assistant_transcript" && m.final) done({ ok: true, text: m.text, ms: Date.now() - t0 });
+      else if (m.type === "error") done({ ok: false, error: m.message });
+    });
+  });
+}
+const pre = await preflightAgent();
+if (!pre.ok) { console.log(`BLOCKED_BY_AGENT_PREFLIGHT: ${pre.error}\n  (the bots were not created; fix the agent — model, key, LOCAL_LLM_REASONING — and run again)`); process.exit(2); }
+console.log(pre.text ? `preflight: agent answered in ${pre.ms} ms — ${JSON.stringify(pre.text.slice(0, 60))}` : `preflight: ${pre.note}`);
+if (process.env.PREFLIGHT_ONLY) process.exit(0); // `PREFLIGHT_ONLY=1 pnpm reality:attendee:auto`: check the agent, create nothing
 
 const api = async (path, init = {}) => {
   const r = await fetch(`${attendee}/api/v1/bots${path}`, { ...init, headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) } });
@@ -126,7 +170,7 @@ process.on("SIGINT", () => { void leaveAll().then(() => process.exit(130)); });
 
 // ---- the Tester's ears --------------------------------------------------------------------------
 /** Room audio, as energy over time. A window is "heard" when enough of it is above the floor. */
-const heard = []; // { t: ms since epoch, db }
+const heard = []; // { t: ms since epoch, db, peak (0..1), clipped (samples at full scale), pcm: Int16Array, sr }
 let chunks = 0;
 const ears = new WebSocket(tester.clientWsUrl);
 ears.on("message", (raw) => {
@@ -136,10 +180,11 @@ ears.on("message", (raw) => {
     if (m?.trigger !== "realtime_audio.mixed" || !m.data?.chunk) return;
     chunks++;
     const b = Buffer.from(m.data.chunk, "base64");
-    let sum = 0;
-    for (let i = 0; i + 1 < b.length; i += 2) { const v = b.readInt16LE(i) / 32768; sum += v * v; }
-    const rms = Math.sqrt(sum / Math.max(1, b.length / 2));
-    heard.push({ t: Date.now(), db: 20 * Math.log10(Math.max(1e-6, rms)) });
+    const pcm = new Int16Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.length - (b.length % 2)));
+    let sum = 0, peak = 0, clipped = 0;
+    for (let i = 0; i < pcm.length; i++) { const v = pcm[i] / 32768; sum += v * v; const a = Math.abs(v); if (a > peak) peak = a; if (a >= 32700 / 32768) clipped++; }
+    const rms = Math.sqrt(sum / Math.max(1, pcm.length));
+    heard.push({ t: Date.now(), db: 20 * Math.log10(Math.max(1e-6, rms)), peak, clipped, pcm, sr: m.data.sample_rate ?? 16000 });
   } catch { /* ignore */ }
 });
 const FLOOR_DB = Number(process.env.FLOOR_DB ?? -45);
@@ -150,6 +195,64 @@ const audibleSeconds = (from, to, exclude = []) => {
   const span = (pts[pts.length - 1].t - pts[0].t) / 1000;
   return (pts.filter((h) => h.db > FLOOR_DB).length / pts.length) * span;
 };
+
+/**
+ * The character as sound, not as behaviour. Everything here is what the Tester heard on its relay,
+ * inside a window, with the Tester's own lines excluded:
+ *   spanS     first audible chunk to last — against `sentS`, the seconds the page actually sent
+ *             (a ratio well over 1 is audio arriving slower than it plays: underruns, silence inserted)
+ *   maxGapMs  the longest silence inside the span (a pause at a comma is ~300 ms; a second is a hole)
+ *   clipped   samples at full scale, as a share of the audible ones
+ *   f99Hz     the frequency below which 99 % of the audible energy sits (speech through a working
+ *             path reaches well past 3 kHz; a mangled sample rate or a phone-band path does not)
+ */
+const audioQuality = (from, to, exclude, sentS) => {
+  const pts = heard.filter((h) => h.t >= from && h.t <= to && !exclude.some(([a, b]) => h.t >= a && h.t <= b));
+  const loud = pts.map((h, i) => [h.db > FLOOR_DB, i]).filter(([l]) => l).map(([, i]) => i);
+  if (loud.length < 2) return null;
+  const first = loud[0], last = loud[loud.length - 1];
+  const spanS = (pts[last].t - pts[first].t) / 1000;
+  let maxGapMs = 0, gapStart = null;
+  for (let i = first; i <= last; i++) {
+    if (pts[i].db > FLOOR_DB) { if (gapStart != null) { maxGapMs = Math.max(maxGapMs, pts[i].t - gapStart); gapStart = null; } }
+    else if (gapStart == null) gapStart = pts[i].t;
+  }
+  let samples = 0, clipped = 0;
+  for (const i of loud) { samples += pts[i].pcm.length; clipped += pts[i].clipped; }
+  // Spectrum of the loud chunks (10 ms each on the relay, so they are joined first): 512-point Hann
+  // frames, a plain DFT over table lookups — a few hundred frames, well under a second.
+  const sr = pts[first].sr;
+  const N = 512;
+  const MAX_FRAMES = 300;
+  const joined = new Float32Array(Math.min(samples, N * MAX_FRAMES));
+  let filled = 0;
+  for (const i of loud) { const pcm = pts[i].pcm; for (let j = 0; j < pcm.length && filled < joined.length; j++) joined[filled++] = pcm[j] / 32768; }
+  const cos = new Float64Array(N), sin = new Float64Array(N), hann = new Float64Array(N);
+  for (let n = 0; n < N; n++) { cos[n] = Math.cos((2 * Math.PI * n) / N); sin[n] = Math.sin((2 * Math.PI * n) / N); hann[n] = 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / N); }
+  const power = new Float64Array(N / 2);
+  let frames = 0;
+  for (let off = 0; off + N <= filled; off += N, frames++) {
+    for (let k = 1; k < N / 2; k++) {
+      let re = 0, im = 0;
+      for (let n = 0; n < N; n++) { const x = joined[off + n] * hann[n]; const idx = (k * n) % N; re += x * cos[idx]; im -= x * sin[idx]; }
+      power[k] += re * re + im * im;
+    }
+  }
+  let total = 0;
+  for (const p of power) total += p;
+  let acc = 0, f99Hz = 0;
+  for (let k = 0; k < power.length; k++) { acc += power[k]; if (acc >= 0.99 * total) { f99Hz = Math.round((k * sr) / N); break; } }
+  const stretch = sentS > 0 ? spanS / sentS : null;
+  const issues = [];
+  if (stretch != null && stretch > 1.3) issues.push(`stretched ×${stretch.toFixed(2)} (underruns)`);
+  if (maxGapMs > 700) issues.push(`gap ${maxGapMs} ms`);
+  if (samples && clipped / samples > 0.001) issues.push(`clipping ${(100 * clipped / samples).toFixed(2)}%`);
+  if (frames && f99Hz < 2500) issues.push(`muffled f99=${f99Hz} Hz`);
+  return { spanS, sentS, stretch, maxGapMs, clipped, samples, f99Hz, sr, issues };
+};
+const audioLine = (q) => q ? `span=${q.spanS.toFixed(1)}s sent=${q.sentS ? q.sentS.toFixed(1) + "s" : "?"}${q.stretch != null ? ` ×${q.stretch.toFixed(2)}` : ""} gap=${q.maxGapMs}ms clip=${q.clipped}/${q.samples} f99=${q.f99Hz}Hz@${q.sr}` : "nothing audible";
+/** The reply must not open with the name the recogniser wrote (「ゆイ、お疲れ様！」, run 15) — nor the real one. */
+const NAME_ECHO = new RegExp(`^\\s*(?:${[botName, "ゆい", "ゆイ", "ユイ", "うい", "yui"].map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*(?:さん|ちゃん)?\\s*[、,!！?？…\\s]`, "i");
 
 // ---- wait for both to be in the call ------------------------------------------------------------
 const IN_CALL = new Set(["joined_recording", "joined_not_recording", "joined_recording_paused"]);
@@ -189,6 +292,7 @@ const at = (s) => new Promise((r) => setTimeout(r, Math.max(0, T0 + s * 1000 - D
 const stamp = (ms) => `${String(Math.floor(ms / 60000)).padStart(2, "0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}`;
 
 const results = [];
+const audio = []; // per answered cue: { id, quality, reply, echo }
 for (const cue of CUES) {
   await at(cue.at);
   const start = Date.now();
@@ -231,7 +335,18 @@ for (const cue of CUES) {
       detail = `greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
       break;
     }
-    case "ask1": case "ask2": status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length ? "PARTIAL" : "FAIL"; detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
+    case "ask1": case "ask2": {
+      status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length ? "PARTIAL" : "FAIL";
+      detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`;
+      const spoke = eventsBetween(ev, start, end, "spoke");
+      const reply = spoke.map((e) => e.data?.text ?? "").join(" / ");
+      const sentS = spoke.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+      const q = audioQuality(start, end, spoken, sentS);
+      const echo = reply ? NAME_ECHO.test(reply) : false;
+      audio.push({ id: cue.id, quality: q, reply, echo });
+      detail += ` · reply=${JSON.stringify(reply.slice(0, 60))}${echo ? " NAME-ECHO" : ""} · audio: ${audioLine(q)}${q?.issues.length ? ` ⚠ ${q.issues.join(", ")}` : ""}`;
+      break;
+    }
     case "third": case "chat": case "silence": status = !turns.length && !speaking.length ? "PASS" : "FAIL"; detail = `turn=${turns.length} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
     case "bargein": {
       const afterCut = cutAt ? audibleSeconds(cutAt + 1500, cutAt + 5000, spoken) : 0;
@@ -257,6 +372,11 @@ row("voice agent page started", finalPage.activations > 0 ? "PASS" : "FAIL", fin
 row("page render rate", beat.fps == null ? "UNKNOWN" : beat.fps >= 20 ? "PASS" : "LOW", `${beat.fps ?? "?"} fps at the last heartbeat · avatar=${beat.avatar ?? "?"}`);
 row("tester heard the room", chunks > 0 ? "PASS" : "FAIL", `${chunks} chunks on the Tester's relay`);
 for (const r of results) row(r.id, r.status, `${r.expect} · ${r.detail}`);
+const judged = audio.filter((a) => a.quality);
+const degraded = judged.filter((a) => a.quality.issues.length);
+row("answers as sound", !judged.length ? "UNKNOWN" : degraded.length ? "DEGRADED" : "PASS", judged.length ? judged.map((a) => `${a.id}: ${audioLine(a.quality)}${a.quality.issues.length ? ` ⚠ ${a.quality.issues.join(", ")}` : ""}`).join(" · ") : "no answer was audible to the Tester");
+const echoed = audio.filter((a) => a.echo);
+row("reply does not parrot the name", !audio.some((a) => a.reply) ? "UNKNOWN" : echoed.length ? "FAIL" : "PASS", echoed.length ? echoed.map((a) => `${a.id}: ${JSON.stringify(a.reply.slice(0, 40))}`).join(" · ") : `${audio.filter((a) => a.reply).length} replies read`);
 
 console.log(`\nTester の録画を待っています（${botName} のタイルと声が入っているはず）…`);
 let rec = null;
@@ -282,7 +402,7 @@ if (rec?.url) {
   const byYui = utt.filter((u) => (u.speaker_name ?? "") === botName);
   row("tester recording", "PASS", `${mp4} · frames → ${framesDir}`);
   row("room heard the character (vendor transcript)", byYui.length ? "PASS" : "FAIL", `${byYui.length}/${utt.length} utterances by ${botName}: ${byYui.slice(0, 3).map((u) => JSON.stringify(u.transcription?.transcript ?? u.transcription).slice(0, 60)).join(" / ")}`);
-  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec }, null, 2));
+  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: pre, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec }, null, 2));
   console.log(`\nreport → ${join(dir, "report.json")}`);
 } else {
   row("tester recording", "FAIL", "no recording from the Tester");
