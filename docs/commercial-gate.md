@@ -141,6 +141,18 @@ Final state of the run: every row passes, and the character speaks for 9.7 s.
 | relay carried the streams | PASS (450 messages, 0 malformed) |
 | transcripts, engagement | 5 utterances, ENGAGED → COOLDOWN → ENGAGED |
 
+The harness scores behaviour, not only connectivity, and the same run passes across the combinations
+that matter:
+
+| run | spoke | transcripts | engagement | camera | to the model |
+|---|---|---|---|---|---|
+| local · addressed_only · cues | 9.8 s | 5 | ENGAGED → COOLDOWN | 157 cues, 81 with a face | 0 (correct) |
+| local · open · **vision to the model** | 10.8 s | 5 | ENGAGED → COOLDOWN | 146 cues, 79 faces | 60 frames |
+| **Gemini** · addressed_only · cues | 20.3 s | 5 | ENGAGED → COOLDOWN | 158 cues, 82 faces | 0 (correct) |
+| local · **Zoom URL** · no camera | 10.6 s | 5 | ENGAGED → COOLDOWN | — | — |
+
+Camera frames are real: cut from the recording of the 2026-09-02 meeting.
+
 What this still does not prove: Attendee's own browser and its ALSA capture, its scheduling, a real
 meeting's audio, and a second human. It proves everything downstream of them, which is where every
 failure so far has actually been.

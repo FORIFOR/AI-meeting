@@ -119,6 +119,9 @@ export class MeetingSessionController {
   private forwarded = 0;
   private transcripts = 0;
   private spokeFrames = 0;
+  private cueCount = 0;
+  private faceCount = 0;
+  private shownToModel = 0;
   private heartbeat: ReturnType<typeof setInterval> | null = null;
   private lastSpeaker: string | null = null;
   private lastSpeakerId: string | undefined;
@@ -213,6 +216,7 @@ export class MeetingSessionController {
     this.heartbeat = setInterval(() => {
       console.log("[rcai:bot] " + JSON.stringify({
         heard: this.heard, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
+        cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
       }));
     }, 5000);
@@ -538,6 +542,7 @@ export class MeetingSessionController {
     const speaking = this.policy.state === "RESPONDING";
     if (speaking && !(cue.nodded || cue.shookHead || cue.tilted || cue.smile > 0.6)) return;
     this.lastVisionAt = at;
+    this.shownToModel++;
     rt.pushImage({ data: jpegBase64, mimeType: "image/jpeg" });
   }
 
@@ -581,6 +586,8 @@ export class MeetingSessionController {
     const cue = await this.visual.onFrame(participantId, jpegBase64, at);
     if (!cue) return;
     this.cues.set(participantId, cue);
+    this.cueCount++;
+    if (cue.facePresent) this.faceCount++;
     this.maybeShowModel(participantId, jpegBase64, at, cue);
     // The avatar mirrors the room a little: a person smiling is met with a warmer face, not a report.
     if (cue.smile > 0.55 && cue.confidence > 0.6) this.avatarRuntime?.setEmotion("warm_positive", Math.min(0.5, cue.smile));

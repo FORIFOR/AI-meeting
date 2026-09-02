@@ -52,7 +52,7 @@ const BYTES_PER_CHUNK = (16000 * 2 * CHUNK_MS) / 1000;
 const seen = {
   createdBot: null, sockets: { mixed: 0, participantAudio: 0, participantVideo: 0 },
   botOutputChunks: 0, botOutputBytes: 0, botOutputFirstAt: null,
-  pageErrors: [], pageLogs: [],
+  pageErrors: [], pageLogs: [], beats: [],
 };
 const t0 = Date.now();
 
@@ -86,7 +86,9 @@ console.log(`stand-in Attendee on http://127.0.0.1:${PORT}`);
 const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    meetingUrl: "https://meet.google.com/sim-ulat-ion",
+    // Any platform the connector claims to carry: the stand-in does not care, but the broker and the
+    // page both derive behaviour from the URL, and Zoom has never been exercised at all.
+    meetingUrl: process.env.MEET_URL ?? "https://meet.google.com/sim-ulat-ion",
     botName: env.RECALL_BOT_NAME ?? "Yui",
     botPageQuery: {
       engine: process.env.ENGINE ?? "local",
@@ -97,6 +99,7 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   }),
 })).json();
 if (!created.botId) { console.log("FAIL: broker did not create a bot:", JSON.stringify(created).slice(0, 300)); process.exit(1); }
+console.log(`meeting url ${process.env.MEET_URL ?? "https://meet.google.com/sim-ulat-ion"}`);
 console.log(`broker created ${created.botId}  page=${created.botPageUrl ? "yes" : "MISSING"}`);
 
 const ws = created.createdBotSettings ?? seen.createdBot?.websocket_settings;
@@ -188,6 +191,8 @@ const started = new Promise((resolve) => (pageStarted = resolve));
 page.on("console", (m) => {
   const t = m.text();
   if (/\[rcai:bot\] started/.test(t)) pageStarted?.();
+  const beat = t.match(/\[rcai:bot\] (\{.*\})$/);
+  if (beat) { try { seen.beats.push({ at: Date.now(), ...JSON.parse(beat[1]) }); } catch { /* not a heartbeat */ } }
   if (!/CORS policy|net::ERR|Failed to load resource/.test(t)) seen.pageLogs.push(`${m.type()}: ${t.slice(0, 220)}`);
 });
 await page.goto(created.botPageUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -249,7 +254,21 @@ row("character spoke (page audio out)", (inPage.audio?.buffers ?? 0) > 0, `${inP
 row("and did not also push it back down the socket", seen.botOutputChunks === 0, `${seen.botOutputChunks} bot_output chunks (0 is correct on this path)`);
 const stats = await (await fetch(`${broker}/api/meeting/recall/relay-status/${created.botId}`)).json().catch(() => ({}));
 row("relay carried the streams", (stats.received ?? 0) > 0 && (stats.malformed ?? 1) === 0, JSON.stringify(stats));
-console.log(`page audio raw: ${JSON.stringify(inPage.audio)}`);
+const last = seen.beats[seen.beats.length - 1] ?? {};
+const grew = (field) => seen.beats.some((b, i) => i > 0 && b[field] > seen.beats[i - 1][field]);
+console.log(`\n| behaviour | status | detail |\n|---|---|---|`);
+row("heard everything it was sent", (last.heard ?? 0) > 0 && last.heard === last.forwarded, `heard ${last.heard ?? 0} · forwarded ${last.forwarded ?? 0}`);
+row("transcribed the room", (last.transcripts ?? 0) >= 3, `${last.transcripts ?? 0} utterances`);
+row("took a turn", (last.spoke ?? 0) > 0, `${last.spoke ?? 0} frames released to the meeting`);
+row("entered a conversation", seen.beats.some((b) => b.engagement !== "PASSIVE"), `states: ${[...new Set(seen.beats.map((b) => b.engagement))].join(" → ")}`);
+row("answered more than once", seen.beats.filter((b, i) => i > 0 && b.spoke > seen.beats[i - 1].spoke).length >= 2, `${seen.beats.filter((b, i) => i > 0 && b.spoke > seen.beats[i - 1].spoke).length} separate stretches of speech`);
+if (frameFiles.length) {
+  row("read the camera", (last.cues ?? 0) > 0 && (last.faces ?? 0) > 0, `${last.cues ?? 0} cues · ${last.faces ?? 0} with a face`);
+  row("showed the model only what it should", process.env.VISION === "model" ? (last.shown ?? 0) > 0 : (last.shown ?? 0) === 0, `${last.shown ?? 0} frames to the provider (VISION=${process.env.VISION ?? "cues"})`);
+}
+void grew;
+
+console.log(`\npage audio raw: ${JSON.stringify(inPage.audio)}`);
 console.log(`page sockets: ${JSON.stringify(inPage.sockets ?? [])}`);
 console.log(`\npage said: ${inPage.text.replace(/\n+/g, " | ").slice(0, 300)}`);
 if (seen.pageLogs.length) console.log(`page logs (last 18):\n  ${seen.pageLogs.slice(-18).join("\n  ")}`);
