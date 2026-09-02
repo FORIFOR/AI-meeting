@@ -32,6 +32,15 @@ export interface AttendeeJoinBody {
   /** 8000 | 16000 | 24000. Defaults to 16000, which is what the agent accepts. */
   sampleRate?: number;
   botPageQuery?: Record<string, string>;
+  /**
+   * `character` (default) carries the avatar page as its camera. `listener` is a second bot in the same
+   * meeting with no page: it records what the room sees and hears — including the character, which the
+   * character's own bot never captures — and its relay socket lets a harness hear and speak into the
+   * room. The automated gate is a listener plus a character.
+   */
+  role?: "character" | "listener";
+  /** Vendor recording: what it records and at which resolution. Unset keeps Attendee's default. */
+  recording?: { view?: "speaker_view" | "gallery_view" | "speaker_view_no_sidebar"; resolution?: "1080p" | "720p" };
 }
 
 export interface AttendeeDeps {
@@ -58,6 +67,7 @@ export async function createAttendeeBot(
   if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
 
   const botName = body.botName ?? env.RECALL_BOT_NAME ?? "Yui";
+  const role = body.role ?? "character";
   /**
    * 16 kHz, because that is the rate the local agent's binary input is defined at — raw PCM16 mono, no
    * header. Sending 24 kHz "because the TTS produces it" stretched every utterance by half and the
@@ -69,7 +79,7 @@ export async function createAttendeeBot(
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
 
-  const pageToken = env.RECALL_BOT_PAGE_URL ? deps.sessions.issue(session.id, "bot_page", { brokerPublicUrl: publicUrl }) : null;
+  const pageToken = env.RECALL_BOT_PAGE_URL && role === "character" ? deps.sessions.issue(session.id, "bot_page", { brokerPublicUrl: publicUrl }) : null;
   const botPageUrl = pageToken
     ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
     : undefined;
@@ -111,6 +121,14 @@ export async function createAttendeeBot(
      */
     webhooks: [{ url: `${publicUrl.replace(/\/$/, "")}/api/attendee/webhooks`, triggers: ["bot.state_change"] }],
   };
+  /**
+   * The vendor's own transcript, in the meeting's language. Left to auto-detect it rendered a Japanese
+   * meeting as confident English, which made it useless as evidence of what was said. The page query
+   * already carries the language the character speaks; the transcript follows it.
+   */
+  const language = (body.botPageQuery?.language ?? "").split("-")[0]?.toLowerCase() ?? "";
+  if (language) payload.transcription_settings = { deepgram: { language } };
+  if (body.recording) payload.recording_settings = { ...(body.recording.view ? { view: body.recording.view } : {}), ...(body.recording.resolution ? { resolution: body.recording.resolution } : {}) };
   /**
    * The avatar page as the bot's camera. Taken from Attendee's voice-agent guidance rather than a field
    * we have exercised — the audio path above is verified, this is not. It is sent only when a deployment

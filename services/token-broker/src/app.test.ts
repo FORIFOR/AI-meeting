@@ -250,6 +250,30 @@ describe("meeting session security (Round 3 Gate 5)", () => {
     now.t += 15 * 60_000;
     expect(await (await post(app, "/api/meeting/session/activate", { token: fresh })).json()).toEqual({ error: "invalid_bot_page_token", detail: "expired" });
   });
+  it("bot page reports: the page's own account of a run is readable from outside the vendor", async () => {
+    const now = { t: 1_000_000 };
+    const { app } = mk(now);
+    const created = await (await create(app)).json();
+    const pageToken = new URL(created.botPageUrl).searchParams.get("token")!;
+    const act = await (await post(app, "/api/meeting/session/activate", { token: pageToken })).json();
+    const sid = act.sessionId as string;
+    const auth = { Authorization: `Bearer ${act.clientToken}` };
+    const report = (body: Record<string, unknown>, headers: Record<string, string> = auth) => app.request(`/api/meeting/session/${sid}/report`, { method: "POST", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify(body) });
+    expect((await report({ type: "turn", data: { reason: "addressed" } }, {})).status).toBe(401);
+    expect((await report({ data: {} })).status).toBe(400);
+    expect((await report({ type: "turn", data: { text: "x".repeat(5000) } })).status).toBe(413);
+    expect((await report({ type: "greeting", data: { now: true } })).status).toBe(200);
+    now.t += 5000;
+    expect((await report({ type: "heartbeat", data: { fps: 12 } })).status).toBe(200);
+    now.t += 5000;
+    expect((await report({ type: "heartbeat", data: { fps: 30 } })).status).toBe(200);
+    expect((await report({ type: "turn", data: { reason: "addressed", text: "ゆい" } })).status).toBe(200);
+    const st = await (await app.request(`/api/meeting/session/${sid}`, { headers: auth })).json();
+    // Events keep their order and the broker's clock; only the latest heartbeat is kept.
+    expect(st.pageEvents.map((e: { type: string }) => e.type)).toEqual(["greeting", "turn"]);
+    expect(st.pageEvents[0].at).toBe(1_000_000);
+    expect(st.pageHeartbeat).toMatchObject({ type: "heartbeat", at: 1_010_000, data: { fps: 30 } });
+  });
   it("operator routes need the client token of the same session; refresh issues a new bot-page URL; revoke kills tokens", async () => {
     const now = { t: 1_000_000 };
     const { app, sessions } = mk(now);
@@ -547,6 +571,28 @@ describe("Attendee voice agent page", () => {
     expect(sent.voice_agent_settings.url).toMatch(/^https:\/\/web\.example\/\?rcai_bot=1&token=/);
     // Without this the bot joins, records, and silently never renders or speaks.
     expect(sent.voice_agent_settings.reserve_resources).toBe(true);
+  });
+});
+
+describe("Attendee listener bot", () => {
+  it("a listener joins with no page, records the room in Japanese, and can be told how to record", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_3", state: "joining" })), calls),
+    });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, recording: { view: "gallery_view", resolution: "1080p" } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.botPageUrl).toBeUndefined();
+    const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
+    expect(sent.bot_name).toBe("Tester");
+    expect(sent.voice_agent_settings).toBeUndefined();
+    expect(sent.transcription_settings).toEqual({ deepgram: { language: "ja" } });
+    expect(sent.recording_settings).toEqual({ view: "gallery_view", resolution: "1080p" });
+    // Still on the relay: the harness hears the room (and the character in it) on the same socket.
+    expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
+    expect(body.clientWsUrl).toContain("att_3");
   });
 });
 

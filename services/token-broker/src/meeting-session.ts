@@ -43,7 +43,25 @@ export interface MeetingSessionRecord {
   /** Bot page activations (1 expected; >1 means the URL leaked or was replayed after refresh). */
   activations: number;
   outputMediaRestarts: number;
+  /**
+   * What the bot page said happened, in its own words. The page runs inside a vendor's browser where its
+   * console is unreadable, so every question about a live run — did it greet, did it take a turn, how
+   * fast is it drawing — used to be answered by guessing from the outside. Newest last, capped.
+   */
+  pageEvents: PageEvent[];
+  /** The page's latest heartbeat (counters, policy state, render fps); null until the first one. */
+  pageHeartbeat: PageEvent | null;
 }
+
+export interface PageEvent {
+  type: string;
+  /** Broker clock — the page's own clock is not trusted for ordering. */
+  at: number;
+  data: Record<string, unknown>;
+}
+
+/** Enough for a run's worth of turns without letting a chatty page grow the session forever. */
+export const PAGE_EVENTS_MAX = 300;
 
 export type VerifyFailure =
   | "malformed"
@@ -101,6 +119,8 @@ export class MeetingSessionRegistry {
       botPageActivatedAt: null,
       activations: 0,
       outputMediaRestarts: 0,
+      pageEvents: [],
+      pageHeartbeat: null,
     };
     this.sessions.set(rec.id, rec);
     return rec;
@@ -218,6 +238,20 @@ export class MeetingSessionRegistry {
     if (expect.botId !== undefined && session.botId !== expect.botId) return { ok: false, reason: "bot_mismatch" };
     if (payload.bot && session.botId && payload.bot !== session.botId) return { ok: false, reason: "bot_mismatch" };
     return { ok: true, payload, session };
+  }
+
+  /** Bot page → broker: a heartbeat replaces the previous one; anything else is appended (oldest dropped past the cap). */
+  report(id: string, type: string, data: Record<string, unknown>, now: number = this.now()): boolean {
+    const s = this.sessions.get(id);
+    if (!s) return false;
+    const ev: PageEvent = { type, at: now, data };
+    if (type === "heartbeat") s.pageHeartbeat = ev;
+    else {
+      s.pageEvents.push(ev);
+      if (s.pageEvents.length > PAGE_EVENTS_MAX) s.pageEvents.splice(0, s.pageEvents.length - PAGE_EVENTS_MAX);
+    }
+    s.lastActivityAt = now;
+    return true;
   }
 
   /** bot_page activation: verifies and burns the nonce (a second activation with the same token → replayed). */

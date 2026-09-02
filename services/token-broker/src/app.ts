@@ -12,7 +12,7 @@ import { planWithOpenAI } from "./routes/plan.js";
 import { recordFeedback, type FeedbackEntry } from "./routes/feedback.js";
 import { recordIncident, type IncidentBody } from "./routes/incidents.js";
 import { recordTelemetry } from "./routes/telemetry.js";
-import { publicWsBase, activateBotPage, createRecallBot, getMeetingSession, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
+import { publicWsBase, activateBotPage, createRecallBot, getMeetingSession, reportFromBotPage, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
 import { RelayHub } from "./meeting-relay.js";
 import { MeetingSessionRegistry } from "./meeting-session.js";
 import { fallbackHeuristic, loadEvaluationModule } from "./evaluation-bridge.js";
@@ -316,6 +316,10 @@ export function createApp(deps: AppDeps): Hono {
   });
   app.post("/api/meeting/session/:id/refresh", async (c) => {
     const r = refreshMeetingToken(env, sessions, c.req.param("id"), c.req.header("authorization"), await json<{ role?: "bot_page" | "client" | "relay" }>(c));
+    return c.json(r.body, r.status as 200);
+  });
+  app.post("/api/meeting/session/:id/report", async (c) => {
+    const r = reportFromBotPage(sessions, c.req.param("id"), c.req.header("authorization"), await json<{ type?: string; data?: Record<string, unknown> }>(c));
     return c.json(r.body, r.status as 200);
   });
   app.post("/api/meeting/session/:id/revoke", (c) => {

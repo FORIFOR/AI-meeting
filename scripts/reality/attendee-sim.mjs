@@ -288,6 +288,14 @@ if (frameFiles.length) {
   row("read the camera", (last.cues ?? 0) > 0 && (last.faces ?? 0) > 0, `${last.cues ?? 0} cues · ${last.faces ?? 0} with a face`);
   row("showed the model only what it should", process.env.VISION === "model" ? (last.shown ?? 0) > 0 : (last.shown ?? 0) === 0, `${last.shown ?? 0} frames to the provider (VISION=${process.env.VISION ?? "cues"})`);
 }
+/**
+ * What the page told the broker, read back the way the live harness reads it. Inside a vendor the
+ * console above does not exist; this channel is the only one that does, so it has to carry the same
+ * facts — and the render rate, which is what the room's tile is made of.
+ */
+const session = created.clientToken ? await (await fetch(`${broker}/api/meeting/session/${created.sessionId}`, { headers: { authorization: `Bearer ${created.clientToken}` } })).json().catch(() => ({})) : {};
+const reported = session.pageEvents ?? [];
+row("page reported to the broker", reported.length > 0 && !!session.pageHeartbeat, `${reported.map((e) => e.type).join(" → ") || "nothing"} · fps=${session.pageHeartbeat?.data?.fps ?? "?"} (SwiftShader, ${last.avatar ?? "?"})`);
 void grew;
 
 console.log(`\npage audio raw: ${JSON.stringify(inPage.audio)}`);

@@ -85,7 +85,7 @@ export interface MeetingInit {
    */
   voiceId?: string;
   /** bot role: activation already performed by the screen (tokens are single-use — never activate twice). */
-  botActivation?: { sessionId: string; botId: string };
+  botActivation?: { sessionId: string; botId: string; clientToken?: string };
   connectorMode?: "output_media" | "relay";
   stage: HTMLElement | null;
   handlers: MeetingHandlers;
@@ -167,7 +167,11 @@ export class MeetingSessionController {
   private disposed = false;
   private muted = false;
   private meetingStatus: MeetingStatus | null = null;
-  private activated: { sessionId: string; botId: string } | null = null;
+  private activated: { sessionId: string; botId: string; clientToken?: string } | null = null;
+  /** Frames drawn since the last heartbeat — the page's render rate, which is what the room's tile is made of. */
+  private drawn = 0;
+  private drawLoop: number | null = null;
+  private lastBeatAt = 0;
 
   constructor(private readonly init: MeetingInit) {
     this.decision = decide(init.settings, init.availability);
@@ -185,7 +189,11 @@ export class MeetingSessionController {
       if (t.to === "ADDRESSED") {
         // The policy decided this turn is ours. Nothing else may open the outbound gate.
         this.sanctioned = true;
-        if (this.init.role === "bot") console.log("[rcai:bot] turn", JSON.stringify({ reason: t.reason, text: this.policy.addressedBy?.text ?? "" }));
+        if (this.init.role === "bot") {
+          const turn = { reason: t.reason, text: this.policy.addressedBy?.text ?? "" };
+          console.log("[rcai:bot] turn", JSON.stringify(turn));
+          this.report("turn", turn);
+        }
         void this.answer();
       }
       /**
@@ -235,12 +243,24 @@ export class MeetingSessionController {
      * went quiet", and answering it has needed a rebuild each time. One line every five seconds costs
      * nothing and answers it from the logs the vendor already keeps.
      */
+    if (role === "bot" && typeof requestAnimationFrame === "function") {
+      const tick = (): void => { this.drawn++; this.drawLoop = requestAnimationFrame(tick); };
+      this.drawLoop = requestAnimationFrame(tick);
+      this.lastBeatAt = performance.now();
+    }
     this.heartbeat = setInterval(() => {
-      console.log("[rcai:bot] " + JSON.stringify({
+      const t = performance.now();
+      const fps = this.lastBeatAt ? Math.round((this.drawn * 1000) / Math.max(1, t - this.lastBeatAt)) : null;
+      this.drawn = 0;
+      this.lastBeatAt = t;
+      const beat = {
         heard: this.heard, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
         cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel, sanctioned: this.sanctioned,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
-      }));
+        fps, avatar: this.avatarFailure ?? (this.avatar ? "ok" : "none"),
+      };
+      console.log("[rcai:bot] " + JSON.stringify(beat));
+      this.report("heartbeat", beat);
     }, 5000);
     handlers.onStatus(this.session?.status() ?? "in_call");
   }
@@ -281,6 +301,23 @@ export class MeetingSessionController {
   }
 
   // ---- bot page ---------------------------------------------------------------------------------
+  /**
+   * Tell the broker what happened, so a harness outside the vendor can read it. The page's console is
+   * unreadable from where it runs; this is the only channel that leaves the container. Best effort and
+   * never awaited — a report that fails must not touch the conversation.
+   */
+  private report(type: string, data: Record<string, unknown>): void {
+    const a = this.activated;
+    if (this.init.role !== "bot" || !a?.clientToken) return;
+    const base = (this.init.botBrokerUrl ?? this.init.settings.brokerUrl).replace(/\/$/, "");
+    void fetch(`${base}/api/meeting/session/${encodeURIComponent(a.sessionId)}/report`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${a.clientToken}` },
+      body: JSON.stringify({ type, data }),
+      keepalive: true,
+    }).catch(() => { /* observation only */ });
+  }
+
   private async startBotPage(): Promise<void> {
     // Gate 5: the page must prove it was loaded from a signed, unexpired, unused bot-page URL before doing anything.
     const { botToken, botBrokerUrl, botActivation, settings, handlers } = this.init;
@@ -289,7 +326,7 @@ export class MeetingSessionController {
       if (!botToken) throw new Error("BOT_PAGE_TOKEN_REQUIRED: this page was opened without a signed session token");
       const { activateBotPage } = await import("@rcai/connector-recall");
       const act = await activateBotPage(botBrokerUrl ?? settings.brokerUrl, botToken);
-      this.activated = { sessionId: act.sessionId, botId: act.botId };
+      this.activated = { sessionId: act.sessionId, botId: act.botId, clientToken: act.clientToken };
     }
     handlers.onActivated?.(this.activated);
     this.meetingStatus = "in_call";
@@ -520,6 +557,7 @@ export class MeetingSessionController {
       setTimeout(() => {
         const now = this.policy.onJoined(Date.now());
         console.log("[rcai:bot] greeting", now ? "now" : `deferred (${this.policy.state})`);
+        this.report("greeting", { now, state: this.policy.state });
       }, 1500);
     }
     const level = dbfs(rms(frame.data));
@@ -692,6 +730,7 @@ export class MeetingSessionController {
           break;
         }
         this.policy.markResponding(now);
+        if (this.init.role === "bot") this.report("speaking", { state: this.policy.state });
         break;
       case "assistant_audio":
         /**
@@ -724,6 +763,7 @@ export class MeetingSessionController {
         break;
       case "assistant_speech_ended":
         void this.session?.endOutboundUtterance?.();
+        if (this.init.role === "bot" && this.sanctioned) this.report("spoke", { frames: this.spokeFrames });
         this.sanctioned = false;
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
         break;
@@ -735,6 +775,7 @@ export class MeetingSessionController {
          * the consecutive-turn count must not be spent on an answer nobody heard.
          */
         void this.session?.endOutboundUtterance?.();
+        if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames });
         this.sanctioned = false;
         this.policy.onInterrupted(now);
         break;
@@ -770,6 +811,8 @@ export class MeetingSessionController {
     await this.mic?.stop().catch(() => {});
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.heartbeat = null;
+    if (this.drawLoop !== null && typeof cancelAnimationFrame === "function") cancelAnimationFrame(this.drawLoop);
+    this.drawLoop = null;
     this.visual?.stop();
     this.visual = null;
     this.cues.clear();

@@ -295,7 +295,23 @@ export function getMeetingSession(sessions: MeetingSessionRegistry, sessionId: s
   const auth = authorizeOperator(sessions, sessionId, authHeader);
   if (auth.status !== 200) return auth as RouteResult<Record<string, unknown>>;
   const s = sessions.get(sessionId)!;
-  return { status: 200, body: { sessionId: s.id, botId: s.botId, mode: s.mode, revoked: s.revoked, ended: s.ended, endReason: s.endReason, botPageActivatedAt: s.botPageActivatedAt, activations: s.activations, outputMediaRestarts: s.outputMediaRestarts, createdAt: s.createdAt } };
+  return { status: 200, body: { sessionId: s.id, botId: s.botId, mode: s.mode, revoked: s.revoked, ended: s.ended, endReason: s.endReason, botPageActivatedAt: s.botPageActivatedAt, activations: s.activations, outputMediaRestarts: s.outputMediaRestarts, createdAt: s.createdAt, pageEvents: s.pageEvents, pageHeartbeat: s.pageHeartbeat } };
+}
+
+/**
+ * Bot page → broker: what the page saw, so a harness outside the vendor can read it back. The page holds
+ * a client token from activation, which is the same credential the operator uses — the page is, for this
+ * purpose, the operator of its own session. Bodies are bounded so a page cannot grow the session at will.
+ */
+export function reportFromBotPage(sessions: MeetingSessionRegistry, sessionId: string, authHeader: string | undefined, body: { type?: string; data?: Record<string, unknown> }): RouteResult<Record<string, unknown>> {
+  const auth = authorizeOperator(sessions, sessionId, authHeader);
+  if (auth.status !== 200) return auth as RouteResult<Record<string, unknown>>;
+  const type = typeof body.type === "string" ? body.type.slice(0, 40) : "";
+  if (!type) return { status: 400, body: { error: "type required" } };
+  const data = body.data && typeof body.data === "object" && !Array.isArray(body.data) ? body.data : {};
+  if (JSON.stringify(data).length > 4000) return { status: 413, body: { error: "report too large" } };
+  sessions.report(sessionId, type, data);
+  return { status: 200, body: { ok: true } };
 }
 
 export async function getRecallBot(env: BrokerEnv, botId: string, fetchImpl: typeof fetch, deps?: MeetingDeps): Promise<RouteResult<Record<string, unknown>>> {

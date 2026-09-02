@@ -42,7 +42,7 @@ export function Meeting(p: MeetingProps) {
   const [policy, setPolicy] = useState<ParticipationState>("OBSERVING");
   const [avatarState, setAvatarState] = useState<AvatarState>("IDLE");
   const [muted, setMuted] = useState(false);
-  const [activation, setActivation] = useState<{ sessionId: string; botId: string } | null>(null);
+  const [activation, setActivation] = useState<{ sessionId: string; botId: string; clientToken?: string } | null>(null);
   /** Guards the single-use activation against StrictMode's double effect invocation. */
   const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
@@ -186,7 +186,7 @@ export function Meeting(p: MeetingProps) {
           const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode).catch(() => null);
           if (h) { setBotAvailability(h.availability); note(`engines · local ${h.availability.local} · openai ${h.availability.openai} · google ${h.availability.google}`); }
         }
-        setActivation({ sessionId: act.sessionId, botId: act.botId });
+        setActivation({ sessionId: act.sessionId, botId: act.botId, clientToken: act.clientToken });
         note(`activated · session ${act.sessionId.slice(0, 8)} · bot ${act.botId} · activation #${act.activations}`);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
