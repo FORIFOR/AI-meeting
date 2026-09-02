@@ -18,6 +18,11 @@ export interface CharacterEntry {
    * in a Japanese meeting and stays in OBSERVING forever.
    */
   aliases?: string[];
+  /**
+   * What speech recognition wrote when it misheard the name at an utterance onset, in real meetings.
+   * Accepted only as 「〜、…？」 — an utterance-initial call followed by a question or request.
+   */
+  soundalikes?: string[];
 }
 
 export const characters: CharacterEntry[] = [
@@ -25,6 +30,7 @@ export const characters: CharacterEntry[] = [
     id: "yui",
     name: "Yui",
     aliases: ["ゆい", "ユイ", "結衣"],
+    soundalikes: ["い", "うい", "つい", "ゆ"], // Gate #8 runs 10–13: 「い、今どう思う？」「うい、」「つい今どう思う？」
     renderer: "live2d",
     baseUrl: "/characters/yui",
     license: "Live2D sample 'Hiyori' — Live2D Free Material License (dev only)",

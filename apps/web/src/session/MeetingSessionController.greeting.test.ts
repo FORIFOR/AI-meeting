@@ -129,7 +129,15 @@ describe("greeting on arrival", () => {
     // The next turn: someone starts talking while the answer is still being thought about.
     c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1"); // the test character has no 「ゆい」 alias
     expect(c.policy.state).toBe("ADDRESSED");
+    // A click (Gate #8 run 13: 200 ms of room noise, 600 ms after the greeting was sanctioned) is not a barge-in.
     emit({ type: "user_speech_started", at: Date.now() });
+    await vi.advanceTimersByTimeAsync(200);
+    emit({ type: "user_speech_ended", at: Date.now() });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(c.policy.state).toBe("ADDRESSED");
+    // Speech that lasts the confirmation window is.
+    emit({ type: "user_speech_started", at: Date.now() });
+    await vi.advanceTimersByTimeAsync(700);
     expect(c.policy.state).not.toBe("ADDRESSED");
     emit({ type: "assistant_speech_started", at: Date.now() });
     expect(providerInterrupt).toHaveBeenCalledTimes(1); // unsanctioned, cut

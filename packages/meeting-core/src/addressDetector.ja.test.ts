@@ -15,3 +15,18 @@ describe("address detection with Japanese readings of a romaji name", () => {
   it("a plain greeting keeps the character observing", () => expect(d.detect("こんにちは").addressed).toBe(false));
   it("a third-person mention keeps the character observing", () => expect(d.detect("ゆいがそう言ってた").addressed).toBe(false));
 });
+
+/**
+ * What the recogniser actually wrote for 「ゆい、」 in Gate #8 runs 10–13: 「い、今どう思う？」
+ * 「うい、今どう思う？」「つい今どう思う？」「い今日予定を教えて。」. Each was a call that went unanswered.
+ */
+describe("sound-alikes of the name at an utterance onset", () => {
+  const s = new AddressDetector({ names: ["Yui", "ゆい"], soundalikes: ["い", "うい", "つい", "ゆ"] });
+  for (const line of ["い、今どう思う？", "うい、今どう思う？", "つい今どう思う？", "い今日予定を教えて。", "ゆ、これどう思う"]) {
+    it(`addressed: ${line}`, () => expect(s.detect(line)).toMatchObject({ addressed: true, reason: "vocative (sound-alike)" }));
+  }
+  for (const line of ["つい言っちゃった", "つい言っちゃった、どう思う？", "い、そうだね", "いつ帰る？", "ついでに聞くけど、田中さんは？"]) {
+    it(`not addressed: ${line}`, () => expect(s.detect(line).addressed).toBe(false));
+  }
+  it("without the option nothing changes", () => expect(d.detect("つい今どう思う？").addressed).toBe(false));
+});

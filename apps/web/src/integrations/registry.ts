@@ -191,6 +191,8 @@ export interface CharacterEntry {
   defaultPersona?: string;
   /** Alternative spellings the character answers to (Japanese readings of a romaji name). */
   aliases?: string[];
+  /** Recogniser mishearings of the name, accepted only as an utterance-initial call (see characters/index.ts). */
+  soundalikes?: string[];
 }
 
 export async function loadCharacterEntries(): Promise<{ entries: CharacterEntry[]; error?: string }> {

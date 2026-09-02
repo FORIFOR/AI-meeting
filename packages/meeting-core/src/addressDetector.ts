@@ -21,6 +21,14 @@ export interface AddressDetectorOptions {
   names: string[];
   /** Extra generic vocatives that count as addressing the AI. Defaults cover JP/EN. */
   aiVocatives?: string[];
+  /**
+   * What the recogniser writes when it mishears the name. A short given name loses its first mora
+   * at an utterance onset all the time — in real meetings 「ゆい、」 came back as 「い、」「うい、」「つい、」
+   * — and each time the character was called and never answered. A sound-alike is far weaker
+   * evidence than the name: it counts only as an utterance-initial vocative with its punctuation,
+   * and only when the rest is a question or request. 「つい言っちゃった」 is not a call.
+   */
+  soundalikes?: string[];
 }
 
 const DEFAULT_AI_VOCATIVES = ["AIさん", "AIちゃん", "アシスタント", "ボット", "bot", "assistant", "the AI", "AI"];
@@ -60,6 +68,7 @@ export class AddressDetector {
   private readonly vocativeStartRe: RegExp;
   private readonly vocativeEndRe: RegExp;
   private readonly aiRe: RegExp;
+  private readonly soundalikeRe: RegExp | null;
 
   constructor(opts: AddressDetectorOptions) {
     const names = opts.names.filter(Boolean).map((n) => escapeRe(normalizeForMatch(n)));
@@ -75,6 +84,11 @@ export class AddressDetector {
     this.vocativeEndRe = new RegExp(`[,、\\s]${alt}(?:さん|ちゃん)?[\\s。！!？?]*$`, "i");
     const ai = (opts.aiVocatives ?? DEFAULT_AI_VOCATIVES).map(escapeRe);
     this.aiRe = new RegExp(`(?:^|[\\s,、])(?:${ai.join("|")})(?:さん|ちゃん)?(?:[\\s,、。！!？?:：]|$)`, "i");
+    const like = (opts.soundalikes ?? []).filter(Boolean).map((n) => escapeRe(normalizeForMatch(n)));
+    // With its comma, or straight into the question (「つい今どう思う？」: the recogniser drops the pause too).
+    this.soundalikeRe = like.length
+      ? new RegExp(`^(?:(?:ねえ|ねぇ|なあ|hey|hi|ok|okay|えっと|あの)[\\s,、]*)?(?:${like.join("|")})(?:さん|ちゃん|くん|先生)?(?:[,、！!？?:：]|(?=今|これ|それ|あれ|この|その|どう|何|なん|教えて|いつ|どこ|誰))`, "i")
+      : null;
   }
 
   detect(rawText: string): AddressDetection {
@@ -93,6 +107,7 @@ export class AddressDetector {
       if (question) return { addressed: true, invited: false, confidence: 0.85, reason: "name + question/request" };
       return { addressed: false, invited: false, confidence: 0.4, reason: "name mentioned without a request" };
     }
+    if (question && this.soundalikeRe?.test(text)) return { addressed: true, invited: false, confidence: 0.7, reason: "vocative (sound-alike)" };
     if (invite) return { addressed: false, invited: true, confidence: 0.6, reason: "floor opened" };
     return { addressed: false, invited: false, confidence: 0.1, reason: "not addressed" };
   }

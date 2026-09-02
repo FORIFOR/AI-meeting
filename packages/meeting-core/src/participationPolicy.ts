@@ -43,6 +43,8 @@ export type Proactivity = "addressed_only" | "invited" | "active" | "open";
 
 export interface ParticipationPolicyOptions {
   names: string[];
+  /** Mishearings of the name that still count as an utterance-initial call (see AddressDetector). */
+  soundalikes?: string[];
   proactivity?: Proactivity;
   /** After a response, ignore new triggers for this long (ms). Default 4000. */
   cooldownMs?: number;
@@ -102,7 +104,7 @@ export class ParticipationPolicy {
   /** Arrived while someone was speaking: the greeting waits for the next silence (`tick`). */
   private greetingPending = false;
   private readonly detector: AddressDetector;
-  private readonly opts: Required<Omit<ParticipationPolicyOptions, "detector" | "selfNames">> & { selfNames: string[] };
+  private readonly opts: Required<Omit<ParticipationPolicyOptions, "detector" | "selfNames" | "soundalikes">> & { selfNames: string[] };
   private lastSpeechAt = -1e9;
   private lastResponseEndAt = -1e9;
   private consecutive = 0;
@@ -129,7 +131,7 @@ export class ParticipationPolicy {
       selfNames: options.selfNames ?? options.names,
       engagementTtlMs: options.engagementTtlMs ?? 90_000,
     };
-    this.detector = options.detector ?? new AddressDetector({ names: options.names });
+    this.detector = options.detector ?? new AddressDetector({ names: options.names, soundalikes: options.soundalikes });
   }
 
   get state(): ParticipationState {

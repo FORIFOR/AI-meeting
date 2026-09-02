@@ -157,6 +157,8 @@ export class MeetingSessionController {
   private runtimeReady = false;
   /** Pending ANSWER_STALL_MS watchdog for the sanctioned turn, if any. */
   private answerTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Room speech that began while a sanctioned answer was still being thought up; a barge-in only if it lasts. */
+  private thinkingBargeTimer: ReturnType<typeof setTimeout> | null = null;
   private cueCount = 0;
   private faceCount = 0;
   private shownToModel = 0;
@@ -199,7 +201,7 @@ export class MeetingSessionController {
     this.decision = decide(init.settings, init.availability);
     // Aliases matter in Japanese meetings: STT writes 「ゆい」, never "Yui".
     const names = [init.displayName, init.character.name, ...(init.character.aliases ?? [])].filter(Boolean);
-    this.policy = new ParticipationPolicy({ names, proactivity: init.proactivity });
+    this.policy = new ParticipationPolicy({ names, soundalikes: init.character.soundalikes, proactivity: init.proactivity });
     /**
      * Answering is driven by the transition, not by the transcript that usually causes it. The
      * proactive tiers ("active", "open") enter ADDRESSED from the timer — the room falling quiet is
@@ -752,7 +754,20 @@ export class MeetingSessionController {
     }, ANSWER_STALL_MS);
   }
 
+  private dropThinkingTurn(now: number): void {
+    if (this.init.role === "bot") this.report("interrupted", { frames: 0, phase: "thinking" });
+    this.clearAnswerWatchdog();
+    this.sanctioned = false;
+    this.policy.onInterrupted(now);
+  }
+
+  private clearThinkingBarge(): void {
+    if (this.thinkingBargeTimer) clearTimeout(this.thinkingBargeTimer);
+    this.thinkingBargeTimer = null;
+  }
+
   private clearAnswerWatchdog(): void {
+    this.clearThinkingBarge();
     if (this.answerTimer) clearTimeout(this.answerTimer);
     this.answerTimer = null;
   }
@@ -839,13 +854,26 @@ export class MeetingSessionController {
          * Someone spoke up between the policy sanctioning a turn and the answer starting. The agent
          * treats it as a barge-in on its own thinking and will answer whatever comes next instead —
          * an answer nobody sanctioned. The turn is over; the next transcript earns its own.
+         *
+         * If it was speech. This event is the runtime's own VAD on the room mix, which fires on the
+         * onset — the agent holds the same onset for `bargeInConfirmMs` before it counts. A 200 ms
+         * click 600 ms after the greeting was sanctioned ended it before a word was said (Gate #8
+         * run 13); the bot page waits the same window, and speech that ends inside it never happened.
          */
         if (this.sanctioned && this.policy.state === "ADDRESSED") {
-          if (this.init.role === "bot") this.report("interrupted", { frames: 0, phase: "thinking" });
-          this.clearAnswerWatchdog();
-          this.sanctioned = false;
-          this.policy.onInterrupted(now);
+          if (this.init.role !== "bot") {
+            this.dropThinkingTurn(now);
+            break;
+          }
+          this.clearThinkingBarge();
+          this.thinkingBargeTimer = setTimeout(() => {
+            this.thinkingBargeTimer = null;
+            if (this.sanctioned && this.policy.state === "ADDRESSED") this.dropThinkingTurn(Date.now());
+          }, BOT_BARGE_IN_CONFIRM_MS);
         }
+        break;
+      case "user_speech_ended":
+        this.clearThinkingBarge();
         break;
       case "interrupted":
         /**
