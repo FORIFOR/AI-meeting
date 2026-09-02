@@ -97,6 +97,20 @@ on Attendee's streamer in the first live run, so the GPU surcharge Recall charge
 nothing Attendee does not already do. Attendee's free 5 hours cover the 10-minute smoke and the
 30-minute gate roughly seven times over.
 
+## Perception (added 2026-09-02)
+
+The character reads the room as well as hearing it: Attendee's per-participant webcam at 360p/2 fps →
+MediaPipe Face Landmarker in the bot page → cues (nod, head shake, tilt, smile, gaze) → the
+participation policy and, optionally, the conversational model.
+
+| Claim | State |
+|---|---|
+| The face model runs in a browser | **Measured** — 117 ms to load, 13 ms median frame under software rendering, against a 500 ms budget at 2 fps. |
+| It reads a real face | **Measured** — 52 blendshapes and a 4×4 transformation matrix from a frame cut out of a real meeting recording. |
+| It needs WebGL | **Measured** — both the GPU and the CPU delegate fail without a context. Same requirement as Live2D, which did render inside Attendee, so the two stand or fall together. |
+| It runs inside Attendee | **Not verified.** No live run has carried a webcam frame yet. |
+| Acoustic turn-end costs no latency | **Measured** — first-audio 221–344 ms with the model off, 235–322 ms with it on, same harness. |
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

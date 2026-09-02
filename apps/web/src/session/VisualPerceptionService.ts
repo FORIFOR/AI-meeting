@@ -10,6 +10,11 @@ import { VisualPerception, type FaceObservation, type VisualCue } from "@rcai/vi
  * The model and its WASM runtime are self-hosted (`scripts/fetch-mediapipe.sh` → `/mediapipe/…`).
  * The page runs inside a meeting vendor's browser, and a page that only works while a third-party CDN
  * is reachable is a page that fails mid-call.
+ *
+ * It needs WebGL — the CPU delegate does too, measured — so it lives or dies with the same context
+ * Live2D needs. Where that context exists it is cheap: 117 ms to load and a 13 ms median frame under
+ * software rendering, against a 500 ms budget at Attendee's 2 fps. Where it does not, `start()` leaves
+ * `blockedReason` set and the meeting carries on hearing instead of seeing.
  */
 export interface VisualPerceptionOptions {
   /** Where the self-hosted model and wasm live. Default `/mediapipe`. */

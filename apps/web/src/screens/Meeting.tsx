@@ -30,6 +30,12 @@ export function Meeting(p: MeetingProps) {
   const [name, setName] = useState("");
   const [personaId, setPersonaId] = useState("");
   const [proactivity, setProactivity] = useState<Proactivity>("addressed_only");
+  /**
+   * "cues" reads the webcam in this page only — nods, expressions, gaze — and nothing leaves it.
+   * "model" also sends frames to the conversational provider, which is a different privacy decision
+   * and is why it is not the default.
+   */
+  const [vision, setVision] = useState<"cues" | "model" | "off">("cues");
   const [mode, setMode] = useState<"output_media" | "relay">("output_media");
   const [status, setStatus] = useState<MeetingStatus | null>(null);
   const [timeline, setTimeline] = useState<{ at: number; text: string }[]>([]);
@@ -40,7 +46,7 @@ export function Meeting(p: MeetingProps) {
   /** Guards the single-use activation against StrictMode's double effect invocation. */
   const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
-  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string } | null>(null);
+  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string; vision?: string } | null>(null);
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
@@ -96,6 +102,8 @@ export function Meeting(p: MeetingProps) {
         botAgentUrl: isBot ? botOrigins.agentUrl : undefined,
         botActivation: isBot && activation ? activation : undefined,
         voiceId: isBot ? botConfig?.voice : undefined,
+        vision: (isBot ? botConfig?.vision : vision) === "model",
+        visualCues: (isBot ? botConfig?.vision : vision) !== "off",
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
@@ -153,7 +161,7 @@ export function Meeting(p: MeetingProps) {
       try {
         const m = await import("@rcai/connector-recall");
         const act = await m.activateBotPage(p.botParams?.brokerUrl ?? p.settings.brokerUrl, token);
-        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice });
+        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice, vision: act.botPageQuery.vision });
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
@@ -226,6 +234,14 @@ export function Meeting(p: MeetingProps) {
             <option value="invited">「誰か意見ある？」にも答える</option>
             <option value="active">未回答の質問にも自発的に答える</option>
             <option value="open">呼ばれなくても会話に入る</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>カメラを見る</label>
+          <select className="select" value={vision} onChange={(e) => setVision(e.target.value as "cues" | "model" | "off")} disabled={joined}>
+            <option value="cues">うなずきや表情を読む</option>
+            <option value="model">映像もAIに見せる（トークン消費・映像が送信されます）</option>
+            <option value="off">見ない</option>
           </select>
         </div>
         <div className="field"><label>接続方式</label>

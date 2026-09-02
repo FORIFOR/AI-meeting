@@ -16,7 +16,7 @@ export type ParticipationState = "OBSERVING" | "LISTENING" | "ADDRESSED" | "RESP
  * nobody does when talking to a person. Once someone calls the character by name, their following
  * turns count as addressed until the conversation moves on.
  */
-export type EngagementState = "PASSIVE" | "ENGAGED";
+export type EngagementState = "PASSIVE" | "ENGAGED" | "YIELDING" | "COOLDOWN";
 
 export interface Engagement {
   /** Who the character is talking with. Identity first, display name as the fallback. */
@@ -52,6 +52,8 @@ export interface ParticipationPolicyOptions {
   silenceGapMs?: number;
   /** In "active" mode, respond to any question once the room has been silent this long (ms). Default 1800. */
   activeSilenceMs?: number;
+  /** How long the floor stays with a person after they stop speaking (ms). Default 700. */
+  yieldGraceMs?: number;
   /**
    * Treat a clear visual reaction from the person the character is talking with as a turn: a nod is an
    * answer, and a head shake or a tilt is a request to say it differently. Only inside an engaged
@@ -103,6 +105,8 @@ export class ParticipationPolicy {
   /** The utterance that triggered ADDRESSED (for the assistant's context). */
   addressedBy: { text: string; speakerName?: string | null; detection: AddressDetection } | null = null;
   private engagement: Engagement | null = null;
+  private yieldingUntil = -Infinity;
+  private lastTickAt = 0;
 
   constructor(options: ParticipationPolicyOptions) {
     this.opts = {
@@ -114,6 +118,7 @@ export class ParticipationPolicy {
       activeSilenceMs: options.activeSilenceMs ?? 1800,
       openMinChars: options.openMinChars ?? 6,
       visualTurns: options.visualTurns ?? true,
+      yieldGraceMs: options.yieldGraceMs ?? 700,
       selfNames: options.selfNames ?? options.names,
       engagementTtlMs: options.engagementTtlMs ?? 90_000,
     };
@@ -136,10 +141,31 @@ export class ParticipationPolicy {
   /** Someone (not the character) started/stopped speaking. */
   onSpeechActivity(active: boolean, now: number, speakerName?: string | null): void {
     if (this.isSelf(speakerName)) return;
+    this.lastTickAt = Math.max(this.lastTickAt, now);
     if (active) {
       this.lastSpeechAt = now;
+      // The floor is theirs while they hold it, and for a moment after — a gap between two clauses is
+      // not an invitation.
+      this.yieldingUntil = now + this.opts.yieldGraceMs;
       if (this._state === "OBSERVING") this.transition("LISTENING", now, "speech");
     }
+  }
+
+  /**
+   * A person started talking while the character was answering.
+   *
+   * The audio is stopped by the runtime's fast path long before this is called — that is a hard
+   * requirement and not a policy decision. What the policy does is remember that the character was
+   * cut off: the conversation is still open, the floor is not.
+   */
+  onInterrupted(now: number): void {
+    this.lastTickAt = Math.max(this.lastTickAt, now);
+    this.yieldingUntil = now + this.opts.yieldGraceMs;
+    this.addressedBy = null;
+    this.pendingQuestion = null;
+    // Being cut off does not count as a turn the character took: it did not get to finish one.
+    this.consecutive = 0;
+    if (this._state !== "OBSERVING") this.transition("OBSERVING", now, "interrupted");
   }
 
   /** Who the character is in conversation with, if anyone. */
@@ -147,8 +173,21 @@ export class ParticipationPolicy {
     return this.engagement;
   }
 
+  /**
+   * PASSIVE   not in a conversation
+   * ENGAGED   in one, and it is the character's turn to be spoken to
+   * YIELDING  in one, but a person is speaking — the floor is theirs until they stop
+   * COOLDOWN  in one, just finished answering — briefly deaf to its own echo and to backchannels
+   *
+   * The distinction is not cosmetic: YIELDING is what an interruption produces, and a character that
+   * cannot tell "I was cut off" from "nobody is talking to me" either restarts the conversation from
+   * scratch or keeps talking over the person who cut in.
+   */
   get engagementState(): EngagementState {
-    return this.engagement ? "ENGAGED" : "PASSIVE";
+    if (!this.engagement) return "PASSIVE";
+    if (this.yieldingUntil > this.lastTickAt) return "YIELDING";
+    if (this.lastTickAt - this.lastResponseEndAt < this.opts.cooldownMs) return "COOLDOWN";
+    return "ENGAGED";
   }
 
   /** Stable-ish identity for a speaker: the vendor's id when there is one, the display name otherwise. */
@@ -232,9 +271,11 @@ export class ParticipationPolicy {
    * The cue is an observation, so what it earns is a turn — never a conclusion about the person.
    */
   onVisualCue(cue: VisualCue, now: number): boolean {
+    this.lastTickAt = Math.max(this.lastTickAt, now);
     if (!this.opts.visualTurns || !this.engagement) return false;
     if (cue.participantId !== this.engagement.participantId) return false;
     if (!cue.facePresent || cue.confidence < 0.6) return false;
+    if (this.engagementState === "YIELDING") return false; // someone is talking; a nod is not an interruption
     if (this._state === "RESPONDING" || this._state === "ADDRESSED") return false;
     if (now - this.lastResponseEndAt < this.opts.cooldownMs) return false;
     if (this.consecutive >= this.opts.maxConsecutiveResponses) return false;
@@ -257,6 +298,7 @@ export class ParticipationPolicy {
 
   /** Time-based transitions; call periodically. */
   tick(now: number): void {
+    this.lastTickAt = Math.max(this.lastTickAt, now);
     this.expireEngagement(now);
     if (this._state === "LISTENING" && now - this.lastSpeechAt > this.opts.silenceGapMs) {
       const proactive = this.opts.proactivity === "active" || this.opts.proactivity === "open";
@@ -292,6 +334,7 @@ export class ParticipationPolicy {
 
   /** Force back to observing (e.g. operator pressed "mute character"). */
   reset(now: number): void {
+    this.yieldingUntil = -Infinity;
     this.addressedBy = null;
     this.pendingQuestion = null;
     this.engagement = null;

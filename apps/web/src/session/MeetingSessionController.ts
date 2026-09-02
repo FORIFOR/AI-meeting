@@ -9,6 +9,9 @@ import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
+/** Gemini Live takes at most 1 fps, and every frame costs tokens whether or not it changes anything. */
+const VISION_MIN_INTERVAL_MS = 1000;
+
 /** How long the pipeline waits for the AudioContext before mounting the avatar anyway. */
 const AUDIO_START_GRACE_MS = 2500;
 
@@ -58,6 +61,14 @@ export interface MeetingInit {
    * operator's `ws://localhost:8788` is unreachable there and the character would never speak.
    */
   botAgentUrl?: string;
+  /**
+   * Show the conversational model the camera, not just the face measurements. Off by default: it costs
+   * tokens on every frame and sends a participant's image to a cloud provider, which is a decision
+   * rather than a detail.
+   */
+  vision?: boolean;
+  /** Read the webcam at all. Off means no face model is loaded and no frames are decoded. */
+  visualCues?: boolean;
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
@@ -100,6 +111,7 @@ export class MeetingSessionController {
   private visual: VisualPerceptionService | null = null;
   /** The latest cue per participant, for the answer's context. Observations, never conclusions. */
   private cues = new Map<string, VisualCue>();
+  private lastVisionAt = -Infinity;
 
   /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
@@ -141,6 +153,14 @@ export class MeetingSessionController {
     this.policy.onTransition((t) => {
       init.handlers.onPolicy(t);
       if (t.to === "ADDRESSED") void this.answer();
+      /**
+       * The character's face follows the conversation, not only the audio. Being spoken to and
+       * deciding to answer look different from listening to a room, and a face that only changes when
+       * sound starts is a face that arrives late to every turn.
+       */
+      if (t.to === "ADDRESSED") this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
+      if (t.to === "LISTENING") this.avatarRuntime?.handleEvent({ type: "user_speech_started", at: t.at });
+      if (t.to === "OBSERVING" && t.reason === "interrupted") this.avatarRuntime?.handleEvent({ type: "interrupted" });
     });
   }
 
@@ -192,7 +212,16 @@ export class MeetingSessionController {
       brokerUrl: settings.brokerUrl,
       privacyMode: settings.privacyMode,
       mode,
-      botPageQuery: { character: character.id, persona: persona.id, engine: this.decision.conversation, name: displayName, proactivity: this.init.proactivity, language: persona.language, ...(this.voiceId() ? { voice: this.voiceId()! } : {}) },
+      botPageQuery: {
+        character: character.id,
+        persona: persona.id,
+        engine: this.decision.conversation,
+        name: displayName,
+        proactivity: this.init.proactivity,
+        language: persona.language,
+        vision: this.init.vision ? "model" : this.init.visualCues === false ? "off" : "cues",
+        ...(this.voiceId() ? { voice: this.voiceId()! } : {}),
+      },
     });
     const session = await connector.join({ meetingUrl, displayName, privacyMode: settings.privacyMode, language: persona.language.split("-")[0] });
     this.session = session;
@@ -425,9 +454,30 @@ export class MeetingSessionController {
     // Entering ADDRESSED is handled by the transition listener, whatever caused it.
   }
 
+  /**
+   * Should the model see this frame?
+   *
+   * A face model reads a nod; a vision model reads the room, an expression the landmarks miss, what
+   * someone is holding up to the camera. It is worth having and not worth spending on every frame:
+   * Gemini takes at most 1 fps, every frame costs tokens, and a frame of a person who is not talking
+   * to the character answers a question nobody asked. So: only the participant it is in a
+   * conversation with, at most once a second, and while the character is speaking only when the face
+   * actually changed — a reaction to what it is saying is the one thing worth interrupting for.
+   */
+  private maybeShowModel(participantId: string, jpegBase64: string, at: number, cue: VisualCue): void {
+    const rt = this.runtime;
+    if (!rt || !this.init.vision) return;
+    if (this.policy.engagedWith?.participantId !== participantId) return;
+    if (at - this.lastVisionAt < VISION_MIN_INTERVAL_MS) return;
+    const speaking = this.policy.state === "RESPONDING";
+    if (speaking && !(cue.nodded || cue.shookHead || cue.tilted || cue.smile > 0.6)) return;
+    this.lastVisionAt = at;
+    rt.pushImage({ data: jpegBase64, mimeType: "image/jpeg" });
+  }
+
   /** Loads the face model in the background; a failure is named, never silent, and never fatal. */
   private async startVisual(): Promise<void> {
-    if (this.visual) return;
+    if (this.visual || this.init.visualCues === false) return;
     const v = new VisualPerceptionService();
     this.visual = v;
     await v.start();
@@ -465,6 +515,7 @@ export class MeetingSessionController {
     const cue = await this.visual.onFrame(participantId, jpegBase64, at);
     if (!cue) return;
     this.cues.set(participantId, cue);
+    this.maybeShowModel(participantId, jpegBase64, at, cue);
     // The avatar mirrors the room a little: a person smiling is met with a warmer face, not a report.
     if (cue.smile > 0.55 && cue.confidence > 0.6) this.avatarRuntime?.setEmotion("warm_positive", Math.min(0.5, cue.smile));
     this.policy.onVisualCue(cue, Date.now());
@@ -511,9 +562,18 @@ export class MeetingSessionController {
         if (e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
         break;
       case "assistant_speech_ended":
-      case "interrupted":
         void this.session?.endOutboundUtterance?.();
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
+        break;
+      case "interrupted":
+        /**
+         * Cut off mid-sentence. The audio has already stopped — that is the runtime's fast path and not
+         * a decision made here. What matters to the conversation is that this was not a turn the
+         * character completed: the floor belongs to whoever cut in, the conversation stays open, and
+         * the consecutive-turn count must not be spent on an answer nobody heard.
+         */
+        void this.session?.endOutboundUtterance?.();
+        this.policy.onInterrupted(now);
         break;
       case "error":
         this.init.handlers.onError(e.error.message, "PROVIDER");

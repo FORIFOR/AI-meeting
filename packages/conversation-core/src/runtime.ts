@@ -17,6 +17,8 @@ export interface ConversationSource {
   getOutputStream?(): MediaStream | null;
   /** Optional: providers that want the raw mic stream (WebRTC) instead of PCM frames. */
   attachInputStream?(stream: MediaStream): void;
+  /** Optional: providers that can look at a still image alongside the audio. */
+  pushImage?(image: { data: Uint8Array | string; mimeType: string }): void;
 }
 
 export type ConversationState = "idle" | "listening" | "thinking" | "speaking" | "interrupted";
@@ -157,6 +159,17 @@ export class ConversationRuntime {
     }
     this.record.audioMetrics.frames++;
     this.provider?.pushAudio(frame);
+  }
+
+  /**
+   * A camera frame for the model to look at.
+   *
+   * Rate-limited by the caller, not here: what is worth showing depends on the conversation (a face
+   * during a reply is worth a frame; a face during silence is not), and the runtime does not know
+   * that. Providers that cannot take images ignore it — vision is an extra, never a requirement.
+   */
+  pushImage(image: { data: Uint8Array | string; mimeType: string }): void {
+    this.provider?.pushImage?.(image);
   }
 
   attachMicStream(stream: MediaStream): void {

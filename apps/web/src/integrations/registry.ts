@@ -45,8 +45,14 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
   switch (id) {
     case "openai": {
       const mod = await import("@rcai/provider-openai");
-      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string }>>(mod, "OpenAIRealtimeProvider", "BLOCKED_BY_PROVIDER_OPENAI");
-      return new C({ brokerUrl: o.brokerUrl, model: o.model });
+      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; turnDetection?: "server_vad" | "semantic_vad" }>>(mod, "OpenAIRealtimeProvider", "BLOCKED_BY_PROVIDER_OPENAI");
+      /**
+       * Semantic VAD estimates whether an utterance *finished*, rather than whether sound stopped —
+       * the same question Smart Turn answers locally. In a meeting our own answer is authoritative,
+       * because it is per speaker and OpenAI hears one mixed stream, but asking for the better
+       * estimate costs nothing where the two agree.
+       */
+      return new C({ brokerUrl: o.brokerUrl, model: o.model, turnDetection: o.expressive ? "semantic_vad" : undefined });
     }
     case "google": {
       const mod = await import("@rcai/provider-gemini");
