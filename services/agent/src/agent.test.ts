@@ -9,7 +9,7 @@ import { WhisperServerSTT } from "./adapters/stt.js";
 import { EnergyVADAdapter, type VADAdapter, type VADAdapterEvent } from "./adapters/vad.js";
 import { AsyncQueue, ConversationSession } from "./session.js";
 import type { ServerMessage } from "./protocol.js";
-import type { LLMAdapter } from "./adapters/llm.js";
+import type { ChatMessage, LLMAdapter } from "./adapters/llm.js";
 import { AivisSpeechTTS, type TTSAdapter } from "./adapters/tts.js";
 import type { STTAdapter } from "./adapters/stt.js";
 
@@ -512,7 +512,7 @@ describe("what the character remembers saying", () => {
   it("has its own last turn in context before the next one starts", async () => {
     const seen: ChatMessage[][] = [];
     class RecordingLLM extends FakeLLM {
-      async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
+      override async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
         seen.push([...m]);
         yield* super.stream(m, opts);
       }
@@ -530,7 +530,7 @@ describe("what the character remembers saying", () => {
   it("remembers a turn it was cut off in the middle of", async () => {
     const seen: ChatMessage[][] = [];
     class RecordingLLM extends FakeLLM {
-      async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
+      override async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
         seen.push([...m]);
         yield* super.stream(m, opts);
       }
