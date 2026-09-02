@@ -69,7 +69,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
     if (w.ready) finalStt = w;
     else console.warn("[agent] LOCAL_STT_FINAL=whisper but whisper-server is not reachable at", cfg.whisperServerUrl);
   }
-  const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel);
+  const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel, undefined, cfg.llmKey || undefined, cfg.llmReasoning || undefined);
   await llm.init();
 
   /**

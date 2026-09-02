@@ -22,7 +22,19 @@ export class OpenAICompatibleLLM implements LLMAdapter {
   ready = false;
   model: string;
 
-  constructor(private readonly baseUrl: string, model = "local", private readonly fetchImpl: typeof fetch = fetch, private readonly apiKey?: string) {
+  constructor(
+    private readonly baseUrl: string,
+    model = "local",
+    private readonly fetchImpl: typeof fetch = fetch,
+    private readonly apiKey?: string,
+    /**
+     * How much the model may think before answering, where the endpoint supports it. A thinking model
+     * in a conversation is a model that pauses: measured against gemini-3.5-flash, thinking cost
+     * ~1.5 s before the first token *and* consumed the whole `max_tokens` budget, so the reply came
+     * back as 「私は会議の」 and stopped. "none" is the right setting for talking.
+     */
+    private readonly reasoningEffort?: string,
+  ) {
     this.model = model;
   }
 
@@ -40,6 +52,16 @@ export class OpenAICompatibleLLM implements LLMAdapter {
     }
   }
 
+  /** llama.cpp on this machine, as opposed to a remote OpenAI-compatible endpoint. */
+  private get isLocalServer(): boolean {
+    try {
+      const h = new URL(this.baseUrl).hostname;
+      return h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0";
+    } catch {
+      return true;
+    }
+  }
+
   private headers(): Record<string, string> {
     return { "content-type": "application/json", ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}) };
   }
@@ -49,8 +71,21 @@ export class OpenAICompatibleLLM implements LLMAdapter {
       method: "POST",
       headers: this.headers(),
       signal: opts.signal,
-      // cache_prompt: llama.cpp reuses the KV cache for the unchanged system prompt + history prefix (TTFT ↓); other servers ignore it.
-      body: JSON.stringify({ model: this.model, messages, stream: true, max_tokens: opts.maxTokens ?? 120, temperature: opts.temperature ?? 0.7, cache_prompt: true }),
+      /**
+       * `cache_prompt` is llama.cpp's, not OpenAI's: it reuses the KV cache for the unchanged system
+       * prompt and history prefix, which is most of the local TTFT win. Other servers do not all
+       * ignore unknown fields — Gemini's OpenAI-compatible endpoint answers 400 — so it is sent only
+       * to a local server, where it is understood.
+       */
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        stream: true,
+        max_tokens: opts.maxTokens ?? 120,
+        temperature: opts.temperature ?? 0.7,
+        ...(this.isLocalServer ? { cache_prompt: true } : {}),
+        ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}),
+      }),
     });
     if (!res.ok || !res.body) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
     const reader = res.body.getReader();

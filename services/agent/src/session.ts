@@ -532,7 +532,12 @@ export class ConversationSession {
       if (rest) pushChunk(rest);
       this.deps.log?.(`llm first-token ${(turn.firstTokenAt ?? 0) - turn.llmStartAt}ms first-phrase ${(turn.firstPhraseAt ?? 0) - turn.llmStartAt}ms total ${this.clock() - turn.llmStartAt}ms`);
     } catch (err) {
-      if (!abort.signal.aborted) this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
+      // Logged as well as sent: a failing model otherwise reads as `reply "" (no audio)` in the agent's
+      // own log, which is indistinguishable from a model that had nothing to say.
+      if (!abort.signal.aborted) {
+        this.deps.log?.(`llm error: ${(err as Error).message}`);
+        this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
+      }
     } finally {
       queue.close();
     }

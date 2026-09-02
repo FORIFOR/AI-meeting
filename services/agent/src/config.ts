@@ -13,6 +13,8 @@ export interface AgentConfig {
   whisperServerUrl: string;
   llmUrl: string;
   llmModel: string;
+  llmKey: string;
+  llmReasoning: string;
   tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
   sbv2Url: string;
   sayVoice: string;
@@ -81,6 +83,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     whisperServerUrl: env.WHISPER_SERVER_URL ?? "http://127.0.0.1:8178",
     llmUrl: env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1",
     llmModel: env.LOCAL_LLM_MODEL ?? "local",
+    /**
+     * Bearer token for the LLM endpoint. Empty for llama.cpp on this machine; set when the endpoint is
+     * a cloud one — the local recogniser and the local voice are the parts worth keeping local, and a
+     * 2B model is not. `strict_local` still refuses any non-loopback endpoint, key or no key.
+     */
+    llmKey: env.LOCAL_LLM_KEY ?? "",
+    /** "none" for a thinking model that has to hold a conversation; unset for servers without it. */
+    llmReasoning: env.LOCAL_LLM_REASONING ?? "",
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",
