@@ -14,6 +14,7 @@ export const PRODUCTS: { mode: ConversationMode; kana: string; name: string; des
   { mode: "tutor", kana: "Tutor", name: "学習", desc: "問いかけで理解を確かめながら進める。" },
   { mode: "career", kana: "Career", name: "キャリア相談", desc: "話しながら考えを整理する。" },
   { mode: "companion", kana: "Companion", name: "寄り添い", desc: "評価も助言もしない。近しい相手として、ただ聞く。" },
+  { mode: "task_planning", kana: "Tasks", name: "タスク整理", desc: "頭の中のやることを話して出す。相手が覚えて、最初の一歩を一緒に決める。" },
 ];
 
 export const MODE_NAME: Record<string, string> = Object.fromEntries(PRODUCTS.map((p) => [p.mode, p.name]));

@@ -215,6 +215,28 @@ slot, and the next turn's prompt is cold (0.9–1.3 s to first token, twice in t
 slot (`llama-server -np 2` with a larger `-c`) would take the fold off the conversation's cache; not
 done, because the two cold turns were not what made the run feel slow.
 
+## The derived modes, on the same base (measured 2026-09-02)
+
+The order was set by the product owner: a rich ordinary conversation first, and English practice,
+interview practice and task organisation derived from it. With the memory in place, each mode got its
+own scenario for `pnpm reality:conversation` (`PERSONA=… SCENARIO=scripts/reality/scenarios/…`) and was
+run on the hybrid path (local recogniser and voice, gemini-3.1-flash-lite) and again fully local
+(gemma-4-E2B, llama.cpp). The harness gained `PARAMS`, per-line `all` / `none` / `maxQuestions` / `lang`
+checks, a question count that understands 「〜でしょうか。」 and 「教えてください」, and an "echo
+opening" count — replies that hand the answer back (「〜なのですね。」) before saying anything.
+
+| mode | scenario | hybrid | fully local | what was fixed on the way |
+|---|---|---|---|---|
+| 英会話 `english_daily` | 14 turns, learner slips into Japanese once, asks for 「乗り換え」, memory callback | **13 / 14** (one reply asked two questions) · reply p50 104 chars · first audio 403 ms | **14 / 14** · first audio 406 / 1498 ms | **The voice was told every sentence was Japanese.** Supertonic is tagged per utterance and the session never passed its language, so English came out through the Japanese path — the recogniser heard "Are you need to be a bit successful" for "a morning meeting can be a bit stressful". The session now passes its language to the voice (`en` → 10.6 → 12.1 chars/s, and heard correctly), and the pre-rendered fillers are "Um," / "Hmm," / "Well," in an English lesson instead of 「えーっと」. |
+| 面接練習 `interviewer_ja` | 13 turns: vague answer, hesitation, incident, reverse question | **18 / 18** · echo openings **7/12 → 0/13** · timeouts 1 → 0 · reply p50 58 → 44 | **18 / 18** · echo 2/13 · first audio 668 / 1036 ms | The interviewer paraphrased every answer back before asking (「チーム内での調整も重要な役割だったのですね。」 ×7), against the persona's own rule, and on the reverse question it answered at length *and* closed the interview in one breath (25 s, timed out). The persona now says what "do not summarise" means — 「なるほど」 and on to the next question — and how to take a reverse question: two sentences, then 「他にご質問はありますか」, no closing until the candidate says 以上です. |
+| タスク整理 `task_organizer_ja` | 14 turns: five tasks dumped in passing, one cancelled mid-way, priorities, first step, final read-back | **14 / 14** · reads the list only when asked, drops the cancelled dentist, ends on 「まずはメールからだね」 | **12 / 14** — the 2B model's final read-back lost the vet and the gym, and it recites the list unasked | New mode `task_planning` and persona: a friend who keeps the list, not a manager. The memory notes are what make the read-back possible after the window has moved on. |
+
+Local-model quality, honestly: the English run passed every keyword and still said "I don't have any
+information about your specific meetings" before recalling the meeting; the interview asked its
+questions as requests (「教えてください」) rather than questions, which is fine for an interviewer and
+was miscounted until the harness learned it. The 2B model holds these modes; it does not hold them
+as well as the cloud model, and the read-back of a five-item list is where it shows.
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

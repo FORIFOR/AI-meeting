@@ -11,7 +11,9 @@ export type ConversationMode =
   | "tutor"
   | "career"
   /** Personal, unstructured conversation with someone close — company rather than practice. */
-  | "companion";
+  | "companion"
+  /** Thinking out loud about what has to be done: the character listens, keeps the list, helps choose the first step. */
+  | "task_planning";
 
 export interface TurnHistoryItem {
   role: "user" | "assistant";

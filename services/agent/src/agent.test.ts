@@ -172,9 +172,11 @@ class FakeTTS implements TTSAdapter {
   engine = "fake"; ready = true; voice = "v";
   calls: string[] = [];
   voiceCalls: (string | undefined)[] = [];
-  async synthesize(text: string, signal?: AbortSignal, voice?: string) {
+  languageCalls: (string | undefined)[] = [];
+  async synthesize(text: string, signal?: AbortSignal, voice?: string, language?: string) {
     this.calls.push(text);
     this.voiceCalls.push(voice);
+    this.languageCalls.push(language);
     await new Promise((r, rej) => { const t = setTimeout(r, 5); signal?.addEventListener("abort", () => { clearTimeout(t); rej(new Error("aborted")); }); });
     return { sampleRate: 16000, pcm16: new Int16Array(16000) }; // 1 s per sentence
   }
@@ -222,6 +224,16 @@ describe("ConversationSession", () => {
     void s.onText("こんにちは");
     await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
     expect(new Set(tts.voiceCalls)).toEqual(new Set([undefined]));
+  });
+  it("tells the voice which language it is speaking, so an English lesson is pronounced as English", async () => {
+    const { s, sent, tts } = makeSession(new FakeLLM("Morning! Did you sleep well?"));
+    s.start({ systemPrompt: "x", mode: "english_lesson", language: "en-US", privacyMode: "strict_local", providerOptions: { turnPolicy: { backchannel: true } } });
+    void s.onText("Hi");
+    await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
+    expect(new Set(tts.languageCalls)).toEqual(new Set(["en-US"]));
+    // The pre-rendered fillers are in the lesson's language too — 「えーっと」 has no place in it.
+    expect(tts.calls.some((t) => /^(Um|Hmm|Well),$/.test(t))).toBe(true);
+    expect(tts.calls.some((t) => /えーっと|うーん|そうですね/.test(t))).toBe(false);
   });
   it("barge-in aborts LLM/TTS, stops audio and emits interrupted", async () => {
     const { s, sent, audio, vad, tts } = makeSession(new FakeLLM("一つ目の理由は春が暖かいこと。二つ目は花が咲くこと。三つ目は新しい出会いがあること。四つ目もあるよ。", 15));

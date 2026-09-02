@@ -184,13 +184,13 @@ export class ConversationSession {
 
   /** Render the fillers for this session's voice, in the background: a turn must not wait for them. */
   private primeFillers(): void {
-    const phrases = this.deps.fillers ?? ["えーっと、", "うーん、", "そうですね、"];
+    const phrases = this.deps.fillers ?? (this.language.toLowerCase().startsWith("en") ? ["Um,", "Hmm,", "Well,"] : ["えーっと、", "うーん、", "そうですね、"]);
     this.filler.clips = [];
     this.filler.next = 0;
     void (async () => {
       for (const phrase of phrases) {
         try {
-          const r = await this.deps.tts.synthesize(phrase, undefined, this.voice);
+          const r = await this.deps.tts.synthesize(phrase, undefined, this.voice, this.language);
           if (r.pcm16.length) this.filler.clips.push(r);
         } catch {
           // A voice that cannot say 「えーっと」 simply does not get fillers.
@@ -718,10 +718,10 @@ export class ConversationSession {
   /** Wrap an adapter into a chunk stream (streaming adapters yield as they synthesize). */
   private ttsStream(text: string, signal: AbortSignal): AsyncIterable<TTSResult> {
     const tts = this.deps.tts;
-    if (tts.synthesizeStream) return tts.synthesizeStream(text, signal, this.voice);
+    if (tts.synthesizeStream) return tts.synthesizeStream(text, signal, this.voice, this.language);
     // The request is issued now (lookahead); a rejection before iteration (e.g. abort) must not
     // surface as an unhandled promise rejection, so it is captured and re-thrown to the consumer.
-    const p = tts.synthesize(text, signal, this.voice).then((r) => ({ ok: true as const, r }), (err: unknown) => ({ ok: false as const, err }));
+    const p = tts.synthesize(text, signal, this.voice, this.language).then((r) => ({ ok: true as const, r }), (err: unknown) => ({ ok: false as const, err }));
     return {
       async *[Symbol.asyncIterator]() {
         const res = await p;

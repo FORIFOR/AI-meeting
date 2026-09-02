@@ -1,0 +1,20 @@
+{
+  "title": "English lesson: a weekday morning (intermediate learner, slips into Japanese once)",
+  "persona": "english_daily",
+  "turns": [
+    { "text": "Good morning! I slept okay, but I woke up late. I have a meeting at ten.", "expect": { "in_english": { "lang": "en" }, "one_question": { "maxQuestions": 1 } } },
+    { "text": "It's about a new app design. My team is making a to-do app for busy people." },
+    { "text": "Yes, I'm the leader. It's my first time, so I'm a little nervous.", "expect": { "in_english": { "lang": "en" }, "no_summary_back": { "none": ["So you are saying", "So you're saying", "In other words"] } } },
+    { "text": "For breakfast I had toast and coffee. I usually skip breakfast, but today I had time.", "expect": { "short_reply": { "minChars": 20 } } },
+    { "text": "えっと、通勤は電車で40分くらいかかります。", "expect": { "answers_in_english": { "lang": "en" }, "offers_phrase": { "any": ["commute", "takes", "train", "You could say", "you can say", "How about"] } } },
+    { "text": "Ah, okay. My commute takes about forty minutes by train. I usually listen to podcasts." },
+    { "text": "Mostly English podcasts about technology. Sometimes I don't understand everything, but it's fun.", "expect": { "encourages_not_corrects": { "none": ["mistake", "incorrect", "wrong", "grammar"] } } },
+    { "text": "How do you say 「乗り換え」 in English? I always forget this word.", "expect": { "gives_word": { "any": ["transfer", "change trains", "connection"] } } },
+    { "text": "Transfer, right. I transfer twice every morning. It's tiring." },
+    { "text": "After work I usually go to the gym, or I walk my dog. His name is Momo." },
+    { "text": "He's a shiba inu, three years old. He is very energetic in the morning.", "expect": { "in_english": { "lang": "en" }, "one_question": { "maxQuestions": 1 } } },
+    { "text": "Do you remember what my meeting is about today?", "expect": { "recalls_app": { "any": ["app", "design", "to-do", "todo"] } } },
+    { "text": "Yes! I hope it goes well. Anyway, I should get ready now." },
+    { "text": "Thanks for the chat. See you tomorrow!", "expect": { "closes_in_english": { "lang": "en" }, "no_question_at_close": { "noQuestion": true } } }
+  ]
+}

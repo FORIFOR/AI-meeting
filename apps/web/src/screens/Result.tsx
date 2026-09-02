@@ -5,7 +5,7 @@ import { PROVIDER_LABEL, loadSettings } from "../state/settings.js";
 import { RATING_AXES, clearGate, loadGate, saveGate, submitGate, type GateEntry } from "../components/humanGateStore.js";
 import { reportToMarkdown } from "@rcai/observability";
 
-const MODE_JA: Record<string, string> = {"interview": "面接練習", "english_lesson": "英会話", "free_talk": "雑談", "sales_roleplay": "営業ロープレ", "tutor": "学習", "career": "キャリア相談"};
+const MODE_JA: Record<string, string> = {"interview": "面接練習", "english_lesson": "英会話", "free_talk": "雑談", "sales_roleplay": "営業ロープレ", "tutor": "学習", "career": "キャリア相談", "companion": "寄り添い", "task_planning": "タスク整理"};
 const AXES: { key: "clarity" | "specificity" | "structure" | "relevance" | "fluency"; ja: string }[] = [
   { key: "clarity", ja: "明瞭さ" },
   { key: "specificity", ja: "具体性" },

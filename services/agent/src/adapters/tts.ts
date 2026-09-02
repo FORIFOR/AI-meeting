@@ -17,14 +17,18 @@ export interface TTSAdapter {
   readonly voice: string;
   /** Voices this engine can actually use on this machine (undefined = unknown). */
   readonly voices?: string[];
-  /** `voice` overrides the adapter's configured voice for this utterance (the user's choice). */
-  synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult>;
+  /**
+   * `voice` overrides the adapter's configured voice for this utterance (the user's choice);
+   * `language` is the session's BCP-47 tag, for engines that pronounce more than one language.
+   * Engines that speak only one ignore it.
+   */
+  synthesize(text: string, signal?: AbortSignal, voice?: string, language?: string): Promise<TTSResult>;
   /**
    * Optional streaming path: audio chunks are yielded as the engine produces them, so playback
    * can start before the whole phrase is synthesized. The request must be issued when this is
    * called (not when iteration starts) so a caller can queue the next phrase early.
    */
-  synthesizeStream?(text: string, signal?: AbortSignal, voice?: string): AsyncIterable<TTSResult>;
+  synthesizeStream?(text: string, signal?: AbortSignal, voice?: string, language?: string): AsyncIterable<TTSResult>;
 }
 
 /** macOS `say` — dev/fallback TTS; no network, ships with the OS. ~0.65–0.77 s fixed spawn/file overhead per call. */
@@ -74,6 +78,9 @@ export class SayTTS implements TTSAdapter {
  * of speech. That is faster than realtime but nothing like the resident macOS daemon's 60 ms to first
  * audio, so it is a quality choice rather than a latency one.
  */
+/** From vendor/supertonic/helper.js `AVAILABLE_LANGS`; the helper throws on anything else. */
+const SUPERTONIC_LANGS = new Set(["en", "ko", "ja", "ar", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hi", "hr", "hu", "id", "it", "lt", "lv", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "tr", "uk", "vi"]);
+
 export class SupertonicTTS implements TTSAdapter {
   readonly engine = "supertonic-3";
   ready = false;
@@ -137,17 +144,28 @@ export class SupertonicTTS implements TTSAdapter {
    */
   private queue: Promise<unknown> = Promise.resolve();
 
-  async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
+  async synthesize(text: string, signal?: AbortSignal, voice?: string, language?: string): Promise<TTSResult> {
     if (!this.ready || !this.tts) throw new Error("supertonic not ready");
-    const mine = this.queue.then(() => this.run(text, signal, voice));
+    const mine = this.queue.then(() => this.run(text, signal, voice, language));
     // A failure must not wedge the queue for every phrase after it.
     this.queue = mine.catch(() => undefined);
     return mine;
   }
 
-  private async run(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
+  /**
+   * The model is tagged per utterance: `<en>…</en>` is pronounced as English, `<ja>…</ja>` as Japanese.
+   * The tag matters even for a model that can say both — the same English sentence tagged `ja` came
+   * back from the recogniser as "Are you need to be a bit successful", tagged `en` as "a morning
+   * meeting can be a bit stressful". A language the model does not list falls back to the configured one.
+   */
+  private langFor(language?: string): string {
+    const primary = language?.split(/[-_]/)[0]?.toLowerCase();
+    return primary && SUPERTONIC_LANGS.has(primary) ? primary : (this.opts.language ?? "ja");
+  }
+
+  private async run(text: string, signal?: AbortSignal, voice?: string, language?: string): Promise<TTSResult> {
     if (signal?.aborted) throw new Error("aborted");
-    const { wav, duration } = await this.tts!.call(text, this.opts.language ?? "ja", this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
+    const { wav, duration } = await this.tts!.call(text, this.langFor(language), this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
     if (signal?.aborted) throw new Error("aborted");
     // The model returns a fixed-size buffer; only `duration` says how much of it is speech.
     const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts!.sampleRate));
