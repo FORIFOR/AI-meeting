@@ -205,15 +205,25 @@ every turn), so the window is cut to half its budget at once and pays one cold p
 | after — cloud, window forced to 600 to exercise the fold | **8 / 9** (recalled from notes) | 34 · 2 | 80 % | 402 ms | 0 |
 | after — **fully local** gemma-4-E2B, 600-char window | **8 / 9** (「ごめん、ちょっと忘れてたかも。…京都旅行だったかな？」) | 36 · 2 | 65 % | 763 ms | 0 |
 
-The one that still fails, in every configuration, is `recalls_project`: asked for advice at turn 9 the
-character gives good generic advice without naming the project. That is a model-quality miss, not a
-memory one, and the check is a keyword check. Reply length needed no change: the 28-character p50 seen
-earlier came from the disjointed soak recording and its barge-ins, not from the persona.
+The one that still failed, in every configuration, was `recalls_project`: asked for advice at turn 9
+the character gave good generic advice without naming the project — 「それは人それぞれだよね。まずは話を
+聞いてみるのがいいんじゃないかな」. Not a memory miss (the same run recalls the app renewal by name at
+turn 18) but a persona one: 「アドバイスの押し付けをしない」 read as 「一般論で返す」. One line added
+to `personas/free_talk/friend_ja.json` — 意見を聞かれたら一般論ではなく、相手がさっき話した具体的なこと（誰と、
+どこで、何を）に引きつけて答える — and the same harness on the same cloud agent went 8/9 → **9/9** in two
+runs out of two (「せっかくリーダーなんだし、誰か一人でも話しやすい人はいないの？」). The cost is length:
+reply p50 32 → 44 and 55 characters across the two runs, 3 sentences against the persona's
+`maxSentences: 2`. Still a friend's turn, not a paragraph; watched, not tuned further. Reply length
+had needed no change before that: the 28-character p50 seen earlier came from the disjointed soak
+recording and its barge-ins, not from the persona.
 
-On the local model the fold costs what it costs — 3.5–5.9 s of background generation on the single
-slot, and the next turn's prompt is cold (0.9–1.3 s to first token, twice in twenty turns). A second
-slot (`llama-server -np 2` with a larger `-c`) would take the fold off the conversation's cache; not
-done, because the two cold turns were not what made the run feel slow.
+On the local model the fold costs what it costs — 3.5–5.9 s of background generation, and the next
+turn's prompt is partly cold (0.9–1.3 s to first token, twice in twenty turns). I first put that down
+to the fold evicting the conversation's slot; the server log says otherwise. llama-server picks
+`-np` automatically (4 slots here), the fold lands on a different slot by LRU, and the conversation's
+slot keeps the persona prefix: the turn after a fold re-processed 212 of 803 tokens — the notes and
+the window behind them, which is exactly what changed. That cost belongs to the notes being in the
+system message, and a second slot would not remove it. No `-np` change.
 
 ## The derived modes, on the same base (measured 2026-09-02)
 
