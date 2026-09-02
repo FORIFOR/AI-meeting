@@ -75,6 +75,21 @@ describe("staying in a conversation", () => {
     expect(p.state).not.toBe("ADDRESSED");
   });
 
+  it("a noise the recogniser wrote as a word is not a follow-up either (Gate #8 run 14: 「你。」「Great.」「Okay.」)", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ ...A, text: "ゆい、これどう思う？", final: true }, t);
+    exchange(p, t);
+    for (const line of ["你。", "Great.", "Okay.", "うん。", "はい", "Yes."]) {
+      t += 2000;
+      p.onTranscript({ ...A, text: line, final: true }, t);
+      expect(p.state, line).not.toBe("ADDRESSED");
+    }
+    t += 2000;
+    p.onTranscript({ ...A, text: "なんで？", final: true }, t); // short, but a question
+    expect(p.state).toBe("ADDRESSED");
+  });
+
   it("can be switched off, and then every turn needs the name again", () => {
     const p = new ParticipationPolicy({ names: ["Yui", "ゆい"], engagementTtlMs: 0, cooldownMs: 0 });
     let t = 1000;

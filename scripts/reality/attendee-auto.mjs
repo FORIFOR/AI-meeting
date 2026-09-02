@@ -219,7 +219,18 @@ for (const cue of CUES) {
   let status;
   let detail;
   switch (cue.id) {
-    case "greet": status = eventsBetween(ev, T0 - 60_000, end, "greeting").length && (speaking.length || heardS > 0.5) ? "PASS" : "FAIL"; detail = `greeting=${eventsBetween(ev, T0 - 60_000, end, "greeting").map((e) => JSON.stringify(e.data)).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
+    case "greet": {
+      // Yui greets on admission, and admission is per bot: when she is let in first, the greeting is
+      // over before the Tester (and T0) exists. Run 14 greeted at T0−26 s, 174 frames spoken by T0−18 s,
+      // and scored 0 against the window. The greeting is judged from its own event, not from T0.
+      const greeting = eventsBetween(ev, T0 - 60_000, end, "greeting");
+      const gAt = greeting[0]?.at ?? start;
+      const spokeAfter = eventsBetween(ev, gAt, end, "speaking").length;
+      const frames = eventsBetween(ev, gAt, end, "spoke").reduce((n, e) => Math.max(n, e.data?.frames ?? 0), 0);
+      status = greeting.length && (spokeAfter || heardS > 0.5) ? "PASS" : "FAIL";
+      detail = `greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
+      break;
+    }
     case "ask1": case "ask2": status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length ? "PARTIAL" : "FAIL"; detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
     case "third": case "chat": case "silence": status = !turns.length && !speaking.length ? "PASS" : "FAIL"; detail = `turn=${turns.length} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
     case "bargein": {

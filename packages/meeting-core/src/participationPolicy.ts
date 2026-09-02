@@ -97,6 +97,26 @@ export interface PolicyTransition {
 /** `addressedBy.detection.reason` for the one turn the character takes without being spoken to. */
 export const JOINED_REASON = "joined the meeting";
 
+/** Acknowledgements, in the languages a room mix gets transcribed into — none of them is a turn. */
+const BACKCHANNELS = new Set([
+  "うん", "ううん", "はい", "ええ", "へえ", "そう", "そうそう", "そうね", "そうだね", "なるほど", "ふーん", "ふうん", "おっけー", "おけ", "いいね", "いいよ", "了解", "りょうかい", "あー", "えー", "んー",
+  "ok", "okay", "yes", "yeah", "yep", "no", "nope", "right", "sure", "great", "good", "nice", "cool", "fine", "hmm", "hm", "mm", "mhm", "uh", "um", "oh", "ah", "wow", "thanks", "thank you",
+  "嗯", "好", "好的", "对", "是", "你", "你好", "谢谢",
+]);
+
+/**
+ * A follow-up is a sentence, not a noise. The recogniser writes a single word — in whatever
+ * language the sound resembled most — for a cough or a chair over an open mic, and an engaged
+ * character answered 「你。」「Great.」「Okay.」 in a room where nobody had spoken (Gate #8 run 14).
+ * Punctuation is stripped; what remains must be at least three characters long and not an
+ * acknowledgement. A real 「なんで？」 or "Why?" clears both bars.
+ */
+export function isFollowUpWorthy(text: string): boolean {
+  const core = text.normalize("NFKC").replace(/[\s\p{P}\p{S}]+/gu, "").toLowerCase();
+  if (core.length < 3 && !/[?？]/.test(text)) return false;
+  return !BACKCHANNELS.has(core);
+}
+
 export class ParticipationPolicy {
   private _state: ParticipationState = "OBSERVING";
   /** The current turn is the greeting on arrival: not a response, so it spends neither cooldown nor cap. */
@@ -252,7 +272,7 @@ export class ParticipationPolicy {
      * nothing either.
      */
     const engagedFollowUp =
-      !!this.engagement && !!key && this.engagement.participantId === key && !d.addressed && !d.reason.startsWith("name mentioned") && seg.text.trim().length >= 2;
+      !!this.engagement && !!key && this.engagement.participantId === key && !d.addressed && !d.reason.startsWith("name mentioned") && isFollowUpWorthy(seg.text);
     const explicitly = d.addressed || engagedFollowUp;
     const invited = d.invited && (this.opts.proactivity === "invited" || this.opts.proactivity === "active");
     if ((explicitly || invited) && !inCooldown && !capped) {
