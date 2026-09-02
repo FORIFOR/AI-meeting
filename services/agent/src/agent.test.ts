@@ -251,6 +251,53 @@ describe("ConversationSession", () => {
     expect(sent.filter((m) => m.type === "assistant_speech_ended").length).toBe(0);
     expect(tts.calls.length).toBeLessThan(4);
   });
+  describe("barge-in confirmation (bargeInConfirmMs)", () => {
+    const LONG = new FakeLLM("一つ目の理由は春が暖かいこと。二つ目は花が咲くこと。三つ目は新しい出会いがあること。四つ目もあるよ。", 15);
+    it("a cough while the character speaks does not cut it off", async () => {
+      const { s, sent, audio, vad } = makeSession(LONG);
+      s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "default", providerOptions: { bargeInConfirmMs: 500 } });
+      void s.onText("理由を教えて");
+      await waitFor(() => audio.length > 0, 5000);
+      const before = audio.length;
+      vad.queue.push({ type: "speech_start", at: 1 });
+      s.onAudio(new Uint8Array(640));
+      // Not yet an interruption: the character is still speaking and the client was not told.
+      expect(s.state).toBe("speaking");
+      expect(sent.map((m) => m.type)).not.toContain("user_speech_started");
+      vad.queue.push({ type: "speech_end", at: 200, samples: new Float32Array(3200) }); // 200 ms
+      s.onAudio(new Uint8Array(640));
+      expect(sent.map((m) => m.type)).not.toContain("interrupted");
+      expect(s.state).toBe("speaking");
+      await waitFor(() => audio.length > before, 5000); // audio keeps flowing
+    });
+    it("speech that lasts the window is a barge-in after all", async () => {
+      const { s, sent, audio, vad } = makeSession(LONG);
+      s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "default", providerOptions: { bargeInConfirmMs: 100 } });
+      void s.onText("理由を教えて");
+      await waitFor(() => audio.length > 0, 5000);
+      vad.queue.push({ type: "speech_start", at: 1 });
+      s.onAudio(new Uint8Array(640));
+      expect(s.state).toBe("speaking");
+      await waitFor(() => sent.some((m) => m.type === "interrupted"), 2000);
+      // Order matters for the client: the cut, then the listening state.
+      const types = sent.map((m) => m.type);
+      expect(types.indexOf("interrupted")).toBeLessThan(types.lastIndexOf("user_speech_started"));
+      expect(s.state).toBe("listening");
+      const before = audio.length;
+      await new Promise((r) => setTimeout(r, 200));
+      expect(audio.length).toBe(before);
+    });
+    it("without the option the onset itself interrupts (operator behaviour unchanged)", async () => {
+      const { s, sent, audio, vad } = makeSession(LONG);
+      s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "default" });
+      void s.onText("理由を教えて");
+      await waitFor(() => audio.length > 0, 5000);
+      vad.queue.push({ type: "speech_start", at: 1 });
+      s.onAudio(new Uint8Array(640));
+      expect(sent.map((m) => m.type)).toContain("interrupted");
+      expect(s.state).toBe("listening");
+    });
+  });
   it("rejects strict_local when an adapter endpoint is not loopback", () => {
     const sent: ServerMessage[] = [];
     const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FakeLLM(), tts: new FakeTTS(), send: (m) => sent.push(m), sendAudio: () => {}, nonLoopbackEndpoints: () => ["http://10.0.0.5:8080/v1"] });

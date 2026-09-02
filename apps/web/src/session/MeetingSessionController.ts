@@ -104,6 +104,9 @@ export interface MeetingInit {
  * ConversationRuntime (AI) ↔ AvatarRuntime. The AI only hears the meeting while the policy allows it and is
  * handed the addressing utterance as text (provider-agnostic), so it answers what it was asked.
  */
+/** How long room speech must last before the bot treats it as a barge-in (provider option, local agent). */
+const BOT_BARGE_IN_CONFIRM_MS = 600;
+
 export class MeetingSessionController {
   readonly policy: ParticipationPolicy;
   private session: MeetingSession | null = null;
@@ -438,7 +441,10 @@ export class MeetingSessionController {
       "うなずきや首振りは、言葉がなくても返事として扱ってよい。";
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
-    config.providerOptions = { ...config.providerOptions, opening: undefined };
+    // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
+    // time, and each onset used to cut the character mid-sentence (Gate #8 runs 6–7: the greeting
+    // died after one audio frame). Speech has to persist before it counts as an interruption.
+    config.providerOptions = { ...config.providerOptions, opening: undefined, bargeInConfirmMs: this.init.role === "bot" ? BOT_BARGE_IN_CONFIRM_MS : undefined };
     await runtime.start(provider, config);
   }
 
@@ -494,7 +500,7 @@ export class MeetingSessionController {
     if (status === "reconnecting" || status === "waiting_room") {
       // Hold the character: nothing we say can reach the room; the policy restarts clean once we are back.
       this.policy.reset(now);
-      void this.runtime?.interrupt();
+      this.cut(status);
     }
     if (prev === "reconnecting" && status === "in_call") this.policy.reset(now);
     if (status === "denied" || status === "removed" || status === "ended" || status === "failed" || status === "left") {
@@ -508,7 +514,7 @@ export class MeetingSessionController {
     this.init.handlers.onMuted?.(muted);
     if (muted) {
       this.policy.reset(Date.now());
-      void this.runtime?.interrupt();
+      this.cut("muted");
     }
   }
 
@@ -733,7 +739,7 @@ export class MeetingSessionController {
          * tokens and leaves the character mid-sentence when it is finally spoken to.
          */
         if (!this.sanctioned) {
-          void this.runtime?.interrupt();
+          this.cut("unsanctioned");
           break;
         }
         this.policy.markResponding(now);
@@ -797,6 +803,12 @@ export class MeetingSessionController {
   /** Operator: mute the character (back to observing). */
   hush(): void {
     this.policy.reset(Date.now());
+    this.cut("hush");
+  }
+
+  /** Stop whatever the character is saying, and tell the broker why (a bot's log is all we get from a room). */
+  private cut(reason: string): void {
+    if (this.init.role === "bot") this.report("cut", { reason, state: this.policy.state, sanctioned: this.sanctioned });
     void this.runtime?.interrupt();
   }
 

@@ -155,6 +155,15 @@ export class ConversationSession {
   private preroll: Float32Array[] = [];
   private prerollSamples = 0;
   readonly sessionStats = { turns: 0, prematureEndpoints: 0, bargeIns: 0 };
+  /**
+   * How long speech has to persist before it counts as a barge-in while the character is speaking
+   * or thinking (0 = the onset itself interrupts, the right answer for one person and a headset).
+   * In a meeting the VAD fires on every cough, backchannel and open mic in the room, and cutting the
+   * character's sentence for each of them is how it never finishes a greeting.
+   */
+  private bargeInConfirmMs = 0;
+  /** Speech onset that has not yet lasted `bargeInConfirmMs`: the character keeps talking for now. */
+  private tentative: { seq: number; voicedMs: number; timer: ReturnType<typeof setTimeout> | null } | null = null;
 
   constructor(private readonly deps: SessionDeps) {
     this.clock = deps.clock ?? (() => Date.now());
@@ -218,6 +227,8 @@ export class ConversationSession {
      */
     const policy = (config.providerOptions as { turnPolicy?: { backchannel?: boolean } } | undefined)?.turnPolicy;
     this.filler.enabled = policy?.backchannel ?? this.deps.fillersEnabled ?? false;
+    const confirm = (config.providerOptions as { bargeInConfirmMs?: unknown } | undefined)?.bargeInConfirmMs;
+    this.bargeInConfirmMs = typeof confirm === "number" && Number.isFinite(confirm) && confirm > 0 ? confirm : 0;
     if (this.filler.enabled) this.primeFillers();
     if (this.strictLocal) {
       const bad = this.deps.nonLoopbackEndpoints?.() ?? [];
@@ -251,10 +262,25 @@ export class ConversationSession {
     }
     for (const ev of this.deps.vad.process(samples, at)) {
       if (ev.type === "speech_start") {
-        if (this.state === "speaking" || this.state === "thinking") this.interrupt("barge-in");
+        if (this.state === "speaking" || this.state === "thinking") {
+          if (this.bargeInConfirmMs > 0) {
+            this.holdBargeIn(0);
+            continue;
+          }
+          this.bargeIn(at);
+        }
         this.state = "listening";
         this.deps.send({ type: "user_speech_started" });
       } else {
+        if (this.tentative) {
+          // Short enough to have ended before the confirmation window: not an interruption.
+          const voicedMs = Math.round((ev.samples.length / 16000) * 1000);
+          if (voicedMs >= this.bargeInConfirmMs) this.confirmBargeIn(at);
+          else if (this.state === "speaking" || this.state === "thinking") {
+            this.dropTentative(voicedMs);
+            continue;
+          } else this.confirmBargeIn(at); // the character finished on its own meanwhile: a normal turn
+        }
         if (this.state !== "listening") continue;
         this.deps.send({ type: "user_speech_ended" });
         this.state = "thinking";
@@ -288,35 +314,28 @@ export class ConversationSession {
     }
     for (const ev of this.deps.vad.process(samples, at)) {
       if (ev.type === "speech_start") {
-        if (this.state === "speaking" || this.state === "thinking") {
-          this.sessionStats.bargeIns++;
-          const le = this.lastEndpoint;
-          if (le && at - le.at < (this.deps.prematureWindowMs ?? 1200)) {
-            // We ended the turn too early: adapt, and merge the text into the next turn.
-            this.sessionStats.prematureEndpoints++;
-            this.policy!.notePrematureEndpoint();
-            this.pendingPrefix = le.text;
-            // Carry the audio too: the second pass must see the whole sentence, not the half that
-            // survived the split. 「ありがとう。ゆいさんは…」 paused before the name, and decoding only
-            // the tail is how 「ゆい」 kept coming back as 「イ」.
-            this.pendingAudio = le.audio;
-            if (this.history[le.userHistoryIndex]?.role === "user") this.history.splice(le.userHistoryIndex, 1);
-            this.deps.log?.(`premature endpoint (${at - le.at}ms) → merging "${le.text.slice(0, 20)}…"`);
-          }
-          this.interrupt("barge-in");
-        }
+        const busy = this.state === "speaking" || this.state === "thinking";
+        // Below the confirmation window the onset is provisional: the recogniser hears it, the
+        // character does not stop yet. `confirmBargeIn` turns it into a real interruption later.
+        const hold = busy && this.bargeInConfirmMs > 0;
+        if (busy && !hold) this.bargeIn(at);
         if (this.utterance) {
           // Pause ended: the user is still talking — cancel the pending endpoint.
           if (this.utterance.timer) clearTimeout(this.utterance.timer);
           this.utterance.timer = null;
+          if (hold) this.holdBargeIn(this.utterance.seq);
         } else {
           this.utterance = { seq: ++this.utteranceSeq, startedAt: at, segments: [], segmentEndAt: at, timer: null, prefix: this.pendingPrefix, audio: this.pendingAudio };
           this.pendingPrefix = "";
           this.pendingAudio = [];
           stt.start(this.language);
           this.flushPreroll(stt);
-          this.state = "listening";
-          this.deps.send({ type: "user_speech_started" });
+          if (hold) {
+            this.holdBargeIn(this.utterance.seq);
+          } else {
+            this.state = "listening";
+            this.deps.send({ type: "user_speech_started" });
+          }
         }
       } else if (this.utterance) {
         const u = this.utterance;
@@ -324,9 +343,77 @@ export class ConversationSession {
         const lagMs = ev.endLagSamples !== undefined ? Math.round((ev.endLagSamples / 16000) * 1000) : 0;
         u.segmentEndAt = at - lagMs;
         u.vadEndLagMs = lagMs;
+        const t = this.tentative;
+        if (t && t.seq === u.seq) {
+          if (t.timer) clearTimeout(t.timer);
+          t.timer = null;
+          t.voicedMs += Math.round((ev.samples.length / 16000) * 1000);
+          if (t.voicedMs >= this.bargeInConfirmMs) this.confirmBargeIn(u.segmentEndAt);
+        }
         void this.evaluateEndpoint(u);
       }
     }
+  }
+
+  // ---- barge-in confirmation ---------------------------------------------------
+
+  /** The user started talking over the character. Cancel the reply (and, in the streaming path, merge a premature endpoint). */
+  private bargeIn(at: number): void {
+    this.sessionStats.bargeIns++;
+    const le = this.lastEndpoint;
+    if (this.policy && le && at - le.at < (this.deps.prematureWindowMs ?? 1200)) {
+      // We ended the turn too early: adapt, and merge the text into the next turn.
+      this.sessionStats.prematureEndpoints++;
+      this.policy.notePrematureEndpoint();
+      // Carry the audio too: the second pass must see the whole sentence, not the half that
+      // survived the split. 「ありがとう。ゆいさんは…」 paused before the name, and decoding only
+      // the tail is how 「ゆい」 kept coming back as 「イ」.
+      if (this.utterance) {
+        this.utterance.prefix = le.text;
+        this.utterance.audio.unshift(...le.audio);
+      } else {
+        this.pendingPrefix = le.text;
+        this.pendingAudio = le.audio;
+      }
+      if (this.history[le.userHistoryIndex]?.role === "user") this.history.splice(le.userHistoryIndex, 1);
+      this.deps.log?.(`premature endpoint (${at - le.at}ms) → merging "${le.text.slice(0, 20)}…"`);
+    }
+    this.interrupt("barge-in");
+  }
+
+  /** Speech onset while busy: start (or resume) the confirmation clock instead of interrupting. */
+  private holdBargeIn(seq: number): void {
+    const t = this.tentative?.seq === seq ? this.tentative : { seq, voicedMs: 0, timer: null };
+    if (t.timer) clearTimeout(t.timer);
+    this.tentative = t;
+    const remaining = Math.max(20, this.bargeInConfirmMs - t.voicedMs);
+    t.timer = setTimeout(() => {
+      t.timer = null;
+      if (this.tentative === t) this.confirmBargeIn(this.clock());
+    }, remaining);
+  }
+
+  /** The speech lasted: it is an interruption after all (or a plain turn, if the character finished meanwhile). */
+  private confirmBargeIn(at: number): void {
+    const t = this.tentative;
+    if (!t) return;
+    if (t.timer) clearTimeout(t.timer);
+    this.tentative = null;
+    if (this.state === "speaking" || this.state === "thinking") {
+      this.deps.log?.(`barge-in confirmed after ${t.voicedMs || this.bargeInConfirmMs}ms of speech`);
+      this.bargeIn(at);
+    }
+    this.state = "listening";
+    this.deps.send({ type: "user_speech_started" });
+  }
+
+  /** Speech that ended before the window: a backchannel, a cough, someone else in the room. */
+  private dropTentative(voicedMs: number): void {
+    const t = this.tentative;
+    if (!t) return;
+    if (t.timer) clearTimeout(t.timer);
+    this.tentative = null;
+    this.deps.log?.(`ignored ${voicedMs}ms of speech while ${this.state} (< ${this.bargeInConfirmMs}ms barge-in window)`);
   }
 
   /** Ring buffer of the audio just before the VAD made up its mind (PREROLL_MS). */
@@ -432,8 +519,18 @@ export class ConversationSession {
 
   private async commitTurn(u: Utterance, text: string, ep: { reason: string; requiredSilenceMs: number; sttMs: number; reused: boolean }): Promise<void> {
     if (this.utterance !== u) return;
-    this.utterance = null;
     const stt = this.streamingStt!;
+    if (this.tentative?.seq === u.seq) {
+      if (this.state === "speaking" || this.state === "thinking") {
+        // Ended before it could count as a barge-in, and the character is still talking: not a turn.
+        this.dropTentative(this.tentative.voicedMs);
+        this.utterance = null;
+        await stt.endUtterance();
+        return;
+      }
+      this.confirmBargeIn(u.segmentEndAt); // the character finished on its own: an ordinary turn
+    }
+    this.utterance = null;
     const final = await stt.endUtterance();
     if (this.utterance !== null) return; // new speech arrived while finalising
     const at = this.clock();
@@ -539,6 +636,8 @@ export class ConversationSession {
     this.preroll = [];
     this.prerollSamples = 0;
     this.pendingAudio = [];
+    if (this.tentative?.timer) clearTimeout(this.tentative.timer);
+    this.tentative = null;
     this.streamingStt?.reset();
     if (this.strictLocal) {
       this.deps.onStrictLocal?.(false); // exactly once per strict session (stop + ws close both call stop())

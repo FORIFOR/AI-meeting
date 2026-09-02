@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * the character speak unasked.
  */
 const sendText = vi.fn(async () => {});
+const connect = vi.fn(async (_config: unknown) => {});
 
 vi.mock("@rcai/audio-core", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@rcai/audio-core")>();
@@ -27,10 +28,15 @@ vi.mock("../integrations/registry.js", () => ({
   plannerUrl: () => "http://127.0.0.1:1/plan",
   createAvatarProvider: async () => { throw new Error("BLOCKED_BY_NO_WEBGL: not needed for this test"); },
   createConversationProvider: async () => ({
-    id: "local", capabilities: () => ({}), async connect() {}, pushAudio() {}, sendText,
+    id: "local", capabilities: () => ({}), connect, pushAudio() {}, sendText,
     async interrupt() {}, async updateContext() {}, async disconnect() {}, onEvent() {},
   }),
-  createMeetingConnector: async () => { throw new Error("not used: the page is attached to Attendee"); },
+  // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
+  createMeetingConnector: async () => ({
+    async join() {
+      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+    },
+  }),
 }));
 
 vi.mock("@rcai/connector-attendee", () => ({
@@ -69,7 +75,7 @@ function botPage(role: "bot" | "operator" = "bot") {
 const frame = () => ({ data: new Float32Array(480), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
 
 describe("greeting on arrival", () => {
-  beforeEach(() => { sendText.mockClear(); vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { sendText.mockClear(); connect.mockClear(); vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
 
   it("addressed_only bot page: the first room audio earns one greeting, a beat later", async () => {
@@ -89,5 +95,20 @@ describe("greeting on arrival", () => {
     await vi.advanceTimersByTimeAsync(2000);
     expect(sendText).toHaveBeenCalledTimes(1);
     await c.leave();
+  });
+
+  /**
+   * Gate #8 runs 6–7: the greeting was cut after one audio frame because the recogniser's VAD fired on
+   * an open mic in the room and the runtime's barge-in fast path did what it is for. A room needs the
+   * speech to last before it counts; a person with a headset does not.
+   */
+  it("bot page asks the agent to confirm a barge-in; the operator page keeps the instant cut", async () => {
+    await botPage("bot").start();
+    const bot = connect.mock.calls.at(-1)![0] as { providerOptions?: Record<string, unknown> };
+    expect(bot.providerOptions?.bargeInConfirmMs).toBe(600);
+    expect(bot.providerOptions?.opening).toBeUndefined();
+    await botPage("operator").start();
+    const op = connect.mock.calls.at(-1)![0] as { providerOptions?: Record<string, unknown> };
+    expect(op.providerOptions?.bargeInConfirmMs).toBeUndefined();
   });
 });
