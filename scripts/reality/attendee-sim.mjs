@@ -102,7 +102,18 @@ if (!created.botId) { console.log("FAIL: broker did not create a bot:", JSON.str
 console.log(`meeting url ${process.env.MEET_URL ?? "https://meet.google.com/sim-ulat-ion"}`);
 console.log(`broker created ${created.botId}  page=${created.botPageUrl ? "yes" : "MISSING"}`);
 
-const ws = created.createdBotSettings ?? seen.createdBot?.websocket_settings;
+/**
+ * The broker must be pointed at this stand-in, or it just made a real bot on a real vendor and sent it
+ * to a meeting that does not exist. That costs money and leaves something running; failing loudly is
+ * not enough, so the bot is removed before exiting.
+ */
+if (!seen.createdBot) {
+  console.log(`FAIL: the broker did not call this stand-in — it went to the real Attendee and created ${created.botId}.`);
+  console.log(`      Removing it. Start the broker with ATTENDEE_API_BASE_URL=http://127.0.0.1:${PORT} and try again.`);
+  await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }).catch(() => {});
+  process.exit(2);
+}
+const ws = seen.createdBot.websocket_settings;
 if (!ws?.audio?.url) { console.log("FAIL: the broker asked for no audio socket"); process.exit(1); }
 console.log(`sockets asked for: mixed=${!!ws.audio?.url} perAudio=${!!ws.per_participant_audio?.url} perVideo=${!!ws.per_participant_video?.url}`);
 

@@ -119,6 +119,15 @@ export class MeetingSessionController {
   private forwarded = 0;
   private transcripts = 0;
   private spokeFrames = 0;
+  /**
+   * Did the policy decide to take this turn?
+   *
+   * A provider like Gemini Live hears the room continuously and answers whenever it feels addressed —
+   * it knows nothing about a participation policy. Gating on "the character is currently speaking"
+   * therefore lets it into any conversation it overhears: measured, it spoke while the policy sat in
+   * PASSIVE. The gate is the decision, not the symptom of one.
+   */
+  private sanctioned = false;
   private cueCount = 0;
   private faceCount = 0;
   private shownToModel = 0;
@@ -165,7 +174,11 @@ export class MeetingSessionController {
      */
     this.policy.onTransition((t) => {
       init.handlers.onPolicy(t);
-      if (t.to === "ADDRESSED") void this.answer();
+      if (t.to === "ADDRESSED") {
+        // The policy decided this turn is ours. Nothing else may open the outbound gate.
+        this.sanctioned = true;
+        void this.answer();
+      }
       /**
        * The character's face follows the conversation, not only the audio. Being spoken to and
        * deciding to answer look different from listening to a room, and a face that only changes when
@@ -216,7 +229,7 @@ export class MeetingSessionController {
     this.heartbeat = setInterval(() => {
       console.log("[rcai:bot] " + JSON.stringify({
         heard: this.heard, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
-        cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel,
+        cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel, sanctioned: this.sanctioned,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
       }));
     }, 5000);
@@ -636,6 +649,15 @@ export class MeetingSessionController {
         }
         break;
       case "assistant_speech_started":
+        /**
+         * A provider that answers on its own started talking without being asked. Stop it rather than
+         * let it run: the audio is muted either way, and a model talking into a muted channel costs
+         * tokens and leaves the character mid-sentence when it is finally spoken to.
+         */
+        if (!this.sanctioned) {
+          void this.runtime?.interrupt();
+          break;
+        }
         this.policy.markResponding(now);
         break;
       case "assistant_audio":
@@ -650,7 +672,7 @@ export class MeetingSessionController {
          * so pushing the same audio back down the socket puts the character in the meeting twice, half
          * a second apart. Measured: 332 duplicate chunks in one run of the offline harness.
          */
-        if (this.outboundAllowed && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
+        if (this.outboundAllowed && this.sanctioned && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
           this.spokeFrames++;
           if (!this.init.attendeeAttach) this.session?.pushOutboundAudio(e.frame);
         }
@@ -660,6 +682,7 @@ export class MeetingSessionController {
         break;
       case "assistant_speech_ended":
         void this.session?.endOutboundUtterance?.();
+        this.sanctioned = false;
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
         break;
       case "interrupted":
@@ -670,6 +693,7 @@ export class MeetingSessionController {
          * the consecutive-turn count must not be spent on an answer nobody heard.
          */
         void this.session?.endOutboundUtterance?.();
+        this.sanctioned = false;
         this.policy.onInterrupted(now);
         break;
       case "error":
