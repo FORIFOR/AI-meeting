@@ -188,11 +188,21 @@ await page.evaluateOnNewDocument(() => {
   // Count every source that is started, not only ones whose buffer is readable at that instant: the
   // question is whether the page made sound, and a null read there was reporting silence during a run
   // that was audibly speaking.
+  // Keep the samples too, not just the count: the point of a voice is what it sounds like, and the
+  // only place the character's audio exists on this path is the page's own output.
+  w.__rcaiPcm = [];
   const start = AudioBufferSourceNode.prototype.start;
   AudioBufferSourceNode.prototype.start = function (...args) {
     w.__rcaiProbe.buffers++;
     w.__rcaiProbe.seconds += this.buffer?.duration ?? 0;
     w.__rcaiProbe.firstAt ??= Date.now();
+    try {
+      const b = this.buffer;
+      if (b && w.__rcaiPcm.length < 4000) {
+        w.__rcaiProbe.rate = b.sampleRate;
+        w.__rcaiPcm.push(Array.from(b.getChannelData(0)));
+      }
+    } catch { /* a source without a readable buffer */ }
     return start.apply(this, args);
   };
 });
@@ -247,6 +257,7 @@ if (videoTimer) clearInterval(videoTimer);
 const inPage = await page.evaluate(() => ({
   text: document.body.innerText.slice(0, 1800),
   audio: { ...window.__rcaiProbe },
+  pcm: window.__rcaiPcm.flat(),
   sockets: window.__rcaiProbeSockets,
 })).catch(() => ({ text: "", audio: { buffers: 0, seconds: 0, firstAt: null } }));
 

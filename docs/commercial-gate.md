@@ -157,6 +157,23 @@ What this still does not prove: Attendee's own browser and its ALSA capture, its
 meeting's audio, and a second human. It proves everything downstream of them, which is where every
 failure so far has actually been.
 
+## Which engine (measured 2026-09-02)
+
+Same 2–3 minute harness, same voice (Zephyr) for both Gemini rows, same room audio.
+
+| engine | answered | turn latency p50 / p95 | reply length p50 | notes |
+|---|---|---|---|---|
+| **Gemini 3.1 flash-live** | 95–100 % | **1162–1222 / 1314–1586 ms** | 25–32 chars | fastest cloud path; no affective dialog or proactive audio |
+| Gemini 2.5 native-audio | 100 % | **3871–5646 / 6124–11318 ms** | 13–14 chars | the only family with affective dialog and proactive audio, and 3–5× slower with shorter answers |
+| Local: sherpa + gemini-3.1-flash-lite + Supertonic F1 int8 | — | first audio 1195–1658 ms | 30–40 chars | the recogniser that can actually read a meeting room |
+
+The cloud rows are measured on the app's own screen, close-mic. **On the meeting path Gemini barely
+speaks at all** — 0.7 s in 80 seconds — because addressing depends on its own input transcription,
+and on the same recording where the local recogniser reads 「ゆイ、今 どう 思う？」 it returns 「 。」.
+
+So: 3.1 flash-live for the app, local for meetings, and 2.5 native-audio only when reacting to *how*
+something was said is worth three seconds of waiting for it.
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

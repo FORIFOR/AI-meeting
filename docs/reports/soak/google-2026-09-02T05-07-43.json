@@ -1,0 +1,680 @@
+{
+  "engine": "google",
+  "minutes": 2,
+  "character": "yui",
+  "mode": "free_talk",
+  "startedAt": "2026-09-02T05:07:43.433Z",
+  "verdict": "PASS",
+  "blocked": null,
+  "preflight": {
+    "broker": {
+      "ok": true,
+      "providers": {
+        "openai": true,
+        "google": true,
+        "livekit": false,
+        "heygen": false,
+        "tavus": false,
+        "recall": true
+      },
+      "meeting": {
+        "recall": true,
+        "creditRefusedAt": null,
+        "recallPublicUrl": true,
+        "recallBotPageUrl": true,
+        "region": "ap-northeast-1",
+        "tokenSecret": "env"
+      }
+    },
+    "agent": {
+      "ok": true,
+      "strictLocalCapable": true,
+      "stt": {
+        "engine": "sherpa-onnx",
+        "ready": true,
+        "model": "sense_voice:sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+        "mode": "incremental",
+        "finalPass": null,
+        "pauseMinSilenceMs": 200,
+        "endpoint": {
+          "minSilenceMs": 240,
+          "completeSilenceMs": 320,
+          "unknownSilenceMs": 520,
+          "incompleteSilenceMs": 800,
+          "maxSilenceMs": 900
+        }
+      },
+      "llm": {
+        "engine": "openai-compatible",
+        "ready": true,
+        "model": "gemini-3.1-flash-lite",
+        "url": "https://generativelanguage.googleapis.com/v1beta/openai"
+      },
+      "tts": {
+        "engine": "supertonic-3",
+        "ready": true,
+        "voice": "F1",
+        "voices": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "M5"
+        ],
+        "precision": "int8"
+      },
+      "turn": {
+        "engine": "smart-turn-v3",
+        "ready": true
+      },
+      "vad": {
+        "engine": "silero-vad"
+      }
+    },
+    "blocked": null
+  },
+  "timeline": {
+    "seconds": 123.3026875,
+    "timeline": [
+      {
+        "index": 0,
+        "startSec": 3,
+        "endSec": 6.292458333333333,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 1,
+        "startSec": 10.339270833333334,
+        "endSec": 14.468458333333333,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 2,
+        "startSec": 18.716291666666667,
+        "endSec": 21.8181875,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 3,
+        "startSec": 29.7258125,
+        "endSec": 33.9229375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 4,
+        "startSec": 40.7190625,
+        "endSec": 43.63552083333333,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 5,
+        "startSec": 45.63552083333333,
+        "endSec": 48.512708333333336,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 6,
+        "startSec": 54.598479166666664,
+        "endSec": 57.385416666666664,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 7,
+        "startSec": 63.0075,
+        "endSec": 66.1655,
+        "text": "私は最近、ランニングを始めました。",
+        "kind": "turn"
+      },
+      {
+        "index": 8,
+        "startSec": 72.0304375,
+        "endSec": 75.79872916666666,
+        "text": "英語の勉強を続けるコツがあれば教えてください。",
+        "kind": "turn"
+      },
+      {
+        "index": 9,
+        "startSec": 80.7584375,
+        "endSec": 84.71208333333334,
+        "text": "今日は天気がいいので、散歩に行こうと思います。",
+        "kind": "turn"
+      },
+      {
+        "index": 10,
+        "startSec": 86.71208333333334,
+        "endSec": 89.731125,
+        "text": "あ、ごめんなさい、一つ聞いてもいいですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 11,
+        "startSec": 95.9444375,
+        "endSec": 100.20129166666666,
+        "text": "面接で緊張しないためには、どうすればいいでしょうか。",
+        "kind": "turn"
+      },
+      {
+        "index": 12,
+        "startSec": 107.12058333333333,
+        "endSec": 110.6569375,
+        "text": "先週、友人と京都に旅行に行きました。",
+        "kind": "turn"
+      },
+      {
+        "index": 13,
+        "startSec": 115.68820833333334,
+        "endSec": 118.67889583333333,
+        "text": "そのとき、とても美味しいお茶を飲みました。",
+        "kind": "turn"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "t": 0,
+      "pill": "Connecting接続中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": 0
+        },
+        "bargeIn": {
+          "ms": null,
+          "n": 0
+        },
+        "listening": {
+          "ms": null,
+          "n": 0
+        },
+        "mouthStop": {
+          "ms": null,
+          "n": 0
+        }
+      },
+      "transcript": 0
+    },
+    {
+      "t": 30191,
+      "pill": "Speaking話しています",
+      "hud": {
+        "turn": {
+          "p50": 1158,
+          "p95": 1230,
+          "n": 3
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 3
+        },
+        "listening": {
+          "ms": 43,
+          "n": 3
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 3
+        }
+      },
+      "transcript": 6
+    },
+    {
+      "t": 60367,
+      "pill": "Speaking話しています",
+      "hud": {
+        "turn": {
+          "p50": 1228,
+          "p95": 1332,
+          "n": 7
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 7
+        },
+        "listening": {
+          "ms": 43,
+          "n": 7
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 7
+        }
+      },
+      "transcript": 15
+    },
+    {
+      "t": 90592,
+      "pill": "Listening聞いています",
+      "hud": {
+        "turn": {
+          "p50": 1210,
+          "p95": 1332,
+          "n": 10
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 10
+        },
+        "listening": {
+          "ms": 43,
+          "n": 11
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 10
+        }
+      },
+      "transcript": 23
+    }
+  ],
+  "pills": [
+    {
+      "t": 0,
+      "pill": "Connecting接続中"
+    },
+    {
+      "t": 2009,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 3010,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 4019,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 7544,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 8046,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 11068,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 15588,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 16092,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 19607,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 23141,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 23643,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 30692,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 35223,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 35725,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 41268,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 44786,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 45790,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 46292,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 49804,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 50308,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 55337,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 58854,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 59360,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 63901,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 67427,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 67929,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 71969,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 72973,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 77006,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 77509,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 81532,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 86061,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 86569,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 87577,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 91097,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 91599,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 93102,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 96613,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 101654,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 102155,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 107696,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 111727,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 112729,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 116256,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 119794,
+      "pill": "Thinking考え中"
+    }
+  ],
+  "transcript": [
+    {
+      "t": 4019,
+      "role": "assistant",
+      "text": "おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 8046,
+      "role": "user",
+      "text": "こんにちは 。 今日 は よろしく お 願い し ます 。"
+    },
+    {
+      "t": 11068,
+      "role": "assistant",
+      "text": "おっ、よろしく！今日は何話そうか。なんかおもしろいことあった？"
+    },
+    {
+      "t": 16092,
+      "role": "user",
+      "text": "最近 、 仕事 で 新しい プロジェクト が 始まっ た ん です 。"
+    },
+    {
+      "t": 19607,
+      "role": "assistant",
+      "text": "へえー、そうなんだ！どんなプロジェクトなの？"
+    },
+    {
+      "t": 23643,
+      "role": "user",
+      "text": "週末は何をするのがおススメですか？"
+    },
+    {
+      "t": 30692,
+      "role": "assistant",
+      "text": "うーん、天気が良ければ軽い散歩とかいい気分転換になるかも！インドア派なら、見たかった映画とかを一気に見るのもいいよね。普段どう過ごしてるの？"
+    },
+    {
+      "t": 35725,
+      "role": "user",
+      "text": "実 は 昨日 少し 失敗 し て しまっ て 落ち込ん で い ます 。"
+    },
+    {
+      "t": 41268,
+      "role": "assistant",
+      "text": "そっか、大変だったね。まあ、誰にでもあることだし、あんまり気にしすぎないでね。美味しいものでも食べて、次に切り替えよ！何か話したいことある？"
+    },
+    {
+      "t": 45790,
+      "role": "user",
+      "text": "でも 、 チーム の みんな が 助け て くれ まし た 。"
+    },
+    {
+      "t": 46292,
+      "role": "assistant",
+      "text": "いいチームだね！ほんと、仲間がいる"
+    },
+    {
+      "t": 46292,
+      "role": "assistant",
+      "text": "って心"
+    },
+    {
+      "t": 50308,
+      "role": "user",
+      "text": "すみません、それはどういう意味ですか？"
+    },
+    {
+      "t": 55337,
+      "role": "assistant",
+      "text": "あ、ごめん！みんなが助けてくれたなら、そのチームは素敵だねってこと！みんなで協力—"
+    },
+    {
+      "t": 59360,
+      "role": "user",
+      "text": "あなた は 音楽 を 聴く の は 好き です か ?"
+    },
+    {
+      "t": 63901,
+      "role": "assistant",
+      "text": "うん、音楽は好きだよ！いろんなジャンルを広く浅く聴く感じかな。どんな音楽が好きなの？"
+    },
+    {
+      "t": 67929,
+      "role": "user",
+      "text": "私 は 最近 ランニング を 始め まし た 。"
+    },
+    {
+      "t": 71969,
+      "role": "assistant",
+      "text": "へえー、すごいじゃん！どれくらいの距離走ってるの？"
+    },
+    {
+      "t": 77509,
+      "role": "user",
+      "text": "英語の勉強を続けるコツがあれば教えてください。"
+    },
+    {
+      "t": 81532,
+      "role": "assistant",
+      "text": "毎日少しずつでも続けることかな。好きな映画とか音楽を使って、楽しくやるのもいいかも！どんな、勉強してるの？"
+    },
+    {
+      "t": 86569,
+      "role": "user",
+      "text": "今日 は 天気 が いい の で 散歩 に 行こう と 思い ます 。"
+    },
+    {
+      "t": 87577,
+      "role": "assistant",
+      "text": "いいね！散歩日和だね。どこか行きたい場所"
+    },
+    {
+      "t": 87577,
+      "role": "assistant",
+      "text": "とか"
+    },
+    {
+      "t": 91599,
+      "role": "user",
+      "text": "あ 、 ごめん なさい 。 1 つ 聞い て も いい です か ?"
+    },
+    {
+      "t": 93102,
+      "role": "assistant",
+      "text": "うん、何？"
+    },
+    {
+      "t": 102155,
+      "role": "user",
+      "text": "面接 で 緊張 し ない ため に は どう すれ ば いい でしょう か ?"
+    },
+    {
+      "t": 107696,
+      "role": "assistant",
+      "text": "準備をしっかりすると自信になるかも。あとは、深呼吸をして、いつもの自分で話すつもりで臨むとか！応援してるよ。"
+    },
+    {
+      "t": 112729,
+      "role": "user",
+      "text": "先週 、 友人 と 京都 に 旅行 に 行き まし た 。"
+    },
+    {
+      "t": 116256,
+      "role": "assistant",
+      "text": "へえ、京都いいな！どこか美味しいものとか観光地とか行った？"
+    }
+  ],
+  "toasts": [],
+  "consoleErrors": [
+    {
+      "t": 124482,
+      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+    }
+  ],
+  "pageErrors": [],
+  "httpErrors": [
+    {
+      "t": 124482,
+      "status": 502,
+      "url": "http://localhost:8787/api/evaluate"
+    }
+  ],
+  "reconnects": [],
+  "hudLast": "latency · google\nturn p50/p95\t1215 / 1332 ms\t< 700 / 1500 · n=13\nbarge-in stop\t43 ms\t< 150 · n=12\n→ listening\t43 ms\t< 100 · n=14\nmouth stop\t0 ms\t< 100 · n=12\nturns\t13 / 16\treconnects 0 · stale 0\nstt / ttft / ttfa\t– / – / – ms\tp50 · n=0\nlip delay / frame\t18 / 31 ms\terrors 0",
+  "result": {
+    "overall": "78"
+  },
+  "summary": {
+    "elapsedMs": 120295,
+    "survived": true,
+    "failReason": null,
+    "userUtterancesHeard": 13,
+    "assistantTurns": 16,
+    "answered": 13,
+    "answeredRatio": 1,
+    "expectedUtterancesFromWav": 14,
+    "speakingEpisodes": 14,
+    "turnLatency": {
+      "p50": 1215,
+      "p95": 1332,
+      "n": 13
+    },
+    "bargeInStop": {
+      "ms": 43,
+      "n": 12
+    },
+    "listeningReact": {
+      "ms": 43,
+      "n": 14
+    },
+    "mouthStop": {
+      "ms": 0,
+      "n": 12
+    },
+    "reconnectEvents": 0,
+    "toasts": 0,
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "httpErrors": 1,
+    "longestNoAssistantSpeechMs": 9053,
+    "replyChars": {
+      "min": 2,
+      "p50": 25,
+      "max": 70,
+      "avg": 31
+    },
+    "resultOverall": "78"
+  },
+  "wav": "/var/folders/qy/086ttpq57jsd36jnc1jffst00000gn/T/rcai-soak/soak-2m.wav",
+  "chrome": "Chrome/152.0.7977.65",
+  "sessionStartMs": 3841,
+  "endedAt": "2026-09-02T05:09:52.198Z"
+}

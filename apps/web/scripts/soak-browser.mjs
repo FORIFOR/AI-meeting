@@ -85,6 +85,25 @@ page.on("console", (m) => {
 page.on("pageerror", (e) => report.pageErrors.push({ t: now(), text: String(e).slice(0, 300) }));
 page.on("response", (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) report.httpErrors.push({ t: now(), status: r.status(), url: r.url() }); });
 
+/**
+ * Keep what the character actually said, when asked to. Latency numbers describe a voice about as well
+ * as a spec sheet describes a face — comparing two engines means listening to both.
+ */
+if (process.env.SAVE_AUDIO) {
+  await page.evaluateOnNewDocument(() => {
+    const w = window;
+    w.__soakPcm = [];
+    w.__soakRate = 0;
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args) {
+      try {
+        const b = this.buffer;
+        if (b && w.__soakPcm.length < 6000) { w.__soakRate = b.sampleRate; w.__soakPcm.push(Array.from(b.getChannelData(0))); }
+      } catch { /* nothing readable */ }
+      return start.apply(this, args);
+    };
+  });
+}
 await page.evaluateOnNewDocument((settings) => { localStorage.setItem("rcai.settings.v1", JSON.stringify(settings)); }, {
   brokerUrl, agentUrl, engine, autoPolicy: engine === "local" ? "offline" : "quality_first", advanced: {},
   privacyMode: engine === "local" ? "strict_local" : "default", showHud: true, characterId: character, cameraOn: false, captionsOn: true,
@@ -96,7 +115,7 @@ await sleep(1500);
 const productIndex = { interview: 0, english_lesson: 1, free_talk: 2 }[mode] ?? 0;
 const products = await page.$$("button.act");
 const disabled = await page.evaluate((i) => { const b = document.querySelectorAll("button.act")[i]; return b ? { disabled: b.disabled, title: b.title } : { disabled: true, title: "no product button" }; }, productIndex);
-if (disabled.disabled) { report.verdict = "FAIL"; report.failReason = `product disabled: ${disabled.title}`; await browser.close(); finish(1); }
+if (disabled.disabled) { report.verdict = "FAIL"; report.failReason = `product disabled: ${disabled.title}`; await browser.close(); await finish(1); }
 await products[productIndex].click();
 // Modes with a single param-less persona (free talk) skip the Setup screen and start immediately.
 await page.waitForSelector(".page__actions .btn--primary, .pill", { timeout: 30000 });
@@ -168,6 +187,23 @@ try {
 } catch (e) {
   report.resultError = String(e).slice(0, 200);
 }
+
+/** Keep the voice, not just the numbers. */
+if (process.env.SAVE_AUDIO) {
+  const cap = await page.evaluate(() => ({ rate: window.__soakRate, pcm: window.__soakPcm.flat() })).catch(() => null);
+  if (cap?.pcm?.length) {
+    const rate = cap.rate || 24000;
+    const pcm = Int16Array.from(cap.pcm, (v) => Math.max(-32768, Math.min(32767, Math.round(v * 32767))));
+    const buf = Buffer.alloc(44 + pcm.length * 2);
+    buf.write("RIFF", 0); buf.writeUInt32LE(36 + pcm.length * 2, 4); buf.write("WAVE", 8);
+    buf.write("fmt ", 12); buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22);
+    buf.writeUInt32LE(rate, 24); buf.writeUInt32LE(rate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34);
+    buf.write("data", 36); buf.writeUInt32LE(pcm.length * 2, 40);
+    Buffer.from(pcm.buffer, pcm.byteOffset, pcm.byteLength).copy(buf, 44);
+    writeFileSync(process.env.SAVE_AUDIO, buf);
+    console.log(`voice: ${process.env.SAVE_AUDIO} (${(pcm.length / rate).toFixed(1)}s @ ${rate}Hz)`);
+}
+}
 await browser.close();
 
 // ---- 6. Summary + verdict -------------------------------------------------------------------------
@@ -195,7 +231,7 @@ report.summary = {
 const fullDuration = elapsedMs >= durationMs - 2000;
 report.verdict = survived && fullDuration && report.summary.answeredRatio >= 0.8 && report.pageErrors.length === 0 && !report.toasts.some((x) => /fatal|BLOCKED_BY/i.test(x.text)) ? "PASS" : "FAIL";
 if (report.verdict === "FAIL" && !failReason) report.failReason = !fullDuration ? "did not reach full duration" : report.summary.answeredRatio < 0.8 ? `answered ratio ${report.summary.answeredRatio.toFixed(2)} < 0.8` : "errors present";
-finish(report.verdict === "PASS" ? 0 : 1);
+await finish(report.verdict === "PASS" ? 0 : 1);
 
 // ---- helpers ------------------------------------------------------------------------------------
 function parseArgs(argv) {
@@ -229,7 +265,7 @@ function parseHud(text) {
 }
 function pct(values, p) { const s = [...values].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.max(0, Math.ceil((p / 100) * s.length) - 1))]; }
 function fail(msg) { console.error(msg); process.exit(1); }
-function finish(code) {
+async function finish(code) {
   report.endedAt = new Date().toISOString();
   writeFileSync(jsonPath, JSON.stringify(report, null, 2));
   writeFileSync(mdPath, renderMd(report));
