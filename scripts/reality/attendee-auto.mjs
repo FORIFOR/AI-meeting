@@ -96,7 +96,7 @@ const yui = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({
     meetingUrl: url, botName,
-    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), outbound: "page" },
+    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), outbound: "page" },
   }),
 })).json();
 if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail ?? ""}`); process.exit(1); }

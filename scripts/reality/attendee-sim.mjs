@@ -249,7 +249,16 @@ const videoTimer = frameFiles.length
     }, 500)
   : null;
 
-await new Promise((r) => setTimeout(r, SECONDS * 1000));
+/**
+ * What Attendee's capture would see, twice: as soon as the page is up, and again in the middle of the
+ * run. The room's tile is made of these frames; a blurry tile starts here or it does not.
+ */
+const SHOTS = process.env.SHOTS ? String(process.env.SHOTS).replace(/\/$/, "") : null;
+const shoot = async (name) => { if (!SHOTS) return; try { await page.screenshot({ path: `${SHOTS}/${name}.png` }); console.log(`screenshot → ${SHOTS}/${name}.png`); } catch (e) { console.log(`screenshot failed: ${e?.message ?? e}`); } };
+await shoot("page-ready");
+await new Promise((r) => setTimeout(r, (SECONDS * 1000) / 2));
+await shoot("page-mid");
+await new Promise((r) => setTimeout(r, (SECONDS * 1000) / 2));
 clearInterval(audioTimer);
 if (videoTimer) clearInterval(videoTimer);
 

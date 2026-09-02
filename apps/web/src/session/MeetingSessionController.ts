@@ -75,6 +75,12 @@ export interface MeetingInit {
    * vendor capturing the page's speaker, which is invisible from here.
    */
   outboundPath?: "socket" | "page";
+  /**
+   * How the character is framed on the stage. A bot page is a camera tile and defaults to "meeting"
+   * (head and shoulders, flat background); "default" keeps the operator's full portrait — the A/B
+   * switch for measuring the tile the room actually sees.
+   */
+  framing?: "default" | "meeting";
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
@@ -146,7 +152,8 @@ export class MeetingSessionController {
   /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
     try {
-      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode });
+      const framing = this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default");
+      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode, framing });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.avatarFailure = message;

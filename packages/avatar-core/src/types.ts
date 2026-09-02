@@ -180,8 +180,12 @@ export interface CharacterDefinition {
   /** Extra clip JSON files bundled with the pack (`motions/<category>/<id>.json`). */
   motionFiles?: string[];
   voice: VoiceProfile;
-  /** Renderer hints. */
-  view?: { scale?: number; x?: number; y?: number; background?: string };
+  /**
+   * Renderer hints. `meeting` is the video-tile framing — head and shoulders filling the frame — used
+   * when the renderer is asked for it (a meeting vendor captures the page at 1280x720, encodes it twice
+   * and the room sees a tile a few hundred pixels wide; a full-figure portrait does not survive that).
+   */
+  view?: { scale?: number; x?: number; y?: number; background?: string; meeting?: { scale?: number; x?: number; y?: number } };
   /** Renderer-specific parameter id overrides (e.g. custom Live2D ids). */
   paramIds?: Partial<Record<ParamName, string>>;
 }

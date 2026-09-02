@@ -261,6 +261,9 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .caption__who { font-size: var(--app-size-secondary); color: var(--app-text-tertiary); margin-right: var(--app-space-3); }
 .stage--mini { min-height: 220px; border-radius: var(--app-radius); background: var(--app-stage); position: relative; overflow: hidden; }
 .session--bot { background: var(--app-stage); }
+/* A bot page is a camera: flat ground (gradients band and block after two encodes), ink set with it. */
+.session--bot .stage { background: var(--app-stage); }
+.session--bot .pill { color: inherit; }
 
 /* ---------- toasts ---------- */
 .toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: var(--app-space-6); z-index: 100; display: flex; flex-direction: column; gap: var(--app-space-2); max-width: min(480px, calc(100vw - 40px)); }

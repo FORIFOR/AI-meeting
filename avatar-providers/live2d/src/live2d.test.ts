@@ -46,3 +46,13 @@ describe("toLive2DValues", () => {
     expect(closed.get("ParamA")).toBe(0);
   });
 });
+
+describe("inkFor", () => {
+  it("puts dark ink on a pack's light background and white on anything dark or unparseable", async () => {
+    const { inkFor } = await import("./live2dAvatar.js");
+    expect(inkFor("#f6f1ea")).toBe("rgba(0, 0, 0, 0.62)");
+    expect(inkFor("#fff")).toBe("rgba(0, 0, 0, 0.62)");
+    expect(inkFor("#1a1a1a")).toBe("#ffffff");
+    expect(inkFor("linear-gradient(#000, #fff)")).toBe("#ffffff");
+  });
+});

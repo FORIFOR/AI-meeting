@@ -4,6 +4,16 @@ import { buildParamTable, resolveParamIds, toLive2DValues, type ParamTable } fro
 import { MotionSyncLipSync, MotionSyncUnavailableError } from "./motionSync.js";
 import type { ParameterModel } from "./motionsync/cubismMotionSync.js";
 
+/** Text colour that reads on a pack's flat background (#rgb / #rrggbb); white on anything else. */
+export function inkFor(background: string): string {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(background.trim());
+  if (!m) return "#ffffff";
+  const hex = m[1]!.length === 3 ? m[1]!.split("").map((c) => c + c).join("") : m[1]!;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luma > 0.6 ? "rgba(0, 0, 0, 0.62)" : "#ffffff";
+}
+
 export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
   container: HTMLElement;
   /** Explicit Cubism Core URL. Default: vendored file if present, else the official CDN. */
@@ -12,6 +22,13 @@ export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
   allowCdn?: boolean;
   vendorCoreUrl?: string;
   cdnCoreUrl?: string;
+  /**
+   * "meeting": the page is a camera. The pack's `view.meeting` framing is used, the pack's background is
+   * painted flat behind the model, and MSAA is off — inside a vendor's software-GL browser it is the
+   * most expensive thing on the page, and invisible after the capture and two encodes between the
+   * page and the room. Default "default": the operator's own screen.
+   */
+  framing?: "default" | "meeting";
   /**
    * Lip-sync engine selection (spec §14: MotionSync is the primary path, the analyzer the fallback).
    *  - "auto" (default): MotionSync when the Core is reachable and the model ships a .motionsync3.json, else analyzer
@@ -108,9 +125,14 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
     Live2DModel.registerTicker(PIXI.Ticker as never);
 
     const container = this.opts.container;
+    const meeting = this.opts.framing === "meeting";
+    if (meeting && character.view?.background) {
+      container.style.background = character.view.background;
+      container.style.color = inkFor(character.view.background);
+    }
     const app = new PIXI.Application({
       backgroundAlpha: 0,
-      antialias: true,
+      antialias: !meeting,
       autoDensity: true,
       resolution: Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1),
       width: Math.max(1, container.clientWidth || 480),
@@ -211,7 +233,7 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
     const h = Math.max(1, container.clientHeight || 640);
     this.app.renderer.resize(w, h);
     const im = this.model.internalModel;
-    const view = character.view ?? {};
+    const view = this.opts.framing === "meeting" ? { ...(character.view ?? {}), ...(character.view?.meeting ?? {}) } : (character.view ?? {});
     // Fit the model height into the container, then apply the pack's scale; portrait framing.
     const fit = Math.min(w / im.originalWidth, h / im.originalHeight);
     const scale = fit * (view.scale ?? 1) * 1.15;
