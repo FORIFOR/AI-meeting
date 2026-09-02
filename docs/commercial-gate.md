@@ -76,9 +76,25 @@ What the runs found, in order (each fixed in the commit named, then re-run):
 Also from the runs: the agent is now `autoRespond: false` on a meeting page — it transcribes, and only the page's
 sanctioned `text` turn generates (`ab73149`), so an unsanctioned draft can no longer be cut mid-sentence by the page.
 
-Still open from Run 15: the model echoes the misspelt name (「ゆイ、お疲れ様！」) — the answer prompt should say the
-transcript may misspell the name and not to repeat it. And the row above stays owed a person: a real microphone,
-unscripted, ten minutes.
+What Run 15 sounded like, measured from the Tester's recording against the same reply rendered again on this
+machine (`02a41b6`): the character was heard at 44.1 kHz through an ~8 kHz path (99.9 % of the energy under 6.3 kHz —
+the Tester's own `say` lines come through the same way, so this is Meet, not the page), with no clipping, and with
+1.1 s holes inside the answer. The holes were not the network: Supertonic pads every phrase with 270–570 ms of
+silence before the first sound and ~550 ms after the last, and the agent speaks phrase by phrase, so each phrase
+boundary was a second of nothing and each reply began with up to half a second of silence counted as first audio.
+The adapter now trims that padding (60 ms kept in front, 150 ms behind; a 7.3 s reply became 5.9 s) and scales
+peaks under −0.45 dBFS — at `SUPERTONIC_STEPS=2`, which the run used, the same sentence came out ~10 dB hotter than
+at 8 and clipped 248 samples. The agent runs at `SUPERTONIC_STEPS=4` (0.13× realtime on this Mac) from Run 16 on.
+
+The gate now also judges every answer as sound — span heard against seconds sent, longest gap, clipping share,
+f99 bandwidth — reads the reply for a parroted name, and asks the agent one text turn before creating any bot.
+Replayed over Run 15's recording the new check flags exactly the 1070 ms gap in ask1 (f99 5.1 kHz, 0 clipped
+samples). The meeting prompt now says the transcript may misspell the name and not to repeat it; whether that holds
+in the room is what the in-run check is for.
+
+**Run 16: BLOCKED_BY_ATTENDEE_CREDIT** (2026-09-03) — `attendee_create_bot_failed: Organization has run out of
+credits`. The preflight answered in 2.7 s; no bot was created. The row above stays owed a person: a real
+microphone, unscripted, ten minutes.
 
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
