@@ -507,3 +507,44 @@ describe("covering a long think", () => {
     expect(tts.calls.filter((c) => c === "わかりました。").length).toBeGreaterThan(0);
   });
 });
+
+describe("what the character remembers saying", () => {
+  it("has its own last turn in context before the next one starts", async () => {
+    const seen: ChatMessage[][] = [];
+    class RecordingLLM extends FakeLLM {
+      async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
+        seen.push([...m]);
+        yield* super.stream(m, opts);
+      }
+    }
+    const { s } = makeSession(new RecordingLLM("こんにちは！"));
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await s.onText("やあ");
+    await s.onText("週末は何してた？");
+    // The second call must be able to see that it already said hello — this is the difference between
+    // a conversation and a series of first meetings.
+    expect(seen).toHaveLength(2);
+    expect(seen[1]!.some((m) => m.role === "assistant" && m.content.includes("こんにちは"))).toBe(true);
+  });
+
+  it("remembers a turn it was cut off in the middle of", async () => {
+    const seen: ChatMessage[][] = [];
+    class RecordingLLM extends FakeLLM {
+      async *stream(m: ChatMessage[], opts: { signal?: AbortSignal }) {
+        seen.push([...m]);
+        yield* super.stream(m, opts);
+      }
+    }
+    const { s, vad } = makeSession(new RecordingLLM("春はあたたかいし、花も咲くし、出会いもあります。", 20));
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "default" });
+    void s.onText("春が好きな理由は？");
+    await new Promise((r) => setTimeout(r, 120));
+    vad.queue.push({ type: "speech_start", at: 1 });
+    s.onAudio(new Uint8Array(640)); // barge-in
+    await new Promise((r) => setTimeout(r, 60));
+    await s.onText("ごめん、もう一度");
+    const last = seen[seen.length - 1]!;
+    // Whatever it managed to say is in context; the room heard that much.
+    expect(last.some((m) => m.role === "assistant" && m.content.length > 0)).toBe(true);
+  });
+});

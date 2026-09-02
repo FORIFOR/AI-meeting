@@ -106,7 +106,12 @@ if (process.env.SAVE_AUDIO) {
 }
 await page.evaluateOnNewDocument((settings) => { localStorage.setItem("rcai.settings.v1", JSON.stringify(settings)); }, {
   brokerUrl, agentUrl, engine, autoPolicy: engine === "local" ? "offline" : "quality_first", advanced: {},
-  privacyMode: engine === "local" ? "strict_local" : "default", showHud: true, characterId: character, cameraOn: false, captionsOn: true,
+  /**
+   * strict_local is the right default for a local-engine soak — it is what proves the privacy claim —
+   * but it also refuses a cloud LLM behind the local agent, which is a configuration worth measuring
+   * on its own. PRIVACY=default opts into that, and the guard stays in force everywhere else.
+   */
+  privacyMode: process.env.PRIVACY ?? (engine === "local" ? "strict_local" : "default"), showHud: true, characterId: character, cameraOn: false, captionsOn: true,
 });
 await page.goto(base, { waitUntil: "networkidle0", timeout: 60000 });
 await sleep(1500);

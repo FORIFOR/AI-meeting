@@ -618,11 +618,26 @@ export class ConversationSession {
     } finally {
       if (fillerTimer) clearTimeout(fillerTimer);
       queue.close();
+      /**
+       * Remember what was said as soon as it was said, not when it finished being spoken.
+       *
+       * Speech takes seconds; a person can start their next sentence during it, and every one of
+       * those arrives at a model that cannot see its own last turn. Measured over five minutes of
+       * conversation: the character greeted mid-conversation in 11 replies out of 29, because as far
+       * as the model could tell each of them was the first thing it had ever said.
+       *
+       * A turn that was cut off counts too, and counts as what was actually reached — the room heard
+       * that much, so the model has to know it. Without this an interrupted answer disappears and the
+       * character starts it again from the top.
+       */
+      const said = stripMarkdown(full).trim();
+      if (said && this.history[this.history.length - 1]?.role !== "assistant") {
+        this.history.push({ role: "assistant", content: said });
+      }
     }
     const spoke = await speakTask;
     if (abort.signal.aborted || genId !== this.activeGeneration) return;
     const finalText = stripMarkdown(full).trim();
-    if (finalText) this.history.push({ role: "assistant", content: finalText });
     this.deps.log?.(`reply "${finalText}"${spoke ? " (spoken)" : " (no audio)"}`);
     this.sendGen(genId, { type: "assistant_transcript", text: finalText, final: true });
     if (spoke) this.sendGen(genId, { type: "assistant_speech_ended" });
