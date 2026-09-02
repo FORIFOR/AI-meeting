@@ -92,8 +92,15 @@ export interface PolicyTransition {
   reason: string;
 }
 
+/** `addressedBy.detection.reason` for the one turn the character takes without being spoken to. */
+export const JOINED_REASON = "joined the meeting";
+
 export class ParticipationPolicy {
   private _state: ParticipationState = "OBSERVING";
+  /** The current turn is the greeting on arrival: not a response, so it spends neither cooldown nor cap. */
+  private greeting = false;
+  /** Arrived while someone was speaking: the greeting waits for the next silence (`tick`). */
+  private greetingPending = false;
   private readonly detector: AddressDetector;
   private readonly opts: Required<Omit<ParticipationPolicyOptions, "detector" | "selfNames">> & { selfNames: string[] };
   private lastSpeechAt = -1e9;
@@ -161,6 +168,10 @@ export class ParticipationPolicy {
   onInterrupted(now: number): void {
     this.lastTickAt = Math.max(this.lastTickAt, now);
     this.yieldingUntil = now + this.opts.yieldGraceMs;
+    // A greeting in progress is over; one still waiting for silence keeps waiting. On a vendor where
+    // the AI is the only recogniser, every unsanctioned generation is cut off this way, several times
+    // a minute — forgetting the greeting on each would mean never greeting a room that talks.
+    this.greeting = false;
     this.addressedBy = null;
     this.pendingQuestion = null;
     // Being cut off does not count as a turn the character took: it did not get to finish one.
@@ -290,6 +301,32 @@ export class ParticipationPolicy {
     return true;
   }
 
+  /**
+   * The character has just been let into the room. A participant who walks in and says nothing is not
+   * a participant, and a policy that only ever answers has no other way to let it speak — so arriving
+   * is the one turn it takes unasked, in every proactivity tier. Only from idle: if the room is
+   * already talking to it the greeting is superfluous, and it never interrupts. It is not a response
+   * either — no cooldown, no consecutive turn — so 「ゆい、こんにちは」 straight back gets an answer.
+   */
+  onJoined(now: number): boolean {
+    this.lastTickAt = Math.max(this.lastTickAt, now);
+    if (this._state === "ADDRESSED" || this._state === "RESPONDING") return false;
+    if (this._state === "LISTENING") {
+      // Someone is talking (or the admit click is still ringing): greet when the room goes quiet.
+      this.greetingPending = true;
+      return false;
+    }
+    this.greet(now);
+    return true;
+  }
+
+  private greet(now: number): void {
+    this.greetingPending = false;
+    this.greeting = true;
+    this.addressedBy = { text: "", detection: { addressed: false, invited: true, confidence: 1, reason: JOINED_REASON } };
+    this.transition("ADDRESSED", now, JOINED_REASON);
+  }
+
   /** Should the session forward audio / let the assistant answer now? */
   shouldRespond(now: number): boolean {
     this.tick(now);
@@ -300,6 +337,10 @@ export class ParticipationPolicy {
   tick(now: number): void {
     this.lastTickAt = Math.max(this.lastTickAt, now);
     this.expireEngagement(now);
+    if (this.greetingPending && this._state === "OBSERVING" && this.yieldingUntil <= now) {
+      this.greet(now);
+      return;
+    }
     if (this._state === "LISTENING" && now - this.lastSpeechAt > this.opts.silenceGapMs) {
       const proactive = this.opts.proactivity === "active" || this.opts.proactivity === "open";
       const inCooldown = now - this.lastResponseEndAt < this.opts.cooldownMs;
@@ -326,8 +367,11 @@ export class ParticipationPolicy {
 
   /** The assistant finished (or was cut off). */
   onAssistantDone(now: number): void {
-    this.lastResponseEndAt = now;
-    this.consecutive++;
+    if (this.greeting) this.greeting = false;
+    else {
+      this.lastResponseEndAt = now;
+      this.consecutive++;
+    }
     this.addressedBy = null;
     this.transition("OBSERVING", now, "assistant done");
   }
@@ -335,6 +379,8 @@ export class ParticipationPolicy {
   /** Force back to observing (e.g. operator pressed "mute character"). */
   reset(now: number): void {
     this.yieldingUntil = -Infinity;
+    this.greeting = false;
+    this.greetingPending = false;
     this.addressedBy = null;
     this.pendingQuestion = null;
     this.engagement = null;
@@ -350,6 +396,8 @@ export class ParticipationPolicy {
   private transition(to: ParticipationState, at: number, reason: string): void {
     const from = this._state;
     if (from === to) return;
+    // Spoken to before the greeting got its silence: that turn is the introduction, the greeting is moot.
+    if (to === "ADDRESSED" && reason !== JOINED_REASON) this.greetingPending = false;
     this._state = to;
     const t = { from, to, at, reason };
     this.history.push(t);

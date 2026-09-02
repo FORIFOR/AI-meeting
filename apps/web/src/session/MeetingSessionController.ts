@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { ParticipationPolicy, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, ParticipationPolicy, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -134,6 +134,8 @@ export class MeetingSessionController {
    * PASSIVE. The gate is the decision, not the symptom of one.
    */
   private sanctioned = false;
+  /** The arrival greeting has been scheduled (once per page, never per reconnect). */
+  private greeted = false;
   private cueCount = 0;
   private faceCount = 0;
   private shownToModel = 0;
@@ -183,6 +185,7 @@ export class MeetingSessionController {
       if (t.to === "ADDRESSED") {
         // The policy decided this turn is ours. Nothing else may open the outbound gate.
         this.sanctioned = true;
+        if (this.init.role === "bot") console.log("[rcai:bot] turn", JSON.stringify({ reason: t.reason, text: this.policy.addressedBy?.text ?? "" }));
         void this.answer();
       }
       /**
@@ -505,6 +508,20 @@ export class MeetingSessionController {
       this.heardAnything = true;
       console.log("[rcai:bot] first meeting audio", JSON.stringify({ rate: frame.sampleRate, samples: frame.data.length }));
     }
+    /**
+     * The first frame of room audio is the moment the character is actually in the call — the
+     * vendor's "in_call" arrives when the audio socket opens, which on a bot page is before anyone has
+     * admitted it. Greet once, a beat later, so the first thing the room hears is not the character
+     * speaking over the click of the admit button. Bot role only: an operator page's first frame is
+     * the operator's own microphone.
+     */
+    if (this.init.role === "bot" && !this.greeted && this.runtime && this.outboundAllowed) {
+      this.greeted = true;
+      setTimeout(() => {
+        const now = this.policy.onJoined(Date.now());
+        console.log("[rcai:bot] greeting", now ? "now" : `deferred (${this.policy.state})`);
+      }, 1500);
+    }
     const level = dbfs(rms(frame.data));
     this.behavior?.reportUserAudio(Math.max(0, Math.min(1, (level + 50) / 35)), frame.timestamp);
     const allowed = this.hasExternalTranscripts ? this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING" : true;
@@ -625,10 +642,20 @@ export class MeetingSessionController {
     }
     const context = this.recent.slice(0, -1).map((r) => `${r.speaker}: ${r.text}`).join("\n");
     const seen = this.visualContext();
-    const asked = by.text
-      ? `【あなたへの質問】${by.speakerName ?? "参加者"}: ${by.text}`
-      : `【言葉のない反応】${by.detection.reason}`;
-    const prompt = `${context ? `【会議の直近の発言】\n${context}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${asked}\n\n短く（1〜2文で）答えてください。`;
+    /**
+     * Arrival is the one turn with nothing to answer. The greeting is the character's, not a fixed
+     * line: it should sound like the persona and say the one thing the room needs to know — how to
+     * get its attention — without a speech.
+     */
+    const greeting = by.detection.reason === JOINED_REASON;
+    const asked = greeting
+      ? `【入室】たった今この会議に参加しました。一言だけ挨拶してください：名前を名乗り、「${this.init.displayName}」と呼びかければ答えると伝える。自己紹介以上のことは話さない。`
+      : by.text
+        ? `【あなたへの質問】${by.speakerName ?? "参加者"}: ${by.text}`
+        : `【言葉のない反応】${by.detection.reason}`;
+    const prompt = greeting
+      ? `${asked}\n\n短く（1〜2文で）。`
+      : `${context ? `【会議の直近の発言】\n${context}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${asked}\n\n短く（1〜2文で）答えてください。`;
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });

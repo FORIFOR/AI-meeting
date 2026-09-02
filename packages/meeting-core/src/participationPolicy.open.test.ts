@@ -51,3 +51,85 @@ describe("open participation", () => {
     expect(p.state).toBe("OBSERVING");
   });
 });
+
+/**
+ * Arrival. A character let into a room and saying nothing looked wrong to the first person who tried
+ * it — 「入室した際に何も挨拶ないのは良くない」 — and addressed_only had no way to speak unasked.
+ */
+describe("greeting on arrival", () => {
+  const quiet = () => new ParticipationPolicy({ names: ["Yui", "ゆい"], proactivity: "addressed_only", cooldownMs: 4000 });
+
+  it("takes one turn on joining, even when it would otherwise only answer", () => {
+    const p = quiet();
+    expect(p.onJoined(1000)).toBe(true);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
+  });
+
+  it("is not a response: a name straight after the greeting gets answered, no cooldown", () => {
+    const p = quiet();
+    p.onJoined(1000);
+    p.markResponding(1100);
+    p.onAssistantDone(3000);
+    expect(p.state).toBe("OBSERVING");
+    p.onTranscript({ text: "ゆい、こんにちは", final: true }, 3500); // inside cooldownMs of the greeting's end
+    expect(p.state).toBe("ADDRESSED");
+  });
+
+  it("does not spend a consecutive turn", () => {
+    const p = quiet();
+    p.onJoined(1000);
+    p.onAssistantDone(2000);
+    p.onTranscript({ text: "ゆい、今日の予定は？", final: true }, 10_000);
+    p.onAssistantDone(12_000);
+    p.onTranscript({ text: "ゆい、もう一つ", final: true }, 20_000); // second answer in a row: still under the cap of 2
+    expect(p.state).toBe("ADDRESSED");
+  });
+
+  it("arriving mid-speech waits for the silence, then greets", () => {
+    const p = quiet();
+    p.onSpeechActivity(true, 500);
+    expect(p.state).toBe("LISTENING");
+    expect(p.onJoined(1000)).toBe(false);
+    p.tick(1250);
+    expect(p.state).toBe("LISTENING"); // still talking
+    p.onSpeechActivity(false, 2000);
+    p.tick(4600); // past silenceGapMs → OBSERVING
+    p.tick(4850); // next tick: the greeting takes the floor
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
+  });
+
+  it("an unsanctioned turn being cut off does not forget the pending greeting", () => {
+    const p = quiet();
+    p.onSpeechActivity(true, 500);
+    p.onJoined(1000);
+    p.onInterrupted(1200); // the page killed a generation the policy never sanctioned
+    p.onSpeechActivity(false, 1300);
+    p.tick(1400);
+    expect(p.state).toBe("OBSERVING"); // yield grace: not yet
+    p.tick(1200 + 1500 + 250);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
+  });
+
+  it("a name spoken before the greeting's silence replaces it: no belated greeting afterwards", () => {
+    const p = quiet();
+    p.onSpeechActivity(true, 500);
+    p.onJoined(1000);
+    p.onTranscript({ text: "ゆい、聞こえる？", final: true }, 1500);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.text).toBe("ゆい、聞こえる？");
+    p.onAssistantDone(4000);
+    p.tick(4300);
+    expect(p.state).toBe("OBSERVING");
+  });
+
+  it("never interrupts: joining a room that is already talking to it is a no-op", () => {
+    const p = quiet();
+    p.onTranscript({ text: "ゆい、聞こえる？", final: true }, 1000);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.onJoined(1100)).toBe(false);
+    expect(p.addressedBy?.text).toBe("ゆい、聞こえる？");
+  });
+});

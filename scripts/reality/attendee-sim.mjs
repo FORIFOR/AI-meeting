@@ -293,7 +293,9 @@ void grew;
 console.log(`\npage audio raw: ${JSON.stringify(inPage.audio)}`);
 console.log(`page sockets: ${JSON.stringify(inPage.sockets ?? [])}`);
 console.log(`\npage said: ${inPage.text.replace(/\n+/g, " | ").slice(0, 300)}`);
-if (seen.pageLogs.length) console.log(`page logs (last 18):\n  ${seen.pageLogs.slice(-18).join("\n  ")}`);
+// Heartbeats are summarised above; what is worth reading here is everything else the page said.
+const said = seen.pageLogs.filter((l) => !/\[rcai:bot\] \{/.test(l));
+if (said.length) console.log(`page logs (last 30, heartbeats omitted):\n  ${said.slice(-30).join("\n  ")}`);
 
 await fetch(`${broker}/api/meeting/attendee/bots/${created.botId}/leave`, { method: "POST" }).catch(() => {});
 await browser.close();
