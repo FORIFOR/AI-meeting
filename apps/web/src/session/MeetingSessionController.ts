@@ -69,6 +69,12 @@ export interface MeetingInit {
   vision?: boolean;
   /** Read the webcam at all. Off means no face model is loaded and no frames are decoded. */
   visualCues?: boolean;
+  /**
+   * How the character's voice leaves this page on a vendor that runs it as a voice agent.
+   * "socket" (default) sends it back over the relay, where it can be counted; "page" relies on the
+   * vendor capturing the page's speaker, which is invisible from here.
+   */
+  outboundPath?: "socket" | "page";
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
@@ -668,13 +674,22 @@ export class MeetingSessionController {
          * thinking out loud, which is not the same thing as taking a turn.
          */
         /**
-         * When the vendor is running this page as its voice agent it captures the page's own speaker,
-         * so pushing the same audio back down the socket puts the character in the meeting twice, half
-         * a second apart. Measured: 332 duplicate chunks in one run of the offline harness.
+         * Two ways out of this page, and only one of them can be checked from here.
+         *
+         *   page   the vendor captures the page's own speaker (its webpage streamer does this for
+         *          video and audio together). Nothing crosses our own code, so nothing we log can
+         *          tell whether it worked — and in the first live run with a working page, a working
+         *          relay and 38k audio chunks arriving, the room heard nothing.
+         *   socket the character's audio goes back the way the meeting's audio came, over the relay
+         *          we own and count.
+         *
+         * Sending both is the one combination that is definitely wrong: the character would be heard
+         * twice, half a second apart. So it is a choice, and the default is the one that can be
+         * measured.
          */
         if (this.outboundAllowed && this.sanctioned && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
           this.spokeFrames++;
-          if (!this.init.attendeeAttach) this.session?.pushOutboundAudio(e.frame);
+          if (!this.init.attendeeAttach || this.init.outboundPath !== "page") this.session?.pushOutboundAudio(e.frame);
         }
         break;
       case "assistant_transcript":
