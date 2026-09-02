@@ -456,7 +456,16 @@ export class MeetingSessionController {
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
     // time, and each onset used to cut the character mid-sentence (Gate #8 runs 6–7: the greeting
     // died after one audio frame). Speech has to persist before it counts as an interruption.
-    config.providerOptions = { ...config.providerOptions, opening: undefined, bargeInConfirmMs: this.init.role === "bot" ? BOT_BARGE_IN_CONFIRM_MS : undefined };
+    // The participation policy decides which utterances are for the character, and `answer()` sends
+    // those as text turns. The recogniser must not draft a reply to every room fragment on its own:
+    // each draft was cut unsanctioned (Gate #8 run 10: 25 drafts, an LLM call each), and one that
+    // began speaking before the sanctioned text arrived was cancelled by it, turn and all.
+    config.providerOptions = {
+      ...config.providerOptions,
+      opening: undefined,
+      autoRespond: false,
+      bargeInConfirmMs: this.init.role === "bot" ? BOT_BARGE_IN_CONFIRM_MS : undefined,
+    };
     await runtime.start(provider, config);
     this.runtimeReady = true;
   }

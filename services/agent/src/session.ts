@@ -162,6 +162,14 @@ export class ConversationSession {
    * character's sentence for each of them is how it never finishes a greeting.
    */
   private bargeInConfirmMs = 0;
+  /**
+   * `providerOptions.autoRespond === false`: speech is transcribed and endpointed, but never answered on
+   * its own — only a `text` turn generates. A meeting page decides which utterances are for the character
+   * (participation policy); with drafts on, the agent answered every room fragment, the page cut each one
+   * unsanctioned (Gate #8 run 10: 25 drafts, 12 cuts, an LLM call each), and a draft that started speaking
+   * before the page's text arrived was cancelled by that very text, taking the sanctioned turn with it.
+   */
+  private autoRespond = true;
   /** Speech onset that has not yet lasted `bargeInConfirmMs`: the character keeps talking for now. */
   private tentative: { seq: number; voicedMs: number; timer: ReturnType<typeof setTimeout> | null } | null = null;
 
@@ -229,6 +237,7 @@ export class ConversationSession {
     this.filler.enabled = policy?.backchannel ?? this.deps.fillersEnabled ?? false;
     const confirm = (config.providerOptions as { bargeInConfirmMs?: unknown } | undefined)?.bargeInConfirmMs;
     this.bargeInConfirmMs = typeof confirm === "number" && Number.isFinite(confirm) && confirm > 0 ? confirm : 0;
+    this.autoRespond = (config.providerOptions as { autoRespond?: unknown } | undefined)?.autoRespond !== false;
     if (this.filler.enabled) this.primeFillers();
     if (this.strictLocal) {
       const bad = this.deps.nonLoopbackEndpoints?.() ?? [];
@@ -323,6 +332,7 @@ export class ConversationSession {
           // Pause ended: the user is still talking — cancel the pending endpoint.
           if (this.utterance.timer) clearTimeout(this.utterance.timer);
           this.utterance.timer = null;
+          stt.onSpeechStart?.();
           if (hold) this.holdBargeIn(this.utterance.seq);
         } else {
           this.utterance = { seq: ++this.utteranceSeq, startedAt: at, segments: [], segmentEndAt: at, timer: null, prefix: this.pendingPrefix, audio: this.pendingAudio };
@@ -343,6 +353,7 @@ export class ConversationSession {
         const lagMs = ev.endLagSamples !== undefined ? Math.round((ev.endLagSamples / 16000) * 1000) : 0;
         u.segmentEndAt = at - lagMs;
         u.vadEndLagMs = lagMs;
+        stt.onSpeechEnd?.();
         const t = this.tentative;
         if (t && t.seq === u.seq) {
           if (t.timer) clearTimeout(t.timer);
@@ -531,7 +542,7 @@ export class ConversationSession {
       this.confirmBargeIn(u.segmentEndAt); // the character finished on its own: an ordinary turn
     }
     this.utterance = null;
-    const final = await stt.endUtterance();
+    const final = await stt.endUtterance({ trailingSilenceMs: this.clock() - u.segmentEndAt });
     if (this.utterance !== null) return; // new speech arrived while finalising
     const at = this.clock();
     this.deps.send({ type: "user_speech_ended" });
@@ -561,6 +572,10 @@ export class ConversationSession {
       return;
     }
     this.deps.send({ type: "user_transcript", text: merged, final: true });
+    if (!this.autoRespond) {
+      this.state = "idle";
+      return;
+    }
     this.lastEndpoint = { at, text: merged, userHistoryIndex: this.history.length, audio: u.audio };
     await this.respond(merged, turn);
   }
@@ -668,6 +683,10 @@ export class ConversationSession {
       return;
     }
     this.deps.send({ type: "user_transcript", text, final: true });
+    if (!this.autoRespond) {
+      this.state = "idle";
+      return;
+    }
     await this.respond(text, turn);
   }
 

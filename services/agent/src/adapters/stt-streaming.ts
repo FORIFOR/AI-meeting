@@ -21,7 +21,11 @@ export interface StreamingSTT {
   snapshot(opts?: { trailingSilenceMs?: number }): Promise<StreamingTranscript>;
   /** The last decode only appended to the previous one (tail unchanged). */
   readonly isStable: boolean;
-  endUtterance(): Promise<StreamingTranscript>;
+  /** `trailingSilenceMs`: as for `snapshot` — audio at the end that is known to be silence. */
+  endUtterance(opts?: { trailingSilenceMs?: number }): Promise<StreamingTranscript>;
+  /** The VAD says the speech paused / resumed: silence keeps arriving but is not worth a decode. */
+  onSpeechEnd?(): void;
+  onSpeechStart?(): void;
   reset(): void;
   readonly partials: number;
 }
@@ -60,6 +64,23 @@ export class IncrementalOfflineSTT implements StreamingSTT {
   /** Sample position of the last known end of speech (silence after it is not "new audio"). */
   private speechEndSample: number | null = null;
 
+  /**
+   * No decodes during a pause. The endpoint policy waits up to ~1.3 s of silence before committing,
+   * and the audio keeps streaming in meanwhile — so without this the utterance was re-decoded every
+   * 250 ms with more and more silence stapled to it, and the last of those decodes became the final.
+   * A decode over speech + a second of silence is not the same decode: SenseVoice dropped the first
+   * syllable of 「ゆい、今日の予定を教えて」 that way (Gate #8 run 10: the endpoint was decided on
+   * 「ゆい今日予定を教えて」 and the turn was committed as 「い今日予定を教えて」 — no name, no answer).
+   * The decode that heard the speech end is the one that is kept; speech resuming lifts the gate.
+   */
+  onSpeechEnd(): void {
+    this.speechEndSample = this.total;
+  }
+
+  onSpeechStart(): void {
+    this.speechEndSample = null;
+  }
+
   constructor(private readonly base: STTAdapter, opts: IncrementalOptions = {}) {
     this.engine = `incremental(${base.engine})`;
     this.model = base.model;
@@ -88,6 +109,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
     this.chunks.push(samples);
     this.total += samples.length;
     const newMs = ((this.total - this.decodedUpTo) / 16000) * 1000;
+    if (this.speechEndSample !== null && this.decodedUpTo >= this.speechEndSample) return; // paused, and the speech is already decoded
     if (!this.decoding && this.total >= (this.o.minAudioMs / 1000) * 16000 && newMs >= this.o.intervalMs) {
       this.decoding = this.decodeAll("partial").finally(() => (this.decoding = null));
     }
@@ -107,8 +129,9 @@ export class IncrementalOfflineSTT implements StreamingSTT {
     return { text: this.lastPartial, kind: "partial", reused: false };
   }
 
-  async endUtterance(): Promise<StreamingTranscript> {
-    const snap = await this.snapshot();
+  /** The final is the last partial whenever that already covers the speech (silence excluded). */
+  async endUtterance(opts: { trailingSilenceMs?: number } = {}): Promise<StreamingTranscript> {
+    const snap = await this.snapshot(opts);
     const final: StreamingTranscript = { text: snap.text, kind: "final", reused: snap.reused };
     for (const l of this.listeners) l(final);
     return final;
@@ -127,6 +150,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
   }
 
   reset(): void {
+    this.speechEndSample = null;
     this.chunks = [];
     this.total = 0;
     this.decodedUpTo = 0;

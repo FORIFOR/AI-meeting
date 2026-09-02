@@ -116,6 +116,28 @@ describe("IncrementalOfflineSTT", () => {
     expect(final.reused).toBe(true);
     expect(base.calls.length).toBe(callsBefore); // no post-end decode
   });
+  it("a pause stops the decodes; the final is the decode that heard the speech, not one padded with silence", async () => {
+    const base = new FakeSTT();
+    const stt = new IncrementalOfflineSTT(base, { intervalMs: 300, minAudioMs: 400, reuseTailMs: 150 });
+    stt.start("ja-JP");
+    const chunk = new Float32Array(320); // 20 ms
+    for (let i = 0; i < 50; i++) { stt.pushAudio(chunk); if (i % 5 === 4) await new Promise((r) => setTimeout(r, 1)); }
+    await new Promise((r) => setTimeout(r, 5));
+    stt.onSpeechEnd();
+    const snap = await stt.snapshot({ trailingSilenceMs: 0 }); // the endpoint policy's first look, right at the pause
+    const callsAfterPause = base.calls.length;
+    for (let i = 0; i < 65; i++) stt.pushAudio(chunk); // 1.3 s of the policy's wait, still streamed in
+    await new Promise((r) => setTimeout(r, 5));
+    expect(base.calls.length).toBe(callsAfterPause); // nothing re-decoded over speech + silence
+    const final = await stt.endUtterance({ trailingSilenceMs: 1300 });
+    expect(final.reused).toBe(true);
+    expect(final.text).toBe(snap.text);
+    // Speech resuming lifts the gate: the next interval of audio is decoded again.
+    stt.onSpeechStart();
+    for (let i = 0; i < 20; i++) stt.pushAudio(chunk);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(base.calls.length).toBe(callsAfterPause + 1);
+  });
   it("decodes once more when the last partial is stale, and skips decodes while busy", async () => {
     const base = new FakeSTT(30);
     const stt = new IncrementalOfflineSTT(base, { intervalMs: 300, minAudioMs: 400, reuseTailMs: 150 });

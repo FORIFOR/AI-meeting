@@ -251,6 +251,24 @@ describe("ConversationSession", () => {
     expect(sent.filter((m) => m.type === "assistant_speech_ended").length).toBe(0);
     expect(tts.calls.length).toBeLessThan(4);
   });
+  describe("transcribe-only mode (autoRespond: false)", () => {
+    it("speech is transcribed but never answered on its own; a text turn still is", async () => {
+      const { s, sent, audio, vad } = makeSession();
+      s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { autoRespond: false } });
+      vad.queue.push({ type: "speech_start", at: 0 });
+      s.onAudio(new Uint8Array(640));
+      vad.queue.push({ type: "speech_end", at: 500, samples: new Float32Array(8000) });
+      s.onAudio(new Uint8Array(640));
+      await waitFor(() => sent.some((m) => m.type === "user_transcript"), 5000);
+      await new Promise((r) => setTimeout(r, 150));
+      expect(sent.map((m) => m.type)).not.toContain("assistant_thinking");
+      expect(audio.length).toBe(0);
+      expect(s.state).toBe("idle");
+      void s.onText("こんにちは");
+      await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
+      expect(audio.length).toBeGreaterThan(0);
+    });
+  });
   describe("barge-in confirmation (bargeInConfirmMs)", () => {
     const LONG = new FakeLLM("一つ目の理由は春が暖かいこと。二つ目は花が咲くこと。三つ目は新しい出会いがあること。四つ目もあるよ。", 15);
     it("a cough while the character speaks does not cut it off", async () => {
