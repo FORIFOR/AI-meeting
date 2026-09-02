@@ -138,6 +138,55 @@ describe("greeting on arrival", () => {
   });
 
   /**
+   * Gate #8 run 9: admission landed while the page was still opening its agent socket. The greeting
+   * fired 1.5 s after the first frame, its text was dropped by a socket that was not open yet, and the
+   * turn it had sanctioned sat ADDRESSED for 27 s — long enough for 「ゆい、今日の予定を教えて」 to find
+   * the floor already taken. Room audio before the AI is connected does not start the greeting.
+   */
+  it("room audio before the agent is connected does not greet into the void", async () => {
+    let ready!: () => void;
+    connect.mockImplementationOnce(() => new Promise<void>((resolve) => { ready = resolve; }));
+    const c = botPage();
+    const starting = c.start();
+    await vi.advanceTimersByTimeAsync(3000); // past the audio head start: the pipeline is now waiting on the agent
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("OBSERVING");
+    expect(sendText).not.toHaveBeenCalled();
+    ready();
+    await starting;
+    c.onMeetingAudio(frame()); // the next frame after the connection is the one that counts
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(1);
+    await c.leave();
+  });
+
+  /**
+   * The other half of the same failure: a turn the AI never answers must not stay sanctioned. The
+   * text was lost, or the model hung — either way the floor has to open again for the next address.
+   */
+  it("a sanctioned turn with no answer is released, and a lost text turn is released at once", async () => {
+    const c = botPage();
+    await c.start();
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("ADDRESSED");
+    await vi.advanceTimersByTimeAsync(20_500); // nothing from the agent
+    expect(c.policy.state).toBe("OBSERVING");
+
+    const later = Date.now() + 30_000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => later);
+    sendText.mockImplementationOnce(async () => { throw new Error("agent socket not open"); });
+    c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("ADDRESSED");
+    await vi.advanceTimersByTimeAsync(10);
+    expect(c.policy.state).toBe("OBSERVING"); // released as soon as the send failed, not 20 s later
+    clock.mockRestore();
+    await c.leave();
+  });
+
+  /**
    * Gate #8 runs 6–7: the greeting was cut after one audio frame because the recogniser's VAD fired on
    * an open mic in the room and the runtime's barge-in fast path did what it is for. A room needs the
    * speech to last before it counts; a person with a headset does not.

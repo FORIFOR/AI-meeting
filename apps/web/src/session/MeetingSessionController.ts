@@ -106,6 +106,14 @@ export interface MeetingInit {
  */
 /** How long room speech must last before the bot treats it as a barge-in (provider option, local agent). */
 const BOT_BARGE_IN_CONFIRM_MS = 600;
+/**
+ * How long a sanctioned turn may go without the character starting to speak before the page gives
+ * it up. A local agent needs ~3 s for its first token and up to ~7 s for its first phrase of audio;
+ * far past that, the answer is not coming — the text never reached the agent, or the model hung —
+ * and a turn held open blocks every address that follows (Gate #8 run 9: the greeting's turn stayed
+ * ADDRESSED for 27 s and 「ゆい、今日の予定を教えて」 found the floor already taken).
+ */
+const ANSWER_STALL_MS = 20_000;
 
 export class MeetingSessionController {
   readonly policy: ParticipationPolicy;
@@ -145,6 +153,10 @@ export class MeetingSessionController {
   private sanctioned = false;
   /** The arrival greeting has been scheduled (once per page, never per reconnect). */
   private greeted = false;
+  /** The AI provider is connected: text turns can be sent (set once `runtime.start` resolves). */
+  private runtimeReady = false;
+  /** Pending ANSWER_STALL_MS watchdog for the sanctioned turn, if any. */
+  private answerTimer: ReturnType<typeof setTimeout> | null = null;
   private cueCount = 0;
   private faceCount = 0;
   private shownToModel = 0;
@@ -446,6 +458,7 @@ export class MeetingSessionController {
     // died after one audio frame). Speech has to persist before it counts as an interruption.
     config.providerOptions = { ...config.providerOptions, opening: undefined, bargeInConfirmMs: this.init.role === "bot" ? BOT_BARGE_IN_CONFIRM_MS : undefined };
     await runtime.start(provider, config);
+    this.runtimeReady = true;
   }
 
   private onMeetingEvent(e: MeetingEvent): void {
@@ -564,8 +577,12 @@ export class MeetingSessionController {
      * admitted it. Greet once, a beat later, so the first thing the room hears is not the character
      * speaking over the click of the admit button. Bot role only: an operator page's first frame is
      * the operator's own microphone.
+     *
+     * Not before the AI is connected, though. Admission can land while `startPipeline` is still
+     * opening the agent socket, and a greeting sent then is dropped on the floor (Gate #8 run 9);
+     * the frames keep coming, so the greeting simply waits for the first one after the connection.
      */
-    if (this.init.role === "bot" && !this.greeted && this.runtime && this.outboundAllowed) {
+    if (this.init.role === "bot" && !this.greeted && this.runtimeReady && this.outboundAllowed) {
       this.greeted = true;
       setTimeout(() => {
         const now = this.policy.onJoined(Date.now());
@@ -712,8 +729,34 @@ export class MeetingSessionController {
       await rt.sendText(prompt, { hidden: true });
     } catch (err) {
       this.init.handlers.onError(err instanceof Error ? err.message : String(err), "PROVIDER");
-      this.policy.onAssistantDone(Date.now());
+      this.releaseTurn("send failed");
+      return;
     }
+    this.armAnswerWatchdog();
+  }
+
+  private armAnswerWatchdog(): void {
+    this.clearAnswerWatchdog();
+    this.answerTimer = setTimeout(() => {
+      this.answerTimer = null;
+      if (this.sanctioned && this.policy.state === "ADDRESSED") this.releaseTurn("stalled");
+    }, ANSWER_STALL_MS);
+  }
+
+  private clearAnswerWatchdog(): void {
+    if (this.answerTimer) clearTimeout(this.answerTimer);
+    this.answerTimer = null;
+  }
+
+  /** The sanctioned turn ends without an answer: the floor is open again for the next address. */
+  private releaseTurn(reason: string): void {
+    this.clearAnswerWatchdog();
+    if (this.init.role === "bot") {
+      console.log("[rcai:bot] turn released:", reason);
+      this.report("released", { reason, state: this.policy.state });
+    }
+    this.sanctioned = false;
+    if (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING") this.policy.onAssistantDone(Date.now());
   }
 
   private onConversationEvent(e: ConversationEvent): void {
@@ -742,6 +785,7 @@ export class MeetingSessionController {
           this.cut("unsanctioned");
           break;
         }
+        this.clearAnswerWatchdog();
         this.policy.markResponding(now);
         if (this.init.role === "bot") this.report("speaking", { state: this.policy.state });
         break;
@@ -777,6 +821,7 @@ export class MeetingSessionController {
       case "assistant_speech_ended":
         void this.session?.endOutboundUtterance?.();
         if (this.init.role === "bot" && this.sanctioned) this.report("spoke", { frames: this.spokeFrames });
+        this.clearAnswerWatchdog();
         this.sanctioned = false;
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
         break;
@@ -788,6 +833,7 @@ export class MeetingSessionController {
          */
         if (this.sanctioned && this.policy.state === "ADDRESSED") {
           if (this.init.role === "bot") this.report("interrupted", { frames: 0, phase: "thinking" });
+          this.clearAnswerWatchdog();
           this.sanctioned = false;
           this.policy.onInterrupted(now);
         }
@@ -812,6 +858,7 @@ export class MeetingSessionController {
         }
         void this.session?.endOutboundUtterance?.();
         if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames });
+        this.clearAnswerWatchdog();
         this.sanctioned = false;
         this.policy.onInterrupted(now);
         break;
@@ -847,6 +894,7 @@ export class MeetingSessionController {
     if (this.disposed) return;
     this.disposed = true;
     if (this.policyTimer) clearInterval(this.policyTimer);
+    this.clearAnswerWatchdog();
     this.stopFeed?.();
     this.behavior?.stop();
     await this.runtime?.stop().catch(() => {});

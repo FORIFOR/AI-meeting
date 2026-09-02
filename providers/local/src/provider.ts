@@ -184,8 +184,13 @@ export class LocalProvider implements RealtimeAIProvider {
     }
   }
 
+  /**
+   * A text turn is the one message the caller is waiting on an answer for, so losing it must be an
+   * error, not silence: on a bot page the arrival greeting raced the agent socket and vanished here
+   * (Gate #8 run 9 — the page sat ADDRESSED for 27 s waiting for a reply the agent never received).
+   */
   async sendText(text: string): Promise<void> {
-    this.send({ type: "text", text });
+    if (!this.send({ type: "text", text })) throw new Error(`agent socket not open (readyState=${this.ws?.readyState ?? "none"})`);
   }
 
   async interrupt(): Promise<void> {
@@ -210,7 +215,9 @@ export class LocalProvider implements RealtimeAIProvider {
     this.resamplers.clear();
   }
 
-  private send(msg: object): void {
-    if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(msg));
+  private send(msg: object): boolean {
+    if (!this.ws || this.ws.readyState !== 1) return false;
+    this.ws.send(JSON.stringify(msg));
+    return true;
   }
 }

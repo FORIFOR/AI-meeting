@@ -70,6 +70,10 @@ describe("LocalProvider", () => {
     expect(events.at(-1)!.type).toBe("session_closed");
     expect(p.capabilities().localOnly).toBe(true);
   });
+  it("a text turn on a socket that is not open fails instead of vanishing", async () => {
+    const p = new LocalProvider({ agentUrl: "http://127.0.0.1:8788", WebSocketImpl: FakeWS as unknown as typeof WebSocket });
+    await expect(p.sendText("hi")).rejects.toThrow(/agent socket not open/);
+  });
   it("strict_local refuses a non-loopback agent", async () => {
     const p = new LocalProvider({ agentUrl: "http://10.0.0.7:8788", WebSocketImpl: FakeWS as unknown as typeof WebSocket });
     await expect(p.connect({ ...cfg, privacyMode: "strict_local" })).rejects.toBeInstanceOf(PrivacyViolationError);

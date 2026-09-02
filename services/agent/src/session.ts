@@ -566,6 +566,8 @@ export class ConversationSession {
   }
 
   async onText(text: string): Promise<void> {
+    // Logged on receipt: a text turn that never becomes a generation is otherwise invisible here.
+    this.deps.log?.(`text${this.started ? "" : " (ignored: not started)"} "${text.replace(/\s+/g, " ").slice(0, 60)}"`);
     if (!this.started) return;
     if (this.state === "speaking" || this.state === "thinking") this.interrupt("text");
     this.deps.send({ type: "user_transcript", text, final: true });

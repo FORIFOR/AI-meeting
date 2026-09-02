@@ -60,16 +60,22 @@ const api = async (path, init = {}) => {
  */
 const VOICE_A = process.env.VOICE_A ?? "Kyoko";
 const VOICE_B = process.env.VOICE_B ?? "Eddy";
+/**
+ * Order matters: the Tester is one participant with two voices, and once it has addressed the
+ * character every line of its counts as an engaged follow-up (a person who called the character by
+ * name keeps its attention without repeating the name). So the conversation it must stay out of comes
+ * first, before anything has engaged it; the addresses follow.
+ */
 const CUES = [
   { id: "greet", at: 0, kind: "listen", expect: "入室の挨拶をする", window: 25 },
-  { id: "ask1", at: 25, kind: "say", voice: VOICE_A, text: "ゆい、今日の予定を教えて。", expect: "答える", window: 15 },
-  { id: "third", at: 65, kind: "say", voice: VOICE_A, text: "ゆいが昨日そう言ってたよね。", expect: "答えない", window: 15 },
-  { id: "bargein", at: 105, kind: "interrupt", voice: VOICE_A, text: "ゆい、これはどう思う？", cutIn: { voice: VOICE_B, text: "ちょっと待って、その前にこっちの話を先にさせて。" }, expect: "AIが止まる", window: 15 },
-  { id: "chat", at: 150, kind: "conversation", lines: [[VOICE_A, "昨日の資料、見てくれた？"], [VOICE_B, "見たよ。三ページ目の数字が少し気になったかな。"], [VOICE_A, "あそこは後で直しておくね。"], [VOICE_B, "ありがとう、助かる。"]], expect: "割り込まない", window: 30 },
-  { id: "ask2", at: 200, kind: "say", voice: VOICE_A, text: "ゆい、今どう思う？", expect: "答える", window: 15 },
-  { id: "silence", at: 240, kind: "listen", expect: "勝手に話さない", window: 30 },
+  { id: "chat", at: 25, kind: "conversation", lines: [[VOICE_A, "昨日の資料、見てくれた？"], [VOICE_B, "見たよ。三ページ目の数字が少し気になったかな。"], [VOICE_A, "あそこは後で直しておくね。"], [VOICE_B, "ありがとう、助かる。"]], expect: "割り込まない", window: 30 },
+  { id: "ask1", at: 65, kind: "say", voice: VOICE_A, text: "ゆい、今日の予定を教えて。", expect: "答える", window: 15 },
+  { id: "third", at: 105, kind: "say", voice: VOICE_A, text: "ゆいが昨日そう言ってたよね。", expect: "答えない", window: 15 },
+  { id: "bargein", at: 145, kind: "interrupt", voice: VOICE_A, text: "ゆい、これはどう思う？", cutIn: { voice: VOICE_B, text: "ちょっと待って、その前にこっちの話を先にさせて。" }, expect: "AIが止まる", window: 15 },
+  { id: "ask2", at: 190, kind: "say", voice: VOICE_A, text: "ゆい、今どう思う？", expect: "答える", window: 15 },
+  { id: "silence", at: 230, kind: "listen", expect: "勝手に話さない", window: 30 },
 ];
-const SCRIPT_END = 280;
+const SCRIPT_END = 270;
 
 // ---- the Tester's voice, rendered before anyone is billed --------------------------------------
 const dir = join(tmpdir(), `rcai-auto-${Date.now()}`);
