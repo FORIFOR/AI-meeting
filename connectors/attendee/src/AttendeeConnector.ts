@@ -63,6 +63,11 @@ export class AttendeeConnector implements MeetingConnector {
   }
 }
 
+/** RMS of one per-participant chunk below this is silence: Meet's own suppression leaves an idle mic far under it. */
+const PARTICIPANT_FLOOR_DB = -45;
+/** How long a participant keeps the floor after their last audible chunk. */
+const PARTICIPANT_HANGOVER_MS = 500;
+
 class AttendeeSession implements MeetingSession {
   private ws: WebSocketLike | null = null;
   private listeners = new Set<MeetingEventListener>();
@@ -70,6 +75,8 @@ class AttendeeSession implements MeetingSession {
   private closed = false;
   /** The character speaks at the internal rate; Attendee takes whatever we told it we would send. */
   private readonly resampler = createResampler(INTERNAL_SAMPLE_RATE, 24000);
+  /** Participants whose own stream is currently above the floor, each with the timer that ends their turn. */
+  private readonly talking = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     readonly id: string,
@@ -128,14 +135,52 @@ class AttendeeSession implements MeetingSession {
       }
       return;
     }
-    if (msg?.trigger !== INBOUND_MIXED && msg?.trigger !== INBOUND_PER_PARTICIPANT) return;
+    if (msg?.trigger === INBOUND_PER_PARTICIPANT) {
+      this.onParticipantChunk(msg);
+      return;
+    }
+    if (msg?.trigger !== INBOUND_MIXED) return;
     const chunk = msg.data?.chunk;
     if (!chunk) return;
     const pcm16 = decodeChunk(chunk);
     const float = new Float32Array(pcm16.length);
     for (let i = 0; i < pcm16.length; i++) float[i] = pcm16[i]! / 0x8000;
-    const participantId = (msg.data as { participant_uuid?: string } | undefined)?.participant_uuid;
-    this.emit({ type: "audio", frame: createFrame(float, msg.data?.sample_rate ?? this.sampleRate, this.now()), ...(participantId ? { participantId } : {}) });
+    this.emit({ type: "audio", frame: createFrame(float, msg.data?.sample_rate ?? this.sampleRate, this.now()) });
+  }
+
+  /**
+   * A participant's own stream is *who* is talking, never a second copy of *what* they said.
+   *
+   * Attendee sends every voice twice: once in the mix and once on that person's socket. Both used to
+   * reach the recogniser as room audio, interleaved — Gate #8 runs 6–8 heard 「ゆゆゆ今日もののいと…」
+   * for 「ゆい、今日の予定を教えて」 and never answered to its name. The mix is the ears; this stream
+   * only says whose turn it is, the way Recall's speech_on/off does, so a reply can be attached to a
+   * person and the floor is known to be taken. A stream stays "active" while it is above the floor
+   * and for a short hangover after — one quiet chunk between two syllables is not the end of a turn.
+   */
+  private onParticipantChunk(msg: AttendeeAudioMessage): void {
+    const id = msg.data?.participant_uuid;
+    const chunk = msg.data?.chunk;
+    if (!id || !chunk) return;
+    const pcm16 = decodeChunk(chunk);
+    if (pcm16.length === 0) return;
+    let sum = 0;
+    for (let i = 0; i < pcm16.length; i++) {
+      const v = pcm16[i]! / 0x8000;
+      sum += v * v;
+    }
+    const db = 20 * Math.log10(Math.max(1e-6, Math.sqrt(sum / pcm16.length)));
+    if (db < PARTICIPANT_FLOOR_DB) return;
+    const timer = this.talking.get(id);
+    if (timer) clearTimeout(timer);
+    else this.emit({ type: "speech", participant: { id, name: null }, active: true, at: this.now() });
+    this.talking.set(
+      id,
+      setTimeout(() => {
+        this.talking.delete(id);
+        this.emit({ type: "speech", participant: { id, name: null }, active: false, at: this.now() });
+      }, PARTICIPANT_HANGOVER_MS),
+    );
   }
 
   status(): MeetingStatus {
@@ -161,6 +206,8 @@ class AttendeeSession implements MeetingSession {
   async leave(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    for (const t of this.talking.values()) clearTimeout(t);
+    this.talking.clear();
     this.ws?.close();
     this.ws = null;
     this.state = "left";

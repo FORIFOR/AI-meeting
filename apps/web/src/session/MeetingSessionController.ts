@@ -780,13 +780,36 @@ export class MeetingSessionController {
         this.sanctioned = false;
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
         break;
+      case "user_speech_started":
+        /**
+         * Someone spoke up between the policy sanctioning a turn and the answer starting. The agent
+         * treats it as a barge-in on its own thinking and will answer whatever comes next instead —
+         * an answer nobody sanctioned. The turn is over; the next transcript earns its own.
+         */
+        if (this.sanctioned && this.policy.state === "ADDRESSED") {
+          if (this.init.role === "bot") this.report("interrupted", { frames: 0, phase: "thinking" });
+          this.sanctioned = false;
+          this.policy.onInterrupted(now);
+        }
+        break;
       case "interrupted":
         /**
          * Cut off mid-sentence. The audio has already stopped — that is the runtime's fast path and not
          * a decision made here. What matters to the conversation is that this was not a turn the
          * character completed: the floor belongs to whoever cut in, the conversation stays open, and
          * the consecutive-turn count must not be spent on an answer nobody heard.
+         *
+         * Unless nothing of ours was cut. A local agent drafts an answer to every utterance on its own,
+         * and the text turn this page sends for a sanctioned one cancels that draft first — the agent
+         * reports it as an interruption, of a generation the room never heard. Taking that as the end
+         * of our turn made the page cut its own answer the moment it started (Gate #8 runs 6–8: every
+         * 「ゆい、…」 was followed by `interrupted` then `cut unsanctioned`). Before the answer has
+         * started, an interruption is the draft dying, and the sanction is for the answer still to come.
          */
+        if (this.sanctioned && this.policy.state === "ADDRESSED") {
+          if (this.init.role === "bot") console.log("[rcai:bot] draft cancelled, turn still ours");
+          break;
+        }
         void this.session?.endOutboundUtterance?.();
         if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames });
         this.sanctioned = false;

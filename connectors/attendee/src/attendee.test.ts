@@ -60,6 +60,40 @@ describe("AttendeeConnector", () => {
     expect(decodeChunk(out.data.chunk).length).toBeGreaterThan(0);
   });
 
+  it("hears each voice once: the mix is the ears, a participant's own stream only says who is talking", async () => {
+    vi.useFakeTimers();
+    try {
+      const ws = fakeWs();
+      const { session } = await join(ws);
+      const audio: number[] = [];
+      const speech: { id: string; active: boolean }[] = [];
+      session.onEvent((e) => {
+        if (e.type === "audio") audio.push(e.frame.data.length);
+        if (e.type === "speech") speech.push({ id: e.participant.id, active: e.active });
+      });
+      ws.onopen?.();
+      // Attendee sends the same 10 ms of speech twice: once in the mix, once on the speaker's socket.
+      const voiced = encodeChunk(Int16Array.from({ length: 160 }, (_, i) => (i % 2 ? 6000 : -6000)));
+      const silent = encodeChunk(new Int16Array(160));
+      const send = (trigger: string, chunk: string, participant_uuid?: string) =>
+        ws.onmessage?.({ data: JSON.stringify({ relay: { botId: "att_1" }, message: { trigger, data: { chunk, sample_rate: 16000, ...(participant_uuid ? { participant_uuid } : {}) } } }) });
+      send("realtime_audio.mixed", voiced);
+      send("realtime_audio.per_participant", voiced, "p-1");
+      send("realtime_audio.mixed", voiced);
+      send("realtime_audio.per_participant", voiced, "p-1");
+      expect(audio).toEqual([160, 160]);
+      expect(speech).toEqual([{ id: "p-1", active: true }]);
+
+      // Quiet chunks on a participant's socket are not a turn, and the floor is released after the hangover.
+      send("realtime_audio.per_participant", silent, "p-2");
+      vi.advanceTimersByTime(600);
+      expect(speech).toEqual([{ id: "p-1", active: true }, { id: "p-1", active: false }]);
+      expect(audio).toEqual([160, 160]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("ignores another bot's feed", async () => {
     const ws = fakeWs();
     const { session } = await join(ws);

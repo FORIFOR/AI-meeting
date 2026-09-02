@@ -8,6 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 const sendText = vi.fn(async () => {});
 const connect = vi.fn(async (_config: unknown) => {});
+const providerInterrupt = vi.fn(async () => {});
+/** What the fake agent says to the runtime — a test drives the provider side of a turn through this. */
+const listeners: ((e: unknown) => void)[] = [];
+const emit = (e: Record<string, unknown>) => { for (const l of listeners) l(e); };
 
 vi.mock("@rcai/audio-core", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@rcai/audio-core")>();
@@ -29,7 +33,7 @@ vi.mock("../integrations/registry.js", () => ({
   createAvatarProvider: async () => { throw new Error("BLOCKED_BY_NO_WEBGL: not needed for this test"); },
   createConversationProvider: async () => ({
     id: "local", capabilities: () => ({}), connect, pushAudio() {}, sendText,
-    async interrupt() {}, async updateContext() {}, async disconnect() {}, onEvent() {},
+    interrupt: providerInterrupt, async updateContext() {}, async disconnect() {}, onEvent(cb: (e: unknown) => void) { listeners.push(cb); },
   }),
   // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
   createMeetingConnector: async () => ({
@@ -75,7 +79,7 @@ function botPage(role: "bot" | "operator" = "bot") {
 const frame = () => ({ data: new Float32Array(480), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
 
 describe("greeting on arrival", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
 
   it("addressed_only bot page: the first room audio earns one greeting, a beat later", async () => {
@@ -94,6 +98,42 @@ describe("greeting on arrival", () => {
     c.onMeetingAudio(frame());
     await vi.advanceTimersByTimeAsync(2000);
     expect(sendText).toHaveBeenCalledTimes(1);
+    await c.leave();
+  });
+
+  /**
+   * Gate #8 runs 6–8, with the recogniser finally hearing 「ゆい、今日の予定を教えて」: the page sanctioned
+   * the turn, sent its text, and the agent's `interrupted` for the draft it had been writing on its own
+   * made the page drop the sanction — so the real answer was cut as unsanctioned the moment it began.
+   * A cancellation before our answer has started is not our answer being cut. A person speaking up
+   * in that window is.
+   */
+  it("the agent cancelling its own draft does not end the sanctioned turn; a barge-in while thinking does", async () => {
+    const c = botPage();
+    await c.start();
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(1);
+
+    emit({ type: "interrupted", at: Date.now() }); // the agent: `interrupt (text)` on its own draft
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING"); // spoken, not cut
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    emit({ type: "assistant_speech_ended", at: Date.now() });
+    // Past the post-answer cooldown: the policy reads the clock, which the fake timers leave alone.
+    const later = Date.now() + 5000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => later);
+
+    // The next turn: someone starts talking while the answer is still being thought about.
+    c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1"); // the test character has no 「ゆい」 alias
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "user_speech_started", at: Date.now() });
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(providerInterrupt).toHaveBeenCalledTimes(1); // unsanctioned, cut
+    clock.mockRestore();
     await c.leave();
   });
 
