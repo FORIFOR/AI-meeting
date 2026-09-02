@@ -17,6 +17,29 @@ done
 # The vendor's own Node inference, used as-is: this is a four-model pipeline and a reimplementation
 # would be a guess. MIT, Copyright (c) 2025 Supertone Inc.
 curl -fsSL "$GH/helper.js" -o "$DIR/helper.js"
+# One patch to the vendor's file: it throws on any non-CPU request ("GPU mode is not supported yet"),
+# which on this platform means refusing CoreML — a provider onnxruntime-node already bundles. The opts
+# object it builds is passed straight to session creation, so honouring executionProviders is enough.
+python3 - "$DIR/helper.js" <<'PYEOF'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+old = """    if (useGpu) {
+        throw new Error('GPU mode is not supported yet');
+    } else {
+        console.log('Using CPU for inference');
+    }"""
+new = """    if (useGpu) {
+        opts.executionProviders = Array.isArray(useGpu) ? useGpu : ['coreml', 'cpu'];
+        console.log('Using', opts.executionProviders.join(','), 'for inference');
+    } else {
+        console.log('Using CPU for inference');
+    }"""
+if old in s:
+    p.write_text(s.replace(old, new, 1))
+    print("helper: execution providers enabled")
+else:
+    print("helper: patch point not found — upstream changed, leaving as-is")
+PYEOF
 curl -fsSL "https://raw.githubusercontent.com/supertone-inc/supertonic/main/LICENSE" -o "$DIR/LICENSE"
 # The vendor's helper imports onnxruntime-node / fft.js / js-yaml by bare specifier, and it lives
 # outside any package. A link to the agent's modules is what makes those resolve without copying the

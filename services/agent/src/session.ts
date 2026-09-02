@@ -44,6 +44,12 @@ export interface SessionDeps {
   streamingStt?(): StreamingSTT;
   /** Endpoint policy options; the policy is enabled only when `streamingStt` is provided. */
   endpointing?: EndpointPolicyOptions;
+  /** Short pre-rendered syllables to cover a long think. Empty disables them. */
+  fillers?: string[];
+  /** Default when the persona says nothing about backchannels. */
+  fillersEnabled?: boolean;
+  /** How long to wait for the model before covering the gap (ms). Default 400. */
+  fillerAfterMs?: number;
   /** Acoustic turn-end model. Absent ⇒ endpointing is silence + text only. */
   turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
@@ -149,11 +155,62 @@ export class ConversationSession {
   /** Voice chosen by the user for this session; undefined keeps the adapter's configured voice. */
   private voice?: string;
 
+  /**
+   * Pre-rendered 「えーっと、」-class syllables, in the character's own voice.
+   *
+   * Rendered once when a session starts, so playing one costs a buffer copy rather than a synthesis.
+   * They are the only audio in the system that is allowed to be spoken without the model having said
+   * anything, which is why the rules around them are strict: never twice in a row, never when the
+   * persona has backchannels off, and never once the real first phrase has arrived.
+   */
+  private filler = {
+    clips: [] as { sampleRate: number; pcm16: Int16Array }[],
+    next: 0,
+    lastGen: -1,
+    enabled: false,
+    get armed(): boolean {
+      return this.enabled && this.clips.length > 0;
+    },
+    play: (_genId: number) => {},
+  };
+
+  /** Render the fillers for this session's voice, in the background: a turn must not wait for them. */
+  private primeFillers(): void {
+    const phrases = this.deps.fillers ?? ["えーっと、", "うーん、", "そうですね、"];
+    this.filler.clips = [];
+    this.filler.next = 0;
+    void (async () => {
+      for (const phrase of phrases) {
+        try {
+          const r = await this.deps.tts.synthesize(phrase, undefined, this.voice);
+          if (r.pcm16.length) this.filler.clips.push(r);
+        } catch {
+          // A voice that cannot say 「えーっと」 simply does not get fillers.
+        }
+      }
+    })();
+    this.filler.play = (genId: number) => {
+      if (this.filler.lastGen === genId || !this.filler.clips.length) return;
+      this.filler.lastGen = genId;
+      const clip = this.filler.clips[this.filler.next++ % this.filler.clips.length]!;
+      this.sendAudioGen(genId, clip.sampleRate, clip.pcm16);
+    };
+  }
+
   start(config: SessionConfig): void {
     this.systemPrompt = config.systemPrompt;
     this.language = config.language ?? "ja-JP";
     this.strictLocal = config.privacyMode === "strict_local";
     this.voice = config.voice;
+    // Backchannels are a persona decision; the session only supplies the audio.
+    /**
+     * Whether the character makes a small sound while it thinks is the same decision as whether it
+     * uses backchannels at all, and the persona already carries that — as a value, not as a sentence
+     * in the prompt.
+     */
+    const policy = (config.providerOptions as { turnPolicy?: { backchannel?: boolean } } | undefined)?.turnPolicy;
+    this.filler.enabled = policy?.backchannel ?? this.deps.fillersEnabled ?? false;
+    if (this.filler.enabled) this.primeFillers();
     if (this.strictLocal) {
       const bad = this.deps.nonLoopbackEndpoints?.() ?? [];
       if (bad.length) {
@@ -513,6 +570,25 @@ export class ConversationSession {
     let full = "";
     const speakTask = this.speakQueue(queue, abort.signal, turn, genId);
     turn.llmStartAt = this.clock();
+    /**
+     * A held syllable while the model thinks.
+     *
+     * People do this: asked something, they say 「えーっと、」 and start answering a beat later. The
+     * character has the same problem — a cloud model needs ~650 ms before its first token and a
+     * neural voice another ~300 ms — and the same solution, except that it can render the filler in
+     * advance and start it in a few milliseconds.
+     *
+     * Only when the wait is actually long, never twice running, and only if the persona allows
+     * backchannels: a character that says 「えーっと」 before every sentence has a verbal tic, which is
+     * worse than a pause.
+     */
+    const fillerTimer = this.filler.enabled
+      ? setTimeout(() => {
+          // Checked here, not when the timer was set: pre-rendering takes a moment on a real engine,
+          // and the first turn of a session is exactly when a long think is most likely.
+          if (!abort.signal.aborted && !turn.firstPhraseAt && this.filler.armed) this.filler.play(genId);
+        }, this.deps.fillerAfterMs ?? 400)
+      : null;
     const pushChunk = (s: string) => {
       const clean = stripMarkdown(s).trim();
       if (!clean) return; // e.g. an emoji-only "sentence"
@@ -530,6 +606,7 @@ export class ConversationSession {
       }
       const rest = chunker.flush();
       if (rest) pushChunk(rest);
+      if (fillerTimer) clearTimeout(fillerTimer);
       this.deps.log?.(`llm first-token ${(turn.firstTokenAt ?? 0) - turn.llmStartAt}ms first-phrase ${(turn.firstPhraseAt ?? 0) - turn.llmStartAt}ms total ${this.clock() - turn.llmStartAt}ms`);
     } catch (err) {
       // Logged as well as sent: a failing model otherwise reads as `reply "" (no audio)` in the agent's
@@ -539,6 +616,7 @@ export class ConversationSession {
         this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
       }
     } finally {
+      if (fillerTimer) clearTimeout(fillerTimer);
       queue.close();
     }
     const spoke = await speakTask;

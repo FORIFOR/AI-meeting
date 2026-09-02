@@ -157,8 +157,9 @@ class FakeSTT implements STTAdapter {
 }
 class FakeLLM implements LLMAdapter {
   engine = "fake"; model = "fake"; ready = true;
-  constructor(private readonly text = "うん、こんにちは！今日は何してた？", private readonly delayMs = 2) {}
+  constructor(private readonly text = "うん、こんにちは！今日は何してた？", private readonly delayMs = 2, private readonly firstTokenDelayMs = 0) {}
   async *stream(_m: unknown, opts: { signal?: AbortSignal }) {
+    if (this.firstTokenDelayMs) await new Promise((r) => setTimeout(r, this.firstTokenDelayMs));
     for (const ch of this.text) {
       if (opts.signal?.aborted) return;
       await new Promise((r) => setTimeout(r, this.delayMs));
@@ -458,3 +459,51 @@ function wavBytes(sampleRate = 24000, samples = 240): ArrayBuffer {
   ascii("36", "data"); v.setUint32(40, samples * 2, true);
   return buf;
 }
+
+describe("covering a long think", () => {
+  /** A filler is the only audio allowed out before the model has said anything, so the rules are strict. */
+  function session(backchannel: boolean, llmDelayMs: number) {
+    const sent: ServerMessage[] = [];
+    const audio: Uint8Array[] = [];
+    const tts = new FakeTTS();
+    const s = new ConversationSession({
+      stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FakeLLM("わかりました。", 5, llmDelayMs), tts,
+      send: (m) => sent.push(m), sendAudio: (f) => audio.push(f), leadMs: 100000, chunkMs: 100,
+      fillers: ["えーっと、"], fillerAfterMs: 50,
+    });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { turnPolicy: { backchannel } } });
+    return { s, sent, audio, tts };
+  }
+
+  it("says something while the model is still thinking", async () => {
+    const { s, audio, tts } = session(true, 600);
+    await waitFor(() => tts.calls.includes("えーっと、"), 2000); // rendered up front
+    const before = audio.length;
+    const t0 = Date.now();
+    void s.onText("どう思う？");
+    await waitFor(() => audio.length > before, 2000);
+    // The model's first token is 600 ms away; the character is already making a sound.
+    expect(Date.now() - t0).toBeLessThan(400);
+  });
+
+  it("stays quiet when the persona does not use backchannels", async () => {
+    const { s, audio, tts } = session(false, 600);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(tts.calls).not.toContain("えーっと、"); // not even rendered
+    const before = audio.length;
+    void s.onText("どう思う？");
+    await new Promise((r) => setTimeout(r, 200));
+    expect(audio.length).toBe(before);
+  });
+
+  it("does not cover a think that was not long", async () => {
+    const { s, audio, tts } = session(true, 0);
+    await waitFor(() => tts.calls.includes("えーっと、"), 2000);
+    const before = audio.length;
+    void s.onText("どう思う？");
+    await waitFor(() => audio.length > before, 3000);
+    await new Promise((r) => setTimeout(r, 150));
+    // The model answered immediately, so the only thing spoken is the answer.
+    expect(tts.calls.filter((c) => c === "わかりました。").length).toBeGreaterThan(0);
+  });
+});

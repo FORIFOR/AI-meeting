@@ -126,15 +126,34 @@ export class SupertonicTTS implements TTSAdapter {
     return style;
   }
 
+  /**
+   * One inference at a time.
+   *
+   * The session looks ahead and asks for the next phrase while the current one plays, which costs
+   * nothing on a hosted engine and a great deal on this one: three concurrent ONNX runs share the same
+   * cores, and the phrase the listener is actually waiting for arrives last. Measured in the agent,
+   * 「はじめまして、Yuiです。」 took 2694 ms against 348 ms for the same work alone. Playback is
+   * sequential anyway, and synthesis is well under realtime, so serialising loses no lookahead.
+   */
+  private queue: Promise<unknown> = Promise.resolve();
+
   async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
     if (!this.ready || !this.tts) throw new Error("supertonic not ready");
-    const { wav, duration } = await this.tts.call(text, this.opts.language ?? "ja", this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
+    const mine = this.queue.then(() => this.run(text, signal, voice));
+    // A failure must not wedge the queue for every phrase after it.
+    this.queue = mine.catch(() => undefined);
+    return mine;
+  }
+
+  private async run(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
+    if (signal?.aborted) throw new Error("aborted");
+    const { wav, duration } = await this.tts!.call(text, this.opts.language ?? "ja", this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
     if (signal?.aborted) throw new Error("aborted");
     // The model returns a fixed-size buffer; only `duration` says how much of it is speech.
-    const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts.sampleRate));
+    const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts!.sampleRate));
     const pcm16 = new Int16Array(used);
     for (let i = 0; i < used; i++) pcm16[i] = Math.max(-32768, Math.min(32767, Math.round(wav[i]! * 32767)));
-    return { sampleRate: this.tts.sampleRate, pcm16 };
+    return { sampleRate: this.tts!.sampleRate, pcm16 };
   }
 }
 
