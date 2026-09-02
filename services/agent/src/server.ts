@@ -12,7 +12,7 @@ import { IncrementalOfflineSTT, type StreamingSTT } from "./adapters/stt-streami
 import { SherpaOnlineSTT } from "./adapters/sherpa-online.js";
 import { EnergyVADAdapter, SileroVAD, type VADAdapter } from "./adapters/vad.js";
 import { OpenAICompatibleLLM } from "./adapters/llm.js";
-import { AivisSpeechTTS, AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, type TTSAdapter } from "./adapters/tts.js";
+import { AivisSpeechTTS, AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, SupertonicTTS, type TTSAdapter } from "./adapters/tts.js";
 import { SmartTurnV3 } from "./adapters/turn.js";
 import { ConversationSession } from "./session.js";
 import { pcm16BytesToFloat32, type ClientMessage } from "./protocol.js";
@@ -71,6 +71,19 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
   }
   const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel);
   await llm.init();
+
+  /**
+   * Acoustic turn-end. Loaded once and shared: the model is 8 MB and stateless, and a per-session copy
+   * would cost a second of load time at the worst possible moment.
+   */
+  let turn: SmartTurnV3 | null = null;
+  if (cfg.turn !== "off" && cfg.smartTurnModel) {
+    const t = new SmartTurnV3(cfg.smartTurnModel);
+    await t.init();
+    if (t.ready) turn = t;
+    else console.warn("[agent] BLOCKED_BY_SMART_TURN:", t.initError ?? "model did not load", "— endpointing stays silence + text only");
+  }
+
   const tts = await selectTts(cfg);
   const probe = new SileroVAD(cfg.sileroVadModel, { minSilenceSec: cfg.vadMinSilenceMs / 1000 });
   const vadEngine = probe.available ? "silero-vad" : "energy-vad";
@@ -88,17 +101,6 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
   }
   if (sttMode !== "baseline" && !stt.ready) sttMode = "baseline";
   const pauseSec = cfg.pauseMinSilenceMs / 1000;
-  /**
-   * Acoustic turn-end. Loaded once and shared: the model is 8 MB and stateless, and a per-session copy
-   * would cost a second of load time at the worst possible moment.
-   */
-  let turn: SmartTurnV3 | null = null;
-  if (cfg.turn !== "off" && cfg.smartTurnModel) {
-    const t = new SmartTurnV3(cfg.smartTurnModel);
-    await t.init();
-    if (t.ready) turn = t;
-    else console.warn("[agent] BLOCKED_BY_SMART_TURN:", t.initError ?? "model did not load", "— endpointing stays silence + text only");
-  }
 
   const createStreamingStt: AgentRuntime["createStreamingStt"] =
     sttMode === "online" && online ? () => online!.clone() : sttMode === "incremental" ? () => new IncrementalOfflineSTT(stt, { intervalMs: cfg.sttIncrementalIntervalMs }) : null;
@@ -129,6 +131,16 @@ export async function selectTts(cfg: AgentConfig): Promise<TTSAdapter> {
    * like someone, and that difference is most of what people react to. It is local either way, so
    * preferring it costs no privacy — only the engine being installed and running.
    */
+  /**
+   * Explicit only. Supertonic sounds like a person and runs on this machine, but it is ~0.6× realtime
+   * against the resident daemon's 60 ms to first audio — a quality choice, not a default one.
+   */
+  if (cfg.tts === "supertonic" && cfg.supertonicDir) {
+    const s3 = new SupertonicTTS(cfg.supertonicDir, cfg.supertonicVoice, { steps: cfg.supertonicSteps, speed: cfg.supertonicSpeed });
+    await s3.init();
+    if (s3.ready) return s3;
+    console.warn("[agent] BLOCKED_BY_SUPERTONIC:", s3.initError ?? "weights not found — run scripts/fetch-supertonic.sh", "— falling back");
+  }
   if (cfg.tts === "aivis" || cfg.tts === "auto") {
     const a = new AivisSpeechTTS(cfg.aivisUrl, cfg.aivisVoice);
     await a.init();

@@ -63,6 +63,75 @@ export class SayTTS implements TTSAdapter {
 }
 
 /**
+ * Supertonic 3 — on-device neural TTS, 31 languages including Japanese.
+ *
+ * Four ONNX models and a vocoder, run through the vendor's own Node implementation (MIT) rather than a
+ * reimplementation: a four-stage pipeline reproduced from a description is a guess, and a guess here
+ * produces confident noise. `scripts/fetch-supertonic.sh` puts the weights and that helper in
+ * vendor/supertonic; nothing leaves the machine at synthesis time.
+ *
+ * Measured on this Mac, CPU: 452 ms to load, and roughly 0.58× realtime — 2.1 s of compute for 3.7 s
+ * of speech. That is faster than realtime but nothing like the resident macOS daemon's 60 ms to first
+ * audio, so it is a quality choice rather than a latency one.
+ */
+export class SupertonicTTS implements TTSAdapter {
+  readonly engine = "supertonic-3";
+  ready = false;
+  voice: string;
+  /** The open-weight release ships ten preset styles; the picker offers them by name. */
+  readonly voices = ["F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5"];
+  private tts: { call(text: string, lang: string, style: unknown, steps: number, speed: number): Promise<{ wav: Float32Array; duration: number[] }>; sampleRate: number } | null = null;
+  private styles = new Map<string, unknown>();
+  private loadStyle: ((paths: string[], verbose: boolean) => unknown) | null = null;
+  initError: string | null = null;
+
+  constructor(
+    private readonly dir: string,
+    voice = "F1",
+    private readonly opts: { language?: string; steps?: number; speed?: number } = {},
+  ) {
+    this.voice = this.voices.includes(voice) ? voice : "F1";
+  }
+
+  async init(): Promise<void> {
+    if (!fsSync.existsSync(path.join(this.dir, "helper.js"))) return;
+    try {
+      const helper = (await import(/* @vite-ignore */ path.join(this.dir, "helper.js"))) as {
+        loadTextToSpeech(onnxDir: string, useGpu: boolean): Promise<NonNullable<SupertonicTTS["tts"]>>;
+        loadVoiceStyle(paths: string[], verbose: boolean): unknown;
+      };
+      this.tts = await helper.loadTextToSpeech(path.join(this.dir, "onnx"), false);
+      this.loadStyle = helper.loadVoiceStyle;
+      this.ready = true;
+    } catch (err) {
+      this.initError = err instanceof Error ? err.message : String(err);
+      this.ready = false;
+    }
+  }
+
+  private styleFor(voice?: string): unknown {
+    const name = voice && this.voices.includes(voice) ? voice : this.voice;
+    let style = this.styles.get(name);
+    if (!style) {
+      style = this.loadStyle!([path.join(this.dir, "voice_styles", `${name}.json`)], false);
+      this.styles.set(name, style);
+    }
+    return style;
+  }
+
+  async synthesize(text: string, signal?: AbortSignal, voice?: string): Promise<TTSResult> {
+    if (!this.ready || !this.tts) throw new Error("supertonic not ready");
+    const { wav, duration } = await this.tts.call(text, this.opts.language ?? "ja", this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
+    if (signal?.aborted) throw new Error("aborted");
+    // The model returns a fixed-size buffer; only `duration` says how much of it is speech.
+    const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts.sampleRate));
+    const pcm16 = new Int16Array(used);
+    for (let i = 0; i < used; i++) pcm16[i] = Math.max(-32768, Math.min(32767, Math.round(wav[i]! * 32767)));
+    return { sampleRate: this.tts.sampleRate, pcm16 };
+  }
+}
+
+/**
  * AivisSpeech — a local Japanese TTS built for character voices.
  *
  * macOS's voices read text; they do not act. For a character people are supposed to enjoy talking to,

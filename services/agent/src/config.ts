@@ -13,12 +13,17 @@ export interface AgentConfig {
   whisperServerUrl: string;
   llmUrl: string;
   llmModel: string;
-  tts: "say" | "sbv2" | "avspeech" | "aivis" | "auto";
+  tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
   sbv2Url: string;
   sayVoice: string;
   /** AVSpeechSynthesisVoice identifier for the resident daemon (tools/tts-daemon). */
   avspeechVoice: string;
   aivisUrl: string;
+  supertonicDir: string;
+  /** One of the ten preset styles: F1–F5, M1–M5. */
+  supertonicVoice: string;
+  supertonicSteps: number;
+  supertonicSpeed: number;
   /** "Speaker — Style" as AivisSpeech names it; empty means the engine's first style. */
   aivisVoice: string;
   /** Acoustic turn-end model; null when it has not been fetched (scripts/fetch-smart-turn.sh). */
@@ -81,6 +86,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     avspeechVoice: env.AVSPEECH_VOICE ?? "com.apple.voice.compact.ja-JP.Kyoko",
     /** AivisSpeech Engine (VOICEVOX-compatible, local). Absent ⇒ BLOCKED_BY_AIVIS_SERVER and a fallback. */
     aivisUrl: env.AIVIS_URL ?? "http://127.0.0.1:10101",
+    /** Supertonic 3 weights + the vendor's Node inference (scripts/fetch-supertonic.sh). */
+    supertonicDir:
+      env.SUPERTONIC_DIR ??
+      firstExisting([
+        path.resolve(process.cwd(), "../../vendor/supertonic"),
+        path.resolve(process.cwd(), "vendor/supertonic"),
+        path.join(HOME, "Projects/AI-meeting/vendor/supertonic"),
+      ]) ??
+      "",
+    supertonicVoice: env.SUPERTONIC_VOICE ?? "F1",
+    /**
+     * Denoising steps. Measured on this Mac for 「はい、私はゆいです。」: 8 → 1305 ms, 4 → 690 ms,
+     * 2 → 348 ms, 1 → 182 ms, all for the same 2.1 s of speech. 4 is the default because a character
+     * that takes 1.3 s to start a sentence is a character people talk over.
+     */
+    supertonicSteps: Number(env.SUPERTONIC_STEPS ?? 4),
+    supertonicSpeed: Number(env.SUPERTONIC_SPEED ?? 1.05),
     aivisVoice: env.AIVIS_VOICE ?? "",
     /** Acoustic turn-end model (Pipecat Smart Turn v3). Absent ⇒ silence-only endpointing. */
     smartTurnModel:

@@ -21,7 +21,9 @@
     "@rcai/conversation-core": "workspace:*",
     "@rcai/evaluation": "workspace:*",
     "@rcai/provider-core": "workspace:*",
+    "fft.js": "^4.0.4",
     "hono": "4.13.5",
+    "js-yaml": "^5.4.1",
     "onnxruntime-node": "^1.29.0",
     "sherpa-onnx-node": "latest",
     "ws": "8.21.3"
