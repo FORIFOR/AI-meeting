@@ -1,0 +1,95 @@
+diff --git a/bots/models.py b/bots/models.py
+index 0072c48..d9f375a 100644
+--- a/bots/models.py
++++ b/bots/models.py
+@@ -1194,6 +1194,9 @@ class Bot(models.Model):
+     def create_debug_recording(self):
+         if os.getenv("SAVE_DEBUG_RECORDINGS", "false") == "true":
+             return True
++        # local (not upstream): the forced Meet debug capture below is a second x264 encoder per bot, too much for an emulated host
++        if os.getenv("RCAI_DISABLE_DEBUG_RECORDING", "false") == "true":
++            return False
+ 
+         from bots.meeting_url_utils import meeting_type_from_url
+ 
+diff --git a/bots/web_bot_adapter/shared_chromedriver_payload.js b/bots/web_bot_adapter/shared_chromedriver_payload.js
+index 0dc8db7..61c4512 100644
+--- a/bots/web_bot_adapter/shared_chromedriver_payload.js
++++ b/bots/web_bot_adapter/shared_chromedriver_payload.js
+@@ -730,25 +730,28 @@ class BotOutputManager {
+         }
+     }
+ 
++    // local (not upstream): schedule every queued chunk now, back to back, instead of one chunk per
++    // setTimeout tick. On a starved main thread (emulated bot host) the tick came late, the "catch up"
++    // branch in _scheduleChunk opened a gap in the middle of a sentence, and the listener heard fragments.
+     _processAudioQueue() {
+-        if (this.audioQueue.length === 0) {
+-            this.isPlayingAudioQueue = false;
+-    
+-            // Delay turning off the mic by 2 seconds, only if queue stays empty
+-            if (this.turnOffMicTimeout) {
+-                clearTimeout(this.turnOffMicTimeout);
+-            }
+-            this.turnOffMicTimeout = setTimeout(() => {
+-                if (this.audioQueue.length === 0) {
+-                    this.disableMic();
+-                }
+-            }, 2000);
+-    
+-            return;
++        while (this.audioQueue.length > 0) {
++            this._scheduleChunk();
+         }
+-    
+-        this.isPlayingAudioQueue = true;
+-    
++        this.isPlayingAudioQueue = false;
++
++        // Turn the mic off 2 seconds after the scheduled audio has actually ended, unless more arrives
++        if (this.turnOffMicTimeout) {
++            clearTimeout(this.turnOffMicTimeout);
++        }
++        const msUntilPlaybackEnds = Math.max(0, (this.nextPlayTime - this.audioContext.currentTime) * 1000);
++        this.turnOffMicTimeout = setTimeout(() => {
++            if (this.audioQueue.length === 0) {
++                this.disableMic();
++            }
++        }, msUntilPlaybackEnds + 2000);
++    }
++
++    _scheduleChunk() {
+         const currentTime = this.audioContext.currentTime;
+         if (!this.nextPlayTime || this.nextPlayTime < currentTime) {
+             // Catch up if we've fallen behind
+@@ -782,15 +785,6 @@ class BotOutputManager {
+     
+         source.start(this.nextPlayTime);
+         this.nextPlayTime += duration;
+-    
+-        // Schedule the next queue processing a bit before the scheduled end
+-        const timeUntilNextProcessMs =
+-            (this.nextPlayTime - currentTime) * 1000 * 0.8;
+-    
+-        setTimeout(
+-            () => this._processAudioQueue(),
+-            Math.max(0, timeUntilNextProcessMs)
+-        );
+     }
+ 
+     getAudioContextDestination() {
+diff --git a/bots/web_bot_adapter/web_bot_adapter.py b/bots/web_bot_adapter/web_bot_adapter.py
+index 0461f77..af04dc2 100644
+--- a/bots/web_bot_adapter/web_bot_adapter.py
++++ b/bots/web_bot_adapter/web_bot_adapter.py
+@@ -635,6 +635,10 @@ class WebBotAdapter(BotAdapter):
+         }
+         options.add_experimental_option("prefs", prefs)
+ 
++        # local diagnostics hook (not upstream): extra Chrome switches, e.g. "--enable-logging --v=1 --log-file=/tmp/chrome.log"
++        for extra_arg in os.getenv("RCAI_EXTRA_CHROME_ARGS", "").split():
++            options.add_argument(extra_arg)
++
+         self.add_subclass_specific_chrome_options(options)
+ 
+         if self.driver:

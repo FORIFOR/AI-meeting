@@ -99,8 +99,10 @@ microphone, unscripted, ten minutes.
 **Runs 17–28: self-hosted Attendee, and what the host could give it** (2026-09-03). With the hosted
 credit gone the gate moved to Attendee's own open-source stack on this Mac (`scripts/reality/attendee-selfhost/`,
 Docker Desktop, the amd64 image under Rosetta — the four services, Postgres, Redis, MinIO for the recordings;
-three local patches in the clone: Chrome log path, no debug screen recording, a seccomp profile Docker's runc
-cannot load). Two bots in one Meet room is one Chrome per bot in the worker plus the webpage-streamer's software
+three local patches in the clone, kept as `scripts/reality/attendee-selfhost/local-patches.diff` and applied
+with `attendee-selfhost.sh patch`: extra Chrome switches for diagnostics, no forced debug screen recording, and
+back-to-back scheduling of the bot's queued output audio — the seccomp profile Docker's runc cannot load is reset
+in `compose.rcai.yaml`). Two bots in one Meet room is one Chrome per bot in the worker plus the webpage-streamer's software
 GL and VP8 encode, all emulated.
 
 | run | outcome | what it said |

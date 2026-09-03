@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Self-hosted Attendee (Elastic License 2.0) for `pnpm reality:attendee:auto`, at no vendor cost.
 #
+#   scripts/reality/attendee-selfhost/attendee-selfhost.sh patch    # apply local-patches.diff to the checkout (once, before build)
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh build    # image (linux/amd64, emulated on Apple silicon)
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh env      # write $ATTENDEE_DIR/.env (keys, MinIO)
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh up       # postgres, redis, minio, app, worker, scheduler, streamer
@@ -12,6 +13,13 @@
 # Then: sign up at http://localhost:8000 (the confirmation link is printed in the app log), create an
 # API key in the UI, and put ATTENDEE_API_BASE_URL=http://localhost:8000 + ATTENDEE_API_KEY=… in
 # services/token-broker/.env. The gate script and the broker read both.
+#
+# local-patches.diff (against attendee c8f7761) is what the measured runs used — three changes that are
+# not upstream: RCAI_DISABLE_DEBUG_RECORDING (no second x264 encoder per bot), RCAI_EXTRA_CHROME_ARGS
+# (diagnostics), and back-to-back scheduling of queued output audio in shared_chromedriver_payload.js so a
+# starved main thread does not open gaps mid-sentence (Gate #8 runs 17–28). compose.rcai.yaml sets the
+# two env vars. Docker Desktop needs ~12 GB free for the image plus the bot containers' per-run scratch;
+# at 2 GB free the stack stopped mid-run (run 26).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ATTENDEE_DIR="${ATTENDEE_DIR:-$HOME/Projects/attendee}"
@@ -20,6 +28,9 @@ compose() { docker compose --project-directory "$ATTENDEE_DIR" -f "$ATTENDEE_DIR
 lan_ip() { ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1; }
 
 case "${1:-}" in
+  patch)
+    if git -C "$ATTENDEE_DIR" apply --check -R "$HERE/local-patches.diff" 2>/dev/null; then echo "local-patches.diff already applied"; exit 0; fi
+    git -C "$ATTENDEE_DIR" apply "$HERE/local-patches.diff" && echo "applied local-patches.diff to $ATTENDEE_DIR (rebuild the image)" ;;
   build)   compose build attendee-app-local ;;
   env)
     ENV="$ATTENDEE_DIR/.env"
