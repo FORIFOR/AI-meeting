@@ -518,6 +518,34 @@ Soak 22 (2 min, `strict_local`, same utterances) is that configuration's evidenc
 first token p50 149 / p90 186 ms, turn p50 649 / p95 1704 ms on the HUD, no errors, no toasts, replies
 of 13–48 chars (「面接で緊張するのってよくあることだよ。何かリラックスできるルーティンとかある？」).
 
+## The gate's script, through the bot page, without a meeting (measured 2026-09-04)
+
+While the room stayed unadmitted (runs 48–62, `BLOCKED_BY_NO_ADMITTER`) the cue script itself was
+put through the real bot page on the local engine: `scripts/reality/attendee-sim.mjs` now sends
+`outbound=page` like the live harness, and `gate-script-16k.wav` (270 s, the seven cues spoken in
+order) was played into it as the room. Sims 24 and 25 (gemma-4-E2B via llama.cpp, supertonic-3):
+every step and behaviour row PASS — greeting; `ask1` answered as a vocative; the un-addressed
+「third」 line ignored; the barge-in cut the reply mid-sentence and the follow-up was answered as an
+engaged turn (as in run 47); `ask2` answered; `PASSIVE → ENGAGED → COOLDOWN`; six separate
+stretches of speech, 16.5 s of audio; no name parroted. First token 230–483 ms on every turn but
+one: the **greeting waited 5136 ms**, because the 988-token system prompt had never been read into
+the model (cold 3430 ms, ~110 ms once cached — llama.cpp's cache is a prefix cache). `48e9bec`
+sends a one-token request at session start and whenever the meeting prompt changes, so the prompt
+is cached before anyone speaks; sim 26 on a freshly restarted llama-server: `llm warm 1554ms` while
+nobody waited, greeting first token 148 ms. Remote endpoints are never warmed (nothing to cache,
+quota to spend); a failed warm-up is logged and ignored (agent tests 108 / 108).
+
+The greeting the local model gave was 「初めまして、Yuiです。」 — the half the room needs, that
+saying its name gets an answer, dropped 4 times out of 4 when the instruction was one sentence
+with a clause in it. Numbered as two required points (`a47a760`) it kept the clause 5 / 5 against the
+full meeting system prompt; sim 28, a silent room: 「こんにちは、Yuiです。Yuiと声をかけていただければ
+返事をする…」, 6.4 s of audio, first sound 4.7 s after the bot was created. TTS on this engine is the
+floor now: ~127 ms per character, about a second per phrase, streamed phrase by phrase.
+
+None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
+answered. It is the evidence that the path the next admitted run will exercise — ladder, second
+filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —
