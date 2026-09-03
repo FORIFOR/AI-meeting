@@ -540,7 +540,11 @@ saying its name gets an answer, dropped 4 times out of 4 when the instruction wa
 with a clause in it. Numbered as two required points (`a47a760`) it kept the clause 5 / 5 against the
 full meeting system prompt; sim 28, a silent room: 「こんにちは、Yuiです。Yuiと声をかけていただければ
 返事をする…」, 6.4 s of audio, first sound 4.7 s after the bot was created. TTS on this engine is the
-floor now: ~127 ms per character, about a second per phrase, streamed phrase by phrase.
+floor now: about a second per phrase, streamed phrase by phrase. The agent had been started on the
+float weights; on int8 (the run 46–47 environment) the 19-character third phrase came back in
+2.55–2.80 s instead of 4.75 s (req→done, queued behind the two before it) while a 6-character
+phrase stayed at 540–680 ms — the per-call cost, not the per-character one, is what a short phrase
+pays. Runs 63 onward use int8.
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
