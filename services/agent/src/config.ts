@@ -103,11 +103,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      */
     llmHistoryChars: Number(env.LOCAL_LLM_HISTORY_CHARS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 2400 : 12000)),
     /**
-     * A cloud model's slow starts are per request (see HedgedLLM), so a duplicate request after 2.5 s
-     * is what keeps a reply under the conversational limit. A local llama.cpp serves one request at a
-     * time — a second request there would queue behind the first and help nothing — so it is off on loopback.
+     * A cloud model's slow starts are per request (see HedgedLLM), so a duplicate request after a
+     * short wait is what keeps a reply under the conversational limit. 1.8 s: over ~290 turns of one
+     * evening's soak the first token came in 0.67–1.32 s except for the stalls, which sat at 2.4 s and
+     * far beyond — nothing in between worth waiting for, and every 100 ms spent waiting is 100 ms of
+     * silence in the room after 「えーっと、」 (Gate #8 run 47: 4.0 s). A local llama.cpp serves one
+     * request at a time — a second request there would queue behind the first and help nothing — so
+     * it is off on loopback.
      */
-    llmHedgeMs: Number(env.LOCAL_LLM_HEDGE_MS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 0 : 2500)),
+    llmHedgeMs: Number(env.LOCAL_LLM_HEDGE_MS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 0 : 1800)),
     dumpUtterancesDir: env.RCAI_DUMP_UTTERANCES || null,
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",

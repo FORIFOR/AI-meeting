@@ -137,7 +137,7 @@ export function parseSse(body: string): string[] {
 }
 
 /**
- * The same model, asked twice when it is slow to start.
+ * The same model, asked again when it is slow to start.
  *
  * Measured over one afternoon of conversation against gemini-3.5-flash-lite: first-token p50 0.8 s,
  * but 8 turns in 89 took more than 3 s and the worst took 17 s — a person asked a question and heard
@@ -146,15 +146,19 @@ export function parseSse(body: string): string[] {
  * while the first is still silent comes back in the usual time.
  *
  * So: after `afterMs` with no first token, the same request goes out again; the first stream to
- * produce a token is the reply and the other is aborted. A request that fails outright before the
- * deadline is retried the same way. Nothing changes when the first request is prompt, which is the
- * common case. The second request goes to `fallback` when one is given, otherwise to `primary`
- * again — the default, since a different model answers in a different voice.
+ * produce a token is the reply and the others are aborted. A request that fails outright is retried
+ * the same way. Nothing changes when the first request is prompt, which is the common case. The
+ * extra requests go to `fallback` when one is given, otherwise to `primary` again — the default,
+ * since a different model answers in a different voice.
+ *
+ * The ladder has more than one step. Two requests both stalled on the greeting of Gate #8 runs 46
+ * and 47 (30.6 s and 22.8 s to the first token: the second request went out at 2.5 s and was as
+ * silent as the first), so a third goes out after another `afterMs`; `maxRequests` caps it.
  */
 export class HedgedLLM implements LLMAdapter {
   constructor(
     private readonly primary: LLMAdapter,
-    private readonly opts: { afterMs: number; fallback?: LLMAdapter; log?: (line: string) => void; now?: () => number } = { afterMs: 2500 },
+    private readonly opts: { afterMs: number; maxRequests?: number; fallback?: LLMAdapter; log?: (line: string) => void; now?: () => number } = { afterMs: 2500 },
   ) {}
 
   get engine(): string {
@@ -170,32 +174,52 @@ export class HedgedLLM implements LLMAdapter {
   async *stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {}): AsyncIterable<string> {
     const now = this.opts.now ?? Date.now;
     const t0 = now();
-    const a = new AbortController();
-    const b = new AbortController();
-    const onAbort = () => { a.abort(); b.abort(); };
+    const maxRequests = Math.max(1, this.opts.maxRequests ?? 3);
+    const controllers: AbortController[] = [];
+    const onAbort = () => { for (const c of controllers) c.abort(); };
     if (opts.signal?.aborted) onAbort();
     opts.signal?.addEventListener("abort", onAbort, { once: true });
+    // Requests that have neither produced a first token nor failed, in the order they were sent.
+    const live: { who: number; p: Promise<{ who: number; r: Settled<Head | null> }> }[] = [];
+    const ask = (): void => {
+      const c = new AbortController();
+      controllers.push(c);
+      const who = controllers.length;
+      const model = who === 1 ? this.primary : (this.opts.fallback ?? this.primary);
+      live.push({ who, p: settle(head(model.stream(messages, { ...opts, signal: c.signal }))).then((r) => ({ who, r })) });
+    };
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const first = settle(head(this.primary.stream(messages, { ...opts, signal: a.signal })));
-      const deadline = new Promise<"timeout">((resolve) => { timer = setTimeout(() => resolve("timeout"), this.opts.afterMs); });
-      let outcome = await Promise.race([first, deadline]);
-      let source: Head | null;
-      if (outcome !== "timeout" && outcome.ok) {
-        source = outcome.value;
-      } else {
-        this.opts.log?.(outcome === "timeout" ? `llm hedge: no first token after ${now() - t0}ms, asking again` : `llm hedge: first request failed (${outcome.error.message}), asking again`);
-        const second = settle(head((this.opts.fallback ?? this.primary).stream(messages, { ...opts, signal: b.signal })));
-        // Whichever answers first. The first request stays in the race: it may still come through
-        // before the second one has connected.
-        const tagged = { first: first.then((r) => ({ who: "first" as const, r })), second: second.then((r) => ({ who: "second" as const, r })) };
-        let winner = outcome === "timeout" ? await Promise.race([tagged.first, tagged.second]) : await tagged.second;
-        if (!winner.r.ok && outcome === "timeout") winner = await (winner.who === "first" ? tagged.second : tagged.first); // one failed; wait for the other
-        if (!winner.r.ok) throw winner.r.error;
-        source = winner.r.value;
-        (winner.who === "first" ? b : a).abort();
-        this.opts.log?.(`llm hedge: ${winner.who} request answered after ${now() - t0}ms`);
+      ask();
+      let source: Head | null = null;
+      let winner = 0;
+      for (;;) {
+        // Another request may still go out: race the live ones against the clock. At the cap, just wait.
+        const deadline = controllers.length < maxRequests
+          ? new Promise<"timeout">((resolve) => { timer = setTimeout(() => resolve("timeout"), this.opts.afterMs); })
+          : null;
+        const outcome = await Promise.race(deadline ? [...live.map((l) => l.p), deadline] : live.map((l) => l.p));
+        if (timer) clearTimeout(timer);
+        if (outcome === "timeout") {
+          this.opts.log?.(`llm hedge: no first token after ${now() - t0}ms, asking again`);
+          ask();
+          continue;
+        }
+        live.splice(live.findIndex((l) => l.who === outcome.who), 1);
+        if (outcome.r.ok) {
+          source = outcome.r.value;
+          winner = outcome.who;
+          break;
+        }
+        if (live.length) continue; // one failed; the others are still in the race
+        if (controllers.length >= maxRequests) throw outcome.r.error;
+        this.opts.log?.(`llm hedge: ${ORDINAL[outcome.who - 1] ?? `#${outcome.who}`} request failed (${outcome.r.error.message}), asking again`);
+        ask();
       }
+      // Whichever answered first is the reply; the rest are cut. (The first request stays in the race
+      // after a hedge: it may still come through before the second one has connected.)
+      controllers.forEach((c, i) => { if (i + 1 !== winner) c.abort(); });
+      if (controllers.length > 1) this.opts.log?.(`llm hedge: ${ORDINAL[winner - 1] ?? `#${winner}`} request answered after ${now() - t0}ms`);
       if (!source) return; // an empty reply, not a slow one
       yield source.first;
       for (;;) {
@@ -206,8 +230,8 @@ export class HedgedLLM implements LLMAdapter {
     } finally {
       if (timer) clearTimeout(timer);
       opts.signal?.removeEventListener("abort", onAbort);
-      // Aborting the loser is enough for fetch; the other stream's pending promise settles as an
-      // error that nobody is waiting for, which `settle` has already made harmless.
+      // Aborting the losers is enough for fetch; their pending promises settle as errors that nobody
+      // is waiting for, which `settle` has already made harmless.
     }
   }
 
@@ -215,6 +239,8 @@ export class HedgedLLM implements LLMAdapter {
     return this.primary.complete(messages, opts);
   }
 }
+
+const ORDINAL = ["first", "second", "third", "fourth"];
 
 type Head = { first: string; rest: AsyncIterator<string> };
 type Settled<T> = { ok: true; value: T } | { ok: false; error: Error };

@@ -78,7 +78,7 @@ describe("strict_local guard", () => {
   });
 
   it("hedges a remote model's slow starts by default, never a local llama.cpp", () => {
-    expect(loadConfig({ LOCAL_LLM_URL: "https://generativelanguage.googleapis.com/v1beta/openai" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(2500);
+    expect(loadConfig({ LOCAL_LLM_URL: "https://generativelanguage.googleapis.com/v1beta/openai" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(1800);
     expect(loadConfig({ LOCAL_LLM_URL: "http://127.0.0.1:8080/v1" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(0);
     expect(loadConfig({ LOCAL_LLM_URL: "https://generativelanguage.googleapis.com/v1beta/openai", LOCAL_LLM_HEDGE_MS: "0" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(0);
   });
@@ -545,14 +545,14 @@ function wavBytes(sampleRate = 24000, samples = 240): ArrayBuffer {
 
 describe("covering a long think", () => {
   /** A filler is the only audio allowed out before the model has said anything, so the rules are strict. */
-  function session(backchannel: boolean, llmDelayMs: number) {
+  function session(backchannel: boolean, llmDelayMs: number, fillers = ["えーっと、"], fillerRepeatMs?: number) {
     const sent: ServerMessage[] = [];
     const audio: Uint8Array[] = [];
     const tts = new FakeTTS();
     const s = new ConversationSession({
       stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FakeLLM("わかりました。", 5, llmDelayMs), tts,
       send: (m) => sent.push(m), sendAudio: (f) => audio.push(f), leadMs: 100000, chunkMs: 100,
-      fillers: ["えーっと、"], fillerAfterMs: 50,
+      fillers, fillerAfterMs: 50, fillerRepeatMs,
     });
     s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { turnPolicy: { backchannel } } });
     return { s, sent, audio, tts };
@@ -578,6 +578,38 @@ describe("covering a long think", () => {
     await new Promise((r) => setTimeout(r, 200));
     expect(audio.length).toBe(before);
   });
+
+  it("says a second, different thing when the think is still going, and never a third (run 47: 4 s of nothing after 「えーっと、」)", async () => {
+    const { s, audio, tts } = session(true, 700, ["えーっと、", "そうですね、"], 150);
+    await waitFor(() => tts.calls.includes("そうですね、"), 2000);
+    const before = audio.length;
+    void s.onText("どう思う？");
+    await waitFor(() => audio.length >= before + 1, 2000); // 「えーっと、」 at ~50 ms
+    await waitFor(() => audio.length >= before + 2, 2000); // 「そうですね、」 at ~200 ms, the model still silent
+    await new Promise((r) => setTimeout(r, 200));
+    // Still no answer at ~400 ms, and nothing more was said: two fillers is the cap.
+    expect(audio.length).toBe(before + 2);
+    await waitFor(() => tts.calls.includes("わかりました。"), 2000);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(fillerClips(audio.slice(before))).toBe(2);
+  });
+
+  it("does not repeat the filler once the model has started", async () => {
+    const { s, audio, tts } = session(true, 120, ["えーっと、", "そうですね、"], 150);
+    await waitFor(() => tts.calls.includes("そうですね、"), 2000);
+    const before = audio.length;
+    void s.onText("どう思う？");
+    await waitFor(() => tts.calls.includes("わかりました。"), 2000);
+    await new Promise((r) => setTimeout(r, 300));
+    // One filler at 50 ms; the first token came at 120 ms, so the 200 ms repeat found nothing to cover.
+    // Everything after the first clip is the answer itself, in 100 ms chunks.
+    expect(fillerClips(audio.slice(before))).toBe(1);
+    expect(audio.length).toBeGreaterThan(before + 1);
+    expect(tts.calls.filter((c) => c === "わかりました。").length).toBe(1);
+  });
+
+  /** A pre-rendered filler goes out as one whole clip (1 s from FakeTTS); the answer is re-framed to 100 ms. */
+  const fillerClips = (frames: Uint8Array[]) => frames.filter((f) => f.byteLength > 16000).length;
 
   it("does not cover a think that was not long", async () => {
     const { s, audio, tts } = session(true, 0);

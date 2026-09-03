@@ -60,6 +60,8 @@ export interface SessionDeps {
   fillersEnabled?: boolean;
   /** How long to wait for the model before covering the gap (ms). Default 400. */
   fillerAfterMs?: number;
+  /** A think still not over this long after the first filler earns a second, different one (ms). Default 2200; 0 disables. */
+  fillerRepeatMs?: number;
   /** Acoustic turn-end model. Absent ⇒ endpointing is silence + text only. */
   turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
@@ -194,18 +196,20 @@ export class ConversationSession {
    *
    * Rendered once when a session starts, so playing one costs a buffer copy rather than a synthesis.
    * They are the only audio in the system that is allowed to be spoken without the model having said
-   * anything, which is why the rules around them are strict: never twice in a row, never when the
-   * persona has backchannels off, and never once the real first phrase has arrived.
+   * anything, which is why the rules around them are strict: at most two per turn and the second only
+   * when the first has long gone quiet (fillerRepeatMs), never when the persona has backchannels off,
+   * and never once the real first phrase has arrived.
    */
   private filler = {
     clips: [] as { sampleRate: number; pcm16: Int16Array }[],
     next: 0,
     lastGen: -1,
+    repeatedGen: -1,
     enabled: false,
     get armed(): boolean {
       return this.enabled && this.clips.length > 0;
     },
-    play: (_genId: number) => {},
+    play: (_genId: number, _again = false) => {},
   };
 
   /** Render the fillers for this session's voice, in the background: a turn must not wait for them. */
@@ -223,9 +227,12 @@ export class ConversationSession {
         }
       }
     })();
-    this.filler.play = (genId: number) => {
-      if (this.filler.lastGen === genId || !this.filler.clips.length) return;
-      this.filler.lastGen = genId;
+    this.filler.play = (genId: number, again = false) => {
+      if (!this.filler.clips.length) return;
+      // The first one once per turn; the second only after a first, and once.
+      if (again ? this.filler.lastGen !== genId || this.filler.repeatedGen === genId : this.filler.lastGen === genId) return;
+      if (again) this.filler.repeatedGen = genId;
+      else this.filler.lastGen = genId;
       const clip = this.filler.clips[this.filler.next++ % this.filler.clips.length]!;
       this.sendAudioGen(genId, clip.sampleRate, clip.pcm16);
     };
@@ -743,17 +750,31 @@ export class ConversationSession {
      * neural voice another ~300 ms — and the same solution, except that it can render the filler in
      * advance and start it in a few milliseconds.
      *
-     * Only when the wait is actually long, never twice running, and only if the persona allows
-     * backchannels: a character that says 「えーっと」 before every sentence has a verbal tic, which is
-     * worse than a pause.
+     * Only when the wait is actually long, and only if the persona allows backchannels: a character
+     * that says 「えーっと」 before every sentence has a verbal tic, which is worse than a pause.
+     *
+     * One filler does not cover a stalled model. When the first token took 3.8 s (Gate #8 run 47, a
+     * hedged request), the room heard 「えーっと、」 and then 4.0 s of nothing before the answer — a
+     * hole, not a beat. A person whose thought is taking that long says something again — 「そうですね、」
+     * — so a second, different filler goes out when the think is still not over `fillerRepeatMs`
+     * after the first. Never a third: past that point the silence is the honest signal.
      */
-    const fillerTimer = this.filler.enabled
-      ? setTimeout(() => {
-          // Checked here, not when the timer was set: pre-rendering takes a moment on a real engine,
-          // and the first turn of a session is exactly when a long think is most likely.
-          if (!abort.signal.aborted && !turn.firstPhraseAt && this.filler.armed) this.filler.play(genId);
-        }, this.deps.fillerAfterMs ?? 400)
-      : null;
+    const fillerAfterMs = this.deps.fillerAfterMs ?? 400;
+    const fillerRepeatMs = this.deps.fillerRepeatMs ?? 2200;
+    const fillerTimers: ReturnType<typeof setTimeout>[] = [];
+    if (this.filler.enabled) {
+      fillerTimers.push(setTimeout(() => {
+        // Checked here, not when the timer was set: pre-rendering takes a moment on a real engine,
+        // and the first turn of a session is exactly when a long think is most likely.
+        if (!abort.signal.aborted && !turn.firstPhraseAt && this.filler.armed) this.filler.play(genId);
+      }, fillerAfterMs));
+      if (fillerRepeatMs > 0) {
+        fillerTimers.push(setTimeout(() => {
+          if (!abort.signal.aborted && !turn.firstPhraseAt && !turn.firstTokenAt && this.filler.armed) this.filler.play(genId, true);
+        }, fillerAfterMs + fillerRepeatMs));
+      }
+    }
+    const clearFillers = () => { for (const t of fillerTimers) clearTimeout(t); };
     const pushChunk = (s: string) => {
       const clean = stripMarkdown(s).trim();
       if (!clean) return; // e.g. an emoji-only "sentence"
@@ -771,7 +792,7 @@ export class ConversationSession {
       }
       const rest = chunker.flush();
       if (rest) pushChunk(rest);
-      if (fillerTimer) clearTimeout(fillerTimer);
+      clearFillers();
       this.deps.log?.(`llm first-token ${(turn.firstTokenAt ?? 0) - turn.llmStartAt}ms first-phrase ${(turn.firstPhraseAt ?? 0) - turn.llmStartAt}ms total ${this.clock() - turn.llmStartAt}ms`);
     } catch (err) {
       // Logged as well as sent: a failing model otherwise reads as `reply "" (no audio)` in the agent's
@@ -781,7 +802,7 @@ export class ConversationSession {
         this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
       }
     } finally {
-      if (fillerTimer) clearTimeout(fillerTimer);
+      clearFillers();
       queue.close();
       /**
        * Remember what was said as soon as it was said, not when it finished being spoken.

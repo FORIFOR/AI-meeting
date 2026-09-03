@@ -376,7 +376,7 @@ for (const cue of CUES) {
       const sentS = spoke.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
       const q = audioQuality(start, end, spoken, sentS);
       const echo = reply ? NAME_ECHO.test(reply) : false;
-      audio.push({ id: cue.id, quality: q, reply, echo });
+      audio.push({ id: cue.id, quality: q, reply, echo, start, end });
       detail += ` · reply=${JSON.stringify(reply.slice(0, 60))}${echo ? " NAME-ECHO" : ""} · audio: ${audioLine(q)}${q?.issues.length ? ` ⚠ ${q.issues.join(", ")}` : ""}`;
       break;
     }
@@ -400,6 +400,21 @@ await leaveAll();
 earsOpen = false;
 ears.close();
 const beat = finalPage.pageHeartbeat?.data ?? {};
+// `spoke` is logged when the page finishes playing, which is often after the cue's window has closed
+// (run 47: ask1 answered inside the window, `spoke` at 81.2 s against a window ending at 80 s — read
+// as `reply=""`, and the parrot check came out UNKNOWN on a run with two perfectly good answers). The
+// final page state has it; an answer that began in the window is that cue's, wherever it ended.
+for (const a of audio) {
+  if (a.reply) continue;
+  const late = eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "spoke");
+  if (!late.length) continue;
+  a.reply = late.map((e) => e.data?.text ?? "").join(" / ");
+  a.echo = NAME_ECHO.test(a.reply);
+  const sentS = late.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+  a.quality = audioQuality(a.start, a.end, spoken, sentS) ?? a.quality;
+  const r = results.find((x) => x.id === a.id);
+  if (r) r.detail = r.detail.replace('reply=""', `reply=${JSON.stringify(a.reply.slice(0, 60))}${a.echo ? " NAME-ECHO" : ""} (spoke after the window)`);
+}
 console.log(`\n| step | status | detail |\n|---|---|---|`);
 const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
 row("voice agent page started", finalPage.activations > 0 ? "PASS" : "FAIL", finalPage.activations > 0 ? `activated at ${new Date(finalPage.botPageActivatedAt).toISOString()}` : "the page never loaded");

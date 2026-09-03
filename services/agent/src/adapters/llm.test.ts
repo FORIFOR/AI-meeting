@@ -87,9 +87,29 @@ describe("HedgedLLM", () => {
     expect(llm.calls).toBe(2);
   });
 
-  it("fails only when both requests fail", async () => {
+  it("fails only when every request on the ladder fails", async () => {
     const llm = new Sequence([{ text: "", firstAfterMs: 10, fail: true }]);
     await expect(collect(new HedgedLLM(llm, { afterMs: 50 }).stream(messages))).rejects.toThrow("llm 503");
+    expect(llm.calls).toBe(3);
+  });
+
+  it("asks a third time when the second request is as silent as the first (Gate #8 runs 46/47: both stalled 20–30 s)", async () => {
+    const llm = new Sequence([{ text: "一つ目", firstAfterMs: 5000 }, { text: "二つ目", firstAfterMs: 5000 }, { text: "三つ目", firstAfterMs: 20 }]);
+    const lines: string[] = [];
+    const t0 = Date.now();
+    const out = await collect(new HedgedLLM(llm, { afterMs: 100, log: (l) => lines.push(l) }).stream(messages));
+    expect(out).toBe("三つ目");
+    expect(llm.calls).toBe(3);
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(llm.aborted).toBe(2);
+    expect(lines.filter((l) => /no first token/.test(l))).toHaveLength(2);
+    expect(lines.at(-1)).toMatch(/third request answered/);
+  });
+
+  it("stops at maxRequests and waits for what it has", async () => {
+    const llm = new Sequence([{ text: "一つ目", firstAfterMs: 400 }, { text: "二つ目", firstAfterMs: 5000 }]);
+    const out = await collect(new HedgedLLM(llm, { afterMs: 100, maxRequests: 2 }).stream(messages));
+    expect(out).toBe("一つ目");
     expect(llm.calls).toBe(2);
   });
 
@@ -102,14 +122,14 @@ describe("HedgedLLM", () => {
     expect(slow.aborted).toBe(1);
   });
 
-  it("aborts both requests when the caller aborts", async () => {
+  it("aborts every request when the caller aborts", async () => {
     const llm = new Sequence([{ text: "x", firstAfterMs: 2000 }, { text: "y", firstAfterMs: 2000 }]);
     const ac = new AbortController();
     const p = collect(new HedgedLLM(llm, { afterMs: 50 }).stream(messages, { signal: ac.signal }));
-    await new Promise((r) => setTimeout(r, 120));
+    await new Promise((r) => setTimeout(r, 130));
     ac.abort();
     await expect(p).rejects.toThrow("aborted");
-    expect(llm.calls).toBe(2);
-    expect(llm.aborted).toBe(2);
+    expect(llm.calls).toBe(3); // 0 ms, 50 ms, 100 ms
+    expect(llm.aborted).toBe(3);
   });
 });
