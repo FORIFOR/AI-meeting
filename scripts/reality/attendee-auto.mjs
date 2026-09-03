@@ -44,6 +44,14 @@ const proactivity = process.env.PROACTIVITY ?? "addressed_only";
 const botName = env.RECALL_BOT_NAME ?? "Yui";
 /** The room may take a while to let two bots in; nobody is billed for the script until they are. */
 const admitTimeoutS = Number(process.env.ADMIT_TIMEOUT ?? 300);
+/** The Tester's recording: Yui's tile is read from it, so 1080p unless the bot host cannot keep up (self-hosted, emulated). */
+const TESTER_RESOLUTION = process.env.TESTER_RESOLUTION ?? "1080p";
+/**
+ * Yui's own recording is never read here (her tile is not in it). YUI_RECORDING_FORMAT=mp3 drops its screen capture on a
+ * bot host that is short of CPU, and 720p shrinks her Chrome window with it (Attendee sizes the window from the recording
+ * resolution), so Meet sends that browser smaller tiles to decode.
+ */
+const YUI_RECORDING = process.env.YUI_RECORDING_FORMAT ? { recording: { format: process.env.YUI_RECORDING_FORMAT, resolution: TESTER_RESOLUTION } } : {};
 
 const platform = detectPlatform(url ?? "");
 if (!url || platform === "unknown") { console.log(`BLOCKED_BY_MEET_URL: set MEET_URL to a Google Meet, Zoom or Teams link (got ${url ?? "nothing"})`); process.exit(2); }
@@ -145,15 +153,15 @@ console.log(`rendered ${clips.size} clips → ${dir}`);
 const yui = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    meetingUrl: url, botName,
-    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), outbound: "page" },
+    meetingUrl: url, botName, ...YUI_RECORDING,
+    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), ...(process.env.YUI_PAGE_FPS ? { fps: process.env.YUI_PAGE_FPS } : {}), outbound: "page" },
   }),
 })).json();
 if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail ?? ""}`); process.exit(1); }
 
 const tester = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, recording: { view: "gallery_view", resolution: "1080p" } }),
+  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, recording: { view: "gallery_view", resolution: TESTER_RESOLUTION } }),
 })).json();
 if (!tester.botId) {
   console.log(`FAIL: tester ${tester.error ?? "join failed"} ${tester.detail ?? ""}`);
@@ -172,8 +180,10 @@ process.on("SIGINT", () => { void leaveAll().then(() => process.exit(130)); });
 /** Room audio, as energy over time. A window is "heard" when enough of it is above the floor. */
 const heard = []; // { t: ms since epoch, db, peak (0..1), clipped (samples at full scale), pcm: Int16Array, sr }
 let chunks = 0;
-const ears = new WebSocket(tester.clientWsUrl);
-ears.on("message", (raw) => {
+/** The Tester's relay. Opened before the bots are admitted, so it may outlive a long knock: say why it closed, and reopen it until the run ends. */
+let earsOpen = true;
+let ears;
+const onEarsMessage = (raw) => {
   try {
     const outer = JSON.parse(String(raw));
     const m = outer.message ?? outer;
@@ -186,7 +196,18 @@ ears.on("message", (raw) => {
     const rms = Math.sqrt(sum / Math.max(1, pcm.length));
     heard.push({ t: Date.now(), db: 20 * Math.log10(Math.max(1e-6, rms)), peak, clipped, pcm, sr: m.data.sample_rate ?? 16000 });
   } catch { /* ignore */ }
-});
+};
+const listen = () => {
+  ears = new WebSocket(tester.clientWsUrl);
+  ears.on("message", onEarsMessage);
+  ears.on("error", (err) => console.log(`\n   (Tester relay error: ${err.message})`));
+  ears.on("close", (code, reason) => {
+    if (!earsOpen) return;
+    console.log(`\n   (Tester relay closed ${code} ${String(reason)} after ${chunks} chunks — reopening)`);
+    setTimeout(listen, 1000);
+  });
+};
+listen();
 const FLOOR_DB = Number(process.env.FLOOR_DB ?? -45);
 /** Seconds of audible room audio inside [from, to] (epoch ms), excluding what the Tester itself was saying. */
 const audibleSeconds = (from, to, exclude = []) => {
@@ -364,6 +385,7 @@ await at(SCRIPT_END);
 // ---- leave, then read the Tester's recording ------------------------------------------------------
 const finalPage = await pageState();
 await leaveAll();
+earsOpen = false;
 ears.close();
 const beat = finalPage.pageHeartbeat?.data ?? {};
 console.log(`\n| step | status | detail |\n|---|---|---|`);

@@ -30,6 +30,12 @@ export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
    */
   framing?: "default" | "meeting";
   /**
+   * Cap on the render ticker. A camera tile is captured at 15–30 fps by the meeting vendor, so frames
+   * above that are drawn for nothing — and in a software-GL browser each one is expensive. Default: the
+   * browser's refresh rate.
+   */
+  maxFps?: number;
+  /**
    * Lip-sync engine selection (spec §14: MotionSync is the primary path, the analyzer the fallback).
    *  - "auto" (default): MotionSync when the Core is reachable and the model ships a .motionsync3.json, else analyzer
    *  - "motionsync": require MotionSync; `prepare()` throws MotionSyncUnavailableError (BLOCKED_BY_MOTIONSYNC_CORE) otherwise
@@ -138,6 +144,7 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
       width: Math.max(1, container.clientWidth || 480),
       height: Math.max(1, container.clientHeight || 640),
     });
+    if (this.opts.maxFps) app.ticker.maxFPS = this.opts.maxFps;
     app.view.style.width = "100%";
     app.view.style.height = "100%";
     app.view.style.display = "block";

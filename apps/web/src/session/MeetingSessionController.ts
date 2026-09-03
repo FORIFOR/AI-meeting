@@ -81,6 +81,8 @@ export interface MeetingInit {
    * switch for measuring the tile the room actually sees.
    */
   framing?: "default" | "meeting";
+  /** Cap on the avatar's render frame rate; the bot page takes it from its `fps` query (a vendor's page browser is often short of CPU). */
+  avatarFps?: number;
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
@@ -173,7 +175,7 @@ export class MeetingSessionController {
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
     try {
       const framing = this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default");
-      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode, framing });
+      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode, framing, ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}) });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.avatarFailure = message;

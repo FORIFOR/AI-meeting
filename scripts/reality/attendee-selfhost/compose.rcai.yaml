@@ -1,0 +1,76 @@
+# Self-hosted Attendee for the real-meeting gate, on this Mac, for free.
+#
+# Layered over Attendee's own dev.docker-compose.yaml (see attendee-selfhost.sh). What it adds:
+#   - MinIO as the S3 the recordings go to. The endpoint is the Mac's LAN address rather than the
+#     compose service name because the presigned download URL Attendee hands back carries the endpoint
+#     host, and the gate script downloads the Tester's recording from outside the containers.
+#   - the bucket, created once by a throwaway mc container.
+#   - one image for all four Attendee services. Upstream gives each service its own `build:`, which
+#     would export the 6 GB image three more times; they are the same Dockerfile.
+#   (the webpage-streamer profile — what plays the character's page into the call — is switched on by the script.)
+services:
+  attendee-app-local:
+    image: attendee-attendee-app-local
+  attendee-worker-local:
+    image: attendee-attendee-app-local
+    build: !reset null
+    environment:
+      # Chrome's own log, so a "tab crashed" from chromedriver comes with the renderer's exit reason.
+      # Read by a 4-line local patch in the Attendee clone (web_bot_adapter.py, RCAI_EXTRA_CHROME_ARGS);
+      # upstream has no such hook. Both bots of a run append to the same file inside the worker.
+      RCAI_EXTRA_CHROME_ARGS: "--enable-logging --v=1 --log-file=/tmp/chrome-debug.log"
+      # Upstream records a second, debug-only screen capture of every Meet bot (models.py, create_debug_recording).
+      # Two x264 encoders per bot under emulation starved the Tester's audio thread (Run 20: VM load 13.8 on 10 CPUs,
+      # the question reached Yui in fragments). Read by a 3-line local patch in the clone.
+      RCAI_DISABLE_DEBUG_RECORDING: "true"
+  attendee-scheduler-local:
+    image: attendee-attendee-app-local
+    build: !reset null
+  attendee-webpage-streamer-local:
+    image: attendee-attendee-app-local
+    build: !reset null
+    # Upstream's Chrome seccomp profile predates the syscalls Docker Desktop's runc (1.2+) needs to
+    # create the container at all (statx/fsmount: "function not implemented"). Run it the way upstream
+    # runs the worker instead: no custom profile, Chrome's own sandbox off.
+    security_opt: !reset []
+    # It is written as a per-bot pod: it exits 15 min after the last keepalive and again when a bot ends.
+    # In compose it has to be there whenever the next bot starts, so bring it back every time.
+    restart: always
+    # The character's page is rendered by software GL and VP8-encoded in Python (aiortc), both under emulation:
+    # 360–510 % CPU at upstream's 1280x720 (Run 23), the largest single consumer on this host. 360p is a quarter
+    # of the pixels; Meet upscales the tile. Raise it again on a native bot host.
+    command: "python bots/webpage_streamer/run_webpage_streamer.py --video-frame-size ${RCAI_STREAMER_FRAME_SIZE:-640x360}"
+    environment:
+      ENABLE_CHROME_SANDBOX: "false"
+      # the flag webpage_streamer.py actually reads (the worker reads ENABLE_CHROME_SANDBOX)
+      ENABLE_CHROME_SANDBOX_FOR_WEBPAGE_STREAMER: "false"
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-attendee}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-attendee-local-only}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio:/data
+    networks:
+      - attendee_network
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-attendee} ${MINIO_ROOT_PASSWORD:-attendee-local-only} >/dev/null 2>&1; do sleep 1; done;
+      mc mb -p local/${AWS_RECORDING_STORAGE_BUCKET_NAME:-attendee-recordings};
+      echo bucket ready"
+    networks:
+      - attendee_network
+
+volumes:
+  minio:

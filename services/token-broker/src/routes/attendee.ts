@@ -40,7 +40,8 @@ export interface AttendeeJoinBody {
    */
   role?: "character" | "listener";
   /** Vendor recording: what it records and at which resolution. Unset keeps Attendee's default. */
-  recording?: { view?: "speaker_view" | "gallery_view" | "speaker_view_no_sidebar"; resolution?: "1080p" | "720p" };
+  /** `format: "mp3"` keeps the audio and drops the bot's own screen capture — the one thing a self-hosted, emulated bot host cannot afford twice. */
+  recording?: { view?: "speaker_view" | "gallery_view" | "speaker_view_no_sidebar"; resolution?: "1080p" | "720p"; format?: "mp4" | "mp3" };
 }
 
 export interface AttendeeDeps {
@@ -128,7 +129,7 @@ export async function createAttendeeBot(
    */
   const language = (body.botPageQuery?.language ?? "").split("-")[0]?.toLowerCase() ?? "";
   if (language) payload.transcription_settings = { deepgram: { language } };
-  if (body.recording) payload.recording_settings = { ...(body.recording.view ? { view: body.recording.view } : {}), ...(body.recording.resolution ? { resolution: body.recording.resolution } : {}) };
+  if (body.recording) payload.recording_settings = { ...(body.recording.view ? { view: body.recording.view } : {}), ...(body.recording.resolution ? { resolution: body.recording.resolution } : {}), ...(body.recording.format ? { format: body.recording.format } : {}) };
   /**
    * The avatar page as the bot's camera. Taken from Attendee's voice-agent guidance rather than a field
    * we have exercised — the audio path above is verified, this is not. It is sent only when a deployment

@@ -122,6 +122,8 @@ export interface AvatarFactoryOptions {
   privacyMode?: "default" | "strict_local";
   /** "meeting": the page is a camera tile, not an operator's screen (see Live2DAvatarOptions.framing). */
   framing?: "default" | "meeting";
+  /** Cap on the avatar's render frame rate (see Live2DAvatarOptions.maxFps). */
+  maxFps?: number;
 }
 
 /** Renderers that cannot draw anything without a WebGL context. */
@@ -154,8 +156,8 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
   switch (renderer) {
     case "live2d": {
       const mod = await import("@rcai/avatar-live2d");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; allowCdn?: boolean; framing?: "default" | "meeting" }>>(mod, "Live2DAvatarProvider", "BLOCKED_BY_AVATAR_LIVE2D");
-      return new C({ container: o.container, allowCdn: !strict, framing: o.framing ?? "default" });
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; allowCdn?: boolean; framing?: "default" | "meeting"; maxFps?: number }>>(mod, "Live2DAvatarProvider", "BLOCKED_BY_AVATAR_LIVE2D");
+      return new C({ container: o.container, allowCdn: !strict, framing: o.framing ?? "default", ...(o.maxFps ? { maxFps: o.maxFps } : {}) });
     }
     case "canvas": {
       const mod = await import("@rcai/avatar-canvas");
