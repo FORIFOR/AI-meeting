@@ -587,6 +587,8 @@ does, at 1.1–1.2 s per utterance on the turn path (5.0 s for its first, 3.0 s 
 cue would pay before the page even learns it was addressed. All rows still PASS at that cost;
 first sound 0.8–1.1 s after the text turn. Not taken for the next runs: a partial fix for the
 words is not worth a second on every turn while the gate is about answering at all.
+Re-run without it on the agent process the next runs will use (sim 37): 14/14, the same five
+turns as sim 34, first sound 723 / 843 / 819 / 1001 ms after each text turn.
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
