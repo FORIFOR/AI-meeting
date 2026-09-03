@@ -8,6 +8,7 @@ import { StyleBertVits2TTS } from "./adapters/tts.js";
 import { WhisperServerSTT } from "./adapters/stt.js";
 import { EnergyVADAdapter, type VADAdapter, type VADAdapterEvent } from "./adapters/vad.js";
 import { AsyncQueue, ConversationSession } from "./session.js";
+import { IncrementalOfflineSTT } from "./adapters/stt-streaming.js";
 import type { ServerMessage } from "./protocol.js";
 import type { ChatMessage, LLMAdapter } from "./adapters/llm.js";
 import { AivisSpeechTTS, type TTSAdapter } from "./adapters/tts.js";
@@ -135,6 +136,7 @@ describe("adapters with mocked fetch", () => {
       const form = init!.body as FormData;
       expect(form.get("file")).toBeInstanceOf(Blob);
       expect(form.get("language")).toBe("ja");
+      expect(form.get("no_context")).toBe("true"); // no bleed from the previous utterance's decode
       return new Response(JSON.stringify({ text: " こんにちは " }));
     }) as unknown as typeof fetch;
     const stt = new WhisperServerSTT("http://127.0.0.1:8178", f);
@@ -286,6 +288,57 @@ describe("ConversationSession", () => {
       void s.onText("こんにちは");
       await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 5000);
       expect(audio.length).toBeGreaterThan(0);
+    });
+  });
+  describe("deferred second pass (LOCAL_STT_FINAL=whisper-async)", () => {
+    class BetterSTT implements STTAdapter {
+      engine = "better"; ready = true; model = "better";
+      async transcribe() { await new Promise((r) => setTimeout(r, 30)); return "こんにちは、ゆいさん"; }
+    }
+    function streaming(finalAsync: boolean, autoRespond: boolean) {
+      const sent: ServerMessage[] = [];
+      const vad = new ScriptedVAD();
+      const audioAt: number[] = [];
+      const s = new ConversationSession({
+        stt: new FakeSTT(), vad, llm: new FakeLLM(), tts: new FakeTTS(), send: (m) => sent.push(m), sendAudio: () => audioAt.push(Date.now()), leadMs: 100000, chunkMs: 100,
+        streamingStt: () => new IncrementalOfflineSTT(new FakeSTT(), { intervalMs: 300, minAudioMs: 400 }),
+        finalStt: new BetterSTT(), finalAsync, finalAsyncGraceMs: 200,
+      });
+      s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { autoRespond } });
+      vad.queue.push({ type: "speech_start", at: 0 });
+      s.onAudio(new Uint8Array(640));
+      for (let i = 0; i < 40; i++) s.onAudio(new Uint8Array(640)); // 800 ms of "speech"
+      vad.queue.push({ type: "speech_end", at: 820, samples: new Float32Array(8000) });
+      s.onAudio(new Uint8Array(640));
+      return { s, sent, audioAt };
+    }
+    it("client-decides path: the streaming text goes out at once, the better reading follows as a revision of the same utterance", async () => {
+      const { sent } = streaming(true, false);
+      await waitFor(() => sent.some((m) => m.type === "user_transcript_revised"), 8000);
+      const first = sent.find((m) => m.type === "user_transcript") as { text: string; id?: number };
+      const rev = sent.find((m) => m.type === "user_transcript_revised") as { text: string; id: number };
+      expect(first.text).toBe("こんにちは");
+      expect(first.id).toBeDefined();
+      expect(rev).toEqual({ type: "user_transcript_revised", id: first.id, text: "こんにちは、ゆいさん" });
+      expect(sent.indexOf(first as ServerMessage)).toBeLessThan(sent.indexOf(rev as ServerMessage));
+      expect(sent.map((m) => m.type)).not.toContain("assistant_thinking"); // a revision is never a turn
+    });
+    it("stays off the reply's path: when the page takes the turn, the revision follows the first audio", async () => {
+      const { s, sent, audioAt } = streaming(true, false);
+      await waitFor(() => sent.some((m) => m.type === "user_transcript"), 8000);
+      const revisedAt: number[] = [];
+      const send = s["deps"].send;
+      s["deps"].send = (m: ServerMessage) => { if (m.type === "user_transcript_revised") revisedAt.push(Date.now()); send(m); };
+      void s.onText("こんにちは"); // the page's turn on that utterance, straight after the transcript
+      await waitFor(() => sent.some((m) => m.type === "user_transcript_revised"), 8000);
+      expect(audioAt.length).toBeGreaterThan(0);
+      expect(revisedAt[0]!).toBeGreaterThanOrEqual(audioAt[0]!); // the pass ran after the first sound, not beside the model
+    });
+    it("answering here: the turn waits for the better reading, as before — no revision", async () => {
+      const { sent } = streaming(true, true);
+      await waitFor(() => sent.some((m) => m.type === "assistant_speech_ended"), 8000);
+      expect((sent.find((m) => m.type === "user_transcript") as { text: string }).text).toBe("こんにちは、ゆいさん");
+      expect(sent.map((m) => m.type)).not.toContain("user_transcript_revised");
     });
   });
   describe("barge-in confirmation (bargeInConfirmMs)", () => {

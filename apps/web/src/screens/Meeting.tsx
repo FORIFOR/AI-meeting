@@ -131,6 +131,8 @@ export function Meeting(p: MeetingProps) {
         handlers: {
           onStatus: (s, d) => { setStatus(s); note(`${STATUS_JA[s]}${d ? ` · ${d}` : ""}`); },
           onTranscript: (line) => setLines((ls) => {
+            const same = ls.findIndex((x) => x.id === line.id);
+            if (same >= 0) return ls.map((x, k) => (k === same ? line : x)); // a revised reading of a line already shown
             const i = ls.findIndex((x) => !x.final && x.speaker === line.speaker && !x.self);
             if (!line.final && i >= 0) return ls.map((x, k) => (k === i ? line : x));
             return [...ls.filter((x) => x.final || x.speaker !== line.speaker), line].slice(-80);

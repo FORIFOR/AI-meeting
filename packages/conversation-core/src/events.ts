@@ -70,7 +70,13 @@ export type ConversationEvent =
   | { type: "session_closed"; reason?: string }
   | { type: "user_speech_started"; at?: number }
   | { type: "user_speech_ended"; at?: number }
-  | { type: "user_transcript"; text: string; final?: boolean }
+  | { type: "user_transcript"; text: string; final?: boolean; id?: number }
+  /**
+   * A better reading of an utterance already delivered as a final `user_transcript` (`id` matches).
+   * Context only: it replaces the text a later turn will see, and never earns a turn of its own — the
+   * turn decision was made on the first reading, at the speed a conversation needs.
+   */
+  | { type: "user_transcript_revised"; id: number; text: string }
   | { type: "assistant_thinking"; gen?: GenerationRef }
   | { type: "assistant_speech_started"; at?: number; gen?: GenerationRef }
   | { type: "assistant_audio"; frame: PCMFrame; gen?: GenerationRef }

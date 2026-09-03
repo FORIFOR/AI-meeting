@@ -6,8 +6,13 @@ import { fileURLToPath } from "node:url";
 export interface AgentConfig {
   port: number;
   stt: "sherpa" | "whisper";
-  /** Second pass over the committed utterance with a stronger model: "whisper" or "off" (default). */
-  sttFinal: "whisper" | "off";
+  /**
+   * Second pass over the committed utterance with a stronger model: "whisper" (awaited: the turn reads
+   * the better text, ~1 s later), "whisper-async" (the turn goes out on the streaming text at once and
+   * the better reading follows as `user_transcript_revised`, for the context of later turns), or "off"
+   * (default).
+   */
+  sttFinal: "whisper" | "whisper-async" | "off";
   sherpaModelDir: string | null;
   sileroVadModel: string | null;
   whisperServerUrl: string;

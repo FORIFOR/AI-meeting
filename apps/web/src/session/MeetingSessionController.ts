@@ -129,7 +129,8 @@ export class MeetingSessionController {
   private character: CharacterDefinition | null = null;
   private stopFeed: (() => void) | null = null;
   private vad = new EnergyVAD();
-  private recent: { speaker: string; text: string }[] = [];
+  /** `utterance` = the AI recogniser's utterance id, when the line came from it: what a revision addresses. */
+  private recent: { speaker: string; text: string; utterance?: number; line: MeetingTranscriptLine }[] = [];
   private lineId = 0;
   /** Why the character cannot be seen, when it cannot be — reported once, and readable afterwards. */
   avatarFailure: string | null = null;
@@ -615,7 +616,7 @@ export class MeetingSessionController {
    * when the vendor gives no id — two people called 「田中」 would share one conversation, which is
    * still better than every turn needing the name again.
    */
-  onMeetingTranscript(text: string, final: boolean, speakerName: string | null, participantId?: string): void {
+  onMeetingTranscript(text: string, final: boolean, speakerName: string | null, participantId?: string, utterance?: number): void {
     if (final) this.transcripts++;
     if (final && !this.sawTranscript) {
       this.sawTranscript = true;
@@ -624,12 +625,28 @@ export class MeetingSessionController {
     const now = Date.now();
     const line: MeetingTranscriptLine = { id: ++this.lineId, speaker: speakerName ?? "?", text, final, at: now };
     this.init.handlers.onTranscript(line);
-    this.policy.onTranscript({ text, final, speakerName, participantId }, now);
+    // Remembered before the policy hears it: a turn this line triggers reads its context synchronously
+    // from the transition, and with the push after, the line dropped as "the address" was the one
+    // before it — the answer to 「ゆい、今どう思う？」 never saw the remark it was about.
     if (final) {
-      this.recent.push({ speaker: line.speaker, text });
+      this.recent.push({ speaker: line.speaker, text, utterance, line });
       while (this.recent.length > 12) this.recent.shift();
     }
+    this.policy.onTranscript({ text, final, speakerName, participantId }, now);
     // Entering ADDRESSED is handled by the transition listener, whatever caused it.
+  }
+
+  /**
+   * The recogniser's second, better reading of a line it already delivered. Context only: the words a
+   * later turn will see, and the line on screen. The policy never hears it — the turn decision was
+   * taken on the first reading, and a second one arriving a second later must not become a second turn.
+   */
+  private reviseTranscript(utterance: number, text: string): void {
+    const r = this.recent.find((x) => x.utterance === utterance);
+    if (!r || !text.trim()) return;
+    r.text = text;
+    r.line = { ...r.line, text };
+    this.init.handlers.onTranscript(r.line);
   }
 
   /**
@@ -712,7 +729,9 @@ export class MeetingSessionController {
       this.policy.onAssistantDone(Date.now());
       return;
     }
-    const context = this.recent.slice(0, -1).map((r) => `${r.speaker}: ${r.text}`);
+    // The addressing line is handed over separately; everything else it heard is the context.
+    const last = this.recent[this.recent.length - 1];
+    const context = (last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent).map((r) => `${r.speaker}: ${r.text}`);
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
@@ -778,8 +797,11 @@ export class MeetingSessionController {
          * something nobody can read.
          */
         if (!this.hasExternalTranscripts && e.final !== false && e.text.trim()) {
-          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.lastSpeakerId);
+          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.lastSpeakerId, e.id);
         }
+        break;
+      case "user_transcript_revised":
+        if (!this.hasExternalTranscripts) this.reviseTranscript(e.id, e.text);
         break;
       case "assistant_speech_started":
         /**

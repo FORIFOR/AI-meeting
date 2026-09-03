@@ -65,11 +65,11 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
    * a live conversation, and the cloud providers do not need it at all.
    */
   let finalStt: STTAdapter | null = null;
-  if (cfg.sttFinal === "whisper") {
+  if (cfg.sttFinal === "whisper" || cfg.sttFinal === "whisper-async") {
     const w = new WhisperServerSTT(cfg.whisperServerUrl);
     await w.init();
     if (w.ready) finalStt = w;
-    else console.warn("[agent] LOCAL_STT_FINAL=whisper but whisper-server is not reachable at", cfg.whisperServerUrl);
+    else console.warn(`[agent] LOCAL_STT_FINAL=${cfg.sttFinal} but whisper-server is not reachable at`, cfg.whisperServerUrl);
   }
   const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel, undefined, cfg.llmKey || undefined, cfg.llmReasoning || undefined);
   await llm.init();
@@ -179,7 +179,7 @@ export function createApp(rt: AgentRuntime): Hono {
     c.json({
       ok: true,
       strictLocalCapable: true,
-      stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
+      stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? `${rt.finalStt.model}${rt.cfg.sttFinal === "whisper-async" ? " (async)" : ""}` : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
       llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl, hedgeMs: rt.cfg.llmHedgeMs },
       tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [], precision: (rt.tts as { precision?: string }).precision },
       turn: { engine: rt.turn?.engine ?? null, ready: !!rt.turn?.ready },
@@ -232,6 +232,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
       nonLoopbackEndpoints: () => nonLoopbackEndpoints(rt.cfg),
       streamingStt: rt.createStreamingStt ?? undefined,
       finalStt: rt.finalStt,
+      finalAsync: rt.cfg.sttFinal === "whisper-async",
       endpointing: rt.cfg.endpoint,
       historyChars: rt.cfg.llmHistoryChars,
       dumpUtterancesDir: rt.cfg.dumpUtterancesDir ?? undefined,

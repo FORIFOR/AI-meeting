@@ -66,7 +66,9 @@ export type ServerMessage =
   | { type: "ready"; stt: string; llm: string; tts: string; protocolVersion?: number }
   | { type: "user_speech_started" }
   | { type: "user_speech_ended" }
-  | { type: "user_transcript"; text: string; final: boolean }
+  | { type: "user_transcript"; text: string; final: boolean; id?: number }
+  /** Second-pass reading of utterance `id`, after its `user_transcript` already went out (LOCAL_STT_FINAL=whisper-async). */
+  | { type: "user_transcript_revised"; id: number; text: string }
   | { type: "assistant_thinking"; gen?: WireGen }
   | { type: "assistant_speech_started"; gen?: WireGen }
   | { type: "assistant_transcript"; text: string; final: boolean; gen?: WireGen }

@@ -99,6 +99,15 @@ export interface SessionDeps {
    * stronger model costs a few hundred ms once per turn and fixes the text the LLM actually reads.
    */
   finalStt?: STTAdapter | null;
+  /**
+   * Run `finalStt` beside the turn instead of before it: the transcript goes out on the streaming text
+   * at once, and when the second pass reads it differently a `user_transcript_revised` follows. The
+   * page's turn decision keeps its speed; the context of the turns after it gets the better words.
+   * Only on the client-decides path (`autoRespond` off) — a turn answered here has already read the text.
+   */
+  finalAsync?: boolean;
+  /** How long the deferred pass waits for the page to take a turn on the utterance before running (default 600 ms). */
+  finalAsyncGraceMs?: number;
 }
 
 export type SessionState = "idle" | "listening" | "thinking" | "speaking";
@@ -160,6 +169,9 @@ export class ConversationSession {
   private language = "ja-JP";
   private strictLocal = false;
   private abort: AbortController | null = null;
+  /** Where the current reply is, for work that must stay off its critical path (the deferred second pass). */
+  private replyPhase: "idle" | "before-audio" | "after-audio" = "idle";
+  private phaseWaiters: (() => void)[] = [];
   private started = false;
   private turnSeq = 0;
   private clock: () => number;
@@ -586,6 +598,44 @@ export class ConversationSession {
     }
   }
 
+  /** The deferred second pass: a revision goes out only when it read something different. */
+  private reviseLater(u: Utterance, streamed: string): void {
+    void this.offReplyPath().then(() => this.rescore(u, streamed)).then((text) => {
+      if (text !== streamed && text.trim()) this.deps.send({ type: "user_transcript_revised", id: u.seq, text });
+    });
+  }
+
+  /**
+   * The second recogniser shares the machine with the model. Run at the same moment as the reply it
+   * cost the first sound 0.4–0.8 s (sim 40: 1364 / 1649 / 1257 ms against 723–1001 ms without it), so
+   * the pass waits until the reply has its first audio out. If the page takes no turn on the
+   * utterance within the grace, there is nothing to stay out of the way of. Capped: a reply that
+   * never reaches audio must not hold the revision forever.
+   */
+  private async offReplyPath(): Promise<void> {
+    await this.waitReplyPhase((p) => p !== "idle", this.deps.finalAsyncGraceMs ?? 600);
+    await this.waitReplyPhase((p) => p !== "before-audio", 4000);
+  }
+
+  private waitReplyPhase(done: (p: ConversationSession["replyPhase"]) => boolean, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      if (done(this.replyPhase)) return resolve();
+      let settled = false;
+      const finish = () => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } };
+      const timer = setTimeout(finish, ms);
+      const waiter = () => { if (settled) return; if (done(this.replyPhase)) finish(); else this.phaseWaiters.push(waiter); };
+      this.phaseWaiters.push(waiter);
+    });
+  }
+
+  private setReplyPhase(p: ConversationSession["replyPhase"]): void {
+    if (this.replyPhase === p) return;
+    this.replyPhase = p;
+    const waiters = this.phaseWaiters;
+    this.phaseWaiters = [];
+    for (const w of waiters) w();
+  }
+
   /** Diagnostics only (see `dumpUtterancesDir`): never on the turn's path, never fatal. */
   private dumpUtterance(u: Utterance, text: string): void {
     try {
@@ -624,7 +674,8 @@ export class ConversationSession {
     this.state = "thinking";
     this.policy!.noteCleanEndpoint(); // provisional; a barge-in within the premature window revises it
     const streamed = final.text || text.replace(u.prefix, "").trim();
-    const rescored = await this.rescore(u, streamed);
+    const deferred = Boolean(this.deps.finalAsync) && !this.autoRespond;
+    const rescored = deferred ? streamed : await this.rescore(u, streamed);
     // `rescore` decodes the whole utterance audio, prefix included, so it already covers the merged text.
     const merged = rescored !== streamed ? rescored : (u.prefix ? `${u.prefix} ` : "") + streamed;
     if (this.deps.dumpUtterancesDir) this.dumpUtterance(u, merged);
@@ -647,7 +698,8 @@ export class ConversationSession {
       this.state = "idle";
       return;
     }
-    this.deps.send({ type: "user_transcript", text: merged, final: true });
+    this.deps.send({ type: "user_transcript", text: merged, final: true, id: u.seq });
+    if (deferred) this.reviseLater(u, streamed);
     if (!this.autoRespond) {
       this.state = "idle";
       return;
@@ -693,7 +745,7 @@ export class ConversationSession {
   }
 
   /** Send an assistant-side message iff `genId` is still the active generation. */
-  private sendGen(genId: number, msg: Exclude<ServerMessage, { type: "ready" | "user_speech_started" | "user_speech_ended" | "user_transcript" | "error" | "interrupted" }>): boolean {
+  private sendGen(genId: number, msg: Exclude<ServerMessage, { type: "ready" | "user_speech_started" | "user_speech_ended" | "user_transcript" | "user_transcript_revised" | "error" | "interrupted" }>): boolean {
     if (genId !== this.activeGeneration) {
       this.staleDropsServer++;
       this.deps.log?.(`drop stale ${msg.type} gen=${genId} active=${this.activeGeneration}`);
@@ -769,6 +821,15 @@ export class ConversationSession {
   }
 
   private async respond(userText: string, turn: TurnClock): Promise<void> {
+    this.setReplyPhase("before-audio");
+    try {
+      await this.generate(userText, turn);
+    } finally {
+      this.setReplyPhase("idle");
+    }
+  }
+
+  private async generate(userText: string, turn: TurnClock): Promise<void> {
     const abort = new AbortController();
     this.abort = abort;
     this.state = "thinking";
@@ -982,7 +1043,10 @@ export class ConversationSession {
       if (signal.aborted) return;
       if (!this.sendAudioGen(genId, sampleRate, pcm16)) return; // cancelled generation: late chunk dropped
       const now = this.clock();
-      if (!turn.firstAudioSentAt) turn.firstAudioSentAt = now;
+      if (!turn.firstAudioSentAt) {
+        turn.firstAudioSentAt = now;
+        if (this.replyPhase === "before-audio") this.setReplyPhase("after-audio");
+      }
       turn.lastAudioSentAt = now;
       sentMs += (pcm16.length / sampleRate) * 1000;
     };

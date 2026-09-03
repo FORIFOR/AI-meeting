@@ -22,7 +22,8 @@ type AgentMessage =
   | { type: "ready"; protocolVersion?: number }
   | { type: "user_speech_started" }
   | { type: "user_speech_ended" }
-  | { type: "user_transcript"; text: string; final: boolean }
+  | { type: "user_transcript"; text: string; final: boolean; id?: number }
+  | { type: "user_transcript_revised"; id: number; text: string }
   | { type: "assistant_thinking"; gen?: WireGen }
   | { type: "assistant_speech_started"; gen?: WireGen }
   | { type: "assistant_transcript"; text: string; final: boolean; gen?: WireGen }
@@ -129,7 +130,10 @@ export class LocalProvider implements RealtimeAIProvider {
           this.emit({ type: "interrupted", gen: this.toGen(msg.gen) });
           break;
         case "user_transcript":
-          this.emit({ type: msg.type, text: msg.text, final: msg.final });
+          this.emit({ type: msg.type, text: msg.text, final: msg.final, id: msg.id });
+          break;
+        case "user_transcript_revised":
+          this.emit({ type: msg.type, id: msg.id, text: msg.text });
           break;
         case "assistant_transcript":
           this.emit({ type: msg.type, text: msg.text, final: msg.final, gen: this.toGen(msg.gen) });
