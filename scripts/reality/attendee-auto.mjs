@@ -173,7 +173,10 @@ if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail 
 
 const tester = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, recording: { view: "gallery_view", resolution: TESTER_RESOLUTION } }),
+  // The Tester's transcript comes from Meet's own captions unless told otherwise: the self-hosted
+  // Attendee has no Deepgram credential, and with one asked for anyway the "room heard the character"
+  // row read 0/0 for four admitted runs (44–47) without saying why.
+  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: process.env.TESTER_TRANSCRIPTION ?? "closed_captions", recording: { view: "gallery_view", resolution: TESTER_RESOLUTION } }),
 })).json();
 if (!tester.botId) {
   console.log(`FAIL: tester ${tester.error ?? "join failed"} ${tester.detail ?? ""}`);

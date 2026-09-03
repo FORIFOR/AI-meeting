@@ -42,6 +42,14 @@ export interface AttendeeJoinBody {
   /** Vendor recording: what it records and at which resolution. Unset keeps Attendee's default. */
   /** `format: "mp3"` keeps the audio and drops the bot's own screen capture — the one thing a self-hosted, emulated bot host cannot afford twice. */
   recording?: { view?: "speaker_view" | "gallery_view" | "speaker_view_no_sidebar"; resolution?: "1080p" | "720p"; format?: "mp4" | "mp3" };
+  /**
+   * Who writes the vendor transcript. `deepgram` (default) needs a Deepgram credential on the Attendee
+   * project — a self-hosted stack without one records silently nothing (Gate #8 runs 44–47: 0/0
+   * utterances). `closed_captions` has the bot switch on the platform's own captions and read them:
+   * no key, and for a listener judging whether the room could hear the character, the platform's
+   * recogniser is the better witness anyway.
+   */
+  transcription?: "deepgram" | "closed_captions";
 }
 
 export interface AttendeeDeps {
@@ -127,8 +135,12 @@ export async function createAttendeeBot(
    * meeting as confident English, which made it useless as evidence of what was said. The page query
    * already carries the language the character speaks; the transcript follows it.
    */
-  const language = (body.botPageQuery?.language ?? "").split("-")[0]?.toLowerCase() ?? "";
-  if (language) payload.transcription_settings = { deepgram: { language } };
+  const languageTag = body.botPageQuery?.language ?? "";
+  const language = languageTag.split("-")[0]?.toLowerCase() ?? "";
+  if (body.transcription === "closed_captions") {
+    // Meet wants the full tag (ja-JP); Teams/Zoom take their own forms and are left to the vendor default.
+    payload.transcription_settings = { meeting_closed_captions: { ...(/^[a-z]{2}-[A-Z]{2}$/.test(languageTag) ? { google_meet_language: languageTag } : {}), merge_consecutive_captions: true } };
+  } else if (language) payload.transcription_settings = { deepgram: { language } };
   if (body.recording) payload.recording_settings = { ...(body.recording.view ? { view: body.recording.view } : {}), ...(body.recording.resolution ? { resolution: body.recording.resolution } : {}), ...(body.recording.format ? { format: body.recording.format } : {}) };
   /**
    * The avatar page as the bot's camera. Taken from Attendee's voice-agent guidance rather than a field

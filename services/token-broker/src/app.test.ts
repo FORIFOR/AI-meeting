@@ -594,6 +594,18 @@ describe("Attendee listener bot", () => {
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
     expect(body.clientWsUrl).toContain("att_3");
   });
+
+  it("can read the platform's own captions instead of asking Deepgram (no credential on a self-hosted stack)", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_4", state: "joining" })), calls),
+    });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: "closed_captions" });
+    expect(res.status).toBe(200);
+    const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
+    expect(sent.transcription_settings).toEqual({ meeting_closed_captions: { google_meet_language: "ja-JP", merge_consecutive_captions: true } });
+  });
 });
 
 describe("Attendee cleanup", () => {
