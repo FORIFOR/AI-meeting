@@ -62,6 +62,12 @@ export interface SessionDeps {
   fillerAfterMs?: number;
   /** A think still not over this long after the first filler earns a second, different one (ms). Default 2200; 0 disables. */
   fillerRepeatMs?: number;
+  /**
+   * Said when the model fails before it has said anything. Without it the room hears the filler and
+   * then nothing — 「Yuiからの応答がありません」 — and cannot tell a broken model from a character who
+   * chose not to answer. Empty disables it.
+   */
+  recoveryLine?: string;
   /** Acoustic turn-end model. Absent ⇒ endpointing is silence + text only. */
   turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
@@ -800,6 +806,12 @@ export class ConversationSession {
       if (!abort.signal.aborted) {
         this.deps.log?.(`llm error: ${(err as Error).message}`);
         this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
+        // A filler and then silence is the one thing worse than a slow answer: own the miss out loud.
+        const recovery = this.deps.recoveryLine ?? "ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？";
+        if (recovery && !full.trim()) {
+          full = recovery;
+          pushChunk(recovery);
+        }
       }
     } finally {
       clearFillers();

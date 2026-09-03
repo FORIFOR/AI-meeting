@@ -594,6 +594,29 @@ describe("covering a long think", () => {
     expect(fillerClips(audio.slice(before))).toBe(2);
   });
 
+  it("owns a failed think out loud instead of leaving the filler hanging (soak: 429 → filler, then nothing)", async () => {
+    const failing: LLMAdapter = {
+      engine: "fake", model: "fake", ready: true,
+      // eslint-disable-next-line require-yield
+      async *stream() { await new Promise((r) => setTimeout(r, 120)); throw new Error("llm 429: RESOURCE_EXHAUSTED"); },
+      async complete() { return "{}"; },
+    };
+    const sent: ServerMessage[] = [];
+    const tts = new FakeTTS();
+    const s = new ConversationSession({
+      stt: new FakeSTT(), vad: new ScriptedVAD(), llm: failing, tts,
+      send: (m) => sent.push(m), sendAudio: () => {}, leadMs: 100000, chunkMs: 100,
+      fillers: ["えーっと、"], fillerAfterMs: 50,
+    });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { turnPolicy: { backchannel: true } } });
+    await waitFor(() => tts.calls.includes("えーっと、"), 2000);
+    await s.onText("どう思う？");
+    expect(tts.calls).toContain("ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？");
+    expect(sent.some((m) => m.type === "error" && /429/.test((m as { message: string }).message))).toBe(true);
+    const transcript = sent.find((m) => m.type === "assistant_transcript" && (m as { final?: boolean }).final) as { text: string } | undefined;
+    expect(transcript?.text).toBe("ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？");
+  });
+
   it("does not repeat the filler once the model has started", async () => {
     const { s, audio, tts } = session(true, 120, ["えーっと、", "そうですね、"], 150);
     await waitFor(() => tts.calls.includes("そうですね、"), 2000);

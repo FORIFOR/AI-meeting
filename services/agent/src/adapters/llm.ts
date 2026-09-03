@@ -161,6 +161,16 @@ export class HedgedLLM implements LLMAdapter {
     private readonly opts: { afterMs: number; maxRequests?: number; fallback?: LLMAdapter; log?: (line: string) => void; now?: () => number } = { afterMs: 2500 },
   ) {}
 
+  /**
+   * Until when the ladder is held to one request at a time. A quota error (429 / RESOURCE_EXHAUSTED)
+   * is not a slow start: asking again inside the same window spends the quota that is already gone
+   * and comes back 429 too. Seen on a 10-minute soak against the free tier (15 requests a minute):
+   * three-step hedging on every turn reached the limit at 113 s and three turns were answered with
+   * silence — the filler, then nothing. The hold lasts as long as the error asks ("retry in 49s"),
+   * 30 s when it does not say.
+   */
+  private quotaUntil = 0;
+
   get engine(): string {
     return this.primary.engine;
   }
@@ -174,7 +184,9 @@ export class HedgedLLM implements LLMAdapter {
   async *stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {}): AsyncIterable<string> {
     const now = this.opts.now ?? Date.now;
     const t0 = now();
-    const maxRequests = Math.max(1, this.opts.maxRequests ?? 3);
+    const held = now() < this.quotaUntil;
+    const maxRequests = held ? 1 : Math.max(1, this.opts.maxRequests ?? 3);
+    if (held) this.opts.log?.(`llm hedge: quota hold, one request only for another ${Math.ceil((this.quotaUntil - now()) / 1000)}s`);
     const controllers: AbortController[] = [];
     const onAbort = () => { for (const c of controllers) c.abort(); };
     if (opts.signal?.aborted) onAbort();
@@ -211,6 +223,13 @@ export class HedgedLLM implements LLMAdapter {
           winner = outcome.who;
           break;
         }
+        if (isQuotaError(outcome.r.error)) {
+          const wait = retryAfterMs(outcome.r.error);
+          this.quotaUntil = Math.max(this.quotaUntil, now() + wait);
+          if (live.length) continue; // the others were sent before the limit was known; one may still land
+          this.opts.log?.(`llm hedge: ${ORDINAL[outcome.who - 1] ?? `#${outcome.who}`} request hit the quota, not asking again for ${Math.ceil(wait / 1000)}s`);
+          throw outcome.r.error;
+        }
         if (live.length) continue; // one failed; the others are still in the race
         if (controllers.length >= maxRequests) throw outcome.r.error;
         this.opts.log?.(`llm hedge: ${ORDINAL[outcome.who - 1] ?? `#${outcome.who}`} request failed (${outcome.r.error.message}), asking again`);
@@ -241,6 +260,17 @@ export class HedgedLLM implements LLMAdapter {
 }
 
 const ORDINAL = ["first", "second", "third", "fourth"];
+
+/** A rate limit or an exhausted quota, as OpenAI-compatible endpoints and Gemini word them. */
+export function isQuotaError(err: Error): boolean {
+  return /\b429\b|RESOURCE_EXHAUSTED|rate.?limit|quota/i.test(err.message);
+}
+
+/** How long a quota error asks to be left alone ("Please retry in 49.38s"); 30 s when it does not say, never over a minute. */
+export function retryAfterMs(err: Error): number {
+  const m = /retry in (\d+(?:\.\d+)?)\s*s/i.exec(err.message);
+  return m ? Math.min(60_000, Math.ceil(Number(m[1]) * 1000)) : 30_000;
+}
 
 type Head = { first: string; rest: AsyncIterator<string> };
 type Settled<T> = { ok: true; value: T } | { ok: false; error: Error };

@@ -8,14 +8,14 @@ class SlowStart implements LLMAdapter {
   readonly ready = true;
   calls = 0;
   aborted = 0;
-  constructor(private readonly text: string, private readonly firstAfterMs: number, private readonly fail = false) {}
+  constructor(private readonly text: string, private readonly firstAfterMs: number, private readonly fail: boolean | string = false) {}
   async *stream(_m: ChatMessage[], opts: { signal?: AbortSignal } = {}): AsyncIterable<string> {
     this.calls++;
     await new Promise<void>((resolve, reject) => {
       const t = setTimeout(resolve, this.firstAfterMs);
       opts.signal?.addEventListener("abort", () => { clearTimeout(t); this.aborted++; reject(new Error("aborted")); }, { once: true });
     });
-    if (this.fail) throw new Error("llm 503");
+    if (this.fail) throw new Error(typeof this.fail === "string" ? this.fail : "llm 503");
     yield this.text.slice(0, 2);
     yield this.text.slice(2);
   }
@@ -31,7 +31,7 @@ class Sequence implements LLMAdapter {
   readonly ready = true;
   calls = 0;
   aborted = 0;
-  constructor(private readonly plan: { text: string; firstAfterMs: number; fail?: boolean }[]) {}
+  constructor(private readonly plan: { text: string; firstAfterMs: number; fail?: boolean | string }[]) {}
   async *stream(m: ChatMessage[], opts: { signal?: AbortSignal } = {}): AsyncIterable<string> {
     const step = this.plan[Math.min(this.calls, this.plan.length - 1)]!;
     this.calls++;
@@ -110,6 +110,33 @@ describe("HedgedLLM", () => {
     const llm = new Sequence([{ text: "一つ目", firstAfterMs: 400 }, { text: "二つ目", firstAfterMs: 5000 }]);
     const out = await collect(new HedgedLLM(llm, { afterMs: 100, maxRequests: 2 }).stream(messages));
     expect(out).toBe("一つ目");
+    expect(llm.calls).toBe(2);
+  });
+
+  it("does not ask again after a quota error, and holds the ladder to one request for as long as it asked", async () => {
+    const quota = 'llm 429: [{"code":429,"message":"You exceeded your current quota. Please retry in 0.2s.","status":"RESOURCE_EXHAUSTED"}]';
+    const llm = new Sequence([{ text: "", firstAfterMs: 10, fail: quota }, { text: "遅いけど答えるよ。", firstAfterMs: 120 }]);
+    const lines: string[] = [];
+    const hedged = new HedgedLLM(llm, { afterMs: 50, log: (l) => lines.push(l) });
+    await expect(collect(hedged.stream(messages))).rejects.toThrow(/429/);
+    expect(llm.calls).toBe(1); // a retry inside the window would be the same 429, at the price of a request
+    expect(lines).toEqual(["llm hedge: first request hit the quota, not asking again for 1s"]);
+    // The next turn, inside the window: the first token is late but the ladder stays on one request.
+    const out = await collect(hedged.stream(messages));
+    expect(out).toBe("遅いけど答えるよ。");
+    expect(llm.calls).toBe(2);
+    expect(lines[1]).toMatch(/quota hold, one request only/);
+    // After the window it hedges again.
+    await new Promise((r) => setTimeout(r, 120));
+    await collect(hedged.stream(messages));
+    expect(llm.calls).toBe(5); // 120 ms to the first token at afterMs 50: the full three-step ladder again
+  });
+
+  it("a quota error on one request does not give up on the others already in flight", async () => {
+    const quota = "llm 429: RESOURCE_EXHAUSTED";
+    const llm = new Sequence([{ text: "", firstAfterMs: 80, fail: quota }, { text: "こっちは間に合った。", firstAfterMs: 60 }]);
+    const out = await collect(new HedgedLLM(llm, { afterMs: 50 }).stream(messages));
+    expect(out).toBe("こっちは間に合った。");
     expect(llm.calls).toBe(2);
   });
 
