@@ -566,6 +566,14 @@ the last three **15 / 15** in a row, two of them 「三ページ目の数字の�
 「昨日私が言っていたことについてでしょうか？」, a which-question the checker now counts). Replies run 40–70 characters and 4–14 s of speech on this engine — the summary turn is
 three sentences where the persona asks for two.
 
+Sim 33 then showed where the 1.7–2.3 s to first sound went: not the model (first token 258 ms)
+but the chunker — a reply opening 「昨日、」 had its first comma refused as too short to speak,
+and `firstClauseBoundary` never looked past the first comma, so the reply waited for the 60-char
+break: 43 characters synthesised before anything was heard. `219101e` searches from the minimum
+and drops the 24-char cap (the longer clause is always the earlier one). Sim 34, same script:
+every row PASS and first sound **797–860 ms** after the text turn on all three answered turns
+(first token 220–263 ms, first phrase 278–332 ms, synthesis 465–582 ms).
+
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
