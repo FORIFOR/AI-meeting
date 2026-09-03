@@ -119,6 +119,7 @@ GL and VP8 encode, all emulated.
 | 27, 28 | not run — not admitted within 600 s | nobody in the Meet; the stack itself was healthy (load 0.03 before launch) |
 | 29 | not run — `BLOCKED_BY_NO_ADMITTER` (`fatal_error` at 621 s, Meet's own 600 s knock limit; `ADMIT_TIMEOUT=900` cannot outlast it) | launched 19:41 JST with the relief settings, the hedged LLM and the "not just I don't know" rule in place, tunnels 200, load 2.2; nobody in the room. The same configuration is run 30 the moment a person is |
 | 30 | not run — `BLOCKED_BY_NO_ADMITTER` (`request to join was denied` at 620 s) | first run on the native arm64 image, launched 20:29 JST, load 0.75 at launch; both bots knocked within 30 s and waited the full 600 s; nobody in the room. Run 31 is this configuration with a person there |
+| 31–40 | not run — `BLOCKED_BY_NO_ADMITTER` ×10 | a knock kept alive from 20:42 to 22:37 JST (the run relaunched every time Meet dropped it, ~11 min a cycle, native image, load 0.5–1.0): ten consecutive 600 s knocks, two 「You can't join this video call」 retries handled by Attendee, nobody in the room. The stack is ready; the room is the blocker |
 
 What the runs settled: the character answers when the question arrives whole (22), and the failures are
 the host, not the conversation — under emulation the worker's two Chromes and the streamer take the CPU the
