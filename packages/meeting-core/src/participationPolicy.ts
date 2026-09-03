@@ -148,7 +148,7 @@ export class ParticipationPolicy {
   private lastSpeechAt = -1e9;
   private lastResponseEndAt = -1e9;
   private consecutive = 0;
-  private pendingQuestion: { text: string; at: number } | null = null;
+  private pendingQuestion: { text: string; at: number; key: string | null; speakerName?: string | null } | null = null;
   private history: PolicyTransition[] = [];
   private listeners = new Set<(t: PolicyTransition) => void>();
   /** The utterance that triggered ADDRESSED (for the assistant's context). */
@@ -319,7 +319,7 @@ export class ParticipationPolicy {
       return d;
     }
     if (this.opts.proactivity === "active" && !explicitly && !inCooldown && !capped && /[？?]\s*$|ですか|ますか|でしょうか/.test(seg.text)) {
-      this.pendingQuestion = { text: seg.text, at: now };
+      this.pendingQuestion = { text: seg.text, at: now, key, speakerName: seg.speakerName };
     }
     /**
      * "open": ordinary conversation earns a turn too. Held as a pending turn rather than taken here,
@@ -327,7 +327,7 @@ export class ParticipationPolicy {
      * sentence — the difference between joining a conversation and interrupting one.
      */
     if (this.opts.proactivity === "open" && !explicitly && !inCooldown && !capped && seg.text.trim().length >= this.opts.openMinChars) {
-      this.pendingQuestion = { text: seg.text, at: now };
+      this.pendingQuestion = { text: seg.text, at: now, key, speakerName: seg.speakerName };
     }
     return d;
   }
@@ -412,8 +412,12 @@ export class ParticipationPolicy {
         const open = this.opts.proactivity === "open";
         this.addressedBy = {
           text: this.pendingQuestion.text,
+          speakerName: this.pendingQuestion.speakerName,
           detection: { addressed: false, invited: true, confidence: 0.5, reason: open ? "joined the conversation (open)" : "unanswered question (active)" },
         };
+        // A turn taken uninvited is still a conversation with whoever it answered: their next line
+        // is a follow-up, not another wait for silence.
+        this.engage(this.pendingQuestion.key, now);
         this.pendingQuestion = null;
         this.transition("ADDRESSED", now, open ? "joined the conversation" : "unanswered question");
         return;

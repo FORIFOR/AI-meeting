@@ -43,6 +43,21 @@ describe("open participation", () => {
     expect(p.state).toBe("OBSERVING");
   });
 
+  it("the person it answered keeps its attention: their next line is a follow-up, no wait for silence", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ text: "そういえば新しい店ができたらしいよ", final: true, participantId: "p1", speakerName: "Aoi" }, t);
+    t += 2600; p.tick(t);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.speakerName).toBe("Aoi");
+    p.markResponding(t);
+    p.onAssistantDone(t + 1000);
+    t += 1000 + 4500; // past the cooldown
+    p.onTranscript({ text: "駅前のところ、行ってみたいんだよね", final: true, participantId: "p1", speakerName: "Aoi" }, t);
+    expect(p.state).toBe("ADDRESSED"); // straight away, as an engaged follow-up: no tick, no silence
+    expect(p.addressedBy?.text).toBe("駅前のところ、行ってみたいんだよね");
+  });
+
   it("addressed_only is unchanged: ordinary conversation earns nothing", () => {
     const p = new ParticipationPolicy({ names: ["Yui", "ゆい"] });
     let t = 1000;
