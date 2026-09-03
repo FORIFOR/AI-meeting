@@ -380,6 +380,13 @@ describe("SentenceChunker first phrase (P0-3)", () => {
     expect(endsSentence("わかりました。")).toBe(true);
     expect(endsSentence("そうですね、")).toBe(false);
   });
+  it("takes a long first clause over a longer wait (sim 33: 「昨日、」 too short, the next comma at 27 refused, 43 chars synthesised before the first sound)", () => {
+    const c = new SentenceChunker();
+    const out: string[] = [];
+    for (const d of ["昨日、", "3ページ目の数字について", "懸念されていた点については、", "後で修正するとのことなので、", "確認しておきたいですね。"]) out.push(...c.push(d));
+    expect(out[0]).toBe("昨日、3ページ目の数字について懸念されていた点については、");
+    expect(out[1]).toBe("後で修正するとのことなので、確認しておきたいですね。");
+  });
 });
 
 describe("tts daemon framing", () => {

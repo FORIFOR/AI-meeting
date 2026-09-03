@@ -3,12 +3,17 @@
  * - The FIRST chunk of a reply is released at the first clause boundary (、 ，) once it is at
  *   least `firstPhraseMin` chars long (e.g. 「そうですね、」) so audio starts while the LLM
  *   is still generating. Boundaries never fall inside numbers or Latin words (only 、/，/。 etc.).
+ *   A comma too early to speak alone (「昨日、」) is skipped for the next one, and there is no
+ *   upper bound on that first clause: a reply opening 「昨日、3ページ目の数字について懸念されて
+ *   いた点については、」 — 2 chars, then 27 against a cap of 24 — used to be refused at both commas
+ *   and wait for the 60-char break, 43 characters of synthesis before the first sound (sim 33:
+ *   first audio 2.27 s after the text). The longer clause is always the earlier one.
  * - Later chunks are whole sentences (。！？ / .!? / newline); very long clauses break at 、.
  */
 export class SentenceChunker {
   private buffer = "";
   private emitted = 0;
-  constructor(private readonly maxChars = 60, private readonly firstPhraseMin = 4, private readonly firstPhraseMax = 24) {}
+  constructor(private readonly maxChars = 60, private readonly firstPhraseMin = 4) {}
 
   /** Push a delta; returns zero or more speakable chunks. */
   push(delta: string): string[] {
@@ -29,8 +34,8 @@ export class SentenceChunker {
     }
     // First phrase of the reply: release at the first clause comma so TTS starts early.
     if (this.emitted === 0 && out.length === 0) {
-      const idx = firstClauseBoundary(this.buffer);
-      if (idx >= this.firstPhraseMin && idx <= this.firstPhraseMax) {
+      const idx = firstClauseBoundary(this.buffer, this.firstPhraseMin);
+      if (idx >= 0) {
         out.push(this.buffer.slice(0, idx + 1).trim());
         this.buffer = this.buffer.slice(idx + 1);
       }
@@ -55,9 +60,13 @@ export class SentenceChunker {
   }
 }
 
-/** Index of the first Japanese clause comma (、 or ，) that is not inside digits/Latin text; -1 if none. */
-function firstClauseBoundary(text: string): number {
-  for (let i = 0; i < text.length; i++) {
+/**
+ * Index of the first Japanese clause comma (、 or ，) at or after `from` that is not inside
+ * digits/Latin text; -1 if none. `from` matters: looking only at the very first comma meant a
+ * reply opening 「昨日、」 (too short to speak alone) never got a first phrase at all.
+ */
+function firstClauseBoundary(text: string, from = 0): number {
+  for (let i = from; i < text.length; i++) {
     const ch = text[i]!;
     if (ch === "、" || ch === "，") return i;
     if (ch === ",") {
