@@ -117,14 +117,15 @@ GL and VP8 encode, all emulated.
 | 25 | 4/7, DEGRADED (ask1 gap 2.4 s, f99 1.9 kHz) | Yui's join took 138 s; load 18.3 |
 | 26 | greet PASS then `output_audio failed 500 … connection to server at "postgres"` | Docker's disk filled: `write … meta.db: read-only file system`; Postgres gone mid-run. 2.2 GB free → 14 GB after the clean-up (old images, build caches, Chrome profiles); Docker needs ~12 GB for this stack |
 | 27, 28 | not run — not admitted within 600 s | nobody in the Meet; the stack itself was healthy (load 0.03 before launch) |
+| 29 | not run — `BLOCKED_BY_NO_ADMITTER` (`fatal_error` at 621 s, Meet's own 600 s knock limit; `ADMIT_TIMEOUT=900` cannot outlast it) | launched 19:41 JST with the relief settings, the hedged LLM and the "not just I don't know" rule in place, tunnels 200, load 2.2; nobody in the room. The same configuration is run 30 the moment a person is |
 
 What the runs settled: the character answers when the question arrives whole (22), and the failures are
 the host, not the conversation — under emulation the worker's two Chromes and the streamer take the CPU the
 Tester needs to deliver the question in one piece, and what Yui does say comes back stretched or muffled.
-So the run that follows (29) starts with the CPU relief already in place (`YUI_PAGE_FPS=15`, 360p streamer,
+So the run that follows (30) starts with the CPU relief already in place (`YUI_PAGE_FPS=15`, 360p streamer,
 no debug recording, Tester at 720p, mp3 recording), a hedged LLM (below), and the colleague persona; the
 markers are `DEGRADED_BY_HOST_CPU` for a run whose cues fail with the question fragmented, and
-`BLOCKED_BY_NO_ADMITTER` for one nobody admitted. If 29 is still degraded the next lever is a native arm64
+`BLOCKED_BY_NO_ADMITTER` for one nobody admitted. If 30 is still degraded the next lever is a native arm64
 Attendee image, not another prompt.
 
 ## COMMERCIAL-GATE-04 — webhook-authoritative state

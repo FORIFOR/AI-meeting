@@ -171,7 +171,7 @@ with what the room decided in it — at the cost of longer turns (standup replie
 
 **Not covered**: the same replies through a real microphone and Meet's noise suppression, and the
 recogniser's spelling of a question under host load — that is Gate #8 (Runs 17–28 in
-`docs/commercial-gate.md`: `DEGRADED_BY_HOST_CPU` / `BLOCKED_BY_NO_ADMITTER`; Run 29 pending a person in the room).
+`docs/commercial-gate.md`: `DEGRADED_BY_HOST_CPU` / `BLOCKED_BY_NO_ADMITTER`; Run 29 launched 2026-09-03 19:41 JST with everything above in place and was `BLOCKED_BY_NO_ADMITTER` — nobody in the room; Run 30 is the same configuration with a person there).
 
 ### Recall credits exhausted
 
