@@ -541,10 +541,14 @@ with a clause in it. Numbered as two required points (`a47a760`) it kept the cla
 full meeting system prompt; sim 28, a silent room: 「こんにちは、Yuiです。Yuiと声をかけていただければ
 返事をする…」, 6.4 s of audio, first sound 4.7 s after the bot was created. TTS on this engine is the
 floor now: about a second per phrase, streamed phrase by phrase. The agent had been started on the
-float weights; on int8 (the run 46–47 environment) the 19-character third phrase came back in
-2.55–2.80 s instead of 4.75 s (req→done, queued behind the two before it) while a 6-character
-phrase stayed at 540–680 ms — the per-call cost, not the per-character one, is what a short phrase
-pays. Runs 63 onward use int8. Sim 32, the whole script on that final configuration (int8, warm
+float weights and was moved to int8 (the run 46–47 environment) on the strength of the earlier
+"halves synthesis" measurement — which was for a 3.4 s utterance. At the lengths a meeting reply
+actually opens with it buys nothing: first phrase requested → first PCM (`ttsTtfaMs`), 6 characters,
+float 271–300 ms against int8 335–464 ms; ~20 characters, float 551–672 against int8 618–1484 ms
+(int8 sampled 42 turns, float 7, both with llama.cpp finishing the reply on the same machine).
+The `req→done` figures that first suggested a gain include the paced playback (600 ms lead) and
+say more about the audio's length than the synthesis. Runs 63 onward stay on int8 for parity
+with the last admitted runs, not for speed; whether the smaller weights sound worse is unheard. Sim 32, the whole script on that final configuration (int8, warm
 prompt, numbered greeting): every row PASS, eight stretches of speech, 23.1 s of audio, `ask1`'s
 first sound 1.7 s after the text turn (first phrase 271 ms, its synthesis 1405 ms — llama.cpp was
 still finishing the reply on the same machine), the barge-in cut generation 3 and the follow-up
