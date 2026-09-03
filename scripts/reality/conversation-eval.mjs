@@ -140,7 +140,13 @@ const pct = (v, p) => { if (!v.length) return 0; const s = [...v].sort((a, b) =>
  * Questions per reply. A polite Japanese question ends in 「〜でしょうか。」「〜ますか。」 with no question
  * mark, so the count is by sentence, not by punctuation.
  */
-const questionCount = (text) => text.split(/(?<=[。！？!?\n])/).filter((s) => /[？?]\s*$/.test(s) || /(か|かな|かしら|教えてください|お聞かせください)[。」）)]?\s*$/.test(s.trim())).length;
+// A bare 「〜か。」「〜かな。」 is a question only in polite speech; in casual speech it is as often a
+// realisation or a hedge — 「へえ、新しいプロジェクトの立ち上げか。」「私だったら…言っちゃうかな。」
+// 「こんな感じかな。」 (friend/task-organizer reports) — so without a question mark the particle counts
+// when the sentence is polite (〜ますか), asks with an interrogative (何・どう・いつ…か), or proposes
+// something (〜しようか).
+const CASUAL_QUESTION = /(?:(?:ます|です|でしょう|ません|ましょう|ました|でした)か(?:ね)?|(?:何|なに|なん|誰|だれ|どこ|いつ|どう|どの|どれ|どちら|どんな|なぜ|なんで|いくつ|いくら)[^。！？!?\n]*(?:か|かな|かしら)|(?:[こそとのほもよろごぞどぼ]う|よっ)か|(?:教えて|聞かせて|お聞かせ)(?:ください|くれ(?:る|ない)?|もらえ(?:る|ない)?|いただけ(?:ます|ません)?か?))[。」）)]?\s*$/;
+const questionCount = (text) => text.split(/(?<=[。！？!?\n])/).filter((s) => /[？?]\s*$/.test(s) || CASUAL_QUESTION.test(s.trim())).length;
 const questions = replies.filter((t) => questionCount(t.reply) > 0).length;
 /** Replies whose first sentence hands the answer back (「〜なのですね。」「〜でしょうね。」) before saying anything. */
 const echoOpenings = replies.filter((t) => /(ですね|でしょうね|ましたね|のですね)[。！]?\s*$/.test((t.reply.split(/(?<=[。！？!?\n])/)[0] ?? "").trim())).length;
