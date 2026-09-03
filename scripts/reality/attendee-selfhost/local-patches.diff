@@ -61,6 +61,33 @@ index 0072c48..d9f375a 100644
  
          from bots.meeting_url_utils import meeting_type_from_url
  
+diff --git a/bots/tasks/restart_bot_pod_task.py b/bots/tasks/restart_bot_pod_task.py
+index 2726ba0..804fd84 100644
+--- a/bots/tasks/restart_bot_pod_task.py
++++ b/bots/tasks/restart_bot_pod_task.py
+@@ -1,4 +1,5 @@
+ import logging
++import os
+ import time
+ 
+ from celery import shared_task
+@@ -28,6 +29,16 @@ def restart_bot_pod(self, bot_id):
+         logger.info(f"Bot {bot_id} is not in JOINING state, so not restarting pod")
+         return
+ 
++    # local patch (not upstream): outside Kubernetes there is no pod to recreate — the celery/docker launch
++    # methods re-run the bot in place instead of failing on load_incluster_config (Gate #8 run 41, the
++    # Tester got Meet's no-<audio> variant five times and died here with ConfigException).
++    if os.getenv("LAUNCH_BOT_METHOD", "celery") != "kubernetes":
++        from bots.launch_bot_utils import launch_bot
++
++        logger.info(f"Bot {bot_id}: LAUNCH_BOT_METHOD is not kubernetes, relaunching the bot in place instead of recreating a pod")
++        launch_bot(bot)
++        return
++
+     # Initialize kubernetes client
+     try:
+         config.load_incluster_config()
 diff --git a/bots/web_bot_adapter/shared_chromedriver_payload.js b/bots/web_bot_adapter/shared_chromedriver_payload.js
 index 0dc8db7..61c4512 100644
 --- a/bots/web_bot_adapter/shared_chromedriver_payload.js

@@ -15,12 +15,14 @@
 # API key in the UI, and put ATTENDEE_API_BASE_URL=http://localhost:8000 + ATTENDEE_API_KEY=… in
 # services/token-broker/.env. The gate script and the broker read both.
 #
-# local-patches.diff (against attendee c8f7761) is what the measured runs used — four changes that are
+# local-patches.diff (against attendee c8f7761) is what the measured runs used — five changes that are
 # not upstream: RCAI_DISABLE_DEBUG_RECORDING (no second x264 encoder per bot), RCAI_EXTRA_CHROME_ARGS and
 # RCAI_DEBUG_JOIN_SCREENSHOTS (diagnostics), back-to-back scheduling of queued output audio in
 # shared_chromedriver_payload.js so a starved main thread does not open gaps mid-sentence (Gate #8 runs
 # 17–28), and the Meet payload's WebSocket opened one macrotask after document start — opened inline,
-# Chromium 151 (the arm64 image) drops the meet.google.com navigation. compose.rcai.yaml sets the env vars. Docker Desktop needs ~12 GB free for the image plus the bot containers' per-run scratch;
+# Chromium 151 (the arm64 image) drops the meet.google.com navigation; and restart_bot_pod relaunching the bot
+# in place when LAUNCH_BOT_METHOD is not kubernetes (Meet's repeated no-<audio> variant otherwise ends the bot
+# with a kube-config error). compose.rcai.yaml sets the env vars. Docker Desktop needs ~12 GB free for the image plus the bot containers' per-run scratch;
 # at 2 GB free the stack stopped mid-run (run 26).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
