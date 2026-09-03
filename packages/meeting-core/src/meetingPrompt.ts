@@ -67,11 +67,30 @@ export interface MeetingTurnInput {
   asked: { speakerName?: string | null; text: string } | { reaction: string };
 }
 
+/**
+ * A bare これ/それ/あれ (or この件/その話) in the line that addressed the character. これから, それで
+ * and the like are not referents and are left alone.
+ */
+const DEMONSTRATIVE = /(これ|それ|あれ)(は|を|が|って|について|のこと|どう|、|[？?]|$)|(この|その|あの)(件|話)/;
+
+/**
+ * The instructions already say what to do with an ambiguous 「これ」, and the hosted model does it.
+ * The 2B local model does not: with the rule only in the system prompt, 「ゆい、これはどう思う？」
+ * after a talk about a document drew 「その件については…」 five times in six. The same rule restated
+ * on the turn it applies to — and only then — grounded or asked which six in six, and on a turn
+ * whose referent was clear it named the topic and answered (「リリース日の変更についてですね。…」)
+ * six in six, without echoing anyone's name.
+ */
+function demonstrativeHint(text: string): string {
+  return DEMONSTRATIVE.test(text) ? "「これ」「それ」が何を指すか曖昧です。この会議で直前に出た具体的な話題（人・資料・数字など）を一つ挙げて「〜のこと？」と確認し、それについての考えを一言。\n\n" : "";
+}
+
 /** The text sent for one turn in which the room addressed the character. */
 export function meetingTurnPrompt({ context, seen, asked }: MeetingTurnInput): string {
   const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? "参加者"}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
+  const hint = "text" in asked ? demonstrativeHint(asked.text) : "";
   const ctx = context.join("\n");
-  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n短く（1〜2文で）答えてください。`;
+  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}短く（1〜2文で）答えてください。`;
 }
 
 /**

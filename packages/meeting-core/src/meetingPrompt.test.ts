@@ -23,6 +23,18 @@ describe("meeting prompt text", () => {
     expect(meetingTurnPrompt({ context: [], asked: { reaction: "nod" } })).toContain("【言葉のない反応】nod");
   });
 
+  it("restates the demonstrative rule on the turn that needs it, and only then", () => {
+    const ask = (text: string) => meetingTurnPrompt({ context: [], asked: { speakerName: "Tester", text } });
+    expect(ask("ゆい、これはどう思う？")).toContain("「これ」「それ」が何を指すか曖昧です");
+    expect(ask("ゆい、それどう？")).toContain("何を指すか曖昧です");
+    expect(ask("ゆい、その件はどうする？")).toContain("何を指すか曖昧です");
+    // これから / それで are not referents; a plain question carries no hint at all
+    expect(ask("ゆい、これから始めるよ")).not.toContain("曖昧");
+    expect(ask("ゆい、それでいいよ")).not.toContain("曖昧");
+    expect(ask("ゆい、今日の予定を教えて。")).not.toContain("曖昧");
+    expect(meetingTurnPrompt({ context: [], asked: { reaction: "nod" } })).not.toContain("曖昧");
+  });
+
   it("asks for a greeting that says how to get the character's attention", () => {
     expect(meetingGreetingPrompt("Yui")).toContain("「Yui」と声をかけてもらえれば返事をする");
     expect(meetingGreetingPrompt("Yui")).toContain("自分の名前「Yui」を名乗る");
