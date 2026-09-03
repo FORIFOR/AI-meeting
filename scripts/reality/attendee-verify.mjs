@@ -21,8 +21,10 @@ const botId = process.argv[2];
 if (!botId) { console.log("usage: pnpm reality:attendee:verify <bot_id>"); process.exit(2); }
 if (!env.ATTENDEE_API_KEY) { console.log("BLOCKED_BY_ATTENDEE_KEY"); process.exit(2); }
 
+// The same base the broker and attendee-auto use, so a self-hosted Attendee (ATTENDEE_API_BASE_URL) is verified too.
+const attendee = env.ATTENDEE_API_BASE_URL ?? "https://app.attendee.dev";
 const api = async (p) => {
-  const r = await fetch(`https://app.attendee.dev/api/v1/bots/${botId}${p}`, { headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json" } });
+  const r = await fetch(`${attendee}/api/v1/bots/${botId}${p}`, { headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json" } });
   return r.ok ? r.json() : null;
 };
 
