@@ -19,8 +19,29 @@ export class SherpaSTT implements STTAdapter {
   model = "";
   private recognizer: InstanceType<NonNullable<ReturnType<typeof loadSherpa>>["OfflineRecognizer"]> | null = null;
   private kind: "sense_voice" | "zipformer" | null = null;
+  /**
+   * SenseVoice takes its language in the *model* config, not per stream (the per-stream hint below is a
+   * no-op on sherpa-onnx's node API). Left on "auto", a real room's coughs and keyboard noise came back as
+   * Chinese — 「嗯什了你」「给个ら啊」「喂好好」 (Gate #8 run 44) — and the character answered them. One
+   * recognizer per requested language, built on demand; the initial one is the default language.
+   */
+  private readonly byLanguage = new Map<string, InstanceType<NonNullable<ReturnType<typeof loadSherpa>>["OfflineRecognizer"]>>();
+  private static readonly SENSE_VOICE_LANGUAGES = new Set(["zh", "en", "ja", "ko", "yue"]);
 
-  constructor(private readonly modelDir: string | null, private readonly threads = 2) {}
+  constructor(private readonly modelDir: string | null, private readonly threads = 2, private readonly defaultLanguage = "ja") {}
+
+  private senseVoiceLanguage(language: string): string {
+    const code = language.split("-")[0]?.toLowerCase() ?? "";
+    return SherpaSTT.SENSE_VOICE_LANGUAGES.has(code) ? code : "auto";
+  }
+
+  private buildSenseVoice(dir: string, model: string, language: string) {
+    const sherpa = loadSherpa()!;
+    return new sherpa.OfflineRecognizer({
+      featConfig: { sampleRate: 16000, featureDim: 80 },
+      modelConfig: { senseVoice: { model: path.join(dir, model), language, useInverseTextNormalization: 1 }, tokens: path.join(dir, "tokens.txt"), numThreads: this.threads, provider: "cpu", debug: 0 },
+    });
+  }
 
   async init(): Promise<void> {
     const sherpa = loadSherpa();
@@ -30,10 +51,9 @@ export class SherpaSTT implements STTAdapter {
     try {
       if (has("model.int8.onnx") || has("model.onnx")) {
         const model = has("model.int8.onnx") ? "model.int8.onnx" : "model.onnx";
-        this.recognizer = new sherpa.OfflineRecognizer({
-          featConfig: { sampleRate: 16000, featureDim: 80 },
-          modelConfig: { senseVoice: { model: path.join(dir, model), language: "auto", useInverseTextNormalization: 1 }, tokens: path.join(dir, "tokens.txt"), numThreads: this.threads, provider: "cpu", debug: 0 },
-        });
+        const language = this.senseVoiceLanguage(this.defaultLanguage);
+        this.recognizer = this.buildSenseVoice(dir, model, language);
+        this.byLanguage.set(language, this.recognizer);
         this.kind = "sense_voice";
       } else {
         const pick = (prefix: string) => fs.readdirSync(dir).find((f) => f.startsWith(prefix) && f.endsWith(".onnx") && f.includes("int8")) ?? fs.readdirSync(dir).find((f) => f.startsWith(prefix) && f.endsWith(".onnx"));
@@ -54,14 +74,21 @@ export class SherpaSTT implements STTAdapter {
 
   async transcribe(samples: Float32Array, sampleRate: number, language: string): Promise<string> {
     if (!this.recognizer) throw new Error("sherpa STT not ready");
-    const stream = this.recognizer.createStream();
-    stream.acceptWaveform({ samples, sampleRate });
-    if (this.kind === "sense_voice") {
-      // language hint improves SenseVoice; stream option API may be absent in older builds
-      try { (stream as unknown as { setOption?: (k: string, v: string) => void }).setOption?.("language", language.split("-")[0] ?? "auto"); } catch { /* ignore */ }
+    let recognizer = this.recognizer;
+    if (this.kind === "sense_voice" && this.modelDir) {
+      const code = this.senseVoiceLanguage(language);
+      let forLanguage = this.byLanguage.get(code);
+      if (!forLanguage) {
+        const has = (f: string) => fs.existsSync(path.join(this.modelDir!, f));
+        forLanguage = this.buildSenseVoice(this.modelDir, has("model.int8.onnx") ? "model.int8.onnx" : "model.onnx", code);
+        this.byLanguage.set(code, forLanguage);
+      }
+      recognizer = forLanguage;
     }
-    this.recognizer.decode(stream);
-    return this.recognizer.getResult(stream).text.trim();
+    const stream = recognizer.createStream();
+    stream.acceptWaveform({ samples, sampleRate });
+    recognizer.decode(stream);
+    return recognizer.getResult(stream).text.trim();
   }
 }
 

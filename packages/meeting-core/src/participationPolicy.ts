@@ -78,6 +78,16 @@ export interface ParticipationPolicyOptions {
    * still in a conversation. 0 disables the layer entirely (every turn needs the name again).
    */
   engagementTtlMs?: number;
+  /**
+   * How many answers in a row may be cut off before the character stops volunteering follow-ups.
+   *
+   * An open mic carrying someone's continuous talk — a person, a video playing beside them — reached
+   * the character as one "follow-up" after another, and it started an answer to each and was cut off
+   * every time: fifteen half-sentences in three minutes (Gate #8 run 44). Someone talked over that
+   * many times is not being spoken to. After this many interruptions the engagement ends; the name
+   * re-opens it. A completed answer resets the count. Default 3; 0 disables.
+   */
+  maxInterruptedInARow?: number;
 }
 
 export interface TranscriptSegment {
@@ -134,6 +144,8 @@ export class ParticipationPolicy {
   /** The utterance that triggered ADDRESSED (for the assistant's context). */
   addressedBy: { text: string; speakerName?: string | null; detection: AddressDetection } | null = null;
   private engagement: Engagement | null = null;
+  /** Answers cut off since the last one that finished (see `maxInterruptedInARow`). */
+  private interruptedInARow = 0;
   private yieldingUntil = -Infinity;
   private lastTickAt = 0;
 
@@ -150,6 +162,7 @@ export class ParticipationPolicy {
       yieldGraceMs: options.yieldGraceMs ?? 700,
       selfNames: options.selfNames ?? options.names,
       engagementTtlMs: options.engagementTtlMs ?? 90_000,
+      maxInterruptedInARow: options.maxInterruptedInARow ?? 3,
     };
     this.detector = options.detector ?? new AddressDetector({ names: options.names, soundalikes: options.soundalikes });
   }
@@ -198,7 +211,12 @@ export class ParticipationPolicy {
     this.pendingQuestion = null;
     // Being cut off does not count as a turn the character took: it did not get to finish one.
     this.consecutive = 0;
-    if (this._state !== "OBSERVING") this.transition("OBSERVING", now, "interrupted");
+    // Cut off this many times in a row, the character was never being listened to: it stops taking
+    // follow-ups and waits to be called by name.
+    this.interruptedInARow++;
+    const talkedOver = this.opts.maxInterruptedInARow > 0 && this.interruptedInARow >= this.opts.maxInterruptedInARow && !!this.engagement;
+    if (talkedOver) this.engagement = null;
+    if (this._state !== "OBSERVING") this.transition("OBSERVING", now, talkedOver ? "interrupted, talked over" : "interrupted");
   }
 
   /** Who the character is in conversation with, if anyone. */
@@ -276,6 +294,7 @@ export class ParticipationPolicy {
     const explicitly = d.addressed || engagedFollowUp;
     const invited = d.invited && (this.opts.proactivity === "invited" || this.opts.proactivity === "active");
     if ((explicitly || invited) && !inCooldown && !capped) {
+      if (d.addressed) this.interruptedInARow = 0;
       this.addressedBy = { text: seg.text, speakerName: seg.speakerName, detection: d };
       this.pendingQuestion = null;
       this.engage(key, now);
@@ -394,6 +413,7 @@ export class ParticipationPolicy {
       this.lastResponseEndAt = now;
       this.consecutive++;
     }
+    this.interruptedInARow = 0;
     this.addressedBy = null;
     this.transition("OBSERVING", now, "assistant done");
   }

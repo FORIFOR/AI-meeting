@@ -101,3 +101,51 @@ describe("staying in a conversation", () => {
     expect(p.state).not.toBe("ADDRESSED");
   });
 });
+
+describe("being talked over", () => {
+  /** The character starts an answer and is cut off before finishing it. */
+  function cutOff(p: ParticipationPolicy, at: number) {
+    p.markResponding(at);
+    p.onInterrupted(at + 300);
+  }
+
+  it("stops taking follow-ups after being cut off three times in a row, until called by name again", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ ...A, text: "ゆい、これどう思う？", final: true }, t);
+    cutOff(p, t);
+    for (const line of ["いろんなものを全部つぎ込んでしまって", "知れば知るほどやりやすくなるから"]) {
+      t += 3000;
+      p.onTranscript({ ...A, text: line, final: true }, t);
+      expect(p.state, line).toBe("ADDRESSED");
+      cutOff(p, t);
+    }
+    expect(p.engagementState).toBe("PASSIVE");
+    t += 3000;
+    p.onTranscript({ ...A, text: "話であのあったんですけど、でもですね", final: true }, t);
+    expect(p.state).not.toBe("ADDRESSED");
+
+    t += 3000;
+    p.onTranscript({ ...A, text: "ゆい、今どう思う？", final: true }, t);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.engagedWith?.participantId).toBe("p_a");
+  });
+
+  it("one finished answer clears the count — the barge-in in a normal exchange costs nothing", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ ...A, text: "ゆい、これどう思う？", final: true }, t);
+    cutOff(p, t);
+    t += 3000;
+    p.onTranscript({ ...A, text: "今どう思う？", final: true }, t);
+    expect(p.state).toBe("ADDRESSED");
+    exchange(p, t);
+    for (let i = 0; i < 2; i++) {
+      t += 3000;
+      p.onTranscript({ ...A, text: "もうちょっと詳しく", final: true }, t);
+      expect(p.state).toBe("ADDRESSED");
+      cutOff(p, t);
+    }
+    expect(p.engagementState).not.toBe("PASSIVE");
+  });
+});

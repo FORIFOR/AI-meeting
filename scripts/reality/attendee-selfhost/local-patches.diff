@@ -195,3 +195,20 @@ index 0461f77..f6d0373 100644
                  num_retries += 1
              except Exception as e:
                  if num_retries >= max_retries:
+diff --git a/bots/webpage_streamer/webpage_streamer.py b/bots/webpage_streamer/webpage_streamer.py
+index d2f4b7d..710ac73 100644
+--- a/bots/webpage_streamer/webpage_streamer.py
++++ b/bots/webpage_streamer/webpage_streamer.py
+@@ -255,6 +255,12 @@ class WebpageStreamer:
+             logger.info("Chrome sandboxing is enabled")
+         logger.info(f"Video frame size: {self.video_frame_size}")
+ 
++        # local hook (not upstream): extra Chrome switches. Chromium 151 on the arm64 image gives no WebGL
++        # context under --disable-gpu unless --enable-unsafe-swiftshader is passed (Gate #8 run 44: the
++        # character's tile showed the page's BLOCKED_BY_NO_WEBGL notice instead of the avatar).
++        for extra_arg in os.getenv("RCAI_EXTRA_CHROME_ARGS", "").split():
++            options.add_argument(extra_arg)
++
+         options.add_experimental_option("excludeSwitches", ["enable-automation"])
+ 
+         options.add_experimental_option(
