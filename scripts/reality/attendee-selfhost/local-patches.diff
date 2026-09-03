@@ -62,7 +62,7 @@ index 0072c48..d9f375a 100644
          from bots.meeting_url_utils import meeting_type_from_url
  
 diff --git a/bots/tasks/restart_bot_pod_task.py b/bots/tasks/restart_bot_pod_task.py
-index 2726ba0..804fd84 100644
+index 2726ba0..47b2cc4 100644
 --- a/bots/tasks/restart_bot_pod_task.py
 +++ b/bots/tasks/restart_bot_pod_task.py
 @@ -1,4 +1,5 @@
@@ -71,7 +71,7 @@ index 2726ba0..804fd84 100644
  import time
  
  from celery import shared_task
-@@ -28,6 +29,16 @@ def restart_bot_pod(self, bot_id):
+@@ -28,6 +29,27 @@ def restart_bot_pod(self, bot_id):
          logger.info(f"Bot {bot_id} is not in JOINING state, so not restarting pod")
          return
  
@@ -82,6 +82,17 @@ index 2726ba0..804fd84 100644
 +        from bots.launch_bot_utils import launch_bot
 +
 +        logger.info(f"Bot {bot_id}: LAUNCH_BOT_METHOD is not kubernetes, relaunching the bot in place instead of recreating a pod")
++        # Same bookkeeping as the pod path below: the new controller calls set_requested_bot_action_taken_at
++        # and refuses a JOIN_REQUESTED event whose action was already taken (run 43: "has already initiated
++        # this bot request", fatal_error at 94 s).
++        last_bot_event.requested_bot_action_taken_at = None
++        if "pod_recreations" not in last_bot_event.metadata:
++            last_bot_event.metadata["pod_recreations"] = []
++        last_bot_event.metadata["pod_recreations"].append(int(time.time()))
++        last_bot_event.save()
++        bot.first_heartbeat_timestamp = None
++        bot.last_heartbeat_timestamp = None
++        bot.save()
 +        launch_bot(bot)
 +        return
 +
