@@ -116,6 +116,10 @@ export class WhisperServerSTT implements STTAdapter {
     form.append("response_format", "json");
     form.append("language", language.split("-")[0] ?? "ja");
     form.append("temperature", "0");
+    // whisper-server keeps one decoder state across requests, and without this the previous request's
+    // text is the prompt for the next one: the same 2 s cue then came back as 「ゆい、今どう思う?」,
+    // 「ゆい、どう?」 or "and go" depending on what was transcribed before it (sim 39). With it, 15/15 identical.
+    form.append("no_context", "true");
     const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/inference`, { method: "POST", body: form });
     if (!res.ok) throw new Error(`whisper-server ${res.status}`);
     const json = (await res.json()) as { text?: string };

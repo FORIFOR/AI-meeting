@@ -35,7 +35,9 @@ start_whisper() {
   if curl -sf "http://127.0.0.1:$WHISPER_PORT/" >/dev/null 2>&1; then echo "whisper-server already up on :$WHISPER_PORT"; return; fi
   [ -f "$WHISPER_MODEL" ] || { echo "BLOCKED_BY_WHISPER_MODEL: $WHISPER_MODEL not found" >&2; exit 1; }
   command -v whisper-server >/dev/null || { echo "BLOCKED_BY_WHISPER_CPP: whisper-server not installed (brew install whisper-cpp)" >&2; exit 1; }
-  nohup whisper-server -m "$WHISPER_MODEL" --host 127.0.0.1 --port "$WHISPER_PORT" -l ja -nt \
+  # -nc: one decoder state serves every request; without it each utterance is decoded with the previous
+  # one's text as its prompt (the agent also sends no_context=true per request — belt and braces).
+  nohup whisper-server -m "$WHISPER_MODEL" --host 127.0.0.1 --port "$WHISPER_PORT" -l ja -nt -nc \
     > "$RUN_DIR/whisper-server.log" 2>&1 &
   echo $! > "$RUN_DIR/whisper-server.pid"
   echo "whisper-server starting (pid $(cat "$RUN_DIR/whisper-server.pid"))"
