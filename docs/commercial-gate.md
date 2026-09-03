@@ -580,7 +580,13 @@ it the model said 「定リ目の数字のことでしょうか？」 (or 「定
 all grounded, all garbled). A rule saying not to repeat a word that makes no sense did not transfer:
 generic wording left 8 / 8 garbled, an unrelated worked example (「しめ霧まで」→「締め切りまで」)
 7 / 8; only a rule quoting the scenario's own garble brought it to 1 / 8, which is teaching to the
-test and was not kept. The fix is a recogniser that hears 「三ページ目」, or the hosted model.
+test and was not kept. The fix is a recogniser that hears 「三ページ目」, or the hosted model. The recogniser on hand
+(`LOCAL_STT_FINAL=whisper`, large-v3-turbo as a second pass over each finished utterance, sim 35)
+hears 「3ページ目の数理」 — closer, still not the word — and spells the name 「ゆい」 as the room
+does, at 1.1–1.2 s per utterance on the turn path (5.0 s for its first, 3.0 s once), which every
+cue would pay before the page even learns it was addressed. All rows still PASS at that cost;
+first sound 0.8–1.1 s after the text turn. Not taken for the next runs: a partial fix for the
+words is not worth a second on every turn while the gate is about answering at all.
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
