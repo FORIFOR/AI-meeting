@@ -15,15 +15,18 @@ import friendJa from "../free_talk/friend_ja.json";
 import careerCoachJa from "../career/career_coach_ja.json";
 import companionJa from "../companion/companion_ja.json";
 import taskOrganizerJa from "../tasks/task_organizer_ja.json";
+import meetingColleagueJa from "../meeting/colleague_ja.json";
+import { MEETING_PERSONA_ID } from "@rcai/meeting-core";
 
 const RAW: unknown[] = [
   interviewerJa, interviewerEn,
   englishFreeTalk, englishTravel, englishBusiness, englishInterview, englishDaily, englishPronunciation, englishBeginner,
-  salesCustomerJa, tutorJa, friendJa, careerCoachJa, companionJa, taskOrganizerJa,
+  salesCustomerJa, tutorJa, friendJa, careerCoachJa, companionJa, taskOrganizerJa, meetingColleagueJa,
 ];
 
 /** All bundled personas, validated at module load (spec §18: Character ≠ Personality). */
 export const personas: Persona[] = RAW.map((p) => validatePersona(p));
+if (!personas.some((p) => p.id === MEETING_PERSONA_ID)) throw new Error(`the meeting persona ${MEETING_PERSONA_ID} is not in the catalog`);
 
 export const personasByMode: Record<ConversationMode, Persona[]> = {
   free_talk: personas.filter((p) => p.mode === "free_talk"),

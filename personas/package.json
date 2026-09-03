@@ -7,6 +7,6 @@
   "types": "./src/index.ts",
   "exports": { ".": "./src/index.ts" },
   "scripts": { "typecheck": "tsc -p tsconfig.json" },
-  "dependencies": { "@rcai/persona-core": "workspace:*", "@rcai/conversation-core": "workspace:*" },
+  "dependencies": { "@rcai/persona-core": "workspace:*", "@rcai/conversation-core": "workspace:*", "@rcai/meeting-core": "workspace:*" },
   "devDependencies": {}
 }

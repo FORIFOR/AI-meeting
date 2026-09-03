@@ -345,6 +345,21 @@ rules before them. Written as a list with one worked example (「今日の予定
 the model kept all of them in four runs of four. The example is also why the first reply now reads the
 same each time; a fair price for a character that stops inventing its day.
 
+**A meeting now has its own persona.** The bot page had been falling back to the friend (「友達（雑談）」),
+whose job is to draw the other person out — so every answer in a meeting ended in a question
+(「そっちは何か予定あるの？」; 3 of 3 turns on the gate script, 6 of 6 on the standup). `meeting_colleague_ja`
+(`personas/meeting/colleague_ja.json`, the meeting default via `MEETING_PERSONA_ID` in `@rcai/meeting-core`)
+is the colleague who has been listening: answers what was asked, conclusion then reason, a question only
+when something needed is missing. Same scenarios, same checks: standup **13 / 13 ×4**, gate script
+**8 / 8 ×4**, questions asked 1 of 6 turns instead of 6 of 6 — 「元データを取り直したほうがいいと思います。数字の
+正確性を確認しておいたほうが後々安心だからです。」, 「QAで見つかった不具合への対応のため、リリース日を十日から十七日に
+延期し、営業への連絡はTesterさんが担当することに決まりました。」. Two things the runs caught on the way: the
+worked example's wording (「予定は手元にないよ」) was being repeated in its casual register by the polite
+persona, so the example now says *what* to say and leaves the register to the persona; and addressed by
+"Tester" the model once said 「〇〇さんは何か確認しておきたいことでもあった？」 — a placeholder out loud —
+so the rules now say names are used as written in the transcript or not at all.
+Reports: `docs/reports/conversation/meeting_colleague_ja-2026-09-03T09-4*.json`.
+
 **The answer is now bounded in time as well.** The same afternoon's agent log, 89 turns against
 gemini-3.5-flash-lite: first token p50 0.83 s, p90 1.3 s — and 8 turns above 3 s, the worst 13.1 and
 17.3 s. Seventeen seconds of silence after a question is, in a meeting, no answer (the gate closes its

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Persona } from "@rcai/persona-core";
-import type { MeetingStatus, ParticipationState, Proactivity } from "@rcai/meeting-core";
+import { MEETING_PERSONA_ID, type MeetingStatus, type ParticipationState, type Proactivity } from "@rcai/meeting-core";
 import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
 import { settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
@@ -69,7 +69,7 @@ export function Meeting(p: MeetingProps) {
   const t0 = useRef(Date.now());
 
   const character = useMemo(() => p.characters.find((c) => c.id === (isBot ? botConfig?.characterId : p.settings.characterId)) ?? p.characters[0], [p.characters, p.settings.characterId, isBot, botConfig]);
-  const persona = useMemo(() => p.personas.find((x) => x.id === (isBot ? botConfig?.personaId : personaId)) ?? p.personas.find((x) => x.mode === "free_talk") ?? p.personas[0], [p.personas, personaId, isBot, botConfig]);
+  const persona = useMemo(() => p.personas.find((x) => x.id === (isBot ? botConfig?.personaId : personaId)) ?? p.personas.find((x) => x.id === MEETING_PERSONA_ID) ?? p.personas.find((x) => x.mode === "free_talk") ?? p.personas[0], [p.personas, personaId, isBot, botConfig]);
   const displayName = (isBot ? botConfig?.displayName : name) || character?.name || "Yui";
   const strict = p.settings.privacyMode === "strict_local";
   const blocked = strict ? "BLOCKED_BY_STRICT_LOCAL" : p.brokerMeeting && !p.brokerMeeting.recall ? "BLOCKED_BY_RECALL_KEY" : p.brokerMeeting && !p.brokerMeeting.recallPublicUrl ? "BLOCKED_BY_RECALL_PUBLIC_URL" : null;

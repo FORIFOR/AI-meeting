@@ -331,6 +331,9 @@ importers:
       '@rcai/conversation-core':
         specifier: workspace:*
         version: link:../packages/conversation-core
+      '@rcai/meeting-core':
+        specifier: workspace:*
+        version: link:../packages/meeting-core
       '@rcai/persona-core':
         specifier: workspace:*
         version: link:../packages/persona-core
