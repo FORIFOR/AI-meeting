@@ -388,6 +388,12 @@ persona, so the example now says *what* to say and leaves the register to the pe
 "Tester" the model once said 「〇〇さんは何か確認しておきたいことでもあった？」 — a placeholder out loud —
 so the rules now say names are used as written in the transcript or not at all.
 Reports: `docs/reports/conversation/meeting_colleague_ja-2026-09-03T09-4*.json`.
+One more, after the register was left to the persona: the colleague opened in タメ口 (「ごめんね、今日の予定は
+手元にないんだ」 — the Tester speaks casually and the persona allowed 「少しくだけてよい」) and switched to
+です・ます from the second turn on. The persona now keeps one register for the whole meeting (soften the
+endings, never switch to 「〜んだ」「〜だよ」): 「すみません、今日の予定は手元にないですね。Testerさんは今日、
+何か予定が入っていますか？」, and the same register through the summary and the hand-off. Gate script
+8 / 8 ×2, standup 13 / 13 (`…T09-59-*.json`, `…T10-00-18.json`).
 
 **The answer is now bounded in time as well.** The same afternoon's agent log, 89 turns against
 gemini-3.5-flash-lite: first token p50 0.83 s, p90 1.3 s — and 8 turns above 3 s, the worst 13.1 and
