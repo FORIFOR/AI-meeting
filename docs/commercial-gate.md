@@ -118,6 +118,7 @@ GL and VP8 encode, all emulated.
 | 26 | greet PASS then `output_audio failed 500 … connection to server at "postgres"` | Docker's disk filled: `write … meta.db: read-only file system`; Postgres gone mid-run. 2.2 GB free → 14 GB after the clean-up (old images, build caches, Chrome profiles); Docker needs ~12 GB for this stack |
 | 27, 28 | not run — not admitted within 600 s | nobody in the Meet; the stack itself was healthy (load 0.03 before launch) |
 | 29 | not run — `BLOCKED_BY_NO_ADMITTER` (`fatal_error` at 621 s, Meet's own 600 s knock limit; `ADMIT_TIMEOUT=900` cannot outlast it) | launched 19:41 JST with the relief settings, the hedged LLM and the "not just I don't know" rule in place, tunnels 200, load 2.2; nobody in the room. The same configuration is run 30 the moment a person is |
+| 30 | not run — `BLOCKED_BY_NO_ADMITTER` (`request to join was denied` at 620 s) | first run on the native arm64 image, launched 20:29 JST, load 0.75 at launch; both bots knocked within 30 s and waited the full 600 s; nobody in the room. Run 31 is this configuration with a person there |
 
 What the runs settled: the character answers when the question arrives whole (22), and the failures are
 the host, not the conversation — under emulation the worker's two Chromes and the streamer take the CPU the
@@ -140,7 +141,7 @@ navigation altogether (`driver.get` back in 0.2 s with `data:,`; bisected with a
 macrotask later (`WebSocketClient.connect`, `google_meet_chromedriver_payload.js`). Evidence 2026-09-03 20:25 JST,
 `ADMIT_TIMEOUT=120`: both bots `name input found` → `3 audio elements are present` → `Clicking the join button` →
 `UsersUpdate … 'Yui'` over the page socket, load 1.05 — i.e. knocking, on a host with CPU to spare; not admitted
-only because the room was empty. Run 30 runs on this image (`RCAI_ATTENDEE_IMAGE=attendee-attendee-app-local:arm64`).
+only because the room was empty. Runs 30+ run on this image (`RCAI_ATTENDEE_IMAGE=attendee-attendee-app-local:arm64`).
 
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
