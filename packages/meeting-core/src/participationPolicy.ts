@@ -283,8 +283,14 @@ export class ParticipationPolicy {
     }
     if (!seg.final) return null;
     const d = this.detector.detect(seg.text);
-    const inCooldown = now - this.lastResponseEndAt < this.opts.cooldownMs;
-    const capped = this.consecutive >= this.opts.maxConsecutiveResponses;
+    /**
+     * The cooldown and the consecutive cap keep the character from dominating a room on its own
+     * initiative: a follow-up, an invitation, an open-conversation turn. Being called by name is the
+     * room's initiative — 「ゆい、今どう思う？」 2.6 s after the character finished (Gate #8 run 46) was
+     * dropped by the cooldown, and to the person asking that is a character that does not answer.
+     */
+    const inCooldown = !d.addressed && now - this.lastResponseEndAt < this.opts.cooldownMs;
+    const capped = !d.addressed && this.consecutive >= this.opts.maxConsecutiveResponses;
     if (!d.addressed) {
       // Another participant was addressed / normal chatter → the character is not "on".
       this.consecutive = 0;

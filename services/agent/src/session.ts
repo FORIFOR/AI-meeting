@@ -9,6 +9,9 @@ import type { TTSAdapter, TTSResult } from "./adapters/tts.js";
 import { PROTOCOL_VERSION, encodeAudioFrame, pcm16BytesToFloat32, type ServerMessage, type WireGen } from "./protocol.js";
 import { SentenceChunker, endsSentence, stripMarkdown } from "./sentence.js";
 import { AsyncQueue } from "./queue.js";
+import { encodeWav } from "./wav.js";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 /**
  * How much audio before `speech_start` is replayed into the recogniser (400 ms @ 16 kHz).
@@ -61,6 +64,12 @@ export interface SessionDeps {
   turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
   prematureWindowMs?: number;
+  /**
+   * Write each committed utterance's audio (preroll included) as a wav here, named by clock and text.
+   * Diagnostics for what the recogniser was actually given: Gate #8 run 46 committed 「今日の予定を教えて。」
+   * for a line that began 「ゆい、」, and the clean cue decodes with the name — the audio that arrived did not.
+   */
+  dumpUtterancesDir?: string;
   /**
    * Second-pass recogniser for the committed utterance. The streaming recogniser has to answer while the
    * user is still talking, so it trades accuracy for latency — on Japanese it mangles exactly the words a
@@ -469,6 +478,10 @@ export class ConversationSession {
       void this.commitTurn(u, text, { reason: d.reason, requiredSilenceMs: d.requiredSilenceMs, sttMs, reused: Boolean(snap.reused) });
       return;
     }
+    // "speaking" is the VAD re-detecting voice before its speech_end has been delivered: there is
+    // nothing to decide until it ends. Polled — the detection can also drop without a segment — but
+    // not at `waitMs: 0`, which spun this loop ~170 times over 300 ms (Gate #8 run 46).
+    const wait = d.reason === "speaking" ? Math.max(d.waitMs, 60) : d.waitMs;
     u.timer = setTimeout(() => {
       u.timer = null;
       if (this.utterance !== u) return;
@@ -476,7 +489,7 @@ export class ConversationSession {
       const again = policy.evaluate({ speaking: this.deps.vad.speaking, silenceMs: silence, text, stable: true, acoustic });
       if (again.decision === "endpoint") void this.commitTurn(u, text, { reason: again.reason, requiredSilenceMs: again.requiredSilenceMs, sttMs: 0, reused: true });
       else void this.evaluateEndpoint(u); // still waiting: re-evaluate later (max_silence is the hard cap)
-    }, d.waitMs);
+    }, wait);
   }
 
   /**
@@ -528,6 +541,23 @@ export class ConversationSession {
     }
   }
 
+  /** Diagnostics only (see `dumpUtterancesDir`): never on the turn's path, never fatal. */
+  private dumpUtterance(u: Utterance, text: string): void {
+    try {
+      const total = u.audio.reduce((n, a) => n + a.length, 0);
+      const pcm = new Int16Array(total);
+      let o = 0;
+      for (const a of u.audio) for (const v of a) pcm[o++] = Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
+      const dir = this.deps.dumpUtterancesDir!;
+      mkdirSync(dir, { recursive: true });
+      const name = `${new Date().toISOString().replace(/[:.]/g, "-")}_${text.replace(/[\s\u3000\/\\:*?"<>|]/g, "").slice(0, 24) || "empty"}.wav`;
+      writeFileSync(join(dir, name), encodeWav(pcm, 16000));
+      this.deps.log?.(`dumped utterance ${Math.round((total / 16000) * 1000)}ms → ${name}`);
+    } catch (err) {
+      this.deps.log?.(`utterance dump failed: ${(err as Error).message}`);
+    }
+  }
+
   private async commitTurn(u: Utterance, text: string, ep: { reason: string; requiredSilenceMs: number; sttMs: number; reused: boolean }): Promise<void> {
     if (this.utterance !== u) return;
     const stt = this.streamingStt!;
@@ -552,6 +582,7 @@ export class ConversationSession {
     const rescored = await this.rescore(u, streamed);
     // `rescore` decodes the whole utterance audio, prefix included, so it already covers the merged text.
     const merged = rescored !== streamed ? rescored : (u.prefix ? `${u.prefix} ` : "") + streamed;
+    if (this.deps.dumpUtterancesDir) this.dumpUtterance(u, merged);
     const turn: TurnClock = {
       source: "speech",
       speechEndAt: at,

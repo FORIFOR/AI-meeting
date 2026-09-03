@@ -136,12 +136,20 @@ const SCRIPT_END = 270;
 // ---- the Tester's voice, rendered before anyone is billed --------------------------------------
 const dir = join(tmpdir(), `rcai-auto-${Date.now()}`);
 mkdirSync(dir, { recursive: true });
+/**
+ * `say` starts the voice at 0 ms. A person's mic has been carrying room tone for a while before the first
+ * syllable; a stream that begins on 「ゆ」 gives every stage between the Tester and the recogniser (Meet's
+ * sender-side processing, the per-participant track opening) a first word to lose — run 46 committed
+ * 「今日の予定を教えて。」 for the line 「ゆい、今日の予定を教えて。」 while the same mp3 decodes with the name
+ * offline. The clip is led in with this much silence so the onset it tests is a word, not a stream.
+ */
+const LEAD_IN_MS = 400;
 /** @returns {{ mp3: string, seconds: number }} */
 function render(voice, text, name) {
   const aiff = join(dir, `${name}.aiff`);
   const mp3 = join(dir, `${name}.mp3`);
   execFileSync("say", ["-v", voice, "-o", aiff, text]);
-  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-ac", "1", "-ar", "24000", "-b:a", "64k", mp3]);
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-af", `adelay=${LEAD_IN_MS}:all=1`, "-ac", "1", "-ar", "24000", "-b:a", "64k", mp3]);
   const seconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp3]).toString().trim());
   return { mp3: readFileSync(mp3).toString("base64"), seconds };
 }

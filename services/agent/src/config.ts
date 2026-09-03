@@ -19,6 +19,8 @@ export interface AgentConfig {
   llmHistoryChars: number;
   /** Ask the model a second time when its first token is later than this (HedgedLLM); 0 disables. */
   llmHedgeMs: number;
+  /** Directory to write each committed utterance's audio to as a wav (diagnostics; unset ⇒ off). */
+  dumpUtterancesDir: string | null;
   tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
   sbv2Url: string;
   sayVoice: string;
@@ -106,6 +108,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      * time — a second request there would queue behind the first and help nothing — so it is off on loopback.
      */
     llmHedgeMs: Number(env.LOCAL_LLM_HEDGE_MS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 0 : 2500)),
+    dumpUtterancesDir: env.RCAI_DUMP_UTTERANCES || null,
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",

@@ -61,11 +61,21 @@ describe("ParticipationPolicy", () => {
     expect(p.state).toBe("RESPONDING");
     p.onAssistantDone(6000);
     expect(p.state).toBe("OBSERVING");
-    // within cooldown: a second address is ignored
+    // within cooldown: a name is still a name — the room asked, the character answers (run 46 dropped
+    // 「ゆい、今どう思う？」 2.6 s after finishing, and to the asker that was a character not answering)
     p.onTranscript({ text: "Yui、もう一回？", final: true, speakerName: "Tanaka" }, 7000);
+    expect(p.state).toBe("ADDRESSED");
+  });
+  it("cools down on its own initiative: an invitation right after answering is not taken", () => {
+    const p = new ParticipationPolicy({ names: ["Yui"], proactivity: "invited", cooldownMs: 3000 });
+    p.onTranscript({ text: "Yuiさんはどう思う？", final: true, speakerName: "Tanaka" }, 2200);
+    p.markResponding(2500);
+    p.onAssistantDone(6000);
+    // within cooldown: an open invitation is ignored
+    p.onTranscript({ text: "誰か意見ある？", final: true, speakerName: "Tanaka" }, 7000);
     expect(p.state).toBe("LISTENING");
     // after cooldown it works again
-    p.onTranscript({ text: "Yui、もう一回？", final: true, speakerName: "Tanaka" }, 9500);
+    p.onTranscript({ text: "誰か意見ある？", final: true, speakerName: "Tanaka" }, 9500);
     expect(p.state).toBe("ADDRESSED");
   });
   it("ignores its own transcript and falls back to OBSERVING on silence", () => {
@@ -78,15 +88,19 @@ describe("ParticipationPolicy", () => {
     expect(p.state).toBe("OBSERVING");
   });
   it("caps consecutive responses and resets when others are addressed", () => {
-    const p = new ParticipationPolicy({ names: ["Yui"], cooldownMs: 0, maxConsecutiveResponses: 1 });
+    const p = new ParticipationPolicy({ names: ["Yui"], proactivity: "invited", cooldownMs: 0, maxConsecutiveResponses: 1 });
     p.onTranscript({ text: "Yui、意見は？", final: true, speakerName: "A" }, 100);
     p.markResponding(200);
     p.onAssistantDone(300);
-    p.onTranscript({ text: "Yui、もう一つ？", final: true, speakerName: "A" }, 400);
-    expect(p.state).toBe("LISTENING"); // capped
+    p.onTranscript({ text: "他に意見ある人？", final: true, speakerName: "A" }, 400);
+    expect(p.state).toBe("LISTENING"); // capped: the floor is open, but the character just had it
+    p.onTranscript({ text: "Yui、もう一つ？", final: true, speakerName: "A" }, 450);
+    expect(p.state).toBe("ADDRESSED"); // the cap never applies to being called by name
+    p.markResponding(460);
+    p.onAssistantDone(470);
     p.onTranscript({ text: "田中さんはどう？", final: true, speakerName: "A" }, 500);
-    p.onTranscript({ text: "Yui、もう一つ？", final: true, speakerName: "A" }, 600);
-    expect(p.state).toBe("ADDRESSED");
+    p.onTranscript({ text: "他に意見ある人？", final: true, speakerName: "A" }, 600);
+    expect(p.state).toBe("ADDRESSED"); // someone else was addressed in between: the count reset
   });
   it("invited/active proactivity", () => {
     const only = new ParticipationPolicy({ names: ["Yui"] });
