@@ -574,6 +574,14 @@ and drops the 24-char cap (the longer clause is always the earlier one). Sim 34,
 every row PASS and first sound **797–860 ms** after the text turn on all three answered turns
 (first token 220–263 ms, first phrase 278–332 ms, synthesis 465–582 ms).
 
+One thing the local model does that the hosted one did not, left as it is: it repeats the
+recogniser's garble. SenseVoice wrote 「三ページ目の数字」 as 「3定リ目の数字」, and asked about
+it the model said 「定リ目の数字のことでしょうか？」 (or 「定例目」「定指目」 — 7 of 8 in a direct probe,
+all grounded, all garbled). A rule saying not to repeat a word that makes no sense did not transfer:
+generic wording left 8 / 8 garbled, an unrelated worked example (「しめ霧まで」→「締め切りまで」)
+7 / 8; only a rule quoting the scenario's own garble brought it to 1 / 8, which is teaching to the
+test and was not kept. The fix is a recogniser that hears 「三ページ目」, or the hosted model.
+
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
