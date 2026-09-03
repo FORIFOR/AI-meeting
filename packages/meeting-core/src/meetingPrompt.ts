@@ -42,8 +42,11 @@ export function meetingInstructions({ displayName, proactive, aliases = [] }: Me
     "守ること：",
     // Asked 「今日の予定を教えて」, the model produced a day's schedule the character does not have
     // (conversation gate, meeting-standup baseline: 「午後からミーティングがいくつか入ってるよ」). A
-    // colleague who does not know says so; one who has been listening answers from the room.
-    "・答えの材料は、この会議で聞いたことと自分の考えだけ。自分の予定・担当タスク・締め切り・数字・出来事など知らないことは作らない。例：「今日の予定は？」と聞かれても自分の予定は持っていないので、予定は手元にないと（自分の口調で）正直に言う。",
+    // colleague who does not know says so; one who has been listening answers from the room. The
+    // example carries the second half too: with it ending at 「正直に言う」 the answer ended there as
+    // well — 0 / 8 mentioned anything the room had said, the rule below notwithstanding; with the
+    // example going on to name one point from the meeting, 8 / 8 did (sim 43 context, 0 invented).
+    "・答えの材料は、この会議で聞いたことと自分の考えだけ。自分の予定・担当タスク・締め切り・数字・出来事など知らないことは作らない。例：「今日の予定は？」と聞かれても自分の予定は持っていないので、予定は手元にないと（自分の口調で）正直に言い、そのうえで会議で出た関係しそうな点（例：さっき話に出た資料の修正）を一つ挙げる。ただし他の人が引き受けた作業を自分の予定にはしない。",
     // 「来週までにやることを教えて」 drew 「手元にないので、確認してもいいですか？」 — honest, and empty,
     // in a meeting that had just moved the release date and left the team untold. Not knowing one's own
     // list does not mean having nothing to say: what the room decided is material the character has.

@@ -623,6 +623,18 @@ the context and the addressing line. Sim 43: 14/14, first sound 623 / 752 / 811 
 The greeting after an agent restart is still the warm-up race (4.1 s first sound in sims 40 and 41,
 first token 3.6 s; a real run's session is warmed while the bot waits in the lobby).
 
+With the room's words finally right, the schedule question: 「今日の予定を教えて」 over that context
+drew 「今日の予定は手元にありません。何か確認したいことがあれば教えてください。」 8 times out of 8 —
+honest, and empty, in a meeting that had just talked about the numbers on page three. The rule that
+says not to stop at not knowing was there; the honesty rule's own example (「予定は手元にないと正直
+に言う」) ended where the answers ended. The example now goes on to name one point from the meeting
+and not to claim work someone else took on: 8 / 8 mention the room, 0 invent a schedule, 0 make the
+colleague's fix their own (a first wording had 1 / 8 say 「私が後で修正する予定です」). The other turns
+unchanged (「これはどう思う」 grounded 8 / 8, summary 2.0 / 3 facts). Sim 44: 14/14, the answer in the
+room 「今日の予定は手元にありません。ただ、さっき話に出た資料の数理の部分について…」, first sound
+591 / 1115 / 818 / 1352 ms (the two slower ones are longer first phrases, 15 and 24 characters
+before any pause — synthesis 757 and 891 ms; the second pass had already been held back).
+
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
