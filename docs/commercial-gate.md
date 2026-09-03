@@ -510,6 +510,9 @@ Two things follow.
 
 Until 16:00 JST (the Pacific-midnight reset) the agent runs on the local model (gemma-4-E2B via
 llama.cpp, `hedgeMs 0`); the OpenAI key on file has no credit (`You have no credits remaining`).
+Soak 22 (2 min, `strict_local`, same utterances) is that configuration's evidence: 13 / 13 answered,
+first token p50 149 / p90 186 ms, turn p50 649 / p95 1704 ms on the HUD, no errors, no toasts, replies
+of 13–48 chars (「面接で緊張するのってよくあることだよ。何かリラックスできるルーティンとかある？」).
 
 ## Cost, because it is a production requirement
 
