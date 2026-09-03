@@ -617,6 +617,35 @@ describe("covering a long think", () => {
     expect(transcript?.text).toBe("ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？");
   });
 
+  it("climbs a ladder of recovery lines while the model stays down, and starts over once it answers (soak 20: 13 identical apologies)", async () => {
+    let down = true;
+    const flaky: LLMAdapter = {
+      engine: "fake", model: "fake", ready: true,
+      async *stream() { await new Promise((r) => setTimeout(r, 20)); if (down) throw new Error("llm 429: RESOURCE_EXHAUSTED"); yield "はい。"; },
+      async complete() { return "{}"; },
+    };
+    const tts = new FakeTTS();
+    const s = new ConversationSession({
+      stt: new FakeSTT(), vad: new ScriptedVAD(), llm: flaky, tts,
+      send: () => {}, sendAudio: () => {}, leadMs: 100000, chunkMs: 100, fillers: [],
+    });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local", providerOptions: { turnPolicy: { backchannel: true } } });
+    for (let i = 0; i < 4; i++) await s.onText(`質問${i}`);
+    const said = () => tts.calls.filter((c) => !/^質問/.test(c));
+    expect(said()).toEqual([
+      "ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？",
+      "うーん、まだうまく言葉が出てこないや。ちょっとだけ待ってね。",
+      "ごめんね、いまちょっと調子が悪いみたい。落ち着いたらまた話すね。",
+      "ごめんね、いまちょっと調子が悪いみたい。落ち着いたらまた話すね。", // the last one repeats, never a fourth phrasing
+    ]);
+    down = false;
+    await s.onText("質問4");
+    down = true;
+    await s.onText("質問5");
+    // An answer in between puts the ladder back at the first rung.
+    expect(said().slice(-2)).toEqual(["はい。", "ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？"]);
+  }, 15_000); // six spoken turns at FakeTTS's one second each
+
   it("does not repeat the filler once the model has started", async () => {
     const { s, audio, tts } = session(true, 120, ["えーっと、", "そうですね、"], 150);
     await waitFor(() => tts.calls.includes("そうですね、"), 2000);

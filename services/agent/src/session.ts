@@ -20,6 +20,18 @@ import { join } from "node:path";
  */
 const PREROLL_SAMPLES = 6400;
 
+/**
+ * What the character says when the model gave it nothing, in the order the failures come. The first
+ * asks for a repeat, because a single miss usually is one; the second stops asking, because the
+ * person already repeated themselves once; the third owns that it is off today and is the one that
+ * repeats, at most once a turn, for as long as the hold lasts.
+ */
+const RECOVERY_LINES = [
+  "ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？",
+  "うーん、まだうまく言葉が出てこないや。ちょっとだけ待ってね。",
+  "ごめんね、いまちょっと調子が悪いみたい。落ち着いたらまた話すね。",
+];
+
 export { AsyncQueue } from "./queue.js";
 
 export interface SessionDeps {
@@ -65,9 +77,11 @@ export interface SessionDeps {
   /**
    * Said when the model fails before it has said anything. Without it the room hears the filler and
    * then nothing — 「Yuiからの応答がありません」 — and cannot tell a broken model from a character who
-   * chose not to answer. Empty disables it.
+   * chose not to answer. One line per consecutive failure, the last repeated: a quota hold lasts a
+   * minute, and thirteen identical apologies in that minute (soak 20) is a recording, not a person.
+   * Empty disables it.
    */
-  recoveryLine?: string;
+  recoveryLines?: string[];
   /** Acoustic turn-end model. Absent ⇒ endpointing is silence + text only. */
   turn?: { readonly ready: boolean; predict(samples: Float32Array): Promise<{ probability: number; complete: boolean } | null> };
   /** The user resumed within this many ms of an endpoint ⇒ the endpoint was premature. Default 1200. */
@@ -139,6 +153,8 @@ interface Utterance {
 export class ConversationSession {
   state: SessionState = "idle";
   private history: ChatMessage[] = [];
+  /** Turns in a row on which the model said nothing; picks the recovery line, reset by any answer. */
+  private failedTurns = 0;
   private memory = new ConversationMemory({ recentChars: 2400 });
   private systemPrompt = "";
   private language = "ja-JP";
@@ -799,6 +815,7 @@ export class ConversationSession {
       const rest = chunker.flush();
       if (rest) pushChunk(rest);
       clearFillers();
+      if (full.trim()) this.failedTurns = 0;
       this.deps.log?.(`llm first-token ${(turn.firstTokenAt ?? 0) - turn.llmStartAt}ms first-phrase ${(turn.firstPhraseAt ?? 0) - turn.llmStartAt}ms total ${this.clock() - turn.llmStartAt}ms`);
     } catch (err) {
       // Logged as well as sent: a failing model otherwise reads as `reply "" (no audio)` in the agent's
@@ -807,10 +824,13 @@ export class ConversationSession {
         this.deps.log?.(`llm error: ${(err as Error).message}`);
         this.deps.send({ type: "error", message: `llm: ${(err as Error).message}` });
         // A filler and then silence is the one thing worse than a slow answer: own the miss out loud.
-        const recovery = this.deps.recoveryLine ?? "ごめん、いま考えがまとまらなかった。もう一回言ってもらえる？";
-        if (recovery && !full.trim()) {
-          full = recovery;
-          pushChunk(recovery);
+        if (!full.trim()) {
+          const lines = this.deps.recoveryLines ?? RECOVERY_LINES;
+          const recovery = lines[Math.min(this.failedTurns++, lines.length - 1)];
+          if (recovery) {
+            full = recovery;
+            pushChunk(recovery);
+          }
         }
       }
     } finally {
