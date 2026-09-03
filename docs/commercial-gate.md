@@ -556,9 +556,10 @@ with date, cause and owner, the hand-off to 田中さん), meeting-gate 14 / 15 
 「ゆい、これはどう思う？」 answered as 「その件については…」, the rule about an ambiguous 「これ」
 being one the 2B model drops from the system prompt. Restated on the turn that carries a bare
 demonstrative and only then (`bca64b1`), it grounded or asked which 6 / 6 in a direct probe and
-named the topic before answering when the referent was clear; through the agent, 1 of 2 runs
-(the other asked 「昨日私が言っていたことについてでしょうか？」, a which-question the checker now
-counts). Replies run 40–70 characters and 4–14 s of speech on this engine — the summary turn is
+named the topic before answering when the referent was clear; through the agent, 4 of 5 runs,
+the last three **15 / 15** in a row, two of them 「三ページ目の数字のことでしょうか？その部分については、
+修正されるのは良いことだと思います。」 — the room's own material, named and answered (the miss asked
+「昨日私が言っていたことについてでしょうか？」, a which-question the checker now counts). Replies run 40–70 characters and 4–14 s of speech on this engine — the summary turn is
 three sentences where the persona asks for two.
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
