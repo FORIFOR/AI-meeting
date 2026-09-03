@@ -613,9 +613,15 @@ last reply is grounded on 「あそこは後で直しておくね」). Three thi
   237–310 ms — the cost of the earlier sync pass and of the concurrent one both gone, and the
   context for the last turn reads 「見たよ。3ページ目の数理が…」.
 
-Left as it is: whisper spells the name 「結衣」 in one line (「結衣が昨日そう言ってたよね」); the model
-still answered that turn as itself. The greeting after an agent restart is still the warm-up race
-(4.1 s first sound in sims 40 and 41, first token 3.6 s; every later turn under 320 ms).
+Whisper spells the name 「結衣」 (「結衣が昨日そう言ってたよね」), and that is not cosmetic: asked
+「これはどう思う？」 over that context the model answered 「結衣さんが言っていたのは…」 — a colleague,
+not itself — 8 times out of 8, and a rule listing the spellings as its own name changed nothing
+(8 / 8 again). Rewriting the line to 「Yuiが昨日そう言ってたよね」 before it reaches the model, no
+rule: 7 / 8 answered as itself, grounded 8 / 8. So the page now writes every spelling of the name
+the way the model knows it (`canonicalizeName`: aliases, kana in either script, latin any case) in
+the context and the addressing line. Sim 43: 14/14, first sound 623 / 752 / 811 / 986 ms.
+The greeting after an agent restart is still the warm-up race (4.1 s first sound in sims 40 and 41,
+first token 3.6 s; a real run's session is warmed while the bot waits in the lobby).
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second

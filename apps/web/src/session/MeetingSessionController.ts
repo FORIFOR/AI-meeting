@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { JOINED_REASON, ParticipationPolicy, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, ParticipationPolicy, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -162,6 +162,8 @@ export class MeetingSessionController {
   /** The AI provider is connected: text turns can be sent (set once `runtime.start` resolves). */
   private runtimeReady = false;
   /** Pending ANSWER_STALL_MS watchdog for the sanctioned turn, if any. */
+  /** Every spelling of the character's name the transcript may carry (see `canonicalizeName`). */
+  private readonly names: string[];
   private answerTimer: ReturnType<typeof setTimeout> | null = null;
   /** Room speech that began while a sanctioned answer was still being thought up; a barge-in only if it lasts. */
   private thinkingBargeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -207,6 +209,7 @@ export class MeetingSessionController {
     this.decision = decide(init.settings, init.availability);
     // Aliases matter in Japanese meetings: STT writes 「ゆい」, never "Yui".
     const names = [init.displayName, init.character.name, ...(init.character.aliases ?? [])].filter(Boolean);
+    this.names = names;
     this.policy = new ParticipationPolicy({ names, soundalikes: init.character.soundalikes, proactivity: init.proactivity });
     /**
      * Answering is driven by the transition, not by the transcript that usually causes it. The
@@ -446,7 +449,7 @@ export class MeetingSessionController {
     }
 
     const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive });
-    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only" });
+    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
@@ -731,11 +734,13 @@ export class MeetingSessionController {
     }
     // The addressing line is handed over separately; everything else it heard is the context.
     const last = this.recent[this.recent.length - 1];
-    const context = (last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent).map((r) => `${r.speaker}: ${r.text}`);
+    // The model knows the character by one name; the transcript spells it as heard (「ゆイ」, 「結衣」).
+    const canon = (t: string) => canonicalizeName(t, this.init.displayName, this.names);
+    const context = (last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent).map((r) => `${r.speaker}: ${canon(r.text)}`);
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
-      : meetingTurnPrompt({ context, seen, asked: by.text ? { speakerName: by.speakerName, text: by.text } : { reaction: by.detection.reason } });
+      : meetingTurnPrompt({ context, seen, asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt } from "./meetingPrompt.js";
+import { canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt } from "./meetingPrompt.js";
 
 describe("meeting prompt text", () => {
   it("tells an addressed-only character when to speak, and never to invent what it does not know", () => {
@@ -38,5 +38,20 @@ describe("meeting prompt text", () => {
   it("asks for a greeting that says how to get the character's attention", () => {
     expect(meetingGreetingPrompt("Yui")).toContain("「Yui」と声をかけてもらえれば返事をする");
     expect(meetingGreetingPrompt("Yui")).toContain("自分の名前「Yui」を名乗る");
+  });
+});
+
+describe("canonicalizeName", () => {
+  const names = ["Yui", "ゆい", "ユイ", "結衣"];
+  it("rewrites every spelling the recognisers use to the name the model knows, kana in either script", () => {
+    expect(canonicalizeName("結衣が昨日そう言ってたよね", "Yui", names)).toBe("Yuiが昨日そう言ってたよね");
+    expect(canonicalizeName("ゆイ、今どう思う？", "Yui", names)).toBe("Yui、今どう思う？");
+    expect(canonicalizeName("ユイとゆいと結衣", "Yui", names)).toBe("YuiとYuiとYui");
+    expect(canonicalizeName("yui、聞こえる？", "Yui", names)).toBe("Yui、聞こえる？");
+  });
+  it("leaves everything else alone", () => {
+    expect(canonicalizeName("昨日の資料、見てくれた?", "Yui", names)).toBe("昨日の資料、見てくれた?");
+    expect(canonicalizeName("結衣が言ってた", "Yui", [])).toBe("結衣が言ってた");
+    expect(canonicalizeName("結衣", "", [])).toBe("結衣");
   });
 });

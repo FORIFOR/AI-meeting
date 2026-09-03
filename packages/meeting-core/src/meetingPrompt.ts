@@ -17,6 +17,8 @@ export interface MeetingInstructionsInput {
   displayName: string;
   /** True when the character may join in unasked (any proactivity other than `addressed_only`). */
   proactive: boolean;
+  /** Other spellings of the name the recognisers produce (the character pack's aliases: 「ゆい」「ユイ」「結衣」). */
+  aliases?: string[];
 }
 
 /**
@@ -25,7 +27,11 @@ export interface MeetingInstructionsInput {
  * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
  * diagnosis, and never something to say out loud.
  */
-export function meetingInstructions({ displayName, proactive }: MeetingInstructionsInput): string {
+export function meetingInstructions({ displayName, proactive, aliases = [] }: MeetingInstructionsInput): string {
+  // Whisper writes the name as a Japanese given name: 「結衣が昨日そう言ってたよね」. Told only that
+  // 「ゆイ」「うい」 are mishearings, the model read 「結衣」 as a colleague and answered 「結衣さんが言って
+  // いたのは…」 8 times out of 8 (echo probe, sim 41 context). Every spelling is the character itself.
+  const spellings = [...new Set([...aliases, "ゆイ", "うい"].filter((a) => a && a !== displayName))].map((a) => `「${a}」`).join("");
   // One rule per line. As a single paragraph the later rules were the ones the model dropped: with
   // the demonstrative rule appended, the invented schedule the honesty rule had cured came back in
   // two runs out of three (conversation gate, meeting-gate scenario).
@@ -50,7 +56,7 @@ export function meetingInstructions({ displayName, proactive }: MeetingInstructi
     // The recogniser writes the name as it hears it — 「ゆイ」「うい」 — and the model repeated that
     // spelling back to the room (Gate #8 run 15: 「ゆイ、お疲れ様！」). Answers do not begin with the
     // name at all; the room already knows who is talking.
-    "・発言は音声認識の書き起こしなので、あなたの名前が「ゆイ」「うい」のように別の表記になっていることがある。それは呼びかけの聞き間違い。返答であなた自身の名前や、相手が使った表記を繰り返さない。",
+    `・発言は音声認識の書き起こしなので、あなたの名前「${displayName}」が${spellings}のように別の表記になっていることがある。どの表記もあなた自身のこと（別の参加者ではない）。返答であなた自身の名前や、相手が使った表記を繰り返さない。`,
     // Addressed by "Tester" the model answered 「〇〇さんは何か確認しておきたいことでもあった？」 — a
     // placeholder said out loud. Names are used as written in the transcript or not at all.
     "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
@@ -91,6 +97,32 @@ export function meetingTurnPrompt({ context, seen, asked }: MeetingTurnInput): s
   const hint = "text" in asked ? demonstrativeHint(asked.text) : "";
   const ctx = context.join("\n");
   return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}短く（1〜2文で）答えてください。`;
+}
+
+/**
+ * Write the character's name the one way the model knows it, wherever the room's transcript has
+ * another spelling of it.
+ *
+ * The recognisers write a short Japanese name however they hear it — 「ゆい」「ユイ」「ゆイ」, and
+ * whisper as a given name, 「結衣」. Told in the instructions that those are its own name, the model
+ * (gemma-4-E2B) still read 「結衣が昨日そう言ってたよね」 as a colleague and answered 「結衣さんが言って
+ * いたのは…」 8 times out of 8; with the line rewritten to 「Yuiが昨日そう言ってたよね」 it answered as
+ * itself 7 of 8 with no rule at all (echo probe, sim 41 context). Kana are matched in either script
+ * — the mixed spellings are the recogniser's, not aliases anyone lists — and latin case-insensitively.
+ */
+export function canonicalizeName(text: string, displayName: string, spellings: readonly string[]): string {
+  const alts = [...new Set([displayName, ...spellings])].filter(Boolean).sort((a, b) => b.length - a.length);
+  if (alts.length === 0) return text;
+  const re = new RegExp(alts.map((n) => [...n].map(kanaEither).join("")).join("|"), "gi");
+  return text.replace(re, displayName);
+}
+
+/** Regex for one character that also accepts its other kana script. */
+function kanaEither(c: string): string {
+  const code = c.charCodeAt(0);
+  if (code >= 0x3041 && code <= 0x3096) return `[${c}${String.fromCharCode(code + 0x60)}]`; // hiragana or its katakana
+  if (code >= 0x30a1 && code <= 0x30f6) return `[${String.fromCharCode(code - 0x60)}${c}]`; // katakana or its hiragana
+  return c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
