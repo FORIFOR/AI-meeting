@@ -544,7 +544,11 @@ floor now: about a second per phrase, streamed phrase by phrase. The agent had b
 float weights; on int8 (the run 46–47 environment) the 19-character third phrase came back in
 2.55–2.80 s instead of 4.75 s (req→done, queued behind the two before it) while a 6-character
 phrase stayed at 540–680 ms — the per-call cost, not the per-character one, is what a short phrase
-pays. Runs 63 onward use int8.
+pays. Runs 63 onward use int8. Sim 32, the whole script on that final configuration (int8, warm
+prompt, numbered greeting): every row PASS, eight stretches of speech, 23.1 s of audio, `ask1`'s
+first sound 1.7 s after the text turn (first phrase 271 ms, its synthesis 1405 ms — llama.cpp was
+still finishing the reply on the same machine), the barge-in cut generation 3 and the follow-up
+was answered (「はい、大丈夫ですよ。」).
 
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
