@@ -590,6 +590,33 @@ words is not worth a second on every turn while the gate is about answering at a
 Re-run without it on the agent process the next runs will use (sim 37): 14/14, the same five
 turns as sim 34, first sound 723 / 843 / 819 / 1001 ms after each text turn.
 
+Taken instead, off the turn path: `LOCAL_STT_FINAL=whisper-async`. The streaming text still goes
+out at once and the page decides on it; the second pass runs afterwards and, when it read something
+different, sends a revision of the same utterance (`user_transcript_revised`, by utterance id), which
+replaces the line in the context handed to the model on later turns — never a turn of its own. Along
+the way, a bug in that context: the line spoken right before the address was dropped, because the
+answer was composed inside the transition before the line was appended (sim 38 with the fix: the
+last reply is grounded on 「あそこは後で直しておくね」). Three things the sims then found:
+
+- **The second recogniser was not deterministic.** Sim 39: the four cue utterances came back as
+  "and then", "oh", "and go" while the ordinary lines were fine, and the same 2 s wav gave
+  「ゆい、今どう思う?」, 「ゆい、どう?」 or "and go" on repeated calls. whisper-server keeps one decoder
+  state across requests, and by default the previous request's text is the prompt for the next —
+  so each utterance was decoded in the light of whatever came before it. `no_context=true` on every
+  request (and `-nc` in `scripts/local-stack.sh`): 15 / 15 identical over three cues, sim 40 all nine
+  utterances right (「見たよ。3ページ目の数理が少し気になったかな。」, 「ゆい、今日の予定を教えて。」).
+- **Run beside the model it costs the first sound.** Sim 40: first audio 1364 / 1649 / 1257 ms
+  (first token 362–569 ms, against ~250) — the recogniser and the model share the GPU, and the pass
+  over the addressing cue started at the same moment as the reply to it.
+- So the pass waits for the reply's first audio (or 600 ms, if the page takes no turn on that
+  utterance; capped at 4 s). Sim 41: 14/14, first audio **919 / 775 / 749 ms**, first token
+  237–310 ms — the cost of the earlier sync pass and of the concurrent one both gone, and the
+  context for the last turn reads 「見たよ。3ページ目の数理が…」.
+
+Left as it is: whisper spells the name 「結衣」 in one line (「結衣が昨日そう言ってたよね」); the model
+still answered that turn as itself. The greeting after an agent restart is still the warm-up race
+(4.1 s first sound in sims 40 and 41, first token 3.6 s; every later turn under 320 ms).
+
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
