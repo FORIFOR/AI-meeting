@@ -484,6 +484,33 @@ Fixed after the second live run: the harness called a leave route that did not e
 so a bot in a meeting that stayed open would have kept running and billing. A 404 on
 cleanup looks exactly like success when nobody checks.
 
+## The model's quota, because a free key is not a product (measured 2026-09-04)
+
+Three soaks of the Meet configuration (sherpa + Supertonic + a cloud model over the OpenAI-compatible
+endpoint, `PRIVACY=default`, 10 / 10 / 3 minutes, the harness's own Japanese utterances every ~8 s)
+against the project's free-tier Gemini key:
+
+| soak | model | what happened | agent-side numbers |
+|---|---|---|---|
+| 19 · 10 min | gemini-3.5-flash-lite | `429 … free_tier_requests, limit: 15` (a minute) at 113 s; three turns were 「えーっと、」 and then nothing (`reply "" (no audio)`) — the exact 「Yuiからの応答がありません」 | first token p50 901 / p95 1310 ms; ladder answered first ×7, second ×6, third ×2; 39 「no first token」 hedges |
+| 20 · 10 min | gemini-3.5-flash-lite | `429 … GenerateRequestsPerDayPerProjectPerModel-FreeTier, quotaValue 500` from 17 s: **the day's 500 requests were gone** (two soaks plus the day's Meet runs, each turn up to three requests) | quota hold held the ladder to one request; 13 recovery lines spoken, no silent turns |
+| 21 · 3 min | gemini-3.5-flash | works — then `limit: 20` a day at 113 s | first token p50 970 / p90 1103 / max 1274 ms over 16 turns, **no hedge fired**; 1 recovery line |
+
+Two things follow.
+
+1. **`BLOCKED_BY_GEMINI_FREE_TIER` for the hybrid engine.** The free key allows 15 requests a minute and
+   500 a day on flash-lite, 20 a day on flash, and the three-step hedge spends up to three per turn.
+   That is ~160 turns a day — one evening of Gate #8 runs, not a product. A billed key (or the local
+   model) is a release prerequisite for the hybrid engine; the ladder's per-turn cost is the price of
+   the 1.8 s first-token guarantee and should be paid for, not worked around.
+2. The agent now treats a quota error as what it is (2491a15): no retry inside the window, the ladder
+   held to one request for as long as the error asks, and a spoken recovery line — 「ごめん、いま考えが
+   まとまらなかった。もう一回言ってもらえる？」 — instead of the filler left hanging. Soak 20 is the
+   evidence: the same exhaustion that produced silence in soak 19 produced an owned miss.
+
+Until 16:00 JST (the Pacific-midnight reset) the agent runs on the local model (gemma-4-E2B via
+llama.cpp, `hedgeMs 0`); the OpenAI key on file has no credit (`You have no credits remaining`).
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —

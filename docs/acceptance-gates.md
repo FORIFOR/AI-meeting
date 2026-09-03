@@ -83,6 +83,7 @@ Re-verified after fixes: `pnpm gate` (typecheck 20/20, 124 tests, build) and the
 | BLOCKED_BY_LIVE2D_CORE_OFFLINE | strict_local + no vendored Cubism Core | `scripts/fetch-live2d-core.sh` (official CDN → `vendor/live2d/`, git-ignored) |
 | BLOCKED_BY_OPENAI_KEY | no `OPENAI_API_KEY` | set in `services/token-broker/.env` |
 | BLOCKED_BY_GEMINI_KEY | no `GEMINI_API_KEY` | set in `services/token-broker/.env` |
+| BLOCKED_BY_GEMINI_FREE_TIER | the key on file is free tier: 15 req/min and 500/day on flash-lite, 20/day on flash; the hybrid engine's three-step hedge spends up to 3 per turn (soaks 19–21, `docs/commercial-gate.md` § The model's quota) | a billed Gemini key, or `LOCAL_LLM_*` on the local model |
 | BLOCKED_BY_HEYGEN_KEY / BLOCKED_BY_TAVUS_KEY / BLOCKED_BY_LIVEKIT_KEY | realistic avatar credentials | set in `services/token-broker/.env` |
 | BLOCKED_BY_SBV2_SERVER | Style-Bert-VITS2 server not installed | run SBV2 API server, set `LOCAL_TTS=sbv2` |
 | LATENCY_TARGET_NOT_MET (local) | turn p50 2.2 s vs 700 ms target — macOS `say` adds ~0.7 s, Gemma-4-E2B on this Mac ~0.3 s/first sentence | faster TTS (SBV2 / sherpa-onnx TTS), smaller LLM or cloud engine; STT+LLM alone ≈ 0.4 s |
