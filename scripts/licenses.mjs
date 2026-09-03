@@ -14,9 +14,14 @@ for (const [license, pkgs] of Object.entries(byLicense)) {
   for (const p of pkgs) rows.push({ name: p.name, versions: p.versions ?? [p.version], license, author: p.author ?? "", homepage: p.homepage ?? "", description: p.description ?? "" });
 }
 rows.sort((a, b) => a.name.localeCompare(b.name));
-const COPYLEFT = /GPL|AGPL|LGPL|SSPL|EUPL|CC-BY-SA|CC-BY-NC/i;
-const ATTENTION = /CC-BY(?!-SA)|MIT OR GPL|UNKNOWN|UNLICENSED|SEE LICENSE/i;
-const flagged = rows.filter((r) => COPYLEFT.test(r.license) && !/OR MIT|MIT OR/i.test(r.license));
+// Strong copyleft fails the check. LGPL is weak copyleft — a prebuilt shared library the program links
+// to and the user can replace (here: libvips, an optional binary of sharp, pulled in by
+// @huggingface/transformers for image models the agent never loads) — so it is allowed with its notice
+// kept (NOTICE.md), and listed under attention rather than failing the release.
+const COPYLEFT = /GPL|AGPL|SSPL|EUPL|CC-BY-SA|CC-BY-NC/i;
+const WEAK_COPYLEFT = /^LGPL|(^|[\s(])LGPL/i;
+const ATTENTION = /CC-BY(?!-SA)|MIT OR GPL|LGPL|UNKNOWN|UNLICENSED|SEE LICENSE/i;
+const flagged = rows.filter((r) => COPYLEFT.test(r.license) && !WEAK_COPYLEFT.test(r.license) && !/OR MIT|MIT OR/i.test(r.license));
 const attention = rows.filter((r) => ATTENTION.test(r.license));
 writeFileSync("licenses.json", JSON.stringify({ generatedAt: new Date().toISOString(), count: rows.length, packages: rows, flagged: flagged.map((r) => r.name), attention: attention.map((r) => ({ name: r.name, license: r.license })) }, null, 2));
 

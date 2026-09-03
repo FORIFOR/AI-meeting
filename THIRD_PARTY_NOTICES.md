@@ -1,6 +1,6 @@
 # Third-party notices
 
-Generated 2026-08-30T09:05:33.277Z by `scripts/licenses.mjs`. 332 npm packages.
+Generated 2026-09-03T10:06:37.889Z by `scripts/licenses.mjs`. 379 npm packages.
 
 ## Non-OSS and specially licensed components (curated)
 
@@ -14,6 +14,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | VRoid `AvatarSample_B.vrm` | `reference/ChatVRM/public` (not copied) | VRoid sample model terms (pixiv) — https://vroid.pixiv.help/ ; ChatVRM repo itself MIT | demo only |
 | macOS speech voices (Kyoko etc.) via `say` / AVSpeechSynthesizer | local TTS fallback | Apple macOS Software License Agreement — audio generated may not be redistributed as a product voice | dev fallback |
 | Style-Bert-VITS2 models / voices | `LOCAL_TTS=sbv2` (not bundled) | Style-Bert-VITS2 code AGPL-3.0 (server used over HTTP, not linked); each voice model has its own terms (JVNV corpus etc.) — verify per model at Character Voice registration (spec §6) | BLOCKED_BY_SBV2_SERVER |
+| libvips prebuilt binaries (`@img/sharp-libvips-*`) | optional dependency of `sharp`, itself a dependency of `@huggingface/transformers` (agent uses only `WhisperFeatureExtractor`; no image model is ever loaded) | LGPL-3.0-or-later — weak copyleft: a shared library the user can replace; notice kept here, no modification, no static linking | ok (weak copyleft, notice kept) |
 | sherpa-onnx / SenseVoice / ReazonSpeech zipformer / Silero VAD models | agent STT/VAD | sherpa-onnx Apache-2.0; SenseVoice model: FunAudioLLM Model License; ReazonSpeech: Apache-2.0; Silero VAD: MIT | ok (model licenses listed) |
 | Gemma 4 (GGUF) via llama.cpp | local LLM | Gemma Terms of Use — https://ai.google.dev/gemma/terms ; llama.cpp MIT | ok for internal use; review for distribution |
 | Cloud services: OpenAI Realtime, Google Gemini Live, HeyGen LiveAvatar, Tavus CVI, Recall.ai, LiveKit Cloud | providers/*, avatar-providers/*, connectors/* | respective Terms of Service; user data handling documented in `docs/spec-v1.md` §26 | per key |
@@ -52,9 +53,16 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @csstools/css-parser-algorithms | 3.0.5 | MIT |
 | @csstools/css-tokenizer | 3.0.4 | MIT |
 | @daily-co/daily-js | 0.92.2 | BSD-2-Clause |
+| @digital-go-jp/design-tokens | 2.0.1 | MIT |
 | @dimforge/rapier3d-compat | 0.12.0 | Apache-2.0 |
 | @esbuild/darwin-arm64 | 0.28.2 | MIT |
 | @hono/node-server | 2.1.1 | MIT |
+| @huggingface/jinja | 0.5.9 | MIT |
+| @huggingface/tokenizers | 0.1.3 | Apache-2.0 |
+| @huggingface/transformers | 4.2.0 | Apache-2.0 |
+| @img/colour | 1.1.0 | MIT |
+| @img/sharp-darwin-arm64 | 0.34.5 | Apache-2.0 |
+| @img/sharp-libvips-darwin-arm64 | 1.2.4 | LGPL-3.0-or-later |
 | @jridgewell/gen-mapping | 0.3.13 | MIT |
 | @jridgewell/remapping | 2.3.5 | MIT |
 | @jridgewell/resolve-uri | 3.1.2 | MIT |
@@ -62,6 +70,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @jridgewell/trace-mapping | 0.3.31 | MIT |
 | @livekit/mutex | 1.1.1 | Apache-2.0 |
 | @livekit/protocol | 1.48.0, 1.50.4 | Apache-2.0 |
+| @mediapipe/tasks-vision | 1.0.1 | Apache-2.0 |
 | @pixi/accessibility | 6.5.10 | MIT |
 | @pixi/app | 6.5.10 | MIT |
 | @pixi/compressed-textures | 6.5.10 | MIT |
@@ -112,6 +121,15 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @pixiv/types-vrmc-springbone-1.0 | 3.5.5 | MIT |
 | @pixiv/types-vrmc-springbone-extended-collider-1.0 | 3.5.5 | MIT |
 | @pixiv/types-vrmc-vrm-1.0 | 3.5.5 | MIT |
+| @protobufjs/aspromise | 1.1.2 | BSD-3-Clause |
+| @protobufjs/base64 | 1.1.2 | BSD-3-Clause |
+| @protobufjs/codegen | 2.0.5 | BSD-3-Clause |
+| @protobufjs/eventemitter | 1.1.1 | BSD-3-Clause |
+| @protobufjs/fetch | 1.1.1 | BSD-3-Clause |
+| @protobufjs/float | 1.0.2 | BSD-3-Clause |
+| @protobufjs/path | 1.1.2 | BSD-3-Clause |
+| @protobufjs/pool | 1.1.0 | BSD-3-Clause |
+| @protobufjs/utf8 | 1.1.2 | BSD-3-Clause |
 | @puppeteer/browsers | 3.2.1 | Apache-2.0 |
 | @rolldown/pluginutils | 1.0.0-rc.3 | MIT |
 | @rollup/rollup-darwin-arm64 | 4.63.1 | MIT |
@@ -149,15 +167,18 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @vitest/snapshot | 3.2.7 | MIT |
 | @vitest/spy | 3.2.7 | MIT |
 | @vitest/utils | 3.2.7 | MIT |
+| adm-zip | 0.5.18, 0.6.0 | MIT |
 | agent-base | 7.1.4 | MIT |
 | ansi-regex | 5.0.1, 6.3.0 | MIT |
 | ansi-styles | 4.3.0, 6.2.3 | MIT |
+| argparse | 2.0.1 | Python-2.0 |
 | array-union | 1.0.2 | MIT |
 | array-uniq | 1.0.3 | MIT |
 | assertion-error | 2.0.1 | MIT |
 | async | 2.6.4 | MIT |
 | balanced-match | 1.0.2 | MIT |
 | baseline-browser-mapping | 2.11.20 | Apache-2.0 |
+| boolean | 3.2.0 | MIT |
 | bowser | 2.14.1 | MIT |
 | brace-expansion | 1.1.18 | MIT |
 | browserslist | 4.28.8 | MIT |
@@ -183,7 +204,11 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | debug | 4.4.3 | MIT |
 | decimal.js | 10.6.0 | MIT |
 | deep-eql | 5.0.2 | MIT |
+| define-data-property | 1.1.4 | MIT |
+| define-properties | 1.2.1 | MIT |
 | dequal | 2.0.3 | MIT |
+| detect-libc | 2.1.2 | Apache-2.0 |
+| detect-node | 2.1.0 | MIT |
 | devtools-protocol | 0.0.1666840 | BSD-3-Clause |
 | dunder-proto | 1.0.1 | MIT |
 | earcut | 2.2.4 | ISC |
@@ -195,19 +220,22 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | es-errors | 1.3.0 | MIT |
 | es-module-lexer | 1.7.0 | MIT |
 | es-object-atoms | 1.1.2 | MIT |
+| es6-error | 4.1.1 | MIT |
 | esbuild | 0.28.2 | MIT |
 | escalade | 3.2.0 | MIT |
-| escape-string-regexp | 1.0.5 | MIT |
+| escape-string-regexp | 1.0.5, 4.0.0 | MIT |
 | estree-walker | 3.0.3 | MIT |
 | eventemitter3 | 3.1.2 | MIT |
 | events | 3.3.0 | MIT |
 | expect-type | 1.4.0 | Apache-2.0 |
 | fdir | 6.5.0 | MIT |
 | fflate | 0.8.3 | MIT |
+| fft.js | 4.0.4 | MIT |
 | filename-reserved-regex | 2.0.0 | MIT |
 | filenamify | 4.3.0 | MIT |
 | find-cache-dir | 3.3.2 | MIT |
 | find-up | 4.1.0 | MIT |
+| flatbuffers | 25.9.23 | Apache-2.0 |
 | fs-extra | 8.1.0 | MIT |
 | fs.realpath | 1.0.0 | ISC |
 | fsevents | 2.3.3 | MIT |
@@ -219,10 +247,14 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | get-proto | 1.0.1 | MIT |
 | gh-pages | 4.0.0 | MIT |
 | glob | 7.2.3 | ISC |
+| global-agent | 3.0.0, 4.1.3 | BSD-3-Clause |
+| globalthis | 1.0.4 | MIT |
 | globby | 6.1.0 | MIT |
 | gopd | 1.2.0 | MIT |
 | graceful-fs | 4.2.11 | ISC |
+| guid-typescript | 1.0.9 | ISC |
 | has-flag | 4.0.0 | MIT |
+| has-property-descriptors | 1.0.2 | MIT |
 | has-symbols | 1.1.0 | MIT |
 | hasown | 2.0.4 | MIT |
 | hono | 4.13.5 | MIT |
@@ -236,8 +268,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | is-potential-custom-element-name | 1.0.1 | MIT |
 | jose | 5.10.0, 6.2.10 | MIT |
 | js-tokens | 4.0.0, 9.0.1 | MIT |
+| js-yaml | 5.4.1 | MIT |
 | jsdom | 26.1.0 | MIT |
 | jsesc | 3.1.0 | MIT |
+| json-stringify-safe | 5.0.1 | ISC |
 | json5 | 2.2.3 | MIT |
 | jsonfile | 4.0.0 | MIT |
 | livekit-client | 2.22.1 | Apache-2.0 |
@@ -245,11 +279,13 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | locate-path | 5.0.0 | MIT |
 | lodash | 4.18.1 | MIT |
 | loglevel | 1.9.2 | MIT |
+| long | 5.3.2 | Apache-2.0 |
 | loupe | 3.2.1 | MIT |
 | lru-cache | 5.1.1, 10.4.3 | ISC |
 | machina | 7.0.1 | (MIT OR GPL) |
 | magic-string | 0.30.21 | MIT |
 | make-dir | 3.1.0 | MIT |
+| matcher | 3.0.0, 4.0.0 | MIT |
 | math-intrinsics | 1.1.0 | MIT |
 | meshoptimizer | 1.1.1 | MIT |
 | minimatch | 3.1.5 | ISC |
@@ -261,7 +297,11 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | nwsapi | 2.2.26 | MIT |
 | object-assign | 4.1.1 | MIT |
 | object-inspect | 1.13.4 | MIT |
+| object-keys | 1.1.1 | MIT |
 | once | 1.4.0 | ISC |
+| onnxruntime-common | 1.24.0-dev.20251116-b39e144322, 1.24.3, 1.29.0 | MIT |
+| onnxruntime-node | 1.24.3, 1.29.0 | MIT |
+| onnxruntime-web | 1.26.0-dev.20260416-b7804b056c | MIT |
 | p-limit | 2.3.0 | MIT |
 | p-locate | 4.1.0 | MIT |
 | p-try | 2.2.0 | MIT |
@@ -278,8 +318,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | pixi-live2d-display | 0.4.0 | MIT |
 | pixi.js | 6.5.10 | MIT |
 | pkg-dir | 4.2.0 | MIT |
+| platform | 1.3.6 | MIT |
 | postcss | 8.5.26 | MIT |
 | promise-polyfill | 8.3.0 | MIT |
+| protobufjs | 7.6.6 | BSD-3-Clause |
 | punycode | 1.4.1, 2.3.1 | MIT |
 | puppeteer-core | 25.9.0 | Apache-2.0 |
 | qs | 6.15.3 | BSD-3-Clause |
@@ -287,6 +329,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | react-dom | 19.2.8 | MIT |
 | react-refresh | 0.18.0 | MIT |
 | require-directory | 2.1.1 | MIT |
+| roarr | 2.15.4 | BSD-3-Clause |
 | rollup | 4.63.1 | MIT |
 | rrweb-cssom | 0.8.0 | MIT |
 | rxjs | 7.8.2 | Apache-2.0 |
@@ -295,16 +338,20 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | scheduler | 0.27.0 | MIT |
 | sdp | 3.2.2 | MIT |
 | sdp-transform | 2.15.0 | MIT |
-| semver | 6.3.1 | ISC |
+| semver | 6.3.1, 7.8.5 | ISC |
+| semver-compare | 1.0.0 | MIT |
+| serialize-error | 7.0.1, 8.1.0 | MIT |
+| sharp | 0.34.5 | Apache-2.0 |
 | shell-quote | 1.9.0 | MIT |
-| sherpa-onnx-darwin-arm64 | 1.13.6 | Apache-2.0 |
-| sherpa-onnx-node | 1.13.6 | Apache-2.0 |
+| sherpa-onnx-darwin-arm64 | 1.13.7 | Apache-2.0 |
+| sherpa-onnx-node | 1.13.7 | Apache-2.0 |
 | side-channel | 1.1.1 | MIT |
 | side-channel-list | 1.0.1 | MIT |
 | side-channel-map | 1.0.1 | MIT |
 | side-channel-weakmap | 1.0.2 | MIT |
 | siginfo | 2.0.0 | ISC |
 | source-map-js | 1.2.1 | BSD-3-Clause |
+| sprintf-js | 1.1.3 | BSD-3-Clause |
 | stackback | 0.0.2 | MIT |
 | std-env | 3.10.0 | MIT |
 | string-width | 4.2.3, 7.2.0, 8.2.2 | MIT |
@@ -328,6 +375,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | trim-repeated | 1.0.0 | MIT |
 | tslib | 2.8.1 | 0BSD |
 | tsx | 4.23.12, 4.23.13 | MIT |
+| type-fest | 0.13.1, 0.20.2 | (MIT OR CC0-1.0) |
 | typed-emitter | 2.1.0 | MIT |
 | typed-query-selector | 2.12.2 | MIT |
 | typescript | 5.9.3 | Apache-2.0 |

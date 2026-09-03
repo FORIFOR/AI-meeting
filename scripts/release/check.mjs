@@ -67,8 +67,11 @@ if (args.has("--artifacts")) {
   row("web dist", existsSync(resolve(ROOT, "apps/web/dist/index.html")) ? "PASS" : "FAIL");
 }
 
-// 6. External dependencies (informational)
-for (const k of ["OPENAI_API_KEY", "GEMINI_API_KEY", "RECALL_API_KEY", "APPLE_ID"]) row(`external: ${k}`, process.env[k] ? "PASS" : `BLOCKED_BY_${k.replace(/_API_KEY$/, "_KEY").replace("APPLE_ID", "APPLE_NOTARY_CREDS")}`);
+// 6. External dependencies (informational). Keys live in the token broker's .env (never in the shell,
+// never printed): only the presence of a non-empty line is read, and only the name is reported.
+const brokerEnv = (() => { try { return readFileSync(resolve(ROOT, "services/token-broker/.env"), "utf8"); } catch { return ""; } })();
+const hasKey = (k) => !!process.env[k] || new RegExp(`^${k}=.+`, "m").test(brokerEnv);
+for (const k of ["OPENAI_API_KEY", "GEMINI_API_KEY", "RECALL_API_KEY", "ATTENDEE_API_KEY", "APPLE_ID"]) row(`external: ${k}`, hasKey(k) ? "PASS" : `BLOCKED_BY_${k.replace(/_API_KEY$/, "_KEY").replace("APPLE_ID", "APPLE_NOTARY_CREDS")}`, hasKey(k) && !process.env[k] ? "in services/token-broker/.env" : "");
 
 const fail = rows.filter((r) => r.status === "FAIL");
 const blocked = rows.filter((r) => r.status.startsWith("BLOCKED"));
