@@ -510,6 +510,10 @@ Two things follow.
 
 Until 16:00 JST (the Pacific-midnight reset) the agent runs on the local model (gemma-4-E2B via
 llama.cpp, `hedgeMs 0`); the OpenAI key on file has no credit (`You have no credits remaining`).
+Soak 20 also showed what a minute-long hold sounds like: the same apology thirteen times, asking
+the person to repeat themselves when repeating could not help. `cb0b656` turns the line into a
+ladder — ask for a repeat once, then say it needs a moment, then own that it is off today and stay
+on that line until an answer resets it (agent tests 106 / 106; not yet heard in a meeting).
 Soak 22 (2 min, `strict_local`, same utterances) is that configuration's evidence: 13 / 13 answered,
 first token p50 149 / p90 186 ms, turn p50 649 / p95 1704 ms on the HUD, no errors, no toasts, replies
 of 13–48 chars (「面接で緊張するのってよくあることだよ。何かリラックスできるルーティンとかある？」).
