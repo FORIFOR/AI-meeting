@@ -11,16 +11,19 @@
  * What this does NOT cover: Recall's own delivery of those segments in a live call. That still needs a
  * meeting and a bot with credit on it — see docs/acceptance-gates.md.
  */
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { mkdtempSync } from "node:fs";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 // Run the real policy from source; the package ships TypeScript, so tsx provides the loader.
-import { ParticipationPolicy } from "../../packages/meeting-core/src/index.js";
+import { MEETING_PERSONA_ID, ParticipationPolicy, meetingInstructions, meetingTurnPrompt } from "../../packages/meeting-core/src/index.js";
+import { buildSystemPrompt } from "../../packages/persona-core/src/index.js";
+import { personas } from "../../personas/src/catalog.js";
 
-const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
-const WebSocket = require("ws");
+const WebSocket = createRequire(new URL("../../services/agent/package.json", import.meta.url))("ws");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const AGENT = process.env.AGENT_URL ?? "ws://127.0.0.1:8788/session";
 const NAMES = (process.env.CHARACTER_NAMES ?? "Yui,ゆい,ユイ,結衣").split(",");
@@ -73,13 +76,21 @@ const waitReply = (ms) => new Promise((resolve) => {
 });
 
 await new Promise((r) => ws.on("open", r));
+// The character the bot page sends into a meeting: the meeting persona with the meeting instructions,
+// and each address rendered with the room's lines before it — the same text, so the reply measured
+// here is the one the room would hear.
+const persona = personas.find((p) => p.id === (process.env.PERSONA ?? MEETING_PERSONA_ID));
+if (!persona) throw new Error(`unknown persona ${process.env.PERSONA}`);
+const manifest = JSON.parse(readFileSync(join(root, "characters", process.env.CHARACTER ?? "yui", "manifest.json"), "utf8"));
 send({ type: "start", config: {
-  systemPrompt: "あなたはオンライン会議に同席しているキャラクター「Yui」です。名前で呼ばれたときだけ、1〜2文で簡潔に日本語で答えます。",
-  mode: "free_talk", language: "ja-JP", privacyMode: "default", characterId: "yui", personaId: "friendly",
+  systemPrompt: buildSystemPrompt({ persona, character: { manifest }, params: {}, extra: meetingInstructions({ displayName: NAMES[0], proactive: false }) }),
+  mode: persona.mode, language: persona.language, privacyMode: "default", characterId: manifest.id, personaId: persona.id,
+  providerOptions: { speakingStyle: persona.speakingStyle, turnPolicy: persona.turnPolicy },
 }});
 await new Promise((r) => setTimeout(r, 800));
 
 let correct = 0;
+const heard = []; // the room so far, "speaker: text", as the bot page keeps it
 for (const line of SCRIPT) {
   const before = policy.state;
   policy.onTranscript({ text: line.text, final: true, speakerName: line.by }, Date.now());
@@ -87,9 +98,10 @@ for (const line of SCRIPT) {
   const asExpected = addressed === (line.expect === "answered");
   if (asExpected) correct++;
   console.log(`${asExpected ? "✓" : "✗"} [${line.expect.padEnd(8)}] ${line.text}${addressed ? "  → ADDRESSED" : ""}`);
-  if (!addressed) continue;
+  if (!addressed) { heard.push(`${line.by}: ${line.text}`); continue; }
   const t0 = Date.now();
-  send({ type: "text", text: policy.addressedBy?.text ?? line.text });
+  send({ type: "text", text: meetingTurnPrompt({ context: heard.slice(-12), asked: { speakerName: line.by, text: policy.addressedBy?.text ?? line.text } }) });
+  heard.push(`${line.by}: ${line.text}`);
   const reply = await waitReply(30000);
   console.log(`     Yui: ${reply ?? "(応答なし)"}${reply ? `  (+${Date.now() - t0}ms)` : ""}`);
   policy.onAssistantDone(Date.now());

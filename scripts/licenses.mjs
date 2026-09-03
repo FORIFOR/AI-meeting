@@ -23,13 +23,22 @@ const WEAK_COPYLEFT = /^LGPL|(^|[\s(])LGPL/i;
 const ATTENTION = /CC-BY(?!-SA)|MIT OR GPL|LGPL|UNKNOWN|UNLICENSED|SEE LICENSE/i;
 const flagged = rows.filter((r) => COPYLEFT.test(r.license) && !WEAK_COPYLEFT.test(r.license) && !/OR MIT|MIT OR/i.test(r.license));
 const attention = rows.filter((r) => ATTENTION.test(r.license));
-writeFileSync("licenses.json", JSON.stringify({ generatedAt: new Date().toISOString(), count: rows.length, packages: rows, flagged: flagged.map((r) => r.name), attention: attention.map((r) => ({ name: r.name, license: r.license })) }, null, 2));
+// The generated files carry a timestamp; rewriting them on every `--check` would dirty the tree the
+// release check has just called clean. Write only when something other than the timestamp changed.
+const STAMP = /\d{4}-\d{2}-\d{2}T[\d:.]+Z/g;
+const writeIfChanged = (file, text) => {
+  let before = null;
+  try { before = readFileSync(file, "utf8"); } catch {}
+  if (before !== null && before.replace(STAMP, "") === text.replace(STAMP, "")) return;
+  writeFileSync(file, text);
+};
+writeIfChanged("licenses.json", JSON.stringify({ generatedAt: new Date().toISOString(), count: rows.length, packages: rows, flagged: flagged.map((r) => r.name), attention: attention.map((r) => ({ name: r.name, license: r.license })) }, null, 2));
 
 const notice = readFileSync("NOTICE.md", "utf8");
 let md = `# Third-party notices\n\nGenerated ${new Date().toISOString()} by \`scripts/licenses.mjs\`. ${rows.length} npm packages.\n\n`;
 md += notice.replace(/^# .*\n/, "## Non-OSS and specially licensed components (curated)\n") + "\n\n## npm packages\n\n| Package | Version(s) | License |\n|---|---|---|\n";
 for (const r of rows) md += `| ${r.name} | ${r.versions.join(", ")} | ${r.license} |\n`;
-writeFileSync("THIRD_PARTY_NOTICES.md", md);
+writeIfChanged("THIRD_PARTY_NOTICES.md", md);
 console.log(`licenses.json + THIRD_PARTY_NOTICES.md written (${rows.length} packages)`);
 if (attention.length) console.log("attention:", attention.map((a) => `${a.name} (${a.license})`).join(", "));
 if (flagged.length) {

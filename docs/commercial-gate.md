@@ -398,6 +398,16 @@ The arrival greeting — the first thing a real room hears — is measured on th
 (`{ "greeting": true }` renders `meetingGreetingPrompt`): 「こんにちは、Yuiです。Yuiと声をかけてもらえればお返事
 しますので、よろしくお願いします。」 — name, how to get its attention, no question, no speech. Gate script
 12 / 12 ×2.
+`pnpm reality:address` — the ParticipationPolicy fed a room's lines, its decisions run through the real
+agent — used to carry its own one-line prompt and send the bare question; it now sends the meeting persona,
+the meeting instructions and the turn prompt with the room's lines, the way the bot page does. First thing
+it showed: asked 「来週までにやることを教えてください」 with nothing decided, the character produced a plan
+(「先週の数字データの集計とレポートの作成を予定しています。水曜日までに終わらせるつもりです」). The honesty rule
+named 予定・数字・出来事; it now names 担当タスク and 締め切り too, and a standup turn asks the same question:
+「来週までのタスクはまだ決まっていないので、手元にありません。何か割り当てられた作業があれば教えていただけますか？」
+(address gate 2 / 2 honest after the change, standup 15 / 15 and 16 / 16, gate script 15 / 15 with the
+greeting and a names-as-written check — a katakana reading of a name is allowed, 「テスト担当者さん」 and
+「〇〇さん」 are not).
 
 **The answer is now bounded in time as well.** The same afternoon's agent log, 89 turns against
 gemini-3.5-flash-lite: first token p50 0.83 s, p90 1.3 s — and 8 turns above 3 s, the worst 13.1 and
