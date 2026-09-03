@@ -653,6 +653,17 @@ export class ConversationSession {
     }
   }
 
+  /** The whole text turn, next to the utterance wavs: the log keeps 60 characters, a prompt is 500. */
+  private dumpText(text: string): void {
+    try {
+      const dir = this.deps.dumpUtterancesDir!;
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, `${new Date().toISOString().replace(/[:.]/g, "-")}_turn.txt`), text);
+    } catch (err) {
+      this.deps.log?.(`turn dump failed: ${(err as Error).message}`);
+    }
+  }
+
   private async commitTurn(u: Utterance, text: string, ep: { reason: string; requiredSilenceMs: number; sttMs: number; reused: boolean }): Promise<void> {
     if (this.utterance !== u) return;
     const stt = this.streamingStt!;
@@ -712,6 +723,7 @@ export class ConversationSession {
     // Logged on receipt: a text turn that never becomes a generation is otherwise invisible here.
     this.deps.log?.(`text${this.started ? "" : " (ignored: not started)"} "${text.replace(/\s+/g, " ").slice(0, 60)}"`);
     if (!this.started) return;
+    if (this.deps.dumpUtterancesDir) this.dumpText(text);
     if (this.state === "speaking" || this.state === "thinking") this.interrupt("text");
     this.deps.send({ type: "user_transcript", text, final: true });
     await this.respond(text, { source: "text", speechEndAt: this.clock(), phrases: 0, sentences: 0 });
