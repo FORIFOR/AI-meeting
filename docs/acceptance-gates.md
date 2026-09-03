@@ -148,6 +148,28 @@ that talks the way a meeting does passes.
 **Not covered**: Recall's own delivery of those segments in a live call, which needs a bot, which needs
 credit on the workspace (see below).
 
+### Meeting: what the character says (2026-09-03)
+
+`pnpm reality:conversation` with a meeting scenario — the real agent, the real LLM (gemini-3.5-flash-lite,
+hedged) and TTS, the persona and meeting instructions built from the same sources the bot page uses, each
+line the room addressing the character with the lines before it (`meetingTurnPrompt`), the arrival turn
+rendered by `meetingGreetingPrompt`. Scored by named checks per turn; the full account, before/after
+tables and the prompt lessons are in `docs/commercial-gate.md` (「In a meeting, on the gate's own script」).
+
+| scenario | checks | latest | evidence |
+|---|---|---|---|
+| `meeting-gate.json` — the attendee-auto cue script in text: greeting, 「ゆイ、今日の予定を教えて」, 「これはどう思う？」 after a third-person mention, 「今どう思う？」 after a cut-in | own name + how to call it, no invented schedule, honest or asks, demonstrative resolved to 三ページ目の数字, no parroted name, names as written, substance | **PASS 15 / 15** (12 / 12 ×2 before the names check, 8 / 8 ×6 before the greeting turn) | `docs/reports/conversation/meeting_colleague_ja-2026-09-03T10-17-19.json` (gate script), `…T10-18-18.json` (standup), earlier runs `…T09-4*` … `…T10-1*` |
+| `meeting-standup.json` — schedule question, data doubt, release-date change to summarise, opinion, memory callback, next-week tasks, hand-off | no invented schedule or tasks, grounded in the room, new date 17 with the reason, opinion with a reason, remembers the date, steps back without a question | **PASS 16 / 16** (15 / 15, 13 / 13 ×5) | same directory |
+| `pnpm reality:address` with the shipped persona + prompt | 7 / 7 addresses classified, 3 / 3 answered, quiet otherwise; replies honest about tasks it does not have | **PASS** (2 runs) | run output; audio wav in the run's temp dir |
+
+Model-side conditions measured on the way: replies bounded by `HedgedLLM` (first token p50 0.96 s, worst 4.3 s
+over 48 turns; unhedged worst had been 17.3 s), the meeting persona `meeting_colleague_ja` (questions back on
+1 of 6 turns instead of 6 of 6), one register for the whole meeting.
+
+**Not covered**: the same replies through a real microphone and Meet's noise suppression, and the
+recogniser's spelling of a question under host load — that is Gate #8 (Runs 17–28 in
+`docs/commercial-gate.md`: `DEGRADED_BY_HOST_CPU` / `BLOCKED_BY_NO_ADMITTER`; Run 29 pending a person in the room).
+
 ### Recall credits exhausted
 
 `insufficient_credit_balance` — the $5 free grant is spent (2-core 0.92 h, GPU 2.97 h). The GPU hours are
