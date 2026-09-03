@@ -12,6 +12,9 @@ const providerInterrupt = vi.fn(async () => {});
 /** What the fake agent says to the runtime — a test drives the provider side of a turn through this. */
 const listeners: ((e: unknown) => void)[] = [];
 const emit = (e: Record<string, unknown>) => { for (const l of listeners) l(e); };
+/** What the fake meeting (operator page connector) tells the controller. */
+const meetingListeners: ((e: unknown) => void)[] = [];
+const meetingEmit = (e: Record<string, unknown>) => { for (const l of meetingListeners) l(e); };
 
 vi.mock("@rcai/audio-core", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@rcai/audio-core")>();
@@ -38,7 +41,7 @@ vi.mock("../integrations/registry.js", () => ({
   // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
   createMeetingConnector: async () => ({
     async join() {
-      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+      return { id: "bot_test", status: () => "in_call", onEvent(cb: (e: unknown) => void) { meetingListeners.push(cb); }, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
     },
   }),
 }));
@@ -77,9 +80,11 @@ function botPage(role: "bot" | "operator" = "bot") {
 }
 
 const frame = () => ({ data: new Float32Array(480), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
+/** 10 ms at −10 dBFS: a room sound no energy VAD can miss. */
+const loud = () => ({ data: Float32Array.from({ length: 480 }, (_, i) => (i % 2 ? 0.3 : -0.3)), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
 
 describe("greeting on arrival", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
 
   it("addressed_only bot page: the first room audio earns one greeting, a beat later", async () => {
@@ -203,6 +208,46 @@ describe("greeting on arrival", () => {
    * an open mic in the room and the runtime's barge-in fast path did what it is for. A room needs the
    * speech to last before it counts; a person with a headset does not.
    */
+  /**
+   * Gate #8 run 63 (the first admitted run with a clean stack): the greeting died after 17 frames and
+   * the first answer mid-sentence, with no barge-in confirmed by the agent. The cut came from the
+   * runtime's own energy VAD on the room mix — its fast path interrupts on the onset, before the agent's
+   * 600 ms window has even started. A room's onsets are the human's 「えっと」, a −50 dBFS blip, a
+   * chair: on the bot page the agent's confirmed onset is the only one that may stop the character.
+   */
+  it("bot page: room noise while speaking does not cut the character; the agent's confirmed onset does", async () => {
+    const c = botPage();
+    await c.start();
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    for (let i = 0; i < 30; i++) c.onMeetingAudio(loud()); // 300 ms well above the energy VAD's floor
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    expect(c.policy.state).toBe("RESPONDING");
+    emit({ type: "user_speech_started", at: Date.now() }); // the agent, after its confirmation window
+    expect(providerInterrupt).toHaveBeenCalledTimes(1);
+    expect(c.policy.state).not.toBe("RESPONDING");
+    await c.leave();
+  });
+
+  it("operator page: the headset keeps the instant cut on the local VAD", async () => {
+    const c = botPage("operator");
+    await c.start();
+    meetingEmit({ type: "joined", at: Date.now() }); // the operator page speaks only once its bot is in the call
+    const later = Date.now() + 5000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => later);
+    c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    for (let i = 0; i < 30; i++) c.onMeetingAudio(loud());
+    expect(providerInterrupt).toHaveBeenCalledTimes(1);
+    clock.mockRestore();
+    await c.leave();
+  });
+
   it("bot page asks the agent to confirm a barge-in; the operator page keeps the instant cut", async () => {
     await botPage("bot").start();
     const bot = connect.mock.calls.at(-1)![0] as { providerOptions?: Record<string, unknown> };

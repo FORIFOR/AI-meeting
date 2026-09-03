@@ -405,7 +405,14 @@ export class MeetingSessionController {
       new Promise<void>((resolve) => setTimeout(resolve, AUDIO_START_GRACE_MS)),
     ]);
     void speaker.resume().catch(() => {});
-    const runtime = new ConversationRuntime({ sink: speaker, localVad: true });
+    /**
+     * The runtime's own energy VAD is the operator page's instant cut: a headset, one voice, no
+     * mixing. On the bot page the same fast path ran on the room mix (Gate #8 run 63: the greeting
+     * died after 17 frames, the first answer was cut mid-sentence, and the agent had confirmed no
+     * barge-in — a listener's 「えっと」 and a room blip had stopped the character from the page).
+     * There the agent's confirmed onset (bargeInConfirmMs) is the only thing that may stop her.
+     */
+    const runtime = new ConversationRuntime({ sink: speaker, localVad: this.init.role !== "bot" });
     this.runtime = runtime;
 
     const def = await this.resolveCharacter(character);
