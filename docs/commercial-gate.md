@@ -143,6 +143,14 @@ macrotask later (`WebSocketClient.connect`, `google_meet_chromedriver_payload.js
 `UsersUpdate … 'Yui'` over the page socket, load 1.05 — i.e. knocking, on a host with CPU to spare; not admitted
 only because the room was empty. Runs 30+ run on this image (`RCAI_ATTENDEE_IMAGE=attendee-attendee-app-local:arm64`).
 
+What still blocks the gate is not the machine but the door: two runs (29, 30) knocked for the full 600 s
+with nobody to admit them, and the assistant has no way to open it — the Chrome extension is not connected
+here, and logging the bot into a Google account is the user's password, which the assistant never handles.
+Two ways to remove the dependency on a live admitter, both the user's: (1) in the Meet's host controls set
+meeting access to *Open* (「参加をリクエストしなくても参加できる」) for `uqb-ytqv-wwa`, after which every run
+joins by itself; or (2) be in the room when a run starts and admit 「Yui」 and 「Tester」 within 10 min. Until
+one of them happens Gate #8 stays `BLOCKED_BY_NO_ADMITTER`, and the offline gates above are the evidence.
+
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
 The rule is not "delete the polling API". It is: **webhooks are the only thing that moves product state,
