@@ -17,6 +17,8 @@ export interface AgentConfig {
   llmReasoning: string;
   /** Characters of recent conversation kept verbatim in front of the model (older turns become notes). */
   llmHistoryChars: number;
+  /** Ask the model a second time when its first token is later than this (HedgedLLM); 0 disables. */
+  llmHedgeMs: number;
   tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
   sbv2Url: string;
   sayVoice: string;
@@ -98,6 +100,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      * endpoint has room for the whole evening. Either way, what scrolls out is folded into notes.
      */
     llmHistoryChars: Number(env.LOCAL_LLM_HISTORY_CHARS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 2400 : 12000)),
+    /**
+     * A cloud model's slow starts are per request (see HedgedLLM), so a duplicate request after 2.5 s
+     * is what keeps a reply under the conversational limit. A local llama.cpp serves one request at a
+     * time — a second request there would queue behind the first and help nothing — so it is off on loopback.
+     */
+    llmHedgeMs: Number(env.LOCAL_LLM_HEDGE_MS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 0 : 2500)),
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",
     sayVoice: env.SAY_VOICE ?? "Kyoko",

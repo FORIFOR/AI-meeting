@@ -11,7 +11,7 @@ import { SherpaSTT, WhisperServerSTT, type STTAdapter } from "./adapters/stt.js"
 import { IncrementalOfflineSTT, type StreamingSTT } from "./adapters/stt-streaming.js";
 import { SherpaOnlineSTT } from "./adapters/sherpa-online.js";
 import { EnergyVADAdapter, SileroVAD, type VADAdapter } from "./adapters/vad.js";
-import { OpenAICompatibleLLM } from "./adapters/llm.js";
+import { HedgedLLM, OpenAICompatibleLLM, type LLMAdapter } from "./adapters/llm.js";
 import { AivisSpeechTTS, AVSpeechDaemonTTS, SayTTS, StyleBertVits2TTS, SupertonicTTS, type TTSAdapter } from "./adapters/tts.js";
 import { SmartTurnV3 } from "./adapters/turn.js";
 import { ConversationSession } from "./session.js";
@@ -23,6 +23,8 @@ export interface AgentRuntime {
   cfg: AgentConfig;
   stt: STTAdapter;
   llm: OpenAICompatibleLLM;
+  /** What the conversation talks to: the same model, re-asked when it is slow to start (cfg.llmHedgeMs). */
+  conversationLlm: LLMAdapter;
   tts: TTSAdapter;
   vadEngine: string;
   createVad(): VADAdapter;
@@ -71,6 +73,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
   }
   const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel, undefined, cfg.llmKey || undefined, cfg.llmReasoning || undefined);
   await llm.init();
+  const conversationLlm: LLMAdapter = cfg.llmHedgeMs > 0 ? new HedgedLLM(llm, { afterMs: cfg.llmHedgeMs, log: (l) => console.log(`[agent] ${l}`) }) : llm;
 
   /**
    * Acoustic turn-end. Loaded once and shared: the model is 8 MB and stateless, and a per-session copy
@@ -108,6 +111,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
     cfg,
     stt,
     llm,
+    conversationLlm,
     tts,
     vadEngine,
     sttMode,
@@ -176,7 +180,7 @@ export function createApp(rt: AgentRuntime): Hono {
       ok: true,
       strictLocalCapable: true,
       stt: { engine: rt.stt.engine, ready: rt.stt.ready, model: rt.stt.model, mode: rt.sttMode, finalPass: rt.finalStt ? rt.finalStt.model : null, pauseMinSilenceMs: rt.sttMode === "baseline" ? rt.cfg.vadMinSilenceMs : rt.cfg.pauseMinSilenceMs, endpoint: rt.sttMode === "baseline" ? null : rt.cfg.endpoint },
-      llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl },
+      llm: { engine: rt.llm.engine, ready: rt.llm.ready, model: rt.llm.model, url: rt.cfg.llmUrl, hedgeMs: rt.cfg.llmHedgeMs },
       tts: { engine: rt.tts.engine, ready: rt.tts.ready, voice: rt.tts.voice, voices: rt.tts.voices ?? [], precision: (rt.tts as { precision?: string }).precision },
       turn: { engine: rt.turn?.engine ?? null, ready: !!rt.turn?.ready },
       vad: { engine: rt.vadEngine },
@@ -220,7 +224,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
     const session = new ConversationSession({
       stt: rt.stt,
       vad: rt.createVad(),
-      llm: rt.llm,
+      llm: rt.conversationLlm,
       tts: rt.tts,
       turn: rt.turn ?? undefined,
       send: (msg) => ws.readyState === ws.OPEN && ws.send(JSON.stringify(msg)),

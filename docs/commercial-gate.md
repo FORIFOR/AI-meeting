@@ -318,6 +318,46 @@ questions as requests (「教えてください」) rather than questions, which
 was miscounted until the harness learned it. The 2B model holds these modes; it does not hold them
 as well as the cloud model, and the read-back of a five-item list is where it shows.
 
+## In a meeting, on the gate's own script (measured 2026-09-03)
+
+The real-meeting gate scores whether the character answers; it cannot say whether the answer was worth
+hearing, and its runs are scarce (each needs a person in the Meet to admit the bots). So the meeting
+turn was made measurable offline. The text the character is given in a meeting — the session
+instructions, the per-turn prompt with the room's recent lines, the greeting — moved out of
+`apps/web/src/session/MeetingSessionController.ts` into `@rcai/meeting-core` (`meetingPrompt.ts`),
+and `pnpm reality:conversation` learned `meeting` scenarios: each line is the room addressing the
+character (`ask`) with the lines before it (`context`), rendered through the same functions the
+session uses, so what is measured is what ships. Two scenarios: `meeting-standup.json` (a schedule
+question, a data doubt, a release-date change to summarise, an opinion asked, a memory callback, a
+hand-off) and `meeting-gate.json` — the attendee-auto cue script itself, in text, with the
+recogniser's spelling of the name (「ゆイ」).
+
+| meeting instructions | standup 13 checks | gate script 8 checks | what the replies were |
+|---|---|---|---|
+| as shipped in Run 28 | **11 / 13** | — | 「本日は午前中に進捗確認のミーティングがあり、午後は資料の作成を進める予定です。」 — a schedule the character does not have, in a register the persona does not use |
+| + honesty and substance (one paragraph) | **12 / 13 → 13 / 13** over three runs | 7, 6, 8 / 8 | 「ごめん、今日の予定は手元にないから分からないな。みんなは何の予定が入ってるの？」; 「不具合の修正に一週間かかるから、リリース日を十日から十七日にずらすってことだよね。」 — but 「ゆい、これはどう思う？」 drew 「それ、すごく気になるところだよね。どうしてそう思ったのか教えてくれる？」, a reply with no subject |
+| + 「これ」「それ」 rule, appended to the paragraph | — | 7, 7, 6 / 8 | the demonstrative was resolved (「さっき話に出ていた三ページ目の数字のことかな？」) and the invented schedule **came back** in two runs of three |
+| the same rules, one per line | **13 / 13, 13 / 13** | **8 / 8 ×3** (and 7 / 8 once, on a check since loosened: yielding to the cut-in is a fair answer to 「今どう思う？」) | 「予定は手元にないよ。そっちは今日、何か予定あるの？」; 「三ページ目の数字のこと？私はそのまま進めてもいいと思うけど、どうしたい？」; 「リリース日は十七日に変更になったよ。」 |
+
+Reports: `docs/reports/conversation/friend_ja-2026-09-03T09-26-*.json` (before), `…T09-3*.json` (after).
+The lesson on the way is about the prompt, not the model: rules added to the end of a paragraph cost the
+rules before them. Written as a list with one worked example (「今日の予定は？」→「予定は手元にないよ」)
+the model kept all of them in four runs of four. The example is also why the first reply now reads the
+same each time; a fair price for a character that stops inventing its day.
+
+**The answer is now bounded in time as well.** The same afternoon's agent log, 89 turns against
+gemini-3.5-flash-lite: first token p50 0.83 s, p90 1.3 s — and 8 turns above 3 s, the worst 13.1 and
+17.3 s. Seventeen seconds of silence after a question is, in a meeting, no answer (the gate closes its
+window at 15 s). The slow starts are per request, not per model, so `HedgedLLM`
+(`services/agent/src/adapters/llm.ts`) sends the same request again when the first has produced no
+token after 2.5 s (`LOCAL_LLM_HEDGE_MS`; off on loopback, where llama.cpp would only queue it) and
+speaks whichever stream answers first, aborting the other; a request that fails outright is retried
+the same way. Seven unit tests cover the race (prompt first request untouched, late one overtaken,
+first one still winning after the hedge, failure retried, both failing, fallback adapter, caller
+abort reaching both). Over the 48 turns measured since: p50 0.96 s, three hedges, worst first token
+4.3 s. Whether the second request wins often enough on a bad afternoon is not yet known — in all three
+hedges so far the first request came through before the second had connected.
+
 ## Known unverified — the next things likely to break
 
 Two live runs, two bugs that only a live run could show (a sample rate, and a flag

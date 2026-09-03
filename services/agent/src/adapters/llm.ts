@@ -135,3 +135,98 @@ export function parseSse(body: string): string[] {
     .map((l) => l.slice(5).trim())
     .filter((p) => p && p !== "[DONE]");
 }
+
+/**
+ * The same model, asked twice when it is slow to start.
+ *
+ * Measured over one afternoon of conversation against gemini-3.5-flash-lite: first-token p50 0.8 s,
+ * but 8 turns in 89 took more than 3 s and the worst took 17 s — a person asked a question and heard
+ * nothing for seventeen seconds, which in a meeting is the same as no answer (the real-meeting gate
+ * closes its window at 15 s). The slow starts are per request, not per model: a second request sent
+ * while the first is still silent comes back in the usual time.
+ *
+ * So: after `afterMs` with no first token, the same request goes out again; the first stream to
+ * produce a token is the reply and the other is aborted. A request that fails outright before the
+ * deadline is retried the same way. Nothing changes when the first request is prompt, which is the
+ * common case. The second request goes to `fallback` when one is given, otherwise to `primary`
+ * again — the default, since a different model answers in a different voice.
+ */
+export class HedgedLLM implements LLMAdapter {
+  constructor(
+    private readonly primary: LLMAdapter,
+    private readonly opts: { afterMs: number; fallback?: LLMAdapter; log?: (line: string) => void; now?: () => number } = { afterMs: 2500 },
+  ) {}
+
+  get engine(): string {
+    return this.primary.engine;
+  }
+  get model(): string {
+    return this.primary.model;
+  }
+  get ready(): boolean {
+    return this.primary.ready;
+  }
+
+  async *stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {}): AsyncIterable<string> {
+    const now = this.opts.now ?? Date.now;
+    const t0 = now();
+    const a = new AbortController();
+    const b = new AbortController();
+    const onAbort = () => { a.abort(); b.abort(); };
+    if (opts.signal?.aborted) onAbort();
+    opts.signal?.addEventListener("abort", onAbort, { once: true });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const first = settle(head(this.primary.stream(messages, { ...opts, signal: a.signal })));
+      const deadline = new Promise<"timeout">((resolve) => { timer = setTimeout(() => resolve("timeout"), this.opts.afterMs); });
+      let outcome = await Promise.race([first, deadline]);
+      let source: Head | null;
+      if (outcome !== "timeout" && outcome.ok) {
+        source = outcome.value;
+      } else {
+        this.opts.log?.(outcome === "timeout" ? `llm hedge: no first token after ${now() - t0}ms, asking again` : `llm hedge: first request failed (${outcome.error.message}), asking again`);
+        const second = settle(head((this.opts.fallback ?? this.primary).stream(messages, { ...opts, signal: b.signal })));
+        // Whichever answers first. The first request stays in the race: it may still come through
+        // before the second one has connected.
+        const tagged = { first: first.then((r) => ({ who: "first" as const, r })), second: second.then((r) => ({ who: "second" as const, r })) };
+        let winner = outcome === "timeout" ? await Promise.race([tagged.first, tagged.second]) : await tagged.second;
+        if (!winner.r.ok && outcome === "timeout") winner = await (winner.who === "first" ? tagged.second : tagged.first); // one failed; wait for the other
+        if (!winner.r.ok) throw winner.r.error;
+        source = winner.r.value;
+        (winner.who === "first" ? b : a).abort();
+        this.opts.log?.(`llm hedge: ${winner.who} request answered after ${now() - t0}ms`);
+      }
+      if (!source) return; // an empty reply, not a slow one
+      yield source.first;
+      for (;;) {
+        const r = await source.rest.next();
+        if (r.done) return;
+        yield r.value;
+      }
+    } finally {
+      if (timer) clearTimeout(timer);
+      opts.signal?.removeEventListener("abort", onAbort);
+      // Aborting the loser is enough for fetch; the other stream's pending promise settles as an
+      // error that nobody is waiting for, which `settle` has already made harmless.
+    }
+  }
+
+  complete(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean; signal?: AbortSignal } = {}): Promise<string> {
+    return this.primary.complete(messages, opts);
+  }
+}
+
+type Head = { first: string; rest: AsyncIterator<string> };
+type Settled<T> = { ok: true; value: T } | { ok: false; error: Error };
+
+/** The first delta of a stream and the iterator positioned after it; null when the stream is empty. */
+async function head(it: AsyncIterable<string>): Promise<Head | null> {
+  const rest = it[Symbol.asyncIterator]();
+  const r = await rest.next();
+  return r.done ? null : { first: r.value, rest };
+}
+
+/** A promise that never rejects — a losing request's abort must not surface as an unhandled rejection. */
+function settle<T>(p: Promise<T>): Promise<Settled<T>> {
+  return p.then((value) => ({ ok: true as const, value }), (error) => ({ ok: false as const, error: error instanceof Error ? error : new Error(String(error)) }));
+}

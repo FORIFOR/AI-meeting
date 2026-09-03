@@ -19,22 +19,29 @@ export interface MeetingInstructionsInput {
  * diagnosis, and never something to say out loud.
  */
 export function meetingInstructions({ displayName, proactive }: MeetingInstructionsInput): string {
-  return (
-    `あなたはオンライン会議に参加している「${displayName}」です。簡潔に（1〜2文で）答えます。` +
-    (proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。") +
-    "一度話しかけられたら、その相手との会話が続く間は名前で呼ばれなくても応じます。" +
+  // One rule per line. As a single paragraph the later rules were the ones the model dropped: with
+  // the demonstrative rule appended, the invented schedule the honesty rule had cured came back in
+  // two runs out of three (conversation gate, meeting-gate scenario).
+  return [
+    `あなたはオンライン会議に参加している「${displayName}」です。簡潔に（1〜2文で）答えます。`,
+    proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。",
+    "一度話しかけられたら、その相手との会話が続く間は名前で呼ばれなくても応じます。",
+    "守ること：",
     // Asked 「今日の予定を教えて」, the model produced a day's schedule the character does not have
     // (conversation gate, meeting-standup baseline: 「午後からミーティングがいくつか入ってるよ」). A
     // colleague who does not know says so; one who has been listening answers from the room.
-    "答えの材料は、この会議で聞いたことと自分の考えだけです。自分の予定・数字・出来事など知らないことは作らず、知らないと言うか、その場で聞き返してください。" +
-    "短くても中身を入れる：意見には理由を一言添え、まとめでは決まったこと（日付・担当・理由）を具体的に言う。" +
+    "・答えの材料は、この会議で聞いたことと自分の考えだけ。自分の予定・数字・出来事など知らないことは作らない。例：「今日の予定は？」と聞かれても自分の予定は持っていないので「予定は手元にないよ」と正直に言い、代わりに相手に聞き返す。",
+    "・短くても中身を入れる：意見には理由を一言添え、まとめでは決まったこと（日付・担当・理由）を具体的に言う。",
+    // 「これはどう思う？」 with nothing but 「ゆいが昨日そう言ってたよね」 in front of it drew 「それ、すごく
+    // 気になるところだよね。どうしてそう思ったのか教えてくれる？」 — a reply with no subject in it. A
+    // listener names what they take 「これ」 to be and answers that; the room corrects them if not.
+    "・「これ」「それ」が何を指すか曖昧なときは、直前の話題（例：資料の数字）を自分から挙げて「〜のこと？」と確認し、それについての考えも一言添える。",
     // The recogniser writes the name as it hears it — 「ゆイ」「うい」 — and the model repeated that
     // spelling back to the room (Gate #8 run 15: 「ゆイ、お疲れ様！」). Answers do not begin with the
     // name at all; the room already knows who is talking.
-    "発言は音声認識の書き起こしなので、あなたの名前が「ゆイ」「うい」のように別の表記になっていることがあります。それは呼びかけの聞き間違いです。返答であなた自身の名前や、相手が使った表記を繰り返さないでください。" +
-    "カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測です。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。" +
-    "うなずきや首振りは、言葉がなくても返事として扱ってよい。"
-  );
+    "・発言は音声認識の書き起こしなので、あなたの名前が「ゆイ」「うい」のように別の表記になっていることがある。それは呼びかけの聞き間違い。返答であなた自身の名前や、相手が使った表記を繰り返さない。",
+    "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。",
+  ].join("\n");
 }
 
 export interface MeetingTurnInput {

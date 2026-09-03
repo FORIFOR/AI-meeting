@@ -76,6 +76,12 @@ describe("strict_local guard", () => {
     const cfg = loadConfig({ LOCAL_LLM_URL: "http://10.0.0.5:8080/v1", WHISPER_SERVER_URL: "http://127.0.0.1:8178", SBV2_URL: "http://127.0.0.1:5000" } as NodeJS.ProcessEnv);
     expect(nonLoopbackEndpoints(cfg)).toEqual(["http://10.0.0.5:8080/v1"]);
   });
+
+  it("hedges a remote model's slow starts by default, never a local llama.cpp", () => {
+    expect(loadConfig({ LOCAL_LLM_URL: "https://generativelanguage.googleapis.com/v1beta/openai" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(2500);
+    expect(loadConfig({ LOCAL_LLM_URL: "http://127.0.0.1:8080/v1" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(0);
+    expect(loadConfig({ LOCAL_LLM_URL: "https://generativelanguage.googleapis.com/v1beta/openai", LOCAL_LLM_HEDGE_MS: "0" } as NodeJS.ProcessEnv).llmHedgeMs).toBe(0);
+  });
 });
 
 describe("adapters with mocked fetch", () => {

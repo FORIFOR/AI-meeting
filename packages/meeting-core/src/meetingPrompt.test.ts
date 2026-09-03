@@ -7,7 +7,8 @@ describe("meeting prompt text", () => {
     expect(text).toContain("「Yui」");
     expect(text).toContain("名前で呼ばれたときだけ答え");
     expect(text).not.toContain("会話に自然に参加");
-    expect(text).toContain("知らないことは作らず");
+    expect(text).toContain("知らないことは作らない");
+    expect(text).toContain("「〜のこと？」と確認し");
     expect(text).toContain("意見には理由を一言添え");
     expect(meetingInstructions({ displayName: "Yui", proactive: true })).toContain("会話に自然に参加");
   });
