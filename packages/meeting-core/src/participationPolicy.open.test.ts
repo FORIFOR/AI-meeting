@@ -100,6 +100,21 @@ describe("greeting on arrival", () => {
     expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
   });
 
+  it("a greeting that finds no pause within 30 s is dropped, not delivered into the next question (run 45: 70 s late)", () => {
+    const p = quiet();
+    p.onSpeechActivity(true, 500);
+    expect(p.onJoined(1000)).toBe(false);
+    for (let t = 2000; t <= 32_000; t += 1000) {
+      p.onSpeechActivity(true, t); // the room keeps talking
+      p.tick(t + 100);
+    }
+    p.onSpeechActivity(false, 33_000);
+    p.tick(36_000); // past silenceGapMs → OBSERVING
+    p.tick(36_250);
+    expect(p.state).toBe("OBSERVING");
+    expect(p.addressedBy).toBeNull();
+  });
+
   it("an unsanctioned turn being cut off does not forget the pending greeting", () => {
     const p = quiet();
     p.onSpeechActivity(true, 500);

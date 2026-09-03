@@ -53,7 +53,9 @@ services:
       ENABLE_CHROME_SANDBOX_FOR_WEBPAGE_STREAMER: "false"
       # Chromium 151 (arm64 image) refuses a WebGL context under --disable-gpu unless SwiftShader is opted into;
       # without it the character's tile shows the page's BLOCKED_BY_NO_WEBGL notice instead of the avatar (run 44).
-      RCAI_EXTRA_CHROME_ARGS: "--enable-unsafe-swiftshader"
+      # Its Local Network Access check also puts a Block/Allow prompt over the page — and so over the
+      # character's face (run 45) — when the streamer payload posts its WebRTC offer to localhost:8000.
+      RCAI_EXTRA_CHROME_ARGS: "--enable-unsafe-swiftshader --disable-features=LocalNetworkAccessChecks"
 
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z

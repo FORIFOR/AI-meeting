@@ -88,6 +88,14 @@ export interface ParticipationPolicyOptions {
    * re-opens it. A completed answer resets the count. Default 3; 0 disables.
    */
   maxInterruptedInARow?: number;
+  /**
+   * How long a greeting waits for the room to go quiet before it is dropped (ms).
+   *
+   * Let in while the room was talking, the character held its hello for 70 s and then delivered it
+   * into the middle of a question addressed to it (Gate #8 run 45). Someone who joins a busy meeting
+   * says hello in the first pause or not at all. Default 30 s; 0 never drops it.
+   */
+  greetingTtlMs?: number;
 }
 
 export interface TranscriptSegment {
@@ -133,6 +141,8 @@ export class ParticipationPolicy {
   private greeting = false;
   /** Arrived while someone was speaking: the greeting waits for the next silence (`tick`). */
   private greetingPending = false;
+  /** When the pending greeting stops being worth saying (see `greetingTtlMs`). */
+  private greetingExpiresAt = Infinity;
   private readonly detector: AddressDetector;
   private readonly opts: Required<Omit<ParticipationPolicyOptions, "detector" | "selfNames" | "soundalikes">> & { selfNames: string[] };
   private lastSpeechAt = -1e9;
@@ -163,6 +173,7 @@ export class ParticipationPolicy {
       selfNames: options.selfNames ?? options.names,
       engagementTtlMs: options.engagementTtlMs ?? 90_000,
       maxInterruptedInARow: options.maxInterruptedInARow ?? 3,
+      greetingTtlMs: options.greetingTtlMs ?? 30_000,
     };
     this.detector = options.detector ?? new AddressDetector({ names: options.names, soundalikes: options.soundalikes });
   }
@@ -355,6 +366,7 @@ export class ParticipationPolicy {
     if (this._state === "LISTENING") {
       // Someone is talking (or the admit click is still ringing): greet when the room goes quiet.
       this.greetingPending = true;
+      this.greetingExpiresAt = this.opts.greetingTtlMs > 0 ? now + this.opts.greetingTtlMs : Infinity;
       return false;
     }
     this.greet(now);
@@ -378,6 +390,10 @@ export class ParticipationPolicy {
   tick(now: number): void {
     this.lastTickAt = Math.max(this.lastTickAt, now);
     this.expireEngagement(now);
+    if (this.greetingPending && now >= this.greetingExpiresAt) {
+      // The pause never came; the moment for a hello has passed.
+      this.greetingPending = false;
+    }
     if (this.greetingPending && this._state === "OBSERVING" && this.yieldingUntil <= now) {
       this.greet(now);
       return;
