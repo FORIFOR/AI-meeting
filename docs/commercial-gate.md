@@ -96,6 +96,35 @@ in the room is what the in-run check is for.
 credits`. The preflight answered in 2.7 s; no bot was created. The row above stays owed a person: a real
 microphone, unscripted, ten minutes.
 
+**Runs 17–28: self-hosted Attendee, and what the host could give it** (2026-09-03). With the hosted
+credit gone the gate moved to Attendee's own open-source stack on this Mac (`scripts/reality/attendee-selfhost/`,
+Docker Desktop, the amd64 image under Rosetta — the four services, Postgres, Redis, MinIO for the recordings;
+three local patches in the clone: Chrome log path, no debug screen recording, a seccomp profile Docker's runc
+cannot load). Two bots in one Meet room is one Chrome per bot in the worker plus the webpage-streamer's software
+GL and VP8 encode, all emulated.
+
+| run | outcome | what it said |
+|---|---|---|
+| 17, 18 | not run — `FAIL: both bots were not admitted in time` | nobody in the Meet to admit them; Meet drops a knock after ~10 min (`request_to_join_denied` at 600 s), so a run has to start while a person is already in the room |
+| 19 | greet, chat, third, silence PASS; **ask1, bargein, ask2 FAIL** (`heard=0.0s`, nothing audible) | the Tester relayed 2,247 chunks and then nothing — the two bots starved each other; the first run with both in the room |
+| 20 | 4/7; `answers as sound` **DEGRADED** | the question reached Yui in fragments (turn=none); VM load 13.8 on 10 CPUs; the debug screen recording (a second x264 encoder per bot) switched off from here |
+| 21 | 5/7 — ask2 PASS (vocative sound-alike, 4.1 s heard, gap 3.8 s) | the Tester's page hit 33 fps; ask1 still fragmented |
+| 22 | **5/7** — ask1 PASS (10 s heard, gap 4.5 s), bargein PASS, ask2 PASS but `×3.14 stretched (underruns)`; third FAIL (turn=1, answered a third-person mention) | VM load **21.6**, streamer 360–510 % CPU at 1280×720 → frame size cut to 640×360 |
+| 23 | 4/7, DEGRADED — `f99=1063–1688 Hz muffled` | worker 260–460 % CPU, 5.6 GiB; load 23.8 |
+| 24 | 4/7 + ask2 PARTIAL (reply drafted 「へえ、昨日そんな話してたんだっけ？…」, nothing audible); **tester heard the room: FAIL, 0 chunks** | the Tester's relay never carried audio; load 20.4 |
+| 25 | 4/7, DEGRADED (ask1 gap 2.4 s, f99 1.9 kHz) | Yui's join took 138 s; load 18.3 |
+| 26 | greet PASS then `output_audio failed 500 … connection to server at "postgres"` | Docker's disk filled: `write … meta.db: read-only file system`; Postgres gone mid-run. 2.2 GB free → 14 GB after the clean-up (old images, build caches, Chrome profiles); Docker needs ~12 GB for this stack |
+| 27, 28 | not run — not admitted within 600 s | nobody in the Meet; the stack itself was healthy (load 0.03 before launch) |
+
+What the runs settled: the character answers when the question arrives whole (22), and the failures are
+the host, not the conversation — under emulation the worker's two Chromes and the streamer take the CPU the
+Tester needs to deliver the question in one piece, and what Yui does say comes back stretched or muffled.
+So the run that follows (29) starts with the CPU relief already in place (`YUI_PAGE_FPS=15`, 360p streamer,
+no debug recording, Tester at 720p, mp3 recording), a hedged LLM (below), and the colleague persona; the
+markers are `DEGRADED_BY_HOST_CPU` for a run whose cues fail with the question fragmented, and
+`BLOCKED_BY_NO_ADMITTER` for one nobody admitted. If 29 is still degraded the next lever is a native arm64
+Attendee image, not another prompt.
+
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
 The rule is not "delete the polling API". It is: **webhooks are the only thing that moves product state,
