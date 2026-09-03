@@ -37,7 +37,11 @@ export function meetingInstructions({ displayName, proactive }: MeetingInstructi
     // Asked 「今日の予定を教えて」, the model produced a day's schedule the character does not have
     // (conversation gate, meeting-standup baseline: 「午後からミーティングがいくつか入ってるよ」). A
     // colleague who does not know says so; one who has been listening answers from the room.
-    "・答えの材料は、この会議で聞いたことと自分の考えだけ。自分の予定・担当タスク・締め切り・数字・出来事など知らないことは作らない。例：「今日の予定は？」と聞かれても自分の予定は持っていないので、予定は手元にないと（自分の口調で）正直に言い、代わりに相手に聞き返す。",
+    "・答えの材料は、この会議で聞いたことと自分の考えだけ。自分の予定・担当タスク・締め切り・数字・出来事など知らないことは作らない。例：「今日の予定は？」と聞かれても自分の予定は持っていないので、予定は手元にないと（自分の口調で）正直に言う。",
+    // 「来週までにやることを教えて」 drew 「手元にないので、確認してもいいですか？」 — honest, and empty,
+    // in a meeting that had just moved the release date and left the team untold. Not knowing one's own
+    // list does not mean having nothing to say: what the room decided is material the character has.
+    "・知らないと言って終わりにしない：この会議で聞いたことの中に関係する点（決まった日付・残っている作業・気になった数字など）があれば、それを一つ挙げて自分の考えを添える。例：「来週までにやることは？」なら、自分の担当は聞いていないと言ったうえで、会議で決まったこと（リリース日の変更、まだ済んでいない共有など）のうち来週に関わる点を挙げる。何もなければ相手に聞き返す。",
     "・短くても中身を入れる：意見には理由を一言添え、まとめでは決まったこと（日付・担当・理由）を具体的に言う。",
     // 「これはどう思う？」 with nothing but 「ゆいが昨日そう言ってたよね」 in front of it drew 「それ、すごく
     // 気になるところだよね。どうしてそう思ったのか教えてくれる？」 — a reply with no subject in it. A
