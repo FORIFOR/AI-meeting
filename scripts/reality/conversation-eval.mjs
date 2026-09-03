@@ -16,7 +16,8 @@
  * A scenario with `meeting: { displayName, proactive }` is played the way the meeting session plays it: the
  * persona gets the meeting instructions, and each line is the room addressing the character — `context`
  * (the room's recent lines, "Speaker: text") and `ask` ("Speaker: text"), rendered by @rcai/meeting-core's
- * meetingTurnPrompt — so what is measured is the prompt that ships. `text` still works for a plain line.
+ * meetingTurnPrompt — so what is measured is the prompt that ships. `text` still works for a plain line, and
+ * `{ "greeting": true }` is the arrival turn (meetingGreetingPrompt — the first thing a real room hears).
  *
  * A scenario line may carry `expect`: { any: [...keywords] } · { all: [...keywords, "either|wording"] } · { none: [...forbidden] } · { minChars }
  * · { noQuestion: true } · { maxQuestions: n } · { lang: "en" | "ja" } (≥80 % of the letters in that script).
@@ -29,7 +30,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { buildSystemPrompt } from "../../packages/persona-core/src/index.js";
-import { meetingInstructions, meetingTurnPrompt } from "../../packages/meeting-core/src/meetingPrompt.js";
+import { meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt } from "../../packages/meeting-core/src/meetingPrompt.js";
 import { personas } from "../../personas/src/catalog.js";
 
 const WebSocket = createRequire(new URL("../../services/agent/package.json", import.meta.url))("ws");
@@ -54,6 +55,7 @@ const meeting = scenario.meeting ? { displayName: scenario.meeting.displayName ?
 const systemPrompt = buildSystemPrompt({ persona, character: { manifest }, params: PARAMS, extra: meeting ? meetingInstructions(meeting) : undefined });
 /** The text a scenario line sends: verbatim, or — in a meeting — the room's lines and the one that addressed the character. */
 const lineText = (line) => {
+  if (meeting && line.greeting) return meetingGreetingPrompt(meeting.displayName);
   if (!meeting || !line.ask) return line.text;
   const [speakerName, ...rest] = line.ask.split(": ");
   return meetingTurnPrompt({ context: line.context ?? [], asked: { speakerName, text: rest.join(": ") } });
@@ -120,7 +122,7 @@ for (const line of scenario.turns) {
   current = t;
   audioSamples = 0;
   turns.push(t);
-  console.log(`  You: ${line.ask ?? line.text}`);
+  console.log(`  You: ${line.greeting ? "（入室）" : line.ask ?? line.text}`);
   const done = new Promise((res) => { resolveDone = res; });
   sock.send(JSON.stringify({ type: "text", text }));
   await Promise.race([done, sleep(REPLY_TIMEOUT_MS)]);

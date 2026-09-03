@@ -394,6 +394,10 @@ One more, after the register was left to the persona: the colleague opened in �
 endings, never switch to 「〜んだ」「〜だよ」): 「すみません、今日の予定は手元にないですね。Testerさんは今日、
 何か予定が入っていますか？」, and the same register through the summary and the hand-off. Gate script
 8 / 8 ×2, standup 13 / 13 (`…T09-59-*.json`, `…T10-00-18.json`).
+The arrival greeting — the first thing a real room hears — is measured on the same script now
+(`{ "greeting": true }` renders `meetingGreetingPrompt`): 「こんにちは、Yuiです。Yuiと声をかけてもらえればお返事
+しますので、よろしくお願いします。」 — name, how to get its attention, no question, no speech. Gate script
+12 / 12 ×2.
 
 **The answer is now bounded in time as well.** The same afternoon's agent log, 89 turns against
 gemini-3.5-flash-lite: first token p50 0.83 s, p90 1.3 s — and 8 turns above 3 s, the worst 13.1 and
