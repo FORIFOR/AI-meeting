@@ -550,6 +550,17 @@ first sound 1.7 s after the text turn (first phrase 271 ms, its synthesis 1405 m
 still finishing the reply on the same machine), the barge-in cut generation 3 and the follow-up
 was answered (「はい、大丈夫ですよ。」).
 
+The conversation gate, which had only ever scored the hosted model, was then run on this one:
+meeting-standup **16 / 16** (the release-date callback 「十七日に変更になる見込みです」, the summary
+with date, cause and owner, the hand-off to 田中さん), meeting-gate 14 / 15 — the miss was
+「ゆい、これはどう思う？」 answered as 「その件については…」, the rule about an ambiguous 「これ」
+being one the 2B model drops from the system prompt. Restated on the turn that carries a bare
+demonstrative and only then (`bca64b1`), it grounded or asked which 6 / 6 in a direct probe and
+named the topic before answering when the referent was clear; through the agent, 1 of 2 runs
+(the other asked 「昨日私が言っていたことについてでしょうか？」, a which-question the checker now
+counts). Replies run 40–70 characters and 4–14 s of speech on this engine — the summary turn is
+three sentences where the persona asks for two.
+
 None of this is a meeting: the recogniser heard a wav, not a room, and nobody was there to be
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
