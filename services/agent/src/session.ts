@@ -296,6 +296,22 @@ export class ConversationSession {
     this.deps.send({ type: "ready", stt: this.deps.stt.engine, llm: `${this.deps.llm.engine}:${this.deps.llm.model}`, tts: this.deps.tts.engine, protocolVersion: PROTOCOL_VERSION });
     const opening = (config.providerOptions as { opening?: string } | undefined)?.opening;
     if (opening) void this.speakOnly(opening);
+    this.warmPrompt();
+  }
+
+  /**
+   * The first turn of a session pays for the whole system prompt; on the local model that was 5 s
+   * before the first word of a greeting (sim 24), against 250 ms for every turn after. Asking the
+   * model to read the prompt now, while nobody is waiting, makes the first turn cost what the rest
+   * do. Best effort: a model with no cache ignores it, a failure is only logged.
+   */
+  private warmPrompt(): void {
+    if (!this.deps.llm.warm) return;
+    const t = this.clock();
+    this.deps.llm
+      .warm(this.memory.compose(this.systemPrompt, this.history))
+      .then(() => this.deps.log?.(`llm warm ${this.clock() - t}ms`))
+      .catch((err: Error) => this.deps.log?.(`llm warm failed: ${err.message}`));
   }
 
   /** Client audio: Int16 LE PCM @ 16 kHz. */
@@ -697,11 +713,13 @@ export class ConversationSession {
   }
 
   updateContext(ctx: ConversationContext): void {
+    const changed = ctx.systemPrompt !== this.systemPrompt;
     this.systemPrompt = ctx.systemPrompt;
     if (ctx.history) {
       this.history = ctx.history.map((h) => ({ role: h.role, content: h.text }));
       this.memory.reset();
     }
+    if (changed && this.started) this.warmPrompt();
   }
 
   stop(): void {

@@ -11,6 +11,11 @@ export interface LLMAdapter {
   stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal }): AsyncIterable<string>;
   /** Non-streaming completion (JSON tasks). */
   complete(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean; signal?: AbortSignal }): Promise<string>;
+  /**
+   * Put this prompt's prefix into the model's cache before anyone needs it, where the model has one
+   * and the call is free. Resolves when the prefix is in; a model without a cache does nothing.
+   */
+  warm?(messages: ChatMessage[]): Promise<void>;
 }
 
 /**
@@ -123,6 +128,24 @@ export class OpenAICompatibleLLM implements LLMAdapter {
     if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     return json.choices?.[0]?.message?.content ?? "";
+  }
+
+  /**
+   * llama.cpp's prompt cache is a prefix cache, and a session's first turn is the one that fills it:
+   * measured, a 988-token system prompt costs 3.4 s of prompt evaluation cold and 110 ms warm, and
+   * the greeting a character gives on being let into a meeting paid 5.1 s of it (sim 24). One
+   * one-token request at session start moves that cost to a moment nobody is waiting. Only the local
+   * server: a remote endpoint has no such cache and would be billed for the question.
+   */
+  async warm(messages: ChatMessage[]): Promise<void> {
+    if (!this.isLocalServer) return;
+    const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+      method: "POST",
+      headers: this.headers(),
+      body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: 1, cache_prompt: true }),
+    });
+    if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
+    await res.arrayBuffer();
   }
 }
 
@@ -252,6 +275,10 @@ export class HedgedLLM implements LLMAdapter {
       // Aborting the losers is enough for fetch; their pending promises settle as errors that nobody
       // is waiting for, which `settle` has already made harmless.
     }
+  }
+
+  warm(messages: ChatMessage[]): Promise<void> {
+    return this.primary.warm?.(messages) ?? Promise.resolve();
   }
 
   complete(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean; signal?: AbortSignal } = {}): Promise<string> {

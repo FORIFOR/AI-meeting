@@ -98,6 +98,19 @@ describe("adapters with mocked fetch", () => {
     expect(parts.join("")).toBe("うん、そうだね。");
     expect(parseSse(body).length).toBe(2);
   });
+  it("warms llama.cpp's prompt cache with a one-token request, and never asks a remote endpoint to", async () => {
+    const asked: { url: string; body: Record<string, unknown> }[] = [];
+    const f = (async (url: string, init?: RequestInit) => {
+      asked.push({ url, body: JSON.parse(init!.body as string) });
+      return new Response(JSON.stringify({ choices: [{ message: { content: "." } }] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const messages = [{ role: "system" as const, content: "あなたはYuiです。" }];
+    await new OpenAICompatibleLLM("http://127.0.0.1:8080/v1", "m", f).warm(messages);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]!.body).toMatchObject({ messages, max_tokens: 1, cache_prompt: true, stream: false });
+    await new OpenAICompatibleLLM("https://generativelanguage.googleapis.com/v1beta/openai", "gemini", f, "k").warm(messages);
+    expect(asked).toHaveLength(1); // the cloud has no prefix cache and a billed request is not a warm-up
+  });
   it("Style-Bert-VITS2 adapter hits /voice and parses wav; unreachable server → not ready", async () => {
     const wav = encodeWav(new Int16Array([1, 2, 3]), 44100);
     const f = (async (url: string) => {
@@ -672,6 +685,24 @@ describe("covering a long think", () => {
     await new Promise((r) => setTimeout(r, 150));
     // The model answered immediately, so the only thing spoken is the answer.
     expect(tts.calls.filter((c) => c === "わかりました。").length).toBeGreaterThan(0);
+  });
+});
+
+describe("the first turn costs what the rest do", () => {
+  it("reads the system prompt into the model at session start, before anyone has spoken", async () => {
+    const warmed: ChatMessage[][] = [];
+    class WarmingLLM extends FakeLLM {
+      async warm(m: ChatMessage[]) { warmed.push(m); }
+    }
+    const { s } = makeSession(new WarmingLLM());
+    s.start({ systemPrompt: "あなたはYuiです。", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await waitFor(() => warmed.length === 1, 1000);
+    expect(warmed[0]![0]).toEqual({ role: "system", content: "あなたはYuiです。" });
+    // The same prompt again is already in; a new one is read again.
+    s.updateContext({ systemPrompt: "あなたはYuiです。", mode: "free_talk", language: "ja-JP" });
+    s.updateContext({ systemPrompt: "あなたは会議のYuiです。", mode: "free_talk", language: "ja-JP" });
+    await waitFor(() => warmed.length === 2, 1000);
+    expect(warmed[1]![0]!.content).toBe("あなたは会議のYuiです。");
   });
 });
 

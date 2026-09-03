@@ -95,6 +95,9 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
       character: "yui", name: env.RECALL_BOT_NAME ?? "Yui", language: "ja-JP",
       proactivity: process.env.PROACTIVITY ?? "open",
       vision: process.env.VISION ?? "cues",
+      // The live harness has the vendor capture the page's speaker; measuring the socket path here
+      // would pass a page the meeting never hears. OUTBOUND=socket to exercise the other one.
+      outbound: process.env.OUTBOUND ?? "page",
     },
   }),
 })).json();
@@ -282,7 +285,8 @@ row("page ran without errors", seen.pageErrors.length === 0, seen.pageErrors[0] 
  * websocket path is checked too, because a page that sent audio *both* ways would be heard twice.
  */
 row("character spoke (page audio out)", (inPage.audio?.buffers ?? 0) > 0, `${inPage.audio?.buffers ?? 0} buffers · ${(inPage.audio?.seconds ?? 0).toFixed(1)}s · first at ${inPage.audio?.firstAt ? ((inPage.audio.firstAt - t0) / 1000).toFixed(1) + "s" : "—"}`);
-row("and did not also push it back down the socket", seen.botOutputChunks === 0, `${seen.botOutputChunks} bot_output chunks (0 is correct on this path)`);
+const viaSocket = (process.env.OUTBOUND ?? "page") === "socket";
+row(viaSocket ? "and pushed it down the socket" : "and did not also push it back down the socket", viaSocket ? seen.botOutputChunks > 0 : seen.botOutputChunks === 0, `${seen.botOutputChunks} bot_output chunks (${viaSocket ? ">0" : "0"} is correct on this path)`);
 const stats = await (await fetch(`${broker}/api/meeting/recall/relay-status/${created.botId}`)).json().catch(() => ({}));
 row("relay carried the streams", (stats.received ?? 0) > 0 && (stats.malformed ?? 1) === 0, JSON.stringify(stats));
 const last = seen.beats[seen.beats.length - 1] ?? {};
