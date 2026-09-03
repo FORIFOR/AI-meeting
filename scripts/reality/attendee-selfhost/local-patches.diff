@@ -1,3 +1,52 @@
+diff --git a/bots/google_meet_bot_adapter/google_meet_chromedriver_payload.js b/bots/google_meet_bot_adapter/google_meet_chromedriver_payload.js
+index fbecea7..0c79b3b 100644
+--- a/bots/google_meet_bot_adapter/google_meet_chromedriver_payload.js
++++ b/bots/google_meet_bot_adapter/google_meet_chromedriver_payload.js
+@@ -1157,6 +1157,26 @@ class WebSocketClient {
+   constructor() {
+       const url = `ws://localhost:${window.initialData.websocketPort}`;
+       console.log('WebSocketClient url', url);
++      // rcai: Chromium 151 (Debian arm64) drops the meet.google.com navigation entirely — driver.get
++      // returns with `data:,` — when a WebSocket is opened while this document-start script runs. One
++      // macrotask later the socket connects and the page loads. A stub keeps `readyState` readable
++      // (every send checks it) until the real socket exists.
++      this.ws = { readyState: WebSocket.CONNECTING, send: () => {} };
++      setTimeout(() => this.connect(url), 0);
++
++      this.mediaSendingEnabled = false;
++      
++      /*
++      We no longer need this because we're not using MediaStreamTrackProcessor's
++      this.lastVideoFrameTime = performance.now();
++      this.fillerFrameInterval = null;
++
++      this.lastVideoFrame = this.getBlackFrame();
++      this.blackVideoFrame = this.getBlackFrame();
++      */
++  }
++
++  connect(url) {
+       this.ws = new WebSocket(url);
+       this.ws.binaryType = 'arraybuffer';
+       
+@@ -1175,17 +1195,6 @@ class WebSocketClient {
+       this.ws.onclose = () => {
+           console.log('WebSocket Disconnected');
+       };
+-
+-      this.mediaSendingEnabled = false;
+-      
+-      /*
+-      We no longer need this because we're not using MediaStreamTrackProcessor's
+-      this.lastVideoFrameTime = performance.now();
+-      this.fillerFrameInterval = null;
+-
+-      this.lastVideoFrame = this.getBlackFrame();
+-      this.blackVideoFrame = this.getBlackFrame();
+-      */
+   }
+ 
+   /*
 diff --git a/bots/models.py b/bots/models.py
 index 0072c48..d9f375a 100644
 --- a/bots/models.py
@@ -79,7 +128,7 @@ index 0dc8db7..61c4512 100644
  
      getAudioContextDestination() {
 diff --git a/bots/web_bot_adapter/web_bot_adapter.py b/bots/web_bot_adapter/web_bot_adapter.py
-index 0461f77..af04dc2 100644
+index 0461f77..f6d0373 100644
 --- a/bots/web_bot_adapter/web_bot_adapter.py
 +++ b/bots/web_bot_adapter/web_bot_adapter.py
 @@ -635,6 +635,10 @@ class WebBotAdapter(BotAdapter):
@@ -93,3 +142,18 @@ index 0461f77..af04dc2 100644
          self.add_subclass_specific_chrome_options(options)
  
          if self.driver:
+@@ -818,6 +822,14 @@ class WebBotAdapter(BotAdapter):
+ 
+                 logger.info(f"Failed to join meeting and the {e.__class__.__name__} exception is retryable so retrying")
+ 
++                # local diagnostics hook (not upstream): keep a screenshot of the page each time the join UI was not found
++                if os.getenv("RCAI_DEBUG_JOIN_SCREENSHOTS", "false") == "true":
++                    try:
++                        self.driver.save_screenshot(f"/tmp/rcai-join-retry-{self.display_name}-{num_retries}.png")
++                        logger.info(f"rcai join-retry page: url={self.driver.current_url} title={self.driver.title!r} body={self.driver.execute_script('return document.body ? document.body.innerText.slice(0, 300) : null')!r} readyState={self.driver.execute_script('return document.readyState')}")
++                    except Exception as screenshot_error:
++                        logger.warning(f"Could not save join-retry screenshot: {screenshot_error}")
++
+                 num_retries += 1
+             except Exception as e:
+                 if num_retries >= max_retries:

@@ -6,28 +6,35 @@
 #     host, and the gate script downloads the Tester's recording from outside the containers.
 #   - the bucket, created once by a throwaway mc container.
 #   - one image for all four Attendee services. Upstream gives each service its own `build:`, which
-#     would export the 6 GB image three more times; they are the same Dockerfile.
+#     would export the 6 GB image three more times; they are the same Dockerfile. RCAI_ATTENDEE_IMAGE
+#     switches all four to another tag, e.g. the native arm64 build (attendee-selfhost.sh build-arm64).
 #   (the webpage-streamer profile — what plays the character's page into the call — is switched on by the script.)
 services:
   attendee-app-local:
-    image: attendee-attendee-app-local
+    image: ${RCAI_ATTENDEE_IMAGE:-attendee-attendee-app-local}
   attendee-worker-local:
-    image: attendee-attendee-app-local
+    image: ${RCAI_ATTENDEE_IMAGE:-attendee-attendee-app-local}
     build: !reset null
     environment:
       # Chrome's own log, so a "tab crashed" from chromedriver comes with the renderer's exit reason.
       # Read by a 4-line local patch in the Attendee clone (web_bot_adapter.py, RCAI_EXTRA_CHROME_ARGS);
       # upstream has no such hook. Both bots of a run append to the same file inside the worker.
-      RCAI_EXTRA_CHROME_ARGS: "--enable-logging --v=1 --log-file=/tmp/chrome-debug.log"
+      # `--disable-features=LocalNetworkAccessChecks`: Chromium 138+ gates ws://localhost from a public
+      # origin behind a Local Network Access prompt (net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS), and the
+      # bot page's media socket is exactly that. Unknown to Chrome 134 (amd64 image), where it is a no-op.
+      RCAI_EXTRA_CHROME_ARGS: "--enable-logging --v=1 --log-file=/tmp/chrome-debug.log --disable-features=LocalNetworkAccessChecks"
       # Upstream records a second, debug-only screen capture of every Meet bot (models.py, create_debug_recording).
       # Two x264 encoders per bot under emulation starved the Tester's audio thread (Run 20: VM load 13.8 on 10 CPUs,
       # the question reached Yui in fragments). Read by a 3-line local patch in the clone.
       RCAI_DISABLE_DEBUG_RECORDING: "true"
+      # A screenshot per join retry in /tmp of the worker (local patch, web_bot_adapter.py) — what the bot
+      # saw when the join UI was not where it looked (arm64 Chromium bring-up).
+      RCAI_DEBUG_JOIN_SCREENSHOTS: "${RCAI_DEBUG_JOIN_SCREENSHOTS:-false}"
   attendee-scheduler-local:
-    image: attendee-attendee-app-local
+    image: ${RCAI_ATTENDEE_IMAGE:-attendee-attendee-app-local}
     build: !reset null
   attendee-webpage-streamer-local:
-    image: attendee-attendee-app-local
+    image: ${RCAI_ATTENDEE_IMAGE:-attendee-attendee-app-local}
     build: !reset null
     # Upstream's Chrome seccomp profile predates the syscalls Docker Desktop's runc (1.2+) needs to
     # create the container at all (statx/fsmount: "function not implemented"). Run it the way upstream

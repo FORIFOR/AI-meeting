@@ -3,6 +3,7 @@
 #
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh patch    # apply local-patches.diff to the checkout (once, before build)
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh build    # image (linux/amd64, emulated on Apple silicon)
+#   scripts/reality/attendee-selfhost/attendee-selfhost.sh build-arm64  # native image (Dockerfile.arm64, Debian Chromium); use it with RCAI_ATTENDEE_IMAGE=attendee-attendee-app-local:arm64 up
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh env      # write $ATTENDEE_DIR/.env (keys, MinIO)
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh up       # postgres, redis, minio, app, worker, scheduler, streamer
 #   scripts/reality/attendee-selfhost/attendee-selfhost.sh migrate
@@ -14,11 +15,12 @@
 # API key in the UI, and put ATTENDEE_API_BASE_URL=http://localhost:8000 + ATTENDEE_API_KEY=… in
 # services/token-broker/.env. The gate script and the broker read both.
 #
-# local-patches.diff (against attendee c8f7761) is what the measured runs used — three changes that are
-# not upstream: RCAI_DISABLE_DEBUG_RECORDING (no second x264 encoder per bot), RCAI_EXTRA_CHROME_ARGS
-# (diagnostics), and back-to-back scheduling of queued output audio in shared_chromedriver_payload.js so a
-# starved main thread does not open gaps mid-sentence (Gate #8 runs 17–28). compose.rcai.yaml sets the
-# two env vars. Docker Desktop needs ~12 GB free for the image plus the bot containers' per-run scratch;
+# local-patches.diff (against attendee c8f7761) is what the measured runs used — four changes that are
+# not upstream: RCAI_DISABLE_DEBUG_RECORDING (no second x264 encoder per bot), RCAI_EXTRA_CHROME_ARGS and
+# RCAI_DEBUG_JOIN_SCREENSHOTS (diagnostics), back-to-back scheduling of queued output audio in
+# shared_chromedriver_payload.js so a starved main thread does not open gaps mid-sentence (Gate #8 runs
+# 17–28), and the Meet payload's WebSocket opened one macrotask after document start — opened inline,
+# Chromium 151 (the arm64 image) drops the meet.google.com navigation. compose.rcai.yaml sets the env vars. Docker Desktop needs ~12 GB free for the image plus the bot containers' per-run scratch;
 # at 2 GB free the stack stopped mid-run (run 26).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -32,6 +34,7 @@ case "${1:-}" in
     if git -C "$ATTENDEE_DIR" apply --check -R "$HERE/local-patches.diff" 2>/dev/null; then echo "local-patches.diff already applied"; exit 0; fi
     git -C "$ATTENDEE_DIR" apply "$HERE/local-patches.diff" && echo "applied local-patches.diff to $ATTENDEE_DIR (rebuild the image)" ;;
   build)   compose build attendee-app-local ;;
+  build-arm64) docker build --platform linux/arm64 -f "$HERE/Dockerfile.arm64" -t attendee-attendee-app-local:arm64 "$ATTENDEE_DIR" ;;
   env)
     ENV="$ATTENDEE_DIR/.env"
     if [ -f "$ENV" ]; then echo "$ENV exists — not overwriting"; exit 0; fi

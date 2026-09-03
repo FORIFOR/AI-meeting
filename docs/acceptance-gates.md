@@ -171,7 +171,7 @@ with what the room decided in it — at the cost of longer turns (standup replie
 
 **Not covered**: the same replies through a real microphone and Meet's noise suppression, and the
 recogniser's spelling of a question under host load — that is Gate #8 (Runs 17–28 in
-`docs/commercial-gate.md`: `DEGRADED_BY_HOST_CPU` / `BLOCKED_BY_NO_ADMITTER`; Run 29 launched 2026-09-03 19:41 JST with everything above in place and was `BLOCKED_BY_NO_ADMITTER` — nobody in the room; Run 30 is the same configuration with a person there).
+`docs/commercial-gate.md`: `DEGRADED_BY_HOST_CPU` / `BLOCKED_BY_NO_ADMITTER`; Run 29 launched 2026-09-03 19:41 JST with everything above in place and was `BLOCKED_BY_NO_ADMITTER` — nobody in the room; Run 30 is the same configuration with a person there, on the native arm64 Attendee image — VM load 1.0–2.4 instead of 18–24, both bots verified knocking on 2026-09-03 20:25 JST).
 
 ### Recall credits exhausted
 

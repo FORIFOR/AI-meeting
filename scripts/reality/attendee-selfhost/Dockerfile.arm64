@@ -1,0 +1,59 @@
+# Attendee bot image built for the host's own architecture (Apple silicon: linux/arm64), so the
+# worker's Chromes and the webpage-streamer's software GL + VP8 encode run natively instead of under
+# Rosetta. Upstream's Dockerfile is pinned to --platform=linux/amd64 and Google Chrome's amd64 .deb;
+# Debian ships a real Chromium + chromedriver for arm64 (Ubuntu's is a snap stub), so the base moves
+# to bookworm and the package list is upstream's with the Debian names. Build context is the Attendee
+# checkout (attendee-selfhost.sh build-arm64); everything after the browser install mirrors upstream.
+FROM debian:bookworm AS base
+SHELL ["/bin/bash", "-c"]
+ENV project=attendee
+ENV cwd=/$project
+WORKDIR $cwd
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential ca-certificates cmake curl gdb git gfortran libopencv-dev libdbus-1-3 libgbm1 \
+    libgl1 libglib2.0-0 libglib2.0-dev libssl-dev libx11-dev libx11-xcb1 libxcb-image0 libxcb-keysyms1 \
+    libxcb-randr0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xtest0 libgl1-mesa-dri libxfixes3 \
+    linux-libc-dev pkgconf python3-pip python3-dev python3-venv tar unzip zip vim libpq-dev \
+    xvfb xauth x11-xkb-utils xfonts-100dpi xfonts-75dpi xfonts-scalable x11-apps \
+    libvulkan1 fonts-liberation fonts-noto-cjk xdg-utils wget \
+    chromium chromium-driver \
+    libasound2 libasound2-plugins alsa-utils alsa-oss pulseaudio pulseaudio-utils ffmpeg \
+    universal-ctags xterm xclip libavdevice-dev \
+    gstreamer1.0-alsa gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev libgirepository1.0-dev \
+    && rm -rf /var/lib/apt/lists/* && update-ca-certificates
+
+# Selenium looks for google-chrome first; upstream starts chromedriver from /usr/local/bin.
+RUN ln -s /usr/bin/chromium /usr/local/bin/google-chrome \
+    && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python
+
+# Debian's pip refuses system-wide installs without this; a venv would need every upstream command changed.
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
+FROM base AS deps
+COPY requirements.txt .
+# zoom-meeting-sdk wraps Zoom's Linux SDK, which exists for amd64 only (no wheel, no headers on arm64).
+# bot_controller imports the Zoom adapters lazily, so a Meet-only host never loads it; a Zoom bot on this
+# image would fail at that import, not silently.
+RUN grep -v '^zoom-meeting-sdk' requirements.txt > requirements.arm64.txt && pip install -r requirements.arm64.txt
+RUN pip uninstall -y av && pip install --no-binary av "av==12.0.0"
+ENV TINI_VERSION=v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-arm64 /tini
+RUN chmod +x /tini
+
+FROM deps AS build
+RUN useradd -m -u 1000 -s /bin/bash app
+WORKDIR $cwd
+COPY --chown=app:app --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=app:app . .
+RUN mkdir -p "$cwd/staticfiles" && chown -R app:app "$cwd/staticfiles"
+RUN mkdir -p /etc/opt/chrome/policies/managed /etc/chromium/policies/managed \
+  && ln -s /tmp/attendee-chrome-policies.json /etc/opt/chrome/policies/managed/attendee-chrome-policies.json \
+  && ln -s /tmp/attendee-chrome-policies.json /etc/chromium/policies/managed/attendee-chrome-policies.json
+USER app
+ENTRYPOINT ["/tini","--","/usr/local/bin/entrypoint.sh"]
+CMD ["bash"]

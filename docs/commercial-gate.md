@@ -128,6 +128,20 @@ markers are `DEGRADED_BY_HOST_CPU` for a run whose cues fail with the question f
 `BLOCKED_BY_NO_ADMITTER` for one nobody admitted. If 30 is still degraded the next lever is a native arm64
 Attendee image, not another prompt.
 
+That lever is now built and knocks. `scripts/reality/attendee-selfhost/Dockerfile.arm64` (`attendee-selfhost.sh
+build-arm64`, Debian bookworm's Chromium 151 + chromium-driver, Zoom SDK left out — it ships amd64 only) runs the
+whole stack natively at VM load **1.0–2.4** where the Rosetta image sat at 18–24. Two things stood between it and
+the Meet lobby, both in Chromium, neither in Attendee's join logic: (1) Chromium 138+ puts `ws://localhost` from a
+public origin behind a Local Network Access prompt (`net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`), and the
+bot page's media socket is exactly that — `--disable-features=LocalNetworkAccessChecks` in `RCAI_EXTRA_CHROME_ARGS`
+(a no-op on Chrome 134); (2) a WebSocket opened while the document-start payload runs made Chromium 151 drop the
+navigation altogether (`driver.get` back in 0.2 s with `data:,`; bisected with a probe to the one
+`new WebSocket` line — even `wss://echo.websocket.org` did it), so the fourth local patch opens the socket one
+macrotask later (`WebSocketClient.connect`, `google_meet_chromedriver_payload.js`). Evidence 2026-09-03 20:25 JST,
+`ADMIT_TIMEOUT=120`: both bots `name input found` → `3 audio elements are present` → `Clicking the join button` →
+`UsersUpdate … 'Yui'` over the page socket, load 1.05 — i.e. knocking, on a host with CPU to spare; not admitted
+only because the room was empty. Run 30 runs on this image (`RCAI_ATTENDEE_IMAGE=attendee-attendee-app-local:arm64`).
+
 ## COMMERCIAL-GATE-04 — webhook-authoritative state
 
 The rule is not "delete the polling API". It is: **webhooks are the only thing that moves product state,
