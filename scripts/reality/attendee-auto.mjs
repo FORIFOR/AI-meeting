@@ -42,7 +42,11 @@ const attendee = env.ATTENDEE_API_BASE_URL ?? "https://app.attendee.dev";
 const engine = process.env.ENGINE ?? "local";
 const proactivity = process.env.PROACTIVITY ?? "addressed_only";
 const botName = env.RECALL_BOT_NAME ?? "Yui";
-/** The room may take a while to let two bots in; nobody is billed for the script until they are. */
+/**
+ * The room may take a while to let two bots in; nobody is billed for the script until they are. Meet itself
+ * gives up a knock after about 10 minutes (「No one responded to your request to join」 → Attendee reports
+ * request_to_join_denied, runs 27–28), so a larger value only waits for that verdict: be in the room first.
+ */
 const admitTimeoutS = Number(process.env.ADMIT_TIMEOUT ?? 300);
 /** The Tester's recording: Yui's tile is read from it, so 1080p unless the bot host cannot keep up (self-hosted, emulated). */
 const TESTER_RESOLUTION = process.env.TESTER_RESOLUTION ?? "1080p";
