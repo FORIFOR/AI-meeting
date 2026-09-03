@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { JOINED_REASON, ParticipationPolicy, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, ParticipationPolicy, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -445,23 +445,7 @@ export class MeetingSessionController {
     }
 
     const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive });
-    /**
-     * The visual half of the instructions matters as much as the conversational half: a model handed
-     * face measurements will otherwise narrate them back as psychology — 「不安そうですね」 — to a real
-     * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
-     * diagnosis, and never something to say out loud.
-     */
-    const proactive = this.init.proactivity !== "addressed_only";
-    const extra =
-      `あなたはオンライン会議に参加している「${this.init.displayName}」です。簡潔に（1〜2文で）答えます。` +
-      (proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。") +
-      "一度話しかけられたら、その相手との会話が続く間は名前で呼ばれなくても応じます。" +
-      // The recogniser writes the name as it hears it — 「ゆイ」「うい」 — and the model repeated that
-      // spelling back to the room (Gate #8 run 15: 「ゆイ、お疲れ様！」). Answers do not begin with the
-      // name at all; the room already knows who is talking.
-      "発言は音声認識の書き起こしなので、あなたの名前が「ゆイ」「うい」のように別の表記になっていることがあります。それは呼びかけの聞き間違いです。返答であなた自身の名前や、相手が使った表記を繰り返さないでください。" +
-      "カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測です。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。" +
-      "うなずきや首振りは、言葉がなくても返事として扱ってよい。";
+    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only" });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
@@ -728,22 +712,11 @@ export class MeetingSessionController {
       this.policy.onAssistantDone(Date.now());
       return;
     }
-    const context = this.recent.slice(0, -1).map((r) => `${r.speaker}: ${r.text}`).join("\n");
+    const context = this.recent.slice(0, -1).map((r) => `${r.speaker}: ${r.text}`);
     const seen = this.visualContext();
-    /**
-     * Arrival is the one turn with nothing to answer. The greeting is the character's, not a fixed
-     * line: it should sound like the persona and say the one thing the room needs to know — how to
-     * get its attention — without a speech.
-     */
-    const greeting = by.detection.reason === JOINED_REASON;
-    const asked = greeting
-      ? `【入室】たった今この会議に参加しました。一言だけ挨拶してください：名前を名乗り、「${this.init.displayName}」と呼びかければ答えると伝える。自己紹介以上のことは話さない。`
-      : by.text
-        ? `【あなたへの質問】${by.speakerName ?? "参加者"}: ${by.text}`
-        : `【言葉のない反応】${by.detection.reason}`;
-    const prompt = greeting
-      ? `${asked}\n\n短く（1〜2文で）。`
-      : `${context ? `【会議の直近の発言】\n${context}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${asked}\n\n短く（1〜2文で）答えてください。`;
+    const prompt = by.detection.reason === JOINED_REASON
+      ? meetingGreetingPrompt(this.init.displayName)
+      : meetingTurnPrompt({ context, seen, asked: by.text ? { speakerName: by.speakerName, text: by.text } : { reaction: by.detection.reason } });
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });

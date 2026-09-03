@@ -11,6 +11,12 @@
  *   PERSONA=companion_ja pnpm reality:conversation
  *   SCENARIO=scripts/reality/scenarios/x.json pnpm reality:conversation
  *   PERSONA=english_daily PARAMS='{"level":"beginner"}' SCENARIO=... pnpm reality:conversation
+ *   SCENARIO=scripts/reality/scenarios/meeting-standup.json pnpm reality:conversation   # a meeting, addressed by name
+ *
+ * A scenario with `meeting: { displayName, proactive }` is played the way the meeting session plays it: the
+ * persona gets the meeting instructions, and each line is the room addressing the character — `context`
+ * (the room's recent lines, "Speaker: text") and `ask` ("Speaker: text"), rendered by @rcai/meeting-core's
+ * meetingTurnPrompt — so what is measured is the prompt that ships. `text` still works for a plain line.
  *
  * A scenario line may carry `expect`: { any: [...keywords] } · { all: [...keywords, "either|wording"] } · { none: [...forbidden] } · { minChars }
  * · { noQuestion: true } · { maxQuestions: n } · { lang: "en" | "ja" } (≥80 % of the letters in that script).
@@ -23,6 +29,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { buildSystemPrompt } from "../../packages/persona-core/src/index.js";
+import { meetingInstructions, meetingTurnPrompt } from "../../packages/meeting-core/src/meetingPrompt.js";
 import { personas } from "../../personas/src/catalog.js";
 
 const WebSocket = createRequire(new URL("../../services/agent/package.json", import.meta.url))("ws");
@@ -43,7 +50,14 @@ const persona = personas.find((p) => p.id === PERSONA);
 if (!persona) throw new Error(`unknown persona ${PERSONA} (${personas.map((p) => p.id).join(", ")})`);
 const manifest = JSON.parse(readFileSync(join(root, "characters", CHARACTER, "manifest.json"), "utf8"));
 const scenario = JSON.parse(readFileSync(SCENARIO, "utf8"));
-const systemPrompt = buildSystemPrompt({ persona, character: { manifest }, params: PARAMS });
+const meeting = scenario.meeting ? { displayName: scenario.meeting.displayName ?? manifest.name, proactive: !!scenario.meeting.proactive } : null;
+const systemPrompt = buildSystemPrompt({ persona, character: { manifest }, params: PARAMS, extra: meeting ? meetingInstructions(meeting) : undefined });
+/** The text a scenario line sends: verbatim, or — in a meeting — the room's lines and the one that addressed the character. */
+const lineText = (line) => {
+  if (!meeting || !line.ask) return line.text;
+  const [speakerName, ...rest] = line.ask.split(": ");
+  return meetingTurnPrompt({ context: line.context ?? [], asked: { speakerName, text: rest.join(": ") } });
+};
 
 const config = {
   systemPrompt,
@@ -53,7 +67,7 @@ const config = {
   privacyMode: "default",
   characterId: manifest.id,
   personaId: persona.id,
-  providerOptions: { speakingStyle: persona.speakingStyle, turnPolicy: persona.turnPolicy, opening: persona.opening },
+  providerOptions: { speakingStyle: persona.speakingStyle, turnPolicy: persona.turnPolicy, opening: meeting ? undefined : persona.opening },
 };
 
 const sock = new WebSocket(AGENT);
@@ -95,19 +109,20 @@ await new Promise((res, rej) => { sock.once("open", res); sock.once("error", rej
 sock.send(JSON.stringify({ type: "start", config }));
 await waitFor(() => ready, 10_000);
 if (!ready) throw new Error("agent never sent ready");
-// Let the opening line play out first.
-await new Promise((res) => { resolveDone = res; setTimeout(res, 12_000); });
+// Let the opening line play out first (a meeting has none).
+if (!meeting) await new Promise((res) => { resolveDone = res; setTimeout(res, 12_000); });
 await sleep(LISTEN_PAUSE_MS);
 
 console.log(`\n=== 会話品質 ${persona.id} / ${manifest.name} / ${scenario.title} ===`);
 for (const line of scenario.turns) {
-  const t = { user: line.text, sentAt: Date.now(), checks: line.expect ?? null };
+  const text = lineText(line);
+  const t = { user: text, sentAt: Date.now(), checks: line.expect ?? null };
   current = t;
   audioSamples = 0;
   turns.push(t);
-  console.log(`  You: ${line.text}`);
+  console.log(`  You: ${line.ask ?? line.text}`);
   const done = new Promise((res) => { resolveDone = res; });
-  sock.send(JSON.stringify({ type: "text", text: line.text }));
+  sock.send(JSON.stringify({ type: "text", text }));
   await Promise.race([done, sleep(REPLY_TIMEOUT_MS)]);
   if (t.doneMs === undefined) t.timedOut = true;
   console.log(`  ${manifest.name}: ${t.reply?.replace(/\s*\n+\s*/g, " ⏎ ") ?? "(no reply)"}   [${t.firstAudioMs ?? "-"}ms → ${t.doneMs ?? "timeout"}ms, ${t.speechSec?.toFixed(1) ?? "?"}s]`);
