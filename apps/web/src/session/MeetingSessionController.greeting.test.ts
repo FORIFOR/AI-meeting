@@ -93,7 +93,7 @@ describe("greeting on arrival", () => {
     expect(sendText).toHaveBeenCalledTimes(1);
     const [prompt] = sendText.mock.calls[0] as unknown as [string];
     expect(prompt).toContain("【入室】");
-    expect(prompt).toContain("「Yui」と呼びかければ");
+    expect(prompt).toContain("「Yui」と声をかけてもらえれば");
     // Gate #8 run 15: the model answered 「ゆイ、お疲れ様！」 — the recogniser's spelling, parroted. The
     // instructions say the name in a transcript may be misspelt and is never repeated back.
     expect(JSON.stringify(connect.mock.calls[0]?.[0])).toContain("別の表記になっていることがある");

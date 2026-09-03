@@ -78,7 +78,11 @@ export function meetingTurnPrompt({ context, seen, asked }: MeetingTurnInput): s
  * Arrival is the one turn with nothing to answer. The greeting is the character's, not a fixed
  * line: it should sound like the persona and say the one thing the room needs to know — how to
  * get its attention — without a speech.
+ *
+ * The two points are numbered because a 2B local model reads a clause it can skip as optional:
+ * the earlier one-sentence wording lost the "say my name and I answer" half 4 times out of 4 on
+ * gemma-4-E2B (「初めまして、Yuiです。」), the numbered form kept it 5 out of 5.
  */
 export function meetingGreetingPrompt(displayName: string): string {
-  return `【入室】たった今この会議に参加しました。一言だけ挨拶してください：名前を名乗り、「${displayName}」と呼びかければ答えると伝える。自己紹介以上のことは話さない。\n\n短く（1〜2文で）。`;
+  return `【入室】たった今この会議に参加しました。挨拶を一言。次の2点を必ず含める：(1) 自分の名前「${displayName}」を名乗る。(2)「${displayName}」と声をかけてもらえれば返事をする、と伝える。それ以外は話さない。\n\n2文で。`;
 }

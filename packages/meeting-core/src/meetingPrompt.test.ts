@@ -24,6 +24,7 @@ describe("meeting prompt text", () => {
   });
 
   it("asks for a greeting that says how to get the character's attention", () => {
-    expect(meetingGreetingPrompt("Yui")).toContain("「Yui」と呼びかければ答える");
+    expect(meetingGreetingPrompt("Yui")).toContain("「Yui」と声をかけてもらえれば返事をする");
+    expect(meetingGreetingPrompt("Yui")).toContain("自分の名前「Yui」を名乗る");
   });
 });
