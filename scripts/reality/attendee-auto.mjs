@@ -463,8 +463,11 @@ for (const cue of CUES) {
       // The greeting's own audio starting inside the next window is the greeting, not an interruption.
       const greetings = eventsBetween(ev, T0 - 60_000, end, "greeting");
       const own = speaking.filter((e) => !greetings.some((g) => e.at >= g.at && e.at - g.at < 15_000));
-      status = !turns.length && !own.length ? "PASS" : "FAIL";
-      detail = `turn=${turns.length} speaking=${own.length}${own.length !== speaking.length ? ` (+${speaking.length - own.length} greeting)` : ""} heard=${heardS.toFixed(1)}s`;
+      // Run 78 pass 1: the admitter's microphone held the floor until 24 s, the greeting came at 26 s — into
+      // the chat cue, where its `turn` event failed a cue whose speaking it was already forgiven.
+      const ownTurns = turns.filter((t) => t.data?.reason !== "joined the meeting");
+      status = !ownTurns.length && !own.length ? "PASS" : "FAIL";
+      detail = `turn=${ownTurns.length}${ownTurns.length !== turns.length ? ` (+${turns.length - ownTurns.length} greeting)` : ""} speaking=${own.length}${own.length !== speaking.length ? ` (+${speaking.length - own.length} greeting)` : ""} heard=${heardS.toFixed(1)}s`;
       break;
     }
     case "bargein": {
