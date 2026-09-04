@@ -35,7 +35,7 @@ const DEFAULT_AI_VOCATIVES = ["AIさん", "AIちゃん", "アシスタント", "
 
 const JP_QUESTION = /(？|\?|ですか|ますか|でしょうか|かな[ぁあ]?[。]?$|どう思(う|います)|どうですか|どうかな|教えて|説明して|お願い(し|でき)|できますか|してくれ(る|ますか)|してもらえ|いかがですか|意見(を|は|ある)|どう(かな|でしょう)|なんだと思)/;
 const EN_QUESTION = /(\?|what do you think|your thoughts|could you|can you|would you|please|tell (us|me)|explain|what('s| is) your (take|opinion|view)|do you (think|agree)|any (ideas|thoughts)|how about you|thoughts\b|weigh in)/i;
-const JP_THIRD_PERSON = /(だろう(ね|な|か)?[。]?$|と思(う|って(る|いる|た))|って言って(た|ました)|らしい(よ|ね|です)?[。]?$|みたい(だ|です)ね?[。]?$|のこと(を|が|は)|について話|には聞いて(ない|いない)|に聞いた|が言(った|ってた))/;
+const JP_THIRD_PERSON = /(だろう(ね|な|か)?[。]?$|と思(う|って(る|いる|た))|(って|そう)言って(た|ました)|らしい(よ|ね|です)?[。]?$|みたい(だ|です)ね?[。]?$|のこと(を|が|は)|について話|には聞いて(ない|いない)|に聞いた|が言(った|ってた))/;
 const EN_THIRD_PERSON = /\b(said|says|thinks|thought|told|mentioned|I wonder (if|whether|what)|wonder what)\b/i;
 const JP_INVITE = /(誰か(意見|質問|コメント)|何か(意見|質問|ある(人|方))|皆さん(どう|意見)|他に(意見|質問)|AIに(聞|訊)いて|聞いてみ(よう|ましょう)|どなたか)/;
 const EN_INVITE = /(anyone|anybody|any (questions|thoughts|ideas|comments)|let'?s ask (the )?ai|open the floor|does anyone)/i;

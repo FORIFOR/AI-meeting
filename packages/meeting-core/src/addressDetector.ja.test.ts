@@ -14,6 +14,8 @@ describe("address detection with Japanese readings of a romaji name", () => {
   }
   it("a plain greeting keeps the character observing", () => expect(d.detect("こんにちは").addressed).toBe(false));
   it("a third-person mention keeps the character observing", () => expect(d.detect("ゆいがそう言ってた").addressed).toBe(false));
+  // Run 78: the rescore's 「ユイが昨日そう言ってたよね」 read as "without a request" — an adverb between が and 言ってた.
+  it("reports 「…がそう言ってた」 as third person, not merely as a mention", () => expect(d.detect("ゆいが昨日そう言ってたよね").reason).toBe("name mentioned in third person"));
 });
 
 /**

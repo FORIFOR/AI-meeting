@@ -240,6 +240,28 @@ export class ParticipationPolicy {
     if (this._state !== "OBSERVING") this.transition("OBSERVING", now, talkedOver ? "interrupted, talked over" : "interrupted");
   }
 
+  /**
+   * The turn just sanctioned was taken on a misreading, and a better reading of the same words says
+   * it should not have been. Gate #8 run 78: 「ユが昨日そう言ってたよね。」 lost the name, so it was a
+   * follow-up from the person the character was talking with — and the recogniser's rescore 1.9 s
+   * later read 「ユイが昨日そう言ってたよね」, talk *about* the character, which a follow-up must never
+   * be. Withdrawing is not being interrupted (nobody cut in, the floor stays open, no yield) and not
+   * finishing (no cooldown, no consecutive turn): the character simply did not speak. Only while the
+   * answer is still being drafted; once it is speaking, the turn stands.
+   */
+  withdraw(now: number, reason: string): boolean {
+    if (this._state !== "ADDRESSED") return false;
+    this.lastTickAt = Math.max(this.lastTickAt, now);
+    this.addressedBy = null;
+    this.transition("OBSERVING", now, reason);
+    return true;
+  }
+
+  /** What the detector reads in a text — a second opinion, without taking a turn on it. */
+  detect(text: string): AddressDetection {
+    return this.detector.detect(text);
+  }
+
   /** Who the character is in conversation with, if anyone. */
   get engagedWith(): Engagement | null {
     return this.engagement;

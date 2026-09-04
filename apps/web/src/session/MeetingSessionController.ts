@@ -135,6 +135,10 @@ export class MeetingSessionController {
   private vad = new EnergyVAD();
   /** `utterance` = the AI recogniser's utterance id, when the line came from it: what a revision addresses. */
   private recent: { speaker: string; text: string; utterance?: number; line: MeetingTranscriptLine }[] = [];
+  /** The recogniser utterance being handed to the policy right now (so a turn can be tied to its line). */
+  private feeding: number | undefined;
+  /** The utterance the current sanctioned turn was taken on, and why — for the rescore's second opinion. */
+  private turnOf: { utterance: number | undefined; reason: string } | null = null;
   private lineId = 0;
   /** Why the character cannot be seen, when it cannot be — reported once, and readable afterwards. */
   avatarFailure: string | null = null;
@@ -239,6 +243,7 @@ export class MeetingSessionController {
       if (t.to === "ADDRESSED") {
         // The policy decided this turn is ours. Nothing else may open the outbound gate.
         this.sanctioned = true;
+        this.turnOf = { utterance: this.feeding, reason: t.reason };
         if (this.init.role === "bot") {
           // Who this turn is for is part of the evidence: run 71 answered the host's television as a follow-up.
           const turn = { reason: t.reason, text: this.policy.addressedBy?.text ?? "", participantId: this.policy.engagedWith?.participantId };
@@ -708,7 +713,9 @@ export class MeetingSessionController {
       this.recent.push({ speaker: line.speaker, text, utterance, line });
       while (this.recent.length > 12) this.recent.shift();
     }
+    this.feeding = utterance;
     this.policy.onTranscript({ text, final, speakerName, participantId }, now);
+    this.feeding = undefined;
     // Entering ADDRESSED is handled by the transition listener, whatever caused it.
   }
 
@@ -723,6 +730,34 @@ export class MeetingSessionController {
     r.text = text;
     r.line = { ...r.line, text };
     this.init.handlers.onTranscript(r.line);
+  }
+
+  /**
+   * The better reading as a second opinion on a turn taken on the first. Gate #8 run 78 pass 3:
+   * 「ユが昨日そう言ってたよね。」 lost the name, read as a follow-up from the person the character was
+   * talking with, and was answered; the rescore 1.9 s later read 「ユイが昨日そう言ってたよね」 — talk
+   * *about* the character, the one thing a follow-up is never allowed to be — and the answer's audio
+   * started 4 s after that. A follow-up the better reading contradicts is withdrawn while the answer
+   * is still a draft. Only that kind: a turn on the name was heard by name, the greeting was never a
+   * reading, and once the character is speaking the turn stands — a sentence cut off by its own
+   * second thoughts is worse than a wrong one. Still never a turn of its own.
+   */
+  private secondOpinion(utterance: number, text: string, now: number): void {
+    const turn = this.turnOf;
+    if (!turn || turn.utterance !== utterance || turn.reason !== "engaged follow-up") return;
+    if (!this.sanctioned || this.policy.state !== "ADDRESSED") return;
+    const d = this.policy.detect(text);
+    if (d.addressed || !d.reason.startsWith("name mentioned")) return;
+    if (this.init.role === "bot") {
+      console.log("[rcai:bot] turn withdrawn:", d.reason, JSON.stringify(text.slice(0, 80)));
+      this.report("withdrawn", { utterance, text: text.slice(0, 120), reason: d.reason });
+    }
+    this.clearAnswerWatchdog();
+    this.sanctioned = false;
+    this.turnOf = null;
+    this.policy.withdraw(now, `withdrawn: ${d.reason}`);
+    // The draft dies with the turn; the `interrupted` that comes back finds nothing sanctioned.
+    void this.runtime?.interrupt();
   }
 
   /**
@@ -879,7 +914,10 @@ export class MeetingSessionController {
         }
         break;
       case "user_transcript_revised":
-        if (!this.hasExternalTranscripts) this.reviseTranscript(e.id, e.text);
+        if (!this.hasExternalTranscripts) {
+          this.reviseTranscript(e.id, e.text);
+          this.secondOpinion(e.id, e.text, now);
+        }
         break;
       case "assistant_speech_started":
         /**
