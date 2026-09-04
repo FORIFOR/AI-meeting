@@ -45,9 +45,14 @@ const botName = env.RECALL_BOT_NAME ?? "Yui";
 /**
  * The room may take a while to let two bots in; nobody is billed for the script until they are. Meet itself
  * gives up a knock after about 10 minutes (「No one responded to your request to join」 → Attendee reports
- * request_to_join_denied, runs 27–28), so a larger value only waits for that verdict: be in the room first.
+ * request_to_join_denied, runs 27–28), and Attendee gives up an unanswered one after its own
+ * `waiting_room_timeout_seconds` (900 s). A knock that dies unadmitted is knocked again until this budget
+ * is spent, so a large value parks the bots at the door: launch first, admit when the room is ready
+ * (`ADMIT_TIMEOUT=3600`). Each dead knock leaks an Xvfb + Chromium pair in the self-hosted worker;
+ * `PARK_RESTART_WORKER=1` restarts the worker before a re-knock when the pre-flight count says so.
  */
 const admitTimeoutS = Number(process.env.ADMIT_TIMEOUT ?? 300);
+const PARK_RESTART_WORKER = process.env.PARK_RESTART_WORKER === "1";
 /**
  * `KEEP_ROOM=1`: after the script the bots stay in the call instead of leaving, and the script runs
  * again whenever `<run dir>/rerun` appears (`stop` ends the run). One admission, as many passes as
@@ -203,29 +208,33 @@ for (const c of CUES) {
 console.log(`rendered ${clips.size} clips → ${dir}`);
 
 // ---- two bots -----------------------------------------------------------------------------------
-const yui = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
-  method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({
-    meetingUrl: url, botName, ...YUI_RECORDING,
-    botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), ...(process.env.YUI_PAGE_FPS ? { fps: process.env.YUI_PAGE_FPS } : {}), outbound: "page" },
-  }),
-})).json();
-if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail ?? ""}`); process.exit(1); }
+async function knock() {
+  const yui = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      meetingUrl: url, botName, ...YUI_RECORDING,
+      botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), ...(process.env.YUI_PAGE_FPS ? { fps: process.env.YUI_PAGE_FPS } : {}), outbound: "page" },
+    }),
+  })).json();
+  if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail ?? ""}`); process.exit(1); }
 
-const tester = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
-  method: "POST", headers: { "content-type": "application/json" },
-  // The Tester's transcript comes from Meet's own captions unless told otherwise: the self-hosted
-  // Attendee has no Deepgram credential, and with one asked for anyway the "room heard the character"
-  // row read 0/0 for four admitted runs (44–47) without saying why.
-  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: process.env.TESTER_TRANSCRIPTION ?? "closed_captions", recording: { view: "gallery_view", resolution: TESTER_RESOLUTION, format: TESTER_RECORDING } }),
-})).json();
-if (!tester.botId) {
-  console.log(`FAIL: tester ${tester.error ?? "join failed"} ${tester.detail ?? ""}`);
-  await fetch(`${broker}/api/meeting/attendee/bots/${yui.botId}/leave`, { method: "POST" }).catch(() => {});
-  process.exit(1);
+  const tester = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    // The Tester's transcript comes from Meet's own captions unless told otherwise: the self-hosted
+    // Attendee has no Deepgram credential, and with one asked for anyway the "room heard the character"
+    // row read 0/0 for four admitted runs (44–47) without saying why.
+    body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: process.env.TESTER_TRANSCRIPTION ?? "closed_captions", recording: { view: "gallery_view", resolution: TESTER_RESOLUTION, format: TESTER_RECORDING } }),
+  })).json();
+  if (!tester.botId) {
+    console.log(`FAIL: tester ${tester.error ?? "join failed"} ${tester.detail ?? ""}`);
+    await fetch(`${broker}/api/meeting/attendee/bots/${yui.botId}/leave`, { method: "POST" }).catch(() => {});
+    process.exit(1);
+  }
+  console.log(`\n=== 自動 実会議 Gate (Attendee × 2) ===\n${botName} ${yui.botId}  Tester ${tester.botId}  engine=${engine}  proactivity=${proactivity}  platform=${platform}`);
+  console.log(`>>> Meet で「${botName}」と「Tester」の参加を承認してください（${admitTimeoutS}s 以内）。\n`);
+  return { yui, tester };
 }
-console.log(`\n=== 自動 実会議 Gate (Attendee × 2) ===\n${botName} ${yui.botId}  Tester ${tester.botId}  engine=${engine}  proactivity=${proactivity}  platform=${platform}`);
-console.log(`>>> Meet で「${botName}」と「Tester」の参加を承認してください（${admitTimeoutS}s 以内）。\n`);
+let { yui, tester } = await knock();
 
 const leaveAll = async () => {
   for (const id of [yui.botId, tester.botId]) await fetch(`${broker}/api/meeting/attendee/bots/${id}/leave`, { method: "POST" }).catch(() => {});
@@ -336,15 +345,29 @@ const IN_CALL = new Set(["joined_recording", "joined_not_recording", "joined_rec
 const state = async (id) => (await api(`/${id}`)).body?.state ?? "?";
 const t0 = Date.now();
 let joined = false;
+let knocks = 1;
 while (Date.now() - t0 < admitTimeoutS * 1000) {
   const [a, b] = await Promise.all([state(yui.botId), state(tester.botId)]);
   process.stdout.write(`\r   ${botName}=${a}  Tester=${b}  (${Math.round((Date.now() - t0) / 1000)}s)   `);
-  if (["fatal_error", "ended"].includes(a) || ["fatal_error", "ended"].includes(b)) break;
   if (IN_CALL.has(a) && IN_CALL.has(b)) { joined = true; break; }
+  if (["fatal_error", "ended"].includes(a) || ["fatal_error", "ended"].includes(b)) {
+    // A knock nobody answered (Meet's ~10 min, or the vendor's waiting-room timeout). Knock again while the budget lasts.
+    const left = admitTimeoutS - (Date.now() - t0) / 1000;
+    console.log(`\n   knock ${knocks} died unadmitted (${botName}=${a} Tester=${b}); ${left > 60 ? `knocking again (${Math.round(left)}s of budget left)` : "budget spent"}`);
+    if (left <= 60) break;
+    await leaveAll();
+    const w = preflightWorker();
+    if (w?.stale && PARK_RESTART_WORKER) {
+      try { execFileSync("docker", ["restart", WORKER], { stdio: "pipe", timeout: 60_000 }); await sleep(8000); console.log(`   worker restarted (Xvfb ${w.xvfb} · Chromium ${w.chromium})`); } catch (err) { console.log(`   worker restart failed: ${err.message.split("\n")[0]}`); }
+    }
+    ({ yui, tester } = await knock());
+    knocks++;
+    continue;
+  }
   await sleep(3000);
 }
 console.log("");
-if (!joined) { console.log("FAIL: both bots were not admitted in time"); await leaveAll(); process.exit(1); }
+if (!joined) { console.log(`FAIL: both bots were not admitted in time (${knocks} knock${knocks > 1 ? "s" : ""})`); await leaveAll(); process.exit(1); }
 let T0 = Date.now();
 console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト開始。${KEEP_ROOM ? ` (KEEP_ROOM: 退室せず、${dir}/rerun で再実行、${dir}/stop で終了)` : ""}\n`);
 
