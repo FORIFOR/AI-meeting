@@ -107,8 +107,10 @@ export class LocalProvider implements RealtimeAIProvider {
           }
         }
       };
-      ws.onclose = () => {
-        this.emit({ type: "session_closed" });
+      ws.onclose = (ev?: CloseEvent) => {
+        // The code is the only account of why (Gate #8 run 81: a close with nothing logged on either
+        // side): 1006 is the transport gone without a close frame, 1000/1001/1005 a peer that closed on purpose.
+        this.emit({ type: "session_closed", reason: ev ? `ws close ${ev.code}${ev.reason ? ` ${ev.reason}` : ""}` : undefined });
       };
     });
   }

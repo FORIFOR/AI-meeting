@@ -70,6 +70,15 @@ describe("LocalProvider", () => {
     expect(events.at(-1)!.type).toBe("session_closed");
     expect(p.capabilities().localOnly).toBe(true);
   });
+  it("a socket that closes under the session says how (the close code is all the account there is)", async () => {
+    const p = new LocalProvider({ agentUrl: "http://127.0.0.1:8788", WebSocketImpl: FakeWS as unknown as typeof WebSocket });
+    const events: ConversationEvent[] = [];
+    p.onEvent((e) => events.push(e));
+    await p.connect(cfg);
+    const ws = FakeWS.instances.at(-1)!;
+    (ws.onclose as unknown as (ev: { code: number; reason: string }) => void)?.({ code: 1006, reason: "" });
+    expect(events.at(-1)).toEqual({ type: "session_closed", reason: "ws close 1006" });
+  });
   it("a text turn on a socket that is not open fails instead of vanishing", async () => {
     const p = new LocalProvider({ agentUrl: "http://127.0.0.1:8788", WebSocketImpl: FakeWS as unknown as typeof WebSocket });
     await expect(p.sendText("hi")).rejects.toThrow(/agent socket not open/);

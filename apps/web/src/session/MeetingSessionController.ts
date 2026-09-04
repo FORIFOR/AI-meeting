@@ -1065,7 +1065,7 @@ export class MeetingSessionController {
         this.init.handlers.onError(e.error.message, "PROVIDER");
         break;
       case "session_closed":
-        this.onAgentClosed(now);
+        this.onAgentClosed(now, e.reason);
         break;
       default:
         break;
@@ -1078,13 +1078,13 @@ export class MeetingSessionController {
    * brought up behind the same avatar and speaker (`switchProvider`: same config, same system prompt
    * as last updated). `leave()` closes the session too; that one is ours and is left alone.
    */
-  private onAgentClosed(now: number): void {
+  private onAgentClosed(now: number, reason?: string): void {
     if (this.disposed || this.reconnecting || !this.runtimeReady || !this.runtime || !this.providerOpts) return;
     this.runtimeReady = false;
     this.reconnecting = true;
     const lost = this.sanctioned;
-    if (this.init.role === "bot") console.log("[rcai:bot] agent session closed", JSON.stringify({ state: this.policy.state, sanctioned: lost }));
-    this.report("agent_closed", { state: this.policy.state, sanctioned: lost });
+    if (this.init.role === "bot") console.log("[rcai:bot] agent session closed", JSON.stringify({ reason, state: this.policy.state, sanctioned: lost }));
+    this.report("agent_closed", { reason, state: this.policy.state, sanctioned: lost });
     if (lost) {
       this.clearAnswerWatchdog();
       this.sanctioned = false;
