@@ -17,6 +17,14 @@ export class RelayHub {
   /** Counters, so "the socket connected but nothing arrived" is answerable without a rerun. */
   private readonly received = new Map<string, number>();
   private readonly malformed = new Map<string, number>();
+  /**
+   * Continuity of the mixed audio, by the vendor's own stamp. Gate #8 run 70: the room had the whole of
+   * 「ゆい、今日の予定を教えて」 (the bot's recording shows it) and the character's ears got 1.0 s of it
+   * with zero-filled holes — the loss was inside the vendor's capture, before this relay. `timestamp_ms`
+   * is stamped where the chunk is packaged, so a hole there is a hole in the capture, not in the tunnel.
+   */
+  private readonly audio = new Map<string, { chunks: number; gaps: number; gapMs: number; last: number | null }>();
+  private static readonly GAP_MS = 250;
 
   constructor(private readonly publicClientBase: string, private readonly now: () => number = Date.now) {}
 
@@ -72,6 +80,7 @@ export class RelayHub {
       return 0;
     }
     this.received.set(botId, (this.received.get(botId) ?? 0) + 1);
+    this.noteAudio(botId, message);
     const wrapped = JSON.stringify({ relay: { botId, receivedAt: this.now() }, message });
     const set = this.clients.get(botId);
     if (!set || set.size === 0) {
@@ -121,13 +130,33 @@ export class RelayHub {
     return set.size;
   }
 
-  /** What this bot's relay has actually seen: forwarded, unparseable, and who is listening. */
-  stats(botId: string): { received: number; malformed: number; clients: number; vendor: boolean } {
+  private noteAudio(botId: string, message: unknown): void {
+    const m = message as { trigger?: string; data?: { timestamp_ms?: number } };
+    if (m?.trigger !== "realtime_audio.mixed") return;
+    const t = m.data?.timestamp_ms;
+    if (typeof t !== "number") return;
+    let a = this.audio.get(botId);
+    if (!a) {
+      a = { chunks: 0, gaps: 0, gapMs: 0, last: null };
+      this.audio.set(botId, a);
+    }
+    a.chunks++;
+    if (a.last != null && t - a.last > RelayHub.GAP_MS) {
+      a.gaps++;
+      a.gapMs += t - a.last;
+    }
+    a.last = t;
+  }
+
+  /** What this bot's relay has actually seen: forwarded, unparseable, who is listening, and whether the audio was continuous. */
+  stats(botId: string): { received: number; malformed: number; clients: number; vendor: boolean; audio: { chunks: number; gaps: number; gapMs: number } } {
+    const a = this.audio.get(botId);
     return {
       received: this.received.get(botId) ?? 0,
       malformed: this.malformed.get(botId) ?? 0,
       clients: this.clients.get(botId)?.size ?? 0,
       vendor: this.vendors.has(botId),
+      audio: { chunks: a?.chunks ?? 0, gaps: a?.gaps ?? 0, gapMs: a?.gapMs ?? 0 },
     };
   }
 

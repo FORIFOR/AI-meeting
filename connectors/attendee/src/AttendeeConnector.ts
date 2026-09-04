@@ -67,6 +67,8 @@ export class AttendeeConnector implements MeetingConnector {
 const PARTICIPANT_FLOOR_DB = -45;
 /** How long a participant keeps the floor after their last audible chunk. */
 const PARTICIPANT_HANGOVER_MS = 500;
+/** A participant's loudness is reported at most this often: who is louder, not every 10 ms chunk. */
+const PARTICIPANT_LEVEL_EVERY_MS = 100;
 
 class AttendeeSession implements MeetingSession {
   private ws: WebSocketLike | null = null;
@@ -77,6 +79,8 @@ class AttendeeSession implements MeetingSession {
   private readonly resampler = createResampler(INTERNAL_SAMPLE_RATE, 24000);
   /** Participants whose own stream is currently above the floor, each with the timer that ends their turn. */
   private readonly talking = new Map<string, ReturnType<typeof setTimeout>>();
+  /** When each participant's loudness was last reported (`speech_level`). */
+  private readonly levelAt = new Map<string, number>();
 
   constructor(
     readonly id: string,
@@ -171,6 +175,11 @@ class AttendeeSession implements MeetingSession {
     }
     const db = 20 * Math.log10(Math.max(1e-6, Math.sqrt(sum / pcm16.length)));
     if (db < PARTICIPANT_FLOOR_DB) return;
+    const now = this.now();
+    if (now - (this.levelAt.get(id) ?? -Infinity) >= PARTICIPANT_LEVEL_EVERY_MS) {
+      this.levelAt.set(id, now);
+      this.emit({ type: "speech_level", participantId: id, level: db, at: now });
+    }
     const timer = this.talking.get(id);
     if (timer) clearTimeout(timer);
     else this.emit({ type: "speech", participant: { id, name: null }, active: true, at: this.now() });

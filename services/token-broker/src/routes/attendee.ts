@@ -116,13 +116,24 @@ export async function createAttendeeBot(
     bot_name: botName,
     websocket_settings: {
       audio: { url: `${wsBase}/api/meeting/attendee/audio/${encodeURIComponent(audioToken)}`, sample_rate: sampleRate },
-      per_participant_audio: { url: `${wsBase}/api/meeting/attendee/participant-audio/${encodeURIComponent(participantAudioToken)}`, sample_rate: sampleRate },
       /**
-       * 360p is 2 fps at JPEG quality 70 (Attendee picks the framerate from the resolution), which is
-       * what a nod detector needs and far less than a face model can use. Screenshare is off: it is a
-       * different problem and a much larger frame.
+       * Only the character has a use for who is speaking and what they look like. A listener judges
+       * the room by its mixed audio and its recording, and each extra stream is more work in the bot
+       * host's browser (a track processor per speaker, a JPEG per participant twice a second) —
+       * work that, on a self-hosted host already short of CPU, showed up as holes in the character's
+       * hearing (Gate #8 run 70).
        */
-      per_participant_video: { url: `${wsBase}/api/meeting/attendee/participant-video/${encodeURIComponent(participantVideoToken)}`, webcam_resolution: "360p", screenshare_resolution: "none" },
+      ...(role === "character"
+        ? {
+            per_participant_audio: { url: `${wsBase}/api/meeting/attendee/participant-audio/${encodeURIComponent(participantAudioToken)}`, sample_rate: sampleRate },
+            /**
+             * 360p is 2 fps at JPEG quality 70 (Attendee picks the framerate from the resolution), which is
+             * what a nod detector needs and far less than a face model can use. Screenshare is off: it is a
+             * different problem and a much larger frame.
+             */
+            per_participant_video: { url: `${wsBase}/api/meeting/attendee/participant-video/${encodeURIComponent(participantVideoToken)}`, webcam_resolution: "360p", screenshare_resolution: "none" },
+          }
+        : {}),
     },
     /**
      * State comes from here and nowhere else. Without it an Attendee bot that fails to join is invisible:

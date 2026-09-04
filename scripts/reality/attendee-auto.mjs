@@ -26,7 +26,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadEnv, sleep } from "./lib.mjs";
@@ -48,6 +48,14 @@ const botName = env.RECALL_BOT_NAME ?? "Yui";
  * request_to_join_denied, runs 27–28), so a larger value only waits for that verdict: be in the room first.
  */
 const admitTimeoutS = Number(process.env.ADMIT_TIMEOUT ?? 300);
+/**
+ * `KEEP_ROOM=1`: after the script the bots stay in the call instead of leaving, and the script runs
+ * again whenever `<run dir>/rerun` appears (`stop` ends the run). One admission, as many passes as
+ * the room allows — a pass spoiled by an open microphone is repeated without another knock at the
+ * door. Only the harness side changes between passes: the character's page and the agent are the
+ * ones that were admitted.
+ */
+const KEEP_ROOM = process.env.KEEP_ROOM === "1";
 /** The Tester's recording: Yui's tile is read from it, so 1080p unless the bot host cannot keep up (self-hosted, emulated). */
 const TESTER_RESOLUTION = process.env.TESTER_RESOLUTION ?? "1080p";
 /**
@@ -56,6 +64,12 @@ const TESTER_RESOLUTION = process.env.TESTER_RESOLUTION ?? "1080p";
  * resolution), so Meet sends that browser smaller tiles to decode.
  */
 const YUI_RECORDING = process.env.YUI_RECORDING_FORMAT ? { recording: { format: process.env.YUI_RECORDING_FORMAT, resolution: TESTER_RESOLUTION } } : {};
+/**
+ * TESTER_RECORDING_FORMAT=mp3 keeps the Tester's ears and drops its screen capture (720p H.264 in the bot host's
+ * browser VM, plus the decode of every tile it needs). Run 70 lost two thirds of a question inside the vendor's
+ * capture while that VM sat at 500 %: the tile frames are evidence from earlier runs, the answers are the gate.
+ */
+const TESTER_RECORDING = process.env.TESTER_RECORDING_FORMAT ?? "mp4";
 
 const platform = detectPlatform(url ?? "");
 if (!url || platform === "unknown") { console.log(`BLOCKED_BY_MEET_URL: set MEET_URL to a Google Meet, Zoom or Teams link (got ${url ?? "nothing"})`); process.exit(2); }
@@ -186,7 +200,7 @@ const tester = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   // The Tester's transcript comes from Meet's own captions unless told otherwise: the self-hosted
   // Attendee has no Deepgram credential, and with one asked for anyway the "room heard the character"
   // row read 0/0 for four admitted runs (44–47) without saying why.
-  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: process.env.TESTER_TRANSCRIPTION ?? "closed_captions", recording: { view: "gallery_view", resolution: TESTER_RESOLUTION } }),
+  body: JSON.stringify({ meetingUrl: url, botName: "Tester", role: "listener", botPageQuery: { language: "ja-JP" }, transcription: process.env.TESTER_TRANSCRIPTION ?? "closed_captions", recording: { view: "gallery_view", resolution: TESTER_RESOLUTION, format: TESTER_RECORDING } }),
 })).json();
 if (!tester.botId) {
   console.log(`FAIL: tester ${tester.error ?? "join failed"} ${tester.detail ?? ""}`);
@@ -314,8 +328,8 @@ while (Date.now() - t0 < admitTimeoutS * 1000) {
 }
 console.log("");
 if (!joined) { console.log("FAIL: both bots were not admitted in time"); await leaveAll(); process.exit(1); }
-const T0 = Date.now();
-console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト開始。\n`);
+let T0 = Date.now();
+console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト開始。${KEEP_ROOM ? ` (KEEP_ROOM: 退室せず、${dir}/rerun で再実行、${dir}/stop で終了)` : ""}\n`);
 
 // ---- page reports, from the broker ---------------------------------------------------------------
 const pageState = async () => {
@@ -337,8 +351,16 @@ async function speak(key) {
 const at = (s) => new Promise((r) => setTimeout(r, Math.max(0, T0 + s * 1000 - Date.now())));
 const stamp = (ms) => `${String(Math.floor(ms / 60000)).padStart(2, "0")}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}`;
 
-const results = [];
-const audio = []; // per answered cue: { id, quality, reply, echo }
+let results = [];
+let audio = []; // per answered cue: { id, quality, reply, echo }
+let finalPage = {};
+let passNo = 0;
+for (;;) {
+results = [];
+audio = [];
+spoken.length = 0;
+passNo++;
+if (passNo > 1) { T0 = Date.now(); console.log(`\n=== pass ${passNo} (T0 reset) ===\n`); }
 for (const cue of CUES) {
   await at(cue.at);
   const start = Date.now();
@@ -445,9 +467,23 @@ for (const cue of CUES) {
   console.log(`        → ${status}  ${detail}\n`);
 }
 await at(SCRIPT_END);
+finalPage = await pageState();
+if (!KEEP_ROOM) break;
+// ---- stay: the room is kept, the script is repeated on request ----------------------------------
+writeFileSync(join(dir, `report-pass${passNo}.json`), JSON.stringify({ T0, results, audio, pageEvents: finalPage.pageEvents }, null, 2));
+console.log(`\n(KEEP_ROOM) pass ${passNo} 終了、退室せずに待機。再実行: touch ${dir}/rerun · 終了: touch ${dir}/stop`);
+let again = false;
+for (;;) {
+  const [a, b] = await Promise.all([state(yui.botId), state(tester.botId)]);
+  if (!IN_CALL.has(a) || !IN_CALL.has(b)) { console.log(`\n(KEEP_ROOM) a bot left the call (${botName}=${a} Tester=${b}): finishing`); break; }
+  if (existsSync(join(dir, "stop"))) break;
+  if (existsSync(join(dir, "rerun"))) { unlinkSync(join(dir, "rerun")); again = true; break; }
+  await sleep(2000);
+}
+if (!again) break;
+}
 
 // ---- leave, then read the Tester's recording ------------------------------------------------------
-const finalPage = await pageState();
 await leaveAll();
 earsOpen = false;
 ears.close();
@@ -474,6 +510,15 @@ const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
 row("voice agent page started", finalPage.activations > 0 ? "PASS" : "FAIL", finalPage.activations > 0 ? `activated at ${new Date(finalPage.botPageActivatedAt).toISOString()}` : "the page never loaded");
 row("page render rate", beat.fps == null ? "UNKNOWN" : beat.fps >= 20 ? "PASS" : "LOW", `${beat.fps ?? "?"} fps at the last heartbeat · avatar=${beat.avatar ?? "?"}`);
 row("tester heard the room", chunks > 0 ? "PASS" : "FAIL", `${chunks} chunks on the Tester's relay`);
+/**
+ * Whether the character's ears were continuous, at the two places it can be measured: the vendor's own
+ * stamp on each mixed chunk as it reaches the broker, and the page's arrival clock. A hole at the broker
+ * is a hole in the vendor's capture (its recording is a different path and can still be intact).
+ */
+const relayStat = await (async () => { try { return await (await fetch(`${broker}/api/meeting/recall/relay-status/${encodeURIComponent(yui.botId)}`)).json(); } catch { return null; } })();
+const ra = relayStat?.audio;
+row("character's ears continuous (vendor → broker)", !ra ? "UNKNOWN" : ra.gapMs > 2000 ? "DEGRADED" : "PASS", ra ? `${ra.chunks} chunks · ${ra.gaps} holes >250 ms totalling ${(ra.gapMs / 1000).toFixed(1)}s (by the vendor's timestamp_ms)` : "relay-status unavailable");
+row("character's ears continuous (broker → page)", beat.heardMs == null ? "UNKNOWN" : beat.zeroFrames > 0.2 * beat.heard || beat.gaps > 20 ? "DEGRADED" : "PASS", beat.heardMs == null ? "page heartbeat carries no continuity counters" : `${(beat.heardMs / 1000).toFixed(1)}s delivered in ${beat.heard} frames · ${beat.zeroFrames} all-zero frames · ${beat.gaps} arrival holes >250 ms`);
 for (const r of results) row(r.id, r.status, `${r.expect} · ${r.detail}`);
 const judged = audio.filter((a) => a.quality);
 const degraded = judged.filter((a) => a.quality.issues.length);
@@ -490,20 +535,20 @@ for (let i = 0; i < 60; i++) {
   await sleep(5000);
 }
 if (rec?.url) {
-  const mp4 = join(dir, "tester.mp4");
+  const mp4 = join(dir, `tester.${TESTER_RECORDING}`);
   writeFileSync(mp4, Buffer.from(await (await fetch(rec.url)).arrayBuffer()));
   const framesDir = join(dir, "frames");
   mkdirSync(framesDir, { recursive: true });
   // One frame per cue, at the moment an answer was expected: what the room saw of the character.
   const recStart = rec.start_timestamp_ms ?? T0;
-  for (const cue of CUES) {
+  if (TESTER_RECORDING === "mp4") for (const cue of CUES) {
     const sec = Math.max(0, (T0 + (cue.at + 8) * 1000 - recStart) / 1000);
     try { execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", String(sec), "-i", mp4, "-frames:v", "1", join(framesDir, `${cue.id}.png`)]); } catch { /* past the end */ }
   }
   const tr = (await api(`/${tester.botId}/transcript`)).body;
   const utt = Array.isArray(tr) ? tr : (tr?.results ?? []);
   const byYui = utt.filter((u) => (u.speaker_name ?? "") === botName);
-  row("tester recording", "PASS", `${mp4} · frames → ${framesDir}`);
+  row("tester recording", "PASS", TESTER_RECORDING === "mp4" ? `${mp4} · frames → ${framesDir}` : `${mp4} (audio only: no tile frames this run)`);
   row("room heard the character (vendor transcript)", byYui.length ? "PASS" : "FAIL", `${byYui.length}/${utt.length} utterances by ${botName}: ${byYui.slice(0, 3).map((u) => JSON.stringify(u.transcription?.transcript ?? u.transcription).slice(0, 60)).join(" / ")}`);
   writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: pre, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec }, null, 2));
   console.log(`\nreport → ${join(dir, "report.json")}`);

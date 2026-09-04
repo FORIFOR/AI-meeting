@@ -24,11 +24,12 @@ describe("Attendee audio codec", () => {
 });
 
 describe("AttendeeConnector", () => {
-  const join = async (ws: WebSocketLike) => {
+  const join = async (ws: WebSocketLike, extra: { clock?: () => number } = {}) => {
     const calls: { url: string; init?: RequestInit }[] = [];
     const connector = new AttendeeConnector({
       brokerUrl: "http://broker",
       wsFactory: () => ws,
+      ...extra,
       fetchImpl: (async (url: string, init?: RequestInit) => {
         calls.push({ url, init });
         return new Response(JSON.stringify({ botId: "att_1", clientWsUrl: "ws://broker/client", sampleRate: 24000 }));
@@ -92,6 +93,29 @@ describe("AttendeeConnector", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("reports how loud each participant's own stream is, at most ten times a second", async () => {
+    let t = 1000;
+    const ws = fakeWs();
+    const { session } = await join(ws, { clock: () => t });
+    const levels: { id: string; level: number; at: number }[] = [];
+    session.onEvent((e) => { if (e.type === "speech_level") levels.push({ id: e.participantId, level: e.level, at: e.at }); });
+    ws.onopen?.();
+    const loud = encodeChunk(Int16Array.from({ length: 160 }, (_, i) => (i % 2 ? 6000 : -6000)));
+    const faint = encodeChunk(Int16Array.from({ length: 160 }, (_, i) => (i % 2 ? 200 : -200)));
+    const silent = encodeChunk(new Int16Array(160));
+    const send = (chunk: string, participant_uuid: string) =>
+      ws.onmessage?.({ data: JSON.stringify({ relay: { botId: "att_1" }, message: { trigger: "realtime_audio.per_participant", data: { chunk, sample_rate: 16000, participant_uuid } } }) });
+    send(loud, "p-1"); t += 10;
+    send(loud, "p-1"); t += 10; // inside the 100 ms: not reported again
+    send(faint, "p-2"); t += 80;
+    send(silent, "p-1"); // below the floor: nothing to report
+    send(loud, "p-1");
+    expect(levels.map((l) => l.id)).toEqual(["p-1", "p-2", "p-1"]);
+    expect(levels[0]!.level).toBeCloseTo(20 * Math.log10(6000 / 0x8000), 1);
+    expect(levels[1]!.level).toBeLessThan(levels[0]!.level - 25);
+    expect(levels[2]!.at - levels[0]!.at).toBe(100);
   });
 
   it("ignores another bot's feed", async () => {

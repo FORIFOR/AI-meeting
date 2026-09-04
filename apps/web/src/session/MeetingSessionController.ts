@@ -108,6 +108,10 @@ export interface MeetingInit {
  */
 /** How long room speech must last before the bot treats it as a barge-in (provider option, local agent). */
 const BOT_BARGE_IN_CONFIRM_MS = 600;
+/** How much of each participant's loudness is kept for attributing an utterance (see `attribute`). */
+const LEVEL_LEDGER_MS = 20_000;
+/** The loudest stream over an utterance must carry this many times the runner-up's energy to be its speaker. */
+const ATTRIBUTION_MARGIN = 3;
 /**
  * How long a sanctioned turn may go without the character starting to speak before the page gives
  * it up. A local agent needs ~3 s for its first token and up to ~7 s for its first phrase of audio;
@@ -142,6 +146,15 @@ export class MeetingSessionController {
   private heardAnything = false;
   private sawTranscript = false;
   private heard = 0;
+  /**
+   * The ears as a recording would show them: seconds actually delivered, frames that were digital
+   * silence, and arrival holes. Gate #8 run 70 lost two thirds of a question between the room and the
+   * recogniser, and `heard` alone (a chunk count) could not say where; the heartbeat carries these.
+   */
+  private heardMs = 0;
+  private zeroFrames = 0;
+  private gaps = 0;
+  private lastHeardAt = 0;
   private forwarded = 0;
   private transcripts = 0;
   private spokeFrames = 0;
@@ -173,6 +186,10 @@ export class MeetingSessionController {
   private heartbeat: ReturnType<typeof setInterval> | null = null;
   private lastSpeaker: string | null = null;
   private lastSpeakerId: string | undefined;
+  /** Each participant's recent loudness on their own stream (linear power, page time), see `attribute`. */
+  private readonly levels = new Map<string, { at: number; power: number }[]>();
+  /** The room speech the recogniser is working on, bracketed by its own VAD, in page time. */
+  private utterance: { from: number; to: number | null } | null = null;
 
   /** Never throws: an avatar that will not load is reported and the meeting continues with the voice. */
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
@@ -287,7 +304,7 @@ export class MeetingSessionController {
       this.drawn = 0;
       this.lastBeatAt = t;
       const beat = {
-        heard: this.heard, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
+        heard: this.heard, heardMs: Math.round(this.heardMs), zeroFrames: this.zeroFrames, gaps: this.gaps, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
         cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel, sanctioned: this.sanctioned,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
         fps, avatar: this.avatarFailure ?? (this.avatar ? "ok" : "none"),
@@ -502,6 +519,16 @@ export class MeetingSessionController {
       case "transcript":
         this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId);
         break;
+      case "speech_level": {
+        let ledger = this.levels.get(e.participantId);
+        if (!ledger) {
+          ledger = [];
+          this.levels.set(e.participantId, ledger);
+        }
+        ledger.push({ at: e.at, power: 10 ** (e.level / 10) });
+        while (ledger.length && ledger[0]!.at < e.at - LEVEL_LEDGER_MS) ledger.shift();
+        break;
+      }
       case "speech":
         if (e.active) {
           this.lastSpeaker = e.participant.name ?? null;
@@ -582,6 +609,12 @@ export class MeetingSessionController {
      * bot page has no operator to ask. One line, once, is cheap and has paid for itself.
      */
     this.heard++;
+    this.heardMs += (frame.data.length * 1000) / frame.sampleRate;
+    if (this.lastHeardAt && frame.timestamp - this.lastHeardAt > 250) this.gaps++;
+    this.lastHeardAt = frame.timestamp;
+    let silent = true;
+    for (let i = 0; i < frame.data.length; i++) if (frame.data[i] !== 0) { silent = false; break; }
+    if (silent) this.zeroFrames++;
     if (!this.heardAnything) {
       this.heardAnything = true;
       console.log("[rcai:bot] first meeting audio", JSON.stringify({ rate: frame.sampleRate, samples: frame.data.length }));
@@ -618,6 +651,38 @@ export class MeetingSessionController {
       this.forwarded++;
       this.runtime?.pushMicFrame(frame);
     }
+  }
+
+  /**
+   * Whose words the recogniser just delivered. The last stream to go active is a guess that an open
+   * mic beats: Gate #8 run 71 had a host's microphone carrying a television, its stream flickering
+   * above the floor every few seconds, and the Tester's 「ゆい、今日の予定を教えて」 was attached to
+   * whoever had flickered last — after which the television's 「服濡れちゃ…」 was an engaged follow-up
+   * from the person she had answered, and got an answer. Loudness over the utterance decides instead:
+   * the speaker is whoever put the most energy on their own stream while the recogniser's VAD was
+   * open, provided they clearly outweigh the runner-up. No ledger (no per-participant streams, a
+   * listener role) or no clear winner: the old guess stands.
+   */
+  private attribute(now: number): string | undefined {
+    if (this.levels.size === 0) return undefined;
+    const u = this.utterance;
+    const fresh = u && now - (u.to ?? u.from) < 4000;
+    // The VAD fires a little after the sound reached this page; the stream's level did not.
+    const from = fresh ? u.from - 500 : now - 3500;
+    const to = fresh ? (u.to ?? now) : now;
+    let best: { id: string; power: number } | null = null;
+    let second = 0;
+    for (const [id, ledger] of this.levels) {
+      let power = 0;
+      for (const l of ledger) if (l.at >= from && l.at <= to) power += l.power;
+      if (power <= 0) continue;
+      if (!best || power > best.power) {
+        second = best?.power ?? 0;
+        best = { id, power };
+      } else if (power > second) second = power;
+    }
+    if (!best || best.power < second * ATTRIBUTION_MARGIN) return undefined;
+    return best.id;
   }
 
   /**
@@ -809,7 +874,7 @@ export class MeetingSessionController {
          * something nobody can read.
          */
         if (!this.hasExternalTranscripts && e.final !== false && e.text.trim()) {
-          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.lastSpeakerId, e.id);
+          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.attribute(now) ?? this.lastSpeakerId, e.id);
         }
         break;
       case "user_transcript_revised":
@@ -873,6 +938,7 @@ export class MeetingSessionController {
         if (this.policy.state === "RESPONDING" || this.policy.state === "ADDRESSED") this.policy.onAssistantDone(now);
         break;
       case "user_speech_started":
+        this.utterance = { from: now, to: null };
         /**
          * Someone spoke up between the policy sanctioning a turn and the answer starting. The agent
          * treats it as a barge-in on its own thinking and will answer whatever comes next instead —
@@ -896,6 +962,7 @@ export class MeetingSessionController {
         }
         break;
       case "user_speech_ended":
+        if (this.utterance) this.utterance.to = now;
         this.clearThinkingBarge();
         break;
       case "interrupted":

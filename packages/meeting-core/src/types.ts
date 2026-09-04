@@ -64,6 +64,12 @@ export type MeetingEvent =
   | { type: "participant_joined"; participant: MeetingParticipant; at: number }
   | { type: "participant_left"; participant: MeetingParticipant; at: number }
   | { type: "speech"; participant: MeetingParticipant; active: boolean; at: number }
+  /**
+   * How loud one participant's own stream is right now (dBFS RMS, ~10 Hz while above the vendor's
+   * floor). `speech` says who holds the floor; this says by how much — enough to tell the person
+   * asking a question from an open mic with a television behind it.
+   */
+  | { type: "speech_level"; participantId: string; level: number; at: number }
   /** Host muted / unmuted the character; outbound audio must pause while muted. */
   | { type: "audio_muted"; muted: boolean; at: number }
   /** One participant's webcam frame, base64 JPEG (Attendee: 360p at 2 fps). */
