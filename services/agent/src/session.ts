@@ -9,6 +9,7 @@ import type { TTSAdapter, TTSResult } from "./adapters/tts.js";
 import { PROTOCOL_VERSION, encodeAudioFrame, pcm16BytesToFloat32, type ServerMessage, type WireGen } from "./protocol.js";
 import { SentenceChunker, endsSentence, stripMarkdown } from "./sentence.js";
 import { AsyncQueue } from "./queue.js";
+import { rescoreRejection } from "./rescoreGuard.js";
 import { encodeWav } from "./wav.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -590,6 +591,8 @@ export class ConversationSession {
       const text = (await second.transcribe(pcm, 16000, this.language)).trim();
       const ms = this.clock() - t0;
       if (!text) { this.deps.log?.(`rescore empty (${ms}ms) — keeping "${streamed}"`); return streamed; }
+      const rejected = text !== streamed ? rescoreRejection(streamed, text, total / 16000) : undefined;
+      if (rejected) { this.deps.log?.(`rescore ${ms}ms "${streamed}" → "${text}" dropped (${rejected}) — keeping the streaming text`); return streamed; }
       if (text !== streamed) this.deps.log?.(`rescore ${ms}ms "${streamed}" → "${text}"`);
       return text;
     } catch (err) {
