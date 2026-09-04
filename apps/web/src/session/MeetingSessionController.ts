@@ -917,7 +917,8 @@ export class MeetingSessionController {
           break;
         }
         void this.session?.endOutboundUtterance?.();
-        if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames });
+        // What she had said when cut: the harness reads a reply from here too (run 63: three cut answers, 0 read).
+        if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames, text: this.spokeText.slice(0, 200) });
         this.clearAnswerWatchdog();
         this.sanctioned = false;
         this.policy.onInterrupted(now);

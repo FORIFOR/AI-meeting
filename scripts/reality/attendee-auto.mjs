@@ -126,12 +126,14 @@ const CUES = [
   { id: "greet", at: 0, kind: "listen", expect: "入室の挨拶をする", window: 25 },
   { id: "chat", at: 25, kind: "conversation", lines: [[VOICE_A, "昨日の資料、見てくれた？"], [VOICE_B, "見たよ。三ページ目の数字が少し気になったかな。"], [VOICE_A, "あそこは後で直しておくね。"], [VOICE_B, "ありがとう、助かる。"]], expect: "割り込まない", window: 30 },
   { id: "ask1", at: 65, kind: "say", voice: VOICE_A, text: "ゆい、今日の予定を教えて。", expect: "答える", window: 15 },
-  { id: "third", at: 105, kind: "say", voice: VOICE_A, text: "ゆいが昨日そう言ってたよね。", expect: "答えない", window: 15 },
-  { id: "bargein", at: 145, kind: "interrupt", voice: VOICE_A, text: "ゆい、これはどう思う？", cutIn: { voice: VOICE_B, text: "ちょっと待って、その前にこっちの話を先にさせて。" }, expect: "AIが止まる", window: 15 },
-  { id: "ask2", at: 190, kind: "say", voice: VOICE_A, text: "ゆい、今どう思う？", expect: "答える", window: 15 },
-  { id: "silence", at: 230, kind: "listen", expect: "勝手に話さない", window: 30 },
+  // The same person, no name: the conversation continues (an engaged follow-up, seen by accident in run 47).
+  { id: "followup", at: 95, kind: "say", voice: VOICE_A, text: "それって、来週までに終わりそう？", expect: "名前なしでも続けて答える", window: 15 },
+  { id: "third", at: 135, kind: "say", voice: VOICE_A, text: "ゆいが昨日そう言ってたよね。", expect: "答えない", window: 15 },
+  { id: "bargein", at: 175, kind: "interrupt", voice: VOICE_A, text: "ゆい、これはどう思う？", cutIn: { voice: VOICE_B, text: "ちょっと待って、その前にこっちの話を先にさせて。" }, expect: "AIが止まる", window: 30 },
+  { id: "ask2", at: 220, kind: "say", voice: VOICE_A, text: "ゆい、今どう思う？", expect: "答える", window: 15 },
+  { id: "silence", at: 260, kind: "listen", expect: "勝手に話さない", window: 30 },
 ];
-const SCRIPT_END = 270;
+const SCRIPT_END = 300;
 
 // ---- the Tester's voice, rendered before anyone is billed --------------------------------------
 const dir = join(tmpdir(), `rcai-auto-${Date.now()}`);
@@ -334,17 +336,23 @@ for (const cue of CUES) {
   const start = Date.now();
   console.log(`${stamp(start - T0)}  [${cue.id}] ${cue.text ?? cue.kind}\n        期待: ${cue.expect}`);
   let cutAt = null;
+  let heardAt = null;
   if (cue.kind === "say") await speak(cue.id);
   else if (cue.kind === "conversation") for (let i = 0; i < cue.lines.length; i++) { await speak(`${cue.id}:${i}`); await sleep(1200); }
   else if (cue.kind === "interrupt") {
-    await speak(cue.id);
-    // Cut in the moment Yui starts, or after a grace period if she never does.
-    const deadline = Date.now() + 8000;
+    const asked = await speak(cue.id);
+    /**
+     * Cut in when the Tester *hears* her, not when the page says `speaking`: that event fires on the
+     * first phrase text, and under host load the first audio follows it by ~4 s and reaches the room
+     * ~4 s after that (run 63: the cut-in arrived after a 9 s answer had finished — PARTIAL with the
+     * mechanism never exercised). A person interrupts a sentence they can hear, a beat into it.
+     */
+    const deadline = Date.now() + Number(process.env.CUT_DEADLINE_MS ?? 20_000);
     while (Date.now() < deadline) {
-      const st = await pageState();
-      if (eventsBetween(st.pageEvents ?? [], start, Date.now(), "speaking").length) break;
-      await sleep(250);
+      if (audibleSeconds(asked.to, Date.now(), spoken) >= 0.3) { heardAt = Date.now(); break; }
+      await sleep(100);
     }
+    if (heardAt) await sleep(Number(process.env.CUT_AFTER_HEARD_MS ?? 1500));
     cutAt = Date.now();
     await speak(`${cue.id}:cut`);
   }
@@ -371,7 +379,7 @@ for (const cue of CUES) {
       detail = `greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
       break;
     }
-    case "ask1": case "ask2": {
+    case "ask1": case "ask2": case "followup": {
       status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length ? "PARTIAL" : "FAIL";
       detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`;
       const spoke = eventsBetween(ev, start, end, "spoke");
@@ -385,9 +393,32 @@ for (const cue of CUES) {
     }
     case "third": case "chat": case "silence": status = !turns.length && !speaking.length ? "PASS" : "FAIL"; detail = `turn=${turns.length} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
     case "bargein": {
+      /**
+       * Judged on the mechanism and its tail: the page reported `interrupted`, and the room fell quiet
+       * within STOP_TAIL_S of that (audio already in flight to the room keeps playing for the page→room
+       * latency, 3–4 s in run 63). "Quiet" is the first 1.5 s of silence after the interruption, so an
+       * answer to the cut-in itself (run 47: 「承知しました。そちらの対応を優先しましょう。」) is not a tail.
+       */
+      const STOP_TAIL_S = Number(process.env.STOP_TAIL_S ?? 5);
+      const iAt = interrupted[0]?.at ?? null;
+      let stopAt = null;
+      if (iAt) {
+        const pts = heard.filter((h) => h.t >= iAt && h.t <= end && !spoken.some(([a, b]) => h.t >= a && h.t <= b));
+        let quietFrom = null;
+        stopAt = iAt;
+        for (const h of pts) {
+          if (h.db > FLOOR_DB) { quietFrom = null; stopAt = h.t; }
+          else if (quietFrom == null) quietFrom = h.t;
+          else if (h.t - quietFrom >= 1500) break;
+        }
+      }
+      const tailS = iAt ? (stopAt - iAt) / 1000 : null;
       const afterCut = cutAt ? audibleSeconds(cutAt + 1500, cutAt + 5000, spoken) : 0;
-      status = speaking.length && interrupted.length && afterCut < 0.5 ? "PASS" : speaking.length ? "PARTIAL" : "FAIL";
-      detail = `speaking=${speaking.length} interrupted=${interrupted.length} audible 1.5–5s after the cut-in=${afterCut.toFixed(1)}s`;
+      status = speaking.length && interrupted.length && tailS <= STOP_TAIL_S ? "PASS" : speaking.length ? "PARTIAL" : "FAIL";
+      const rel = (t) => (t ? `+${((t - start) / 1000).toFixed(1)}s` : "none");
+      detail = `speaking=${speaking.length} interrupted=${interrupted.length} · heard her ${rel(heardAt)} cut-in ${rel(cutAt)} interrupted ${rel(iAt)}${tailS != null ? ` quiet ${tailS.toFixed(1)}s after that` : ""} · audible 1.5–5s after the cut-in=${afterCut.toFixed(1)}s`;
+      const cutText = interrupted.map((e) => e.data?.text ?? "").filter(Boolean).join(" / ");
+      if (cutText) { const echo = NAME_ECHO.test(cutText); audio.push({ id: cue.id, quality: null, reply: cutText, echo, start, end }); detail += ` · reply(cut)=${JSON.stringify(cutText.slice(0, 60))}${echo ? " NAME-ECHO" : ""}`; }
       break;
     }
     default: status = "INFO"; detail = "";
@@ -409,12 +440,14 @@ const beat = finalPage.pageHeartbeat?.data ?? {};
 // final page state has it; an answer that began in the window is that cue's, wherever it ended.
 for (const a of audio) {
   if (a.reply) continue;
+  // An answer that was cut carries its text on `interrupted` instead (run 63: three cut answers, 0 replies read).
   const late = eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "spoke");
-  if (!late.length) continue;
-  a.reply = late.map((e) => e.data?.text ?? "").join(" / ");
+  const cut = late.length ? [] : eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "interrupted").filter((e) => e.data?.text);
+  if (!late.length && !cut.length) continue;
+  a.reply = (late.length ? late : cut).map((e) => e.data?.text ?? "").join(" / ") + (cut.length ? " (cut)" : "");
   a.echo = NAME_ECHO.test(a.reply);
   const sentS = late.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
-  a.quality = audioQuality(a.start, a.end, spoken, sentS) ?? a.quality;
+  if (late.length) a.quality = audioQuality(a.start, a.end, spoken, sentS) ?? a.quality;
   const r = results.find((x) => x.id === a.id);
   if (r) r.detail = r.detail.replace('reply=""', `reply=${JSON.stringify(a.reply.slice(0, 60))}${a.echo ? " NAME-ECHO" : ""} (spoke after the window)`);
 }
