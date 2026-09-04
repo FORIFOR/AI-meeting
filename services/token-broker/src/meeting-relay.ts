@@ -7,6 +7,15 @@ export interface RelaySocket {
   close(): void;
 }
 
+/** A hole: the vendor's stamp on the chunk after it (`t`), how long it was, and the broker's clock when it arrived. */
+export interface RelayHole { t: number; ms: number; at: number }
+interface RelayAudio { chunks: number; gaps: number; gapMs: number; zeroChunks: number; last: number | null; holes: RelayHole[] }
+
+/** base64 of 16-bit PCM that is all zeros is all "A" (with "=" padding); no decode needed. */
+function isAllZero(chunk: string): boolean {
+  return chunk.length > 0 && /^A+=*$/.test(chunk);
+}
+
 export class RelayHub {
   private tokens = new Map<string, string | null>(); // token → botId (null until bound)
   private clients = new Map<string, Set<RelaySocket>>(); // botId → clients
@@ -23,8 +32,10 @@ export class RelayHub {
    * with zero-filled holes — the loss was inside the vendor's capture, before this relay. `timestamp_ms`
    * is stamped where the chunk is packaged, so a hole there is a hole in the capture, not in the tunnel.
    */
-  private readonly audio = new Map<string, { chunks: number; gaps: number; gapMs: number; last: number | null }>();
+  private readonly audio = new Map<string, RelayAudio>();
   private static readonly GAP_MS = 250;
+  /** How many holes are kept with their times. Run 77: 139 holes in a five-minute pass; the last 64 still say where the pass went. */
+  private static readonly HOLES_KEPT = 64;
 
   constructor(private readonly publicClientBase: string, private readonly now: () => number = Date.now) {}
 
@@ -131,32 +142,40 @@ export class RelayHub {
   }
 
   private noteAudio(botId: string, message: unknown): void {
-    const m = message as { trigger?: string; data?: { timestamp_ms?: number } };
+    const m = message as { trigger?: string; data?: { timestamp_ms?: number; chunk?: string } };
     if (m?.trigger !== "realtime_audio.mixed") return;
     const t = m.data?.timestamp_ms;
     if (typeof t !== "number") return;
     let a = this.audio.get(botId);
     if (!a) {
-      a = { chunks: 0, gaps: 0, gapMs: 0, last: null };
+      a = { chunks: 0, gaps: 0, gapMs: 0, zeroChunks: 0, last: null, holes: [] };
       this.audio.set(botId, a);
     }
     a.chunks++;
     if (a.last != null && t - a.last > RelayHub.GAP_MS) {
       a.gaps++;
       a.gapMs += t - a.last;
+      a.holes.push({ t, ms: t - a.last, at: this.now() });
+      if (a.holes.length > RelayHub.HOLES_KEPT) a.holes.splice(0, a.holes.length - RelayHub.HOLES_KEPT);
     }
     a.last = t;
+    /**
+     * Run 77: with the bot host's memory fine, 14 604 of 16 644 frames reaching the page were exact zeros
+     * — the vendor stamped and sent chunks it had nothing in. Counted here, before the tunnel, so a zero
+     * chunk is known to have left the vendor as one; the holes above are chunks that never came.
+     */
+    if (typeof m.data?.chunk === "string" && isAllZero(m.data.chunk)) a.zeroChunks++;
   }
 
   /** What this bot's relay has actually seen: forwarded, unparseable, who is listening, and whether the audio was continuous. */
-  stats(botId: string): { received: number; malformed: number; clients: number; vendor: boolean; audio: { chunks: number; gaps: number; gapMs: number } } {
+  stats(botId: string): { received: number; malformed: number; clients: number; vendor: boolean; audio: Omit<RelayAudio, "last"> } {
     const a = this.audio.get(botId);
     return {
       received: this.received.get(botId) ?? 0,
       malformed: this.malformed.get(botId) ?? 0,
       clients: this.clients.get(botId)?.size ?? 0,
       vendor: this.vendors.has(botId),
-      audio: { chunks: a?.chunks ?? 0, gaps: a?.gaps ?? 0, gapMs: a?.gapMs ?? 0 },
+      audio: { chunks: a?.chunks ?? 0, gaps: a?.gaps ?? 0, gapMs: a?.gapMs ?? 0, zeroChunks: a?.zeroChunks ?? 0, holes: a?.holes.slice() ?? [] },
     };
   }
 

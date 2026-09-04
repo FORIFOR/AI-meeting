@@ -24,7 +24,7 @@
  * Besides behaviour, each answer is judged as sound: what the Tester heard is compared with what the
  * page sent (a stretch means underruns), scanned for gaps and clipping, and read for a parroted name.
  */
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -113,7 +113,24 @@ async function preflightAgent() {
 const pre = await preflightAgent();
 if (!pre.ok) { console.log(`BLOCKED_BY_AGENT_PREFLIGHT: ${pre.error}\n  (the bots were not created; fix the agent — model, key, LOCAL_LLM_REASONING — and run again)`); process.exit(2); }
 console.log(pre.text ? `preflight: agent answered in ${pre.ms} ms — ${JSON.stringify(pre.text.slice(0, 60))}` : `preflight: ${pre.note}`);
-if (process.env.PREFLIGHT_ONLY) process.exit(0); // `PREFLIGHT_ONLY=1 pnpm reality:attendee:auto`: check the agent, create nothing
+/**
+ * The bot host itself, when it is the self-hosted Attendee in Docker. Run 75's ears were six Chromium
+ * pairs leaked from expired knocks (swap full); run 76's Tester sat 2 m 44 s unlaunched in a worker with
+ * 70 leaked Xvfb. Two bots own two of each; anything above that is a knock that was never cleaned up.
+ * Counted, printed, and a warning — not a block: the operator decides whether to restart the worker.
+ */
+const WORKER = process.env.ATTENDEE_WORKER ?? "attendee-attendee-worker-local-1";
+function preflightWorker() {
+  try {
+    const out = execFileSync("docker", ["exec", WORKER, "sh", "-c", "echo $(ps -eo comm | grep -c '^Xvfb') $(ps -eo comm | grep -ci 'chrom') $(free -m | awk '/Swap/{print $3} /Mem/{print $7}' | tr '\n' ' ')"], { encoding: "utf8", timeout: 10_000 }).trim();
+    const [xvfb, chromium, availMb, swapMb] = out.split(/\s+/).map(Number);
+    const stale = xvfb > 2 || chromium > 4;
+    console.log(`preflight: bot host ${WORKER}: Xvfb ${xvfb} · Chromium ${chromium} · ${availMb} MB available · swap ${swapMb} MB${stale ? " — STALE BOTS LEAKED: docker restart " + WORKER + " before knocking" : ""}`);
+    return { xvfb, chromium, availMb, swapMb, stale };
+  } catch (err) { console.log(`preflight: bot host not inspected (${err.message.split("\n")[0]})`); return null; }
+}
+const preWorker = preflightWorker();
+if (process.env.PREFLIGHT_ONLY) process.exit(0); // `PREFLIGHT_ONLY=1 pnpm reality:attendee:auto`: check the agent and the bot host, create nothing
 
 const api = async (path, init = {}) => {
   const r = await fetch(`${attendee}/api/v1/bots${path}`, { ...init, headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) } });
@@ -332,6 +349,9 @@ let T0 = Date.now();
 console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト開始。${KEEP_ROOM ? ` (KEEP_ROOM: 退室せず、${dir}/rerun で再実行、${dir}/stop で終了)` : ""}\n`);
 
 // ---- page reports, from the broker ---------------------------------------------------------------
+/** The broker's view of the character's ears: chunk/hole counts and the last holes with their times. */
+const relayStatus = async () => { try { return await (await fetch(`${broker}/api/meeting/recall/relay-status/${encodeURIComponent(yui.botId)}`)).json(); } catch { return null; } };
+
 const pageState = async () => {
   try { return await (await fetch(`${broker}/api/meeting/session/${yui.sessionId}`, { headers: { authorization: `Bearer ${yui.clientToken}` } })).json(); } catch { return {}; }
 };
@@ -355,12 +375,23 @@ let results = [];
 let audio = []; // per answered cue: { id, quality, reply, echo }
 let finalPage = {};
 let passNo = 0;
+let hostSamples = [];
 for (;;) {
 results = [];
 audio = [];
 spoken.length = 0;
 passNo++;
 if (passNo > 1) { T0 = Date.now(); console.log(`\n=== pass ${passNo} (T0 reset) ===\n`); }
+/**
+ * The bot host's load while the pass runs — run 77 read it only after the bots had left (low), which
+ * said nothing about the five minutes that mattered. `docker stats` every 15 s, kept with the holes.
+ */
+hostSamples = [];
+const hostSampler = preWorker && setInterval(() => {
+  execFile("docker", ["stats", "--no-stream", "--format", "{{.CPUPerc}} {{.MemUsage}}", WORKER], { encoding: "utf8", timeout: 12_000 }, (err, out) => {
+    if (!err) hostSamples.push({ s: Math.round((Date.now() - T0) / 1000), stat: out.trim() });
+  });
+}, 15_000);
 for (const cue of CUES) {
   await at(cue.at);
   const start = Date.now();
@@ -472,9 +503,24 @@ for (const cue of CUES) {
 }
 await at(SCRIPT_END);
 finalPage = await pageState();
+/**
+ * Where the character's ears went during this pass, on the vendor's own clock. Run 77 pass 1: 139 holes
+ * and 14 604 zero frames with the bot host's memory fine — the totals said "degraded", not when, so the
+ * cue that lost its question could not be matched to the hole that took it. The broker keeps the last 64
+ * holes with its arrival clock; printed against T0 they line up with the cue schedule above.
+ */
+if (hostSampler) clearInterval(hostSampler);
+if (hostSamples.length) console.log(`bot host during the pass (s from T0 → cpu mem): ${hostSamples.map((h) => `${h.s}→${h.stat}`).join("  ")}`);
+const passRelay = await relayStatus();
+if (passRelay?.audio) {
+  const ra = passRelay.audio;
+  const inPass = (ra.holes ?? []).filter((h) => h.at >= T0 - 30_000);
+  console.log(`ears (vendor → broker) this pass: ${inPass.length} holes >250 ms shown of ${ra.gaps} total (${(ra.gapMs / 1000).toFixed(1)}s) · ${ra.zeroChunks}/${ra.chunks} chunks exact zeros since the bot joined`);
+  if (inPass.length) console.log(`  holes at (s from T0 → length): ${inPass.map((h) => `${((h.at - T0) / 1000).toFixed(0)}→${(h.ms / 1000).toFixed(1)}s`).join("  ")}`);
+}
 if (!KEEP_ROOM) break;
 // ---- stay: the room is kept, the script is repeated on request ----------------------------------
-writeFileSync(join(dir, `report-pass${passNo}.json`), JSON.stringify({ T0, results, audio, pageEvents: finalPage.pageEvents }, null, 2));
+writeFileSync(join(dir, `report-pass${passNo}.json`), JSON.stringify({ T0, results, audio, pageEvents: finalPage.pageEvents, relay: passRelay, host: hostSamples }, null, 2));
 console.log(`\n(KEEP_ROOM) pass ${passNo} 終了、退室せずに待機。再実行: touch ${dir}/rerun · 終了: touch ${dir}/stop`);
 let again = false;
 for (;;) {
@@ -519,9 +565,9 @@ row("tester heard the room", chunks > 0 ? "PASS" : "FAIL", `${chunks} chunks on 
  * stamp on each mixed chunk as it reaches the broker, and the page's arrival clock. A hole at the broker
  * is a hole in the vendor's capture (its recording is a different path and can still be intact).
  */
-const relayStat = await (async () => { try { return await (await fetch(`${broker}/api/meeting/recall/relay-status/${encodeURIComponent(yui.botId)}`)).json(); } catch { return null; } })();
+const relayStat = await relayStatus();
 const ra = relayStat?.audio;
-row("character's ears continuous (vendor → broker)", !ra ? "UNKNOWN" : ra.gapMs > 2000 ? "DEGRADED" : "PASS", ra ? `${ra.chunks} chunks · ${ra.gaps} holes >250 ms totalling ${(ra.gapMs / 1000).toFixed(1)}s (by the vendor's timestamp_ms)` : "relay-status unavailable");
+row("character's ears continuous (vendor → broker)", !ra ? "UNKNOWN" : ra.gapMs > 2000 ? "DEGRADED" : "PASS", ra ? `${ra.chunks} chunks · ${ra.gaps} holes >250 ms totalling ${(ra.gapMs / 1000).toFixed(1)}s (by the vendor's timestamp_ms) · ${ra.zeroChunks ?? "?"} chunks exact zeros` : "relay-status unavailable");
 row("character's ears continuous (broker → page)", beat.heardMs == null ? "UNKNOWN" : beat.zeroFrames > 0.2 * beat.heard || beat.gaps > 20 ? "DEGRADED" : "PASS", beat.heardMs == null ? "page heartbeat carries no continuity counters" : `${(beat.heardMs / 1000).toFixed(1)}s delivered in ${beat.heard} frames · ${beat.zeroFrames} all-zero frames · ${beat.gaps} arrival holes >250 ms`);
 // The Tester's own ear over the whole pass: everything the page sent, against what the Tester captured
 // once its own lines are taken out. Both near zero in a muted room is fine; sent ≫ heard is a dead ear.
@@ -559,7 +605,7 @@ if (rec?.url) {
   const byYui = utt.filter((u) => (u.speaker_name ?? "") === botName);
   row("tester recording", "PASS", TESTER_RECORDING === "mp4" ? `${mp4} · frames → ${framesDir}` : `${mp4} (audio only: no tile frames this run)`);
   row("room heard the character (vendor transcript)", byYui.length ? "PASS" : "FAIL", `${byYui.length}/${utt.length} utterances by ${botName}: ${byYui.slice(0, 3).map((u) => JSON.stringify(u.transcription?.transcript ?? u.transcription).slice(0, 60)).join(" / ")}`);
-  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: pre, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec }, null, 2));
+  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: { ...pre, worker: preWorker }, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec, relay: relayStat, host: hostSamples }, null, 2));
   console.log(`\nreport → ${join(dir, "report.json")}`);
 } else {
   row("tester recording", "FAIL", "no recording from the Tester");

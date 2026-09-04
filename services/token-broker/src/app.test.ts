@@ -387,6 +387,28 @@ describe("RelayHub", () => {
     remove();
     expect(hub.clientCount("botA")).toBe(0);
   });
+
+  it("keeps when the mixed audio had holes and how many chunks were exact zeros (run 77: ears dead with memory fine)", async () => {
+    const { RelayHub } = await import("./meeting-relay.js");
+    let wall = 1000;
+    const hub = new RelayHub("ws://localhost:8787", () => wall);
+    hub.register("tok");
+    hub.bind("tok", "botA");
+    const zeros = Buffer.alloc(960).toString("base64"); // 20 ms of 24 kHz int16 silence
+    const sound = Buffer.from([0, 0, 1, 0, 0, 0]).toString("base64");
+    const send = (t: number, chunk: string) => hub.onRecallMessage("tok", JSON.stringify({ trigger: "realtime_audio.mixed", data: { chunk, sample_rate: 24000, timestamp_ms: t } }));
+    send(0, sound); send(20, sound); send(40, zeros);
+    wall = 2000; send(900, zeros); // 860 ms missing before this chunk
+    send(920, sound); send(1500, sound); // another 580 ms
+    const a = hub.stats("botA").audio;
+    expect(a.chunks).toBe(6);
+    expect(a.zeroChunks).toBe(2);
+    expect(a.gaps).toBe(2);
+    expect(a.gapMs).toBe(860 + 580);
+    expect(a.holes).toEqual([{ t: 900, ms: 860, at: 2000 }, { t: 1500, ms: 580, at: 2000 }]);
+    // an all-zero chunk is base64 "A…" with padding; a chunk with any sample set is not
+    expect(hub.stats("nobody").audio).toEqual({ chunks: 0, gaps: 0, gapMs: 0, zeroChunks: 0, holes: [] });
+  });
 });
 
 import { mkdtempSync, readFileSync, readdirSync } from "node:fs";
