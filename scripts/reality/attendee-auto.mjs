@@ -145,13 +145,21 @@ mkdirSync(dir, { recursive: true });
  * 「今日の予定を教えて。」 for the line 「ゆい、今日の予定を教えて。」 while the same mp3 decodes with the name
  * offline. The clip is led in with this much silence so the onset it tests is a word, not a stream.
  */
-const LEAD_IN_MS = 400;
+const LEAD_IN_MS = Number(process.env.LEAD_IN_MS ?? 800);
+/**
+ * Room tone, not digital silence: Meet's captions of run 69 read the Tester's own 「ゆい、今日の予定を教えて。」
+ * as 「今日の予定を教えて。」 and 「ゆい、今どう思う？」 as 「今どう思う？」 — the name was gone before the
+ * sound left the Tester, on a lead-in of 400 ms of zeros. A sender-side gate opens on sound; the lead-in
+ * is now faint pink noise (−50 dBFS) so the track is already "live" when the name starts.
+ */
+const LEAD_IN_NOISE = Number(process.env.LEAD_IN_NOISE ?? 0.003);
 /** @returns {{ mp3: string, seconds: number }} */
 function render(voice, text, name) {
   const aiff = join(dir, `${name}.aiff`);
   const mp3 = join(dir, `${name}.mp3`);
   execFileSync("say", ["-v", voice, "-o", aiff, text]);
-  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-af", `adelay=${LEAD_IN_MS}:all=1`, "-ac", "1", "-ar", "24000", "-b:a", "64k", mp3]);
+  const lead = `anoisesrc=d=${(LEAD_IN_MS / 1000).toFixed(3)}:c=pink:a=${LEAD_IN_NOISE}:r=24000,aformat=sample_fmts=fltp:channel_layouts=mono[n];[0:a]aformat=sample_fmts=fltp:sample_rates=24000:channel_layouts=mono[v];[n][v]concat=n=2:v=0:a=1[out]`;
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-filter_complex", lead, "-map", "[out]", "-ac", "1", "-ar", "24000", "-b:a", "64k", mp3]);
   const seconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp3]).toString().trim());
   return { mp3: readFileSync(mp3).toString("base64"), seconds };
 }
@@ -373,8 +381,11 @@ for (const cue of CUES) {
       // and scored 0 against the window. The greeting is judged from its own event, not from T0.
       const greeting = eventsBetween(ev, T0 - 60_000, end, "greeting");
       const gAt = greeting[0]?.at ?? start;
-      const spokeAfter = eventsBetween(ev, gAt, end, "speaking").length;
-      const frames = eventsBetween(ev, gAt, end, "spoke").reduce((n, e) => Math.max(n, e.data?.frames ?? 0), 0);
+      // A greeting sanctioned late in the window is still judged on its own 15 s (run 69: greeted at
+      // 22.4 s, speaking at 25.8 s against a window closing at 25 s — scored FAIL on the clock).
+      const gEnd = Math.max(end, gAt + 15_000);
+      const spokeAfter = eventsBetween(ev, gAt, gEnd, "speaking").length;
+      const frames = eventsBetween(ev, gAt, gEnd, "spoke").reduce((n, e) => Math.max(n, e.data?.frames ?? 0), 0);
       status = greeting.length && (spokeAfter || heardS > 0.5) ? "PASS" : "FAIL";
       detail = `greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
       break;
@@ -391,7 +402,14 @@ for (const cue of CUES) {
       detail += ` · reply=${JSON.stringify(reply.slice(0, 60))}${echo ? " NAME-ECHO" : ""} · audio: ${audioLine(q)}${q?.issues.length ? ` ⚠ ${q.issues.join(", ")}` : ""}`;
       break;
     }
-    case "third": case "chat": case "silence": status = !turns.length && !speaking.length ? "PASS" : "FAIL"; detail = `turn=${turns.length} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`; break;
+    case "third": case "chat": case "silence": {
+      // The greeting's own audio starting inside the next window is the greeting, not an interruption.
+      const greetings = eventsBetween(ev, T0 - 60_000, end, "greeting");
+      const own = speaking.filter((e) => !greetings.some((g) => e.at >= g.at && e.at - g.at < 15_000));
+      status = !turns.length && !own.length ? "PASS" : "FAIL";
+      detail = `turn=${turns.length} speaking=${own.length}${own.length !== speaking.length ? ` (+${speaking.length - own.length} greeting)` : ""} heard=${heardS.toFixed(1)}s`;
+      break;
+    }
     case "bargein": {
       /**
        * Judged on the mechanism and its tail: the page reported `interrupted`, and the room fell quiet
