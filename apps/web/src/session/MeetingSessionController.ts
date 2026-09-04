@@ -120,6 +120,13 @@ const ATTRIBUTION_MARGIN = 3;
  * ADDRESSED for 27 s and 「ゆい、今日の予定を教えて」 found the floor already taken).
  */
 const ANSWER_STALL_MS = 20_000;
+/**
+ * Backoff between attempts to get the AI back after its socket closes under a live meeting. Gate #8
+ * run 81 pass 2: the agent's WebSocket closed 40 s into the pass with nothing logged on either side;
+ * the ears kept delivering the room, the policy kept hearing nothing, and the character sat silent
+ * through four questions. A bot in a room has nothing better to do than keep trying.
+ */
+const AGENT_RECONNECT_BACKOFF_MS = [1000, 2000, 4000, 8000, 15_000, 30_000];
 
 /** A line the character heard recently: what a turn reads as context, and whose words it was. */
 interface RecentLine { speaker: string; text: string; utterance?: number; participantId?: string; line: MeetingTranscriptLine }
@@ -181,6 +188,10 @@ export class MeetingSessionController {
   private greeted = false;
   /** The AI provider is connected: text turns can be sent (set once `runtime.start` resolves). */
   private runtimeReady = false;
+  /** How the AI provider was made, kept so it can be made again when its session closes under us. */
+  private providerOpts: Parameters<typeof createConversationProvider>[1] | null = null;
+  /** A reconnect to the AI is in progress (its own `session_closed` must not start another). */
+  private reconnecting = false;
   /** Pending ANSWER_STALL_MS watchdog for the sanctioned turn, if any. */
   /** Every spelling of the character's name the transcript may carry (see `canonicalizeName`). */
   private readonly names: string[];
@@ -481,7 +492,8 @@ export class MeetingSessionController {
       runtime.attachMicStream(stream);
     }
 
-    const provider = await createConversationProvider(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive });
+    this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
+    const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
     const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
@@ -1052,9 +1064,57 @@ export class MeetingSessionController {
       case "error":
         this.init.handlers.onError(e.error.message, "PROVIDER");
         break;
+      case "session_closed":
+        this.onAgentClosed(now);
+        break;
       default:
         break;
     }
+  }
+
+  /**
+   * The AI's session closed while the meeting goes on. Whatever turn was in flight is lost — the
+   * policy hears that as an interruption so it does not wait on an answer — and a new session is
+   * brought up behind the same avatar and speaker (`switchProvider`: same config, same system prompt
+   * as last updated). `leave()` closes the session too; that one is ours and is left alone.
+   */
+  private onAgentClosed(now: number): void {
+    if (this.disposed || this.reconnecting || !this.runtimeReady || !this.runtime || !this.providerOpts) return;
+    this.runtimeReady = false;
+    this.reconnecting = true;
+    const lost = this.sanctioned;
+    if (this.init.role === "bot") console.log("[rcai:bot] agent session closed", JSON.stringify({ state: this.policy.state, sanctioned: lost }));
+    this.report("agent_closed", { state: this.policy.state, sanctioned: lost });
+    if (lost) {
+      this.clearAnswerWatchdog();
+      this.sanctioned = false;
+      this.policy.onInterrupted(now);
+    }
+    void this.reconnectAgent(now);
+  }
+
+  private async reconnectAgent(since: number): Promise<void> {
+    for (let attempt = 0; !this.disposed; attempt++) {
+      const wait = AGENT_RECONNECT_BACKOFF_MS[Math.min(attempt, AGENT_RECONNECT_BACKOFF_MS.length - 1)];
+      await new Promise((r) => setTimeout(r, wait));
+      if (this.disposed || !this.runtime || !this.providerOpts) break;
+      try {
+        const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+        await this.runtime.switchProvider(provider);
+        // A WebRTC provider (OpenAI) takes the page's mic as a track, which the new peer must be given again.
+        const stream = this.mic?.mediaStream;
+        if (stream) this.runtime.attachMicStream(stream);
+        this.runtimeReady = true;
+        this.reconnecting = false;
+        const afterMs = Date.now() - since;
+        if (this.init.role === "bot") console.log("[rcai:bot] agent session reconnected", JSON.stringify({ attempts: attempt + 1, afterMs }));
+        this.report("agent_reconnected", { attempts: attempt + 1, afterMs });
+        return;
+      } catch (err) {
+        if (this.init.role === "bot") console.warn("[rcai:bot] agent reconnect failed:", (err as Error).message);
+      }
+    }
+    this.reconnecting = false;
   }
 
   /** Operator: mute the character (back to observing). */
