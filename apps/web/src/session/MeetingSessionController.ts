@@ -240,7 +240,8 @@ export class MeetingSessionController {
         // The policy decided this turn is ours. Nothing else may open the outbound gate.
         this.sanctioned = true;
         if (this.init.role === "bot") {
-          const turn = { reason: t.reason, text: this.policy.addressedBy?.text ?? "" };
+          // Who this turn is for is part of the evidence: run 71 answered the host's television as a follow-up.
+          const turn = { reason: t.reason, text: this.policy.addressedBy?.text ?? "", participantId: this.policy.engagedWith?.participantId };
           console.log("[rcai:bot] turn", JSON.stringify(turn));
           this.report("turn", turn);
         }

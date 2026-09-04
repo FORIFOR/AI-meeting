@@ -31,6 +31,15 @@ const AUDIO = process.env.AUDIO;
 const FRAMES = process.env.FRAMES;
 const SECONDS = Number(process.env.SECONDS ?? 75);
 const PARTICIPANT = "participant_sim_a";
+/**
+ * A second person in the room who is not talking to the character: their own microphone, mixed into
+ * the room by the vendor and also delivered on their own per-participant stream. Run 71 was contaminated
+ * exactly like this (the host's open mic) and the character answered the television; NOISE reproduces
+ * that room so the loudness attribution can be judged without knocking on a real meeting again.
+ */
+const NOISE = process.env.NOISE;
+const NOISE_GAIN = Number(process.env.NOISE_GAIN ?? 0.2);
+const NOISE_PARTICIPANT = process.env.NOISE_PARTICIPANT ?? "participant_sim_host";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 if (!AUDIO || !fs.existsSync(AUDIO)) { console.log(`BLOCKED_BY_AUDIO: set AUDIO to a 16 kHz mono wav (got ${AUDIO})`); process.exit(2); }
@@ -40,6 +49,19 @@ const frameFiles = FRAMES && fs.existsSync(FRAMES) ? fs.readdirSync(FRAMES).filt
 const wav = fs.readFileSync(AUDIO);
 const dataAt = wav.indexOf(Buffer.from("data")) + 8;
 const pcm = wav.subarray(dataAt);
+const noiseWav = NOISE && fs.existsSync(NOISE) ? fs.readFileSync(NOISE) : null;
+const noisePcm = noiseWav ? noiseWav.subarray(noiseWav.indexOf(Buffer.from("data")) + 8) : null;
+if (NOISE && !noisePcm) { console.log(`BLOCKED_BY_NOISE: NOISE is set but not readable (${NOISE})`); process.exit(2); }
+/** int16 little-endian: a + gain·b, clamped — what a vendor's mixer does to two open microphones. */
+const mixInt16 = (a, b, gain) => {
+  const out = Buffer.alloc(a.length);
+  for (let i = 0; i + 1 < a.length; i += 2) {
+    const x = a.readInt16LE(i) + (i + 1 < b.length ? b.readInt16LE(i) * gain : 0);
+    out.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(x))), i);
+  }
+  return out;
+};
+const scaleInt16 = (b, gain) => mixInt16(Buffer.alloc(b.length), b, gain);
 /**
  * 100 ms per message, not 20. At 20 ms this stand-in spends more time in JSON and base64 than in the
  * socket and delivers a quarter of what it should — which looks exactly like a product that drops
@@ -233,12 +255,16 @@ seen.readyAt = ready ? Date.now() : null;
 let offset = 0;
 const audioTimer = setInterval(() => {
   if (offset >= pcm.length) return;
-  const chunk = pcm.subarray(offset, offset + BYTES_PER_CHUNK);
+  const own = pcm.subarray(offset, offset + BYTES_PER_CHUNK);
+  const noise = noisePcm ? noisePcm.subarray(offset, offset + BYTES_PER_CHUNK) : null;
   offset += BYTES_PER_CHUNK;
+  const chunk = noise && noise.length ? mixInt16(own, noise, NOISE_GAIN) : own;
   const b64 = chunk.toString("base64");
   const stamp = Date.now();
   mixed?.send(JSON.stringify({ trigger: "realtime_audio.mixed", data: { chunk: b64, timestamp_ms: stamp, sample_rate: 16000 } }));
-  perAudio?.send(JSON.stringify({ trigger: "realtime_audio.per_participant", data: { participant_uuid: PARTICIPANT, chunk: b64, timestamp_ms: stamp, sample_rate: 16000 } }));
+  // Each person's own microphone on their own stream: the Tester's line as recorded, the host's chatter at the mixer gain.
+  perAudio?.send(JSON.stringify({ trigger: "realtime_audio.per_participant", data: { participant_uuid: PARTICIPANT, chunk: own.toString("base64"), timestamp_ms: stamp, sample_rate: 16000 } }));
+  if (noise && noise.length) perAudio?.send(JSON.stringify({ trigger: "realtime_audio.per_participant", data: { participant_uuid: NOISE_PARTICIPANT, chunk: scaleInt16(noise, NOISE_GAIN).toString("base64"), timestamp_ms: stamp, sample_rate: 16000 } }));
 }, CHUNK_MS);
 
 let frameIndex = 0;
@@ -310,6 +336,14 @@ const session = created.clientToken ? await (await fetch(`${broker}/api/meeting/
 const reported = session.pageEvents ?? [];
 row("page reported to the broker", reported.length > 0 && !!session.pageHeartbeat, `${reported.map((e) => e.type).join(" → ") || "nothing"} · fps=${session.pageHeartbeat?.data?.fps ?? "?"} (SwiftShader, ${last.avatar ?? "?"})`);
 void grew;
+// Who the page decided each turn was for. With NOISE this is the whole point: chatter from the other
+// participant must never come back as an "engaged follow-up" — that is what run 71 did.
+const turns = reported.filter((e) => e.type === "turn");
+if (turns.length) console.log(`turns: ${turns.map((e) => `[${e.data?.reason ?? "?"} ← ${e.data?.participantId ?? e.data?.speaker ?? "?"}] ${String(e.data?.text ?? "").slice(0, 40)}`).join(" | ")}`);
+if (noisePcm) {
+  const strays = turns.filter((e) => /follow-up/.test(String(e.data?.reason ?? "")) && e.data?.participantId && e.data.participantId !== PARTICIPANT);
+  row("host chatter never earns a turn (loudness attribution)", strays.length === 0, strays.length ? strays.map((e) => `${e.data?.reason}: ${e.data?.text}`).join(" | ") : `${turns.length} turns, all attributed to ${PARTICIPANT} or by name`);
+}
 
 console.log(`\npage audio raw: ${JSON.stringify(inPage.audio)}`);
 console.log(`page sockets: ${JSON.stringify(inPage.sockets ?? [])}`);
