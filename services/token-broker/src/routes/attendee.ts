@@ -50,7 +50,23 @@ export interface AttendeeJoinBody {
    * recogniser is the better witness anyway.
    */
   transcription?: "deepgram" | "closed_captions";
+  /**
+   * When the vendor may take the bot out of the room on its own. Seconds; unset fields keep the broker's
+   * defaults below, which in turn override the vendor's.
+   */
+  automaticLeave?: { silenceTimeoutSeconds?: number; silenceActivateAfterSeconds?: number; maxUptimeSeconds?: number };
 }
+
+/**
+ * Attendee's own defaults leave after 600 s without a non-zero audio frame once the bot has been in the
+ * room for 1200 s. A recorder can afford that; a participant cannot. A meeting goes quiet for ten
+ * minutes while people read a document or wait for the last attendee, and a character that slips out
+ * during the pause is gone for the question that ends it (Gate #8 run 83: Yui left with
+ * `auto_leave_silence` exactly 1800 s after joining, seconds before the next pass began). An hour of
+ * silence is the point at which "nobody is talking" more likely means "nobody is here"; the vendor's
+ * only-participant timeout still covers the room that actually emptied.
+ */
+export const ATTENDEE_SILENCE_TIMEOUT_SECONDS = 3600;
 
 export interface AttendeeDeps {
   relay: RelayRegistry & { clientUrl(botId: string): string };
@@ -140,6 +156,11 @@ export async function createAttendeeBot(
      * no lifecycle, no error, no way to tell "waiting to be admitted" from "was refused".
      */
     webhooks: [{ url: `${publicUrl.replace(/\/$/, "")}/api/attendee/webhooks`, triggers: ["bot.state_change"] }],
+    automatic_leave_settings: {
+      silence_timeout_seconds: body.automaticLeave?.silenceTimeoutSeconds ?? ATTENDEE_SILENCE_TIMEOUT_SECONDS,
+      ...(body.automaticLeave?.silenceActivateAfterSeconds !== undefined ? { silence_activate_after_seconds: body.automaticLeave.silenceActivateAfterSeconds } : {}),
+      ...(body.automaticLeave?.maxUptimeSeconds !== undefined ? { max_uptime_seconds: body.automaticLeave.maxUptimeSeconds } : {}),
+    },
   };
   /**
    * The vendor's own transcript, in the meeting's language. Left to auto-detect it rendered a Japanese

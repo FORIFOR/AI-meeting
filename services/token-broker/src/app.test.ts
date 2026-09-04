@@ -571,6 +571,19 @@ describe("Attendee provider", () => {
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
     // Attendee launches the page only when reserve_resources is true; the url alone is stored and ignored.
     expect(sent.voice_agent_settings).toBeUndefined(); // no bot page URL configured in this test
+    // A participant sits through a quiet stretch; the vendor's 600 s recorder default walked out on run 83.
+    expect(sent.automatic_leave_settings).toEqual({ silence_timeout_seconds: 3600 });
+  });
+
+  it("a deployment can set its own leave timers, and only the ones it names are sent", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_1", state: "joining" })), calls),
+    });
+    await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui", automaticLeave: { silenceTimeoutSeconds: 900, maxUptimeSeconds: 7200 } });
+    const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
+    expect(sent.automatic_leave_settings).toEqual({ silence_timeout_seconds: 900, max_uptime_seconds: 7200 });
   });
 
   it("reports a missing key rather than pretending", async () => {
