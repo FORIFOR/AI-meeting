@@ -46,8 +46,14 @@ case "${1:-start}" in
   start)
     command -v cloudflared >/dev/null || { echo "cloudflared がありません: brew install cloudflared" >&2; exit 1; }
     port_up 8787 || { echo "broker (8787) が起動していません。別ターミナルで 'pnpm dev' を実行してください。" >&2; exit 1; }
-    WEB_PORT=5173; port_up 5173 || WEB_PORT=5180
-    port_up "$WEB_PORT" || { echo "web (5173/5180) が起動していません。'pnpm dev' を実行してください。" >&2; exit 1; }
+    # The bot page should be the built app (`pnpm --filter @rcai/web build && pnpm --filter @rcai/web preview`, 5180):
+    # the dev server's HMR client reloads the page when its socket drops and comes back (a tunnel hiccup), and a
+    # reloaded bot page cannot re-activate its single-use token — run 88 lost the character mid-meeting that way.
+    if [ -z "${WEB_PORT:-}" ]; then
+      if port_up 5180; then WEB_PORT=5180; elif port_up 5173; then WEB_PORT=5173; else WEB_PORT=""; fi
+    fi
+    [ -n "$WEB_PORT" ] && port_up "$WEB_PORT" || { echo "web (5180 preview / 5173 dev) が起動していません。'pnpm --filter @rcai/web build && pnpm --filter @rcai/web preview' を実行してください。" >&2; exit 1; }
+    [ "$WEB_PORT" = 5173 ] && echo "! 5173 は Vite dev server です: HMR クライアントがトンネル断のあと bot ページを reload します (run 88)。本番相当は 5180 (vite preview)。" >&2
     echo "→ broker tunnel (localhost:8787)"
     BROKER_URL="$(start_tunnel broker 8787)"
     echo "→ web tunnel (localhost:$WEB_PORT)"

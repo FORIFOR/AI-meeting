@@ -135,6 +135,26 @@ function preflightWorker() {
   } catch (err) { console.log(`preflight: bot host not inspected (${err.message.split("\n")[0]})`); return null; }
 }
 const preWorker = preflightWorker();
+/**
+ * The page the character lives in. Run 88: the Vite dev server's HMR client reloads the page once its
+ * socket to the server drops and comes back (a tunnel hiccup is enough — `location.reload()` on reconnect),
+ * and the reloaded page cannot re-activate (single-use token), so Yui went deaf and mute for passes 3–4
+ * with both bots still in the room. The gate wants the built app (`pnpm --filter @rcai/web build` served
+ * by `vite preview`), which carries no HMR client; a dev-served page is refused unless ALLOW_DEV_BOT_PAGE=1.
+ */
+async function preflightBotPage() {
+  const page = env.RECALL_BOT_PAGE_URL;
+  if (!page) return { ok: false, error: "RECALL_BOT_PAGE_URL is not set in services/token-broker/.env (scripts/reality/meet-setup.sh start)" };
+  try {
+    const res = await fetch(`${page.replace(/\/$/, "")}/?rcai_bot=1`, { signal: AbortSignal.timeout(15_000) });
+    const html = await res.text();
+    return { ok: res.ok, status: res.status, dev: /\/@vite\/client/.test(html), host: new URL(page).host };
+  } catch (err) { return { ok: false, error: err.cause?.code ?? err.message, host: new URL(page).host }; }
+}
+const prePage = await preflightBotPage();
+if (!prePage.ok) { console.log(`BLOCKED_BY_BOT_PAGE: ${prePage.host ?? ""} ${prePage.error ?? `HTTP ${prePage.status}`} — the bot page must answer before a knock`); process.exit(2); }
+if (prePage.dev && process.env.ALLOW_DEV_BOT_PAGE !== "1") { console.log(`BLOCKED_BY_DEV_BOT_PAGE: ${prePage.host} is the Vite dev server (HMR client present) — it reloads the character out of the room on a tunnel hiccup (run 88).\n  pnpm --filter @rcai/web build && pnpm --filter @rcai/web preview --port 5180, point RECALL_BOT_PAGE_URL at it (meet-setup.sh prefers 5180), or ALLOW_DEV_BOT_PAGE=1 to accept the risk`); process.exit(2); }
+console.log(`preflight: bot page ${prePage.host} · ${prePage.dev ? "vite dev server (HMR client present — accepted by ALLOW_DEV_BOT_PAGE)" : "built app, no HMR client"}`);
 if (process.env.PREFLIGHT_ONLY) process.exit(0); // `PREFLIGHT_ONLY=1 pnpm reality:attendee:auto`: check the agent and the bot host, create nothing
 
 const api = async (path, init = {}) => {
@@ -342,7 +362,11 @@ const NAME_ECHO = new RegExp(`^\\s*(?:${[botName, "ゆい", "ゆイ", "ユイ", 
 
 // ---- wait for both to be in the call ------------------------------------------------------------
 const IN_CALL = new Set(["joined_recording", "joined_not_recording", "joined_recording_paused"]);
-const state = async (id) => (await api(`/${id}`)).body?.state ?? "?";
+/** A poll that cannot reach the vendor reads "?" and the loop goes on (run 87: the bot host's Docker VM stopped mid-knock and a hung fetch took the whole run down). */
+const state = async (id) => {
+  try { return (await api(`/${id}`, { signal: AbortSignal.timeout(15_000) })).body?.state ?? "?"; }
+  catch (err) { return `?(${err.cause?.code ?? err.name})`; }
+};
 const t0 = Date.now();
 let joined = false;
 let knocks = 1;
@@ -635,7 +659,7 @@ if (rec?.url) {
   const byYui = utt.filter((u) => (u.speaker_name ?? "") === botName);
   row("tester recording", "PASS", TESTER_RECORDING === "mp4" ? `${mp4} · frames → ${framesDir}` : `${mp4} (audio only: no tile frames this run)`);
   row("room heard the character (vendor transcript)", byYui.length ? "PASS" : "FAIL", `${byYui.length}/${utt.length} utterances by ${botName}: ${byYui.slice(0, 3).map((u) => JSON.stringify(u.transcription?.transcript ?? u.transcription).slice(0, 60)).join(" / ")}`);
-  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: { ...pre, worker: preWorker }, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec, relay: relayStat, host: hostSamples }, null, 2));
+  writeFileSync(join(dir, "report.json"), JSON.stringify({ meetingUrl: url, yui: yui.botId, tester: tester.botId, engine, proactivity, T0, results, audio: audio.map((a) => ({ ...a, quality: a.quality && { ...a.quality } })), preflight: { ...pre, worker: preWorker, page: prePage }, heartbeat: beat, pageEvents: finalPage.pageEvents, transcript: utt, recording: rec, relay: relayStat, host: hostSamples }, null, 2));
   console.log(`\nreport → ${join(dir, "report.json")}`);
 } else {
   row("tester recording", "FAIL", "no recording from the Tester");
