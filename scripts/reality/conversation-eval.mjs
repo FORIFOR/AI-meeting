@@ -19,7 +19,7 @@
  * meetingTurnPrompt — so what is measured is the prompt that ships. `text` still works for a plain line, and
  * `{ "greeting": true }` is the arrival turn (meetingGreetingPrompt — the first thing a real room hears).
  *
- * A scenario line may carry `expect`: { any: [...keywords] } · { all: [...keywords, "either|wording"] } · { none: [...forbidden] } · { minChars }
+ * A scenario line may carry `expect`: { any: [...keywords] } · { all: [...keywords, "either|wording"] } · { none: [...forbidden] } · { minChars } · { maxChars }
  * · { noQuestion: true } · { maxQuestions: n } · { lang: "en" | "ja" } (≥80 % of the letters in that script).
  *
  * The same numbers before and after a persona/prompt/history change tell you whether it helped.
@@ -58,7 +58,7 @@ const lineText = (line) => {
   if (meeting && line.greeting) return meetingGreetingPrompt(meeting.displayName);
   if (!meeting || !line.ask) return line.text;
   const [speakerName, ...rest] = line.ask.split(": ");
-  return meetingTurnPrompt({ context: line.context ?? [], asked: { speakerName, text: rest.join(": ") } });
+  return meetingTurnPrompt({ context: line.context ?? [], displayName: meeting.displayName, asked: { speakerName, text: rest.join(": ") } });
 };
 
 const config = {
@@ -171,6 +171,7 @@ for (const t of replies) {
     if (spec.any) ok = spec.any.some((k) => t.reply.includes(k));
     else if (spec.all) ok = spec.all.every((k) => k.split("|").some((alt) => t.reply.includes(alt))); // "a|b" = either wording
     else if (spec.minChars) ok = t.reply.length >= spec.minChars;
+    else if (spec.maxChars) ok = t.reply.length <= spec.maxChars;
     else if (spec.noQuestion) ok = questionCount(t.reply) === 0;
     else if (spec.none) ok = !spec.none.some((k) => t.reply.includes(k));
     else if (spec.maxQuestions !== undefined) ok = questionCount(t.reply) <= spec.maxQuestions;

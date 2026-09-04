@@ -408,16 +408,20 @@ for (const cue of CUES) {
       const gEnd = Math.max(end, gAt + 15_000);
       const spokeAfter = eventsBetween(ev, gAt, gEnd, "speaking").length;
       const frames = eventsBetween(ev, gAt, gEnd, "spoke").reduce((n, e) => Math.max(n, e.data?.frames ?? 0), 0);
-      status = greeting.length && (spokeAfter || heardS > 0.5) ? "PASS" : "FAIL";
-      detail = `greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
+      // KEEP_ROOM: the greeting is once per admission, so from the second pass on there is nothing to judge.
+      status = passNo > 1 ? "N/A" : greeting.length && (spokeAfter || heardS > 0.5) ? "PASS" : "FAIL";
+      detail = `${passNo > 1 ? `greeting is once per admission (pass ${passNo}) · ` : ""}greeting=${greeting.map((e) => `${JSON.stringify(e.data)}@${((e.at - T0) / 1000).toFixed(1)}s`).join(",") || "none"} speaking=${spokeAfter} spoke=${frames}f heard=${heardS.toFixed(1)}s${gAt < start ? " (before the Tester joined: not audible to it)" : ""}`;
       break;
     }
     case "ask1": case "ask2": case "followup": {
-      status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length ? "PARTIAL" : "FAIL";
-      detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s`;
       const spoke = eventsBetween(ev, start, end, "spoke");
       const reply = spoke.map((e) => e.data?.text ?? "").join(" / ");
       const sentS = spoke.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+      // The page sent an answer and the Tester captured none of it: that is the Tester's ear, not the
+      // character's voice (run 75: its capture went to digital silence mid-run while the admitter heard
+      // her). Neither PASS nor FAIL — UNHEARD, and the admitter's ear decides.
+      status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length && speaking.length && sentS > 1 ? "UNHEARD" : turns.length ? "PARTIAL" : "FAIL";
+      detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s${status === "UNHEARD" ? ` (page sent ${sentS.toFixed(1)}s the Tester never captured)` : ""}`;
       const q = audioQuality(start, end, spoken, sentS);
       const echo = reply ? NAME_ECHO.test(reply) : false;
       audio.push({ id: cue.id, quality: q, reply, echo, start, end });
@@ -519,6 +523,11 @@ const relayStat = await (async () => { try { return await (await fetch(`${broker
 const ra = relayStat?.audio;
 row("character's ears continuous (vendor → broker)", !ra ? "UNKNOWN" : ra.gapMs > 2000 ? "DEGRADED" : "PASS", ra ? `${ra.chunks} chunks · ${ra.gaps} holes >250 ms totalling ${(ra.gapMs / 1000).toFixed(1)}s (by the vendor's timestamp_ms)` : "relay-status unavailable");
 row("character's ears continuous (broker → page)", beat.heardMs == null ? "UNKNOWN" : beat.zeroFrames > 0.2 * beat.heard || beat.gaps > 20 ? "DEGRADED" : "PASS", beat.heardMs == null ? "page heartbeat carries no continuity counters" : `${(beat.heardMs / 1000).toFixed(1)}s delivered in ${beat.heard} frames · ${beat.zeroFrames} all-zero frames · ${beat.gaps} arrival holes >250 ms`);
+// The Tester's own ear over the whole pass: everything the page sent, against what the Tester captured
+// once its own lines are taken out. Both near zero in a muted room is fine; sent ≫ heard is a dead ear.
+const passSentS = eventsBetween(finalPage.pageEvents ?? [], T0 - 60_000, Date.now(), "spoke").reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+const passHeardS = audibleSeconds(T0, Date.now(), spoken);
+row("tester's ear alive", passSentS > 5 && passHeardS < 1 ? "DEAD" : passSentS > 5 && passHeardS < 0.3 * passSentS ? "DEGRADED" : "PASS", `page sent ${passSentS.toFixed(1)}s this pass · Tester captured ${passHeardS.toFixed(1)}s of the room (its own lines excluded)`);
 for (const r of results) row(r.id, r.status, `${r.expect} · ${r.detail}`);
 const judged = audio.filter((a) => a.quality);
 const degraded = judged.filter((a) => a.quality.issues.length);

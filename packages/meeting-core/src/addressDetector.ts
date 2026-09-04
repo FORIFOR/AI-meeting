@@ -107,7 +107,12 @@ export class AddressDetector {
       if (question) return { addressed: true, invited: false, confidence: 0.85, reason: "name + question/request" };
       return { addressed: false, invited: false, confidence: 0.4, reason: "name mentioned without a request" };
     }
-    if (question && this.soundalikeRe?.test(text)) return { addressed: true, invited: false, confidence: 0.7, reason: "vocative (sound-alike)" };
+    // A sound-alike with nothing after it is a syllable, not a call: 「い？」 (run 75, the host's open
+    // microphone) matched the vocative and the question at once and took a turn. The request has to be
+    // in the words that follow the name.
+    if (question && this.soundalikeRe?.test(text) && text.replace(this.soundalikeRe, "").replace(/[\s\p{P}\p{S}]+/gu, "").length >= 2) {
+      return { addressed: true, invited: false, confidence: 0.7, reason: "vocative (sound-alike)" };
+    }
     if (invite) return { addressed: false, invited: true, confidence: 0.6, reason: "floor opened" };
     return { addressed: false, invited: false, confidence: 0.1, reason: "not addressed" };
   }

@@ -131,9 +131,19 @@ const BACKCHANNELS = new Set([
  */
 export function isFollowUpWorthy(text: string): boolean {
   const core = text.normalize("NFKC").replace(/[\s\p{P}\p{S}]+/gu, "").toLowerCase();
-  if (core.length < 3 && !/[?？]/.test(text)) return false;
+  if (core.length < 3 && !(/[?？]/.test(text) && SHORT_QUESTIONS.has(core))) return false;
   return !BACKCHANNELS.has(core);
 }
+
+/**
+ * The short questions a person actually asks in one or two characters. The question mark alone
+ * used to be enough, and the recogniser puts one on noise as readily as on a word: 「とれ？」 (run 75,
+ * a misheard 「ゆい、今日の予定は？」) was answered in full, about a colleague called とれ.
+ */
+export const SHORT_QUESTIONS = new Set([
+  "何", "なに", "なん", "なぜ", "なんで", "どこ", "誰", "だれ", "いつ", "どう", "どれ", "どっち", "どちら", "え", "ん", "は",
+  "why", "how", "who", "what", "where", "when", "which", "hm", "huh", "eh", "so",
+]);
 
 export class ParticipationPolicy {
   private _state: ParticipationState = "OBSERVING";

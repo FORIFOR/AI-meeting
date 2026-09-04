@@ -25,7 +25,7 @@ describe("sound-alikes of the name at an utterance onset", () => {
   for (const line of ["い、今どう思う？", "うい、今どう思う？", "つい今どう思う？", "い今日予定を教えて。", "ゆ、これどう思う"]) {
     it(`addressed: ${line}`, () => expect(s.detect(line)).toMatchObject({ addressed: true, reason: "vocative (sound-alike)" }));
   }
-  for (const line of ["つい言っちゃった", "つい言っちゃった、どう思う？", "い、そうだね", "いつ帰る？", "ついでに聞くけど、田中さんは？"]) {
+  for (const line of ["つい言っちゃった", "つい言っちゃった、どう思う？", "い、そうだね", "いつ帰る？", "ついでに聞くけど、田中さんは？", "い？", "うい？", "ゆ、？"]) {
     it(`not addressed: ${line}`, () => expect(s.detect(line).addressed).toBe(false));
   }
   it("without the option nothing changes", () => expect(d.detect("つい今どう思う？").addressed).toBe(false));

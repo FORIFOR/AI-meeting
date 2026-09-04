@@ -10,6 +10,8 @@
  * who answers what was asked, not the friend who draws the other person out — a question back on every
  * turn is a conversation starter, and a meeting already has one.
  */
+import { SHORT_QUESTIONS } from "./participationPolicy.js";
+
 export const MEETING_PERSONA_ID = "meeting_colleague_ja";
 
 export interface MeetingInstructionsInput {
@@ -63,6 +65,10 @@ export function meetingInstructions({ displayName, proactive, aliases = [] }: Me
     // Addressed by "Tester" the model answered 「〇〇さんは何か確認しておきたいことでもあった？」 — a
     // placeholder said out loud. Names are used as written in the transcript or not at all.
     "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
+    // Run 75: 「ゆい英坊を思う？」 (どう思う) was answered about a colleague called 英坊. No rule fixed it:
+    // told that nonsense words are mishearings and not to repeat them, the 2B model quoted the line
+    // back (「ゆい英坊を思う？」と聞かれましたね, 2/6) or invented 「ゆい英坊さん」 — below the no-rule
+    // baseline on the same probe (meeting-garble scenario). That one is the recogniser's to fix.
     "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。",
   ].join("\n");
 }
@@ -74,6 +80,8 @@ export interface MeetingTurnInput {
   seen?: string;
   /** The line that addressed the character; a reaction with no words carries the detection reason instead. */
   asked: { speakerName?: string | null; text: string } | { reaction: string };
+  /** The character's name as it appears in the line (stripped before judging how much of a question is left). */
+  displayName?: string;
 }
 
 /**
@@ -94,10 +102,36 @@ function demonstrativeHint(text: string): string {
   return DEMONSTRATIVE.test(text) ? "「これ」「それ」が何を指すか曖昧です。この会議で直前に出た具体的な話題（人・資料・数字など）を一つ挙げて「〜のこと？」と確認し、それについての考えを一言。\n\n" : "";
 }
 
+/**
+ * The person asks for the floor: 「ちょっと待って、その前にこっちの話を先にさせて」. The rest of such a
+ * line is often unrecoverable — the recogniser wrote 「…話日を先に咲いて印刷しと」 and 「…ア日ーを済み
+ * させて」 in run 75 — and the model, handed it as a question, acted on the noise (「すぐにこちらの話の
+ * 日程を印刷しておきますね」, 6.6 s) or answered the previous question again. The only right reply is
+ * to yield in a word.
+ */
+const YIELD = /^(?:あ、|え、|あの、)?(?:ちょっと)?(?:待って|まって|ストップ|その前に|先に(?:話|言|させ|やら)|後で(?:いい|聞く)|hold on|wait|hang on|one (?:sec|moment)|let me (?:finish|talk|speak|go first|say))/i;
+
+function yieldHint(text: string): string {
+  return YIELD.test(text.trim()) ? "相手は「自分が先に話す」と言っています。意見・説明・確認は一切言わず、「はい、どうぞ。」のように一言（10文字以内）だけで譲ってください。\n\n" : "";
+}
+
+/** What is left of the line once the character's own name, particles and punctuation are gone. */
+const stripAsk = (text: string, displayName: string) =>
+  text.normalize("NFKC").replace(new RegExp(displayName, "gi"), "").replace(/(?:さん|ちゃん|くん)/g, "").replace(/[\s\p{P}\p{S}]+/gu, "");
+
+/**
+ * Two or three characters cannot carry a question; they are what the recogniser wrote for a sound.
+ * 「とれ？」 was answered at length about the schedule asked before it (run 75). Asked back instead.
+ */
+function shortAskHint(text: string, displayName: string): string {
+  const core = stripAsk(text, displayName).toLowerCase();
+  return core.length <= 3 && !SHORT_QUESTIONS.has(core) ? "この発言は短すぎて聞き取れていない可能性が高いです。内容を推測して答えず、「はい、何？」のように一言だけ聞き返してください。\n\n" : "";
+}
+
 /** The text sent for one turn in which the room addressed the character. */
-export function meetingTurnPrompt({ context, seen, asked }: MeetingTurnInput): string {
+export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui" }: MeetingTurnInput): string {
   const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? "参加者"}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
-  const hint = "text" in asked ? demonstrativeHint(asked.text) : "";
+  const hint = "text" in asked ? yieldHint(asked.text) || shortAskHint(asked.text, displayName) || demonstrativeHint(asked.text) : "";
   const ctx = context.join("\n");
   return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}短く（1〜2文で）答えてください。`;
 }

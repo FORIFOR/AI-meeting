@@ -813,7 +813,7 @@ export class MeetingSessionController {
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
-      : meetingTurnPrompt({ context, seen, asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
+      : meetingTurnPrompt({ context, seen, displayName: this.init.displayName, asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });

@@ -90,6 +90,24 @@ describe("staying in a conversation", () => {
     expect(p.state).toBe("ADDRESSED");
   });
 
+  it("a question mark on a noise does not make it a question (run 75: 「とれ？」 answered about a colleague called とれ)", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ ...A, text: "ゆい、これどう思う？", final: true }, t);
+    exchange(p, t);
+    for (const line of ["とれ？", "い？", "あ、？", "Uh?"]) {
+      t += 2000;
+      p.onTranscript({ ...A, text: line, final: true }, t);
+      expect(p.state, line).not.toBe("ADDRESSED");
+    }
+    for (const line of ["なぜ？", "どこ？", "Why?", "何？"]) {
+      t += 2000;
+      p.onTranscript({ ...A, text: line, final: true }, t);
+      expect(p.state, line).toBe("ADDRESSED");
+      exchange(p, t);
+    }
+  });
+
   it("can be switched off, and then every turn needs the name again", () => {
     const p = new ParticipationPolicy({ names: ["Yui", "ゆい"], engagementTtlMs: 0, cooldownMs: 0 });
     let t = 1000;
