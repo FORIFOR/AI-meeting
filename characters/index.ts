@@ -29,7 +29,7 @@ export const characters: CharacterEntry[] = [
   {
     id: "yui",
     name: "Yui",
-    aliases: ["ゆい", "ユイ", "結衣"],
+    aliases: ["ゆい", "ユイ", "結衣", "唯"], // 唯: run 79 heard 「唯イ寮の予定を教えて」 for 「ゆい、今日の予定を教えて」
     soundalikes: ["い", "うい", "つい", "ゆ"], // Gate #8 runs 10–13: 「い、今どう思う？」「うい、」「つい今どう思う？」
     renderer: "live2d",
     baseUrl: "/characters/yui",

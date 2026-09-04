@@ -164,3 +164,61 @@ describe("the rescore as a second opinion on a follow-up turn", () => {
     await c.leave();
   });
 });
+
+/**
+ * The other direction (run 79 pass 1): 「唯イ寮の予定を教えて。」 was not an address, the rescore
+ * 「ゆい、今日の予定を教えて」 1.4 s later was — and the person got silence.
+ */
+describe("the rescore as a late turn when the first reading lost the name", () => {
+  beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); sendText.mockClear(); interrupt.mockClear(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("takes the turn on the better reading, attached to the person who spoke", async () => {
+    const lines: MeetingTranscriptLine[] = [];
+    const c = controller(lines);
+    await c.start();
+    room!({ type: "speech", participant: { id: "tester", name: null }, active: true, at: Date.now() });
+    emit!({ type: "user_transcript", text: "ユ井寮の予定を教えて。", final: true, id: 1 });
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    emit!({ type: "user_transcript_revised", id: 1, text: "ゆい、今日の予定を教えて" });
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(c.policy.addressedBy?.text).toBe("ゆい、今日の予定を教えて");
+    expect(c.policy.engagedWith?.participantId).toBe("tester");
+    await tick();
+    expect(sendText).toHaveBeenCalledTimes(1);
+    const prompt = (sendText.mock.calls[0] as unknown as [string])[0];
+    expect(prompt).not.toContain("ユ井寮"); // the words it answers are the better ones
+    // A second rescore of the same line, or one that agrees with a turn already taken, is not a second turn.
+    emit!({ type: "user_transcript_revised", id: 1, text: "ゆい、今日の予定を教えて。" });
+    await tick();
+    expect(sendText).toHaveBeenCalledTimes(1);
+    await c.leave();
+  });
+
+  it("a better reading that is not an address by name earns nothing (a follow-up on a rescore would be a second turn)", async () => {
+    const lines: MeetingTranscriptLine[] = [];
+    const c = controller(lines);
+    await c.start();
+    await engaged(c);
+    room!({ type: "speech", participant: { id: "tester", name: null }, active: true, at: Date.now() });
+    emit!({ type: "user_transcript", text: "うん", final: true, id: 2 }); // a backchannel: no follow-up
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    emit!({ type: "user_transcript_revised", id: 2, text: "うん、それって来週までに終わりそう？" });
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(1); // only the first question's answer
+    await c.leave();
+  });
+
+  it("does not take a late turn while the character is already answering something else", async () => {
+    const lines: MeetingTranscriptLine[] = [];
+    const c = controller(lines);
+    await c.start();
+    room!({ type: "speech", participant: { id: "tester", name: null }, active: true, at: Date.now() });
+    emit!({ type: "user_transcript", text: "ユ井寮の予定を教えて。", final: true, id: 1 });
+    emit!({ type: "user_transcript", text: "Yui、今どう思う？", final: true, id: 2 });
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit!({ type: "user_transcript_revised", id: 1, text: "ゆい、今日の予定を教えて" });
+    expect(c.policy.addressedBy?.text).toBe("Yui、今どう思う？"); // the turn in hand is not replaced
+    await c.leave();
+  });
+});

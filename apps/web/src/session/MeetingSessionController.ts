@@ -121,6 +121,9 @@ const ATTRIBUTION_MARGIN = 3;
  */
 const ANSWER_STALL_MS = 20_000;
 
+/** A line the character heard recently: what a turn reads as context, and whose words it was. */
+interface RecentLine { speaker: string; text: string; utterance?: number; participantId?: string; line: MeetingTranscriptLine }
+
 export class MeetingSessionController {
   readonly policy: ParticipationPolicy;
   private session: MeetingSession | null = null;
@@ -134,7 +137,7 @@ export class MeetingSessionController {
   private stopFeed: (() => void) | null = null;
   private vad = new EnergyVAD();
   /** `utterance` = the AI recogniser's utterance id, when the line came from it: what a revision addresses. */
-  private recent: { speaker: string; text: string; utterance?: number; line: MeetingTranscriptLine }[] = [];
+  private recent: RecentLine[] = [];
   /** The recogniser utterance being handed to the policy right now (so a turn can be tied to its line). */
   private feeding: number | undefined;
   /** The utterance the current sanctioned turn was taken on, and why — for the rescore's second opinion. */
@@ -710,7 +713,7 @@ export class MeetingSessionController {
     // from the transition, and with the push after, the line dropped as "the address" was the one
     // before it — the answer to 「ゆい、今どう思う？」 never saw the remark it was about.
     if (final) {
-      this.recent.push({ speaker: line.speaker, text, utterance, line });
+      this.recent.push({ speaker: line.speaker, text, utterance, participantId, line });
       while (this.recent.length > 12) this.recent.shift();
     }
     this.feeding = utterance;
@@ -724,12 +727,14 @@ export class MeetingSessionController {
    * later turn will see, and the line on screen. The policy never hears it — the turn decision was
    * taken on the first reading, and a second one arriving a second later must not become a second turn.
    */
-  private reviseTranscript(utterance: number, text: string): void {
+  private reviseTranscript(utterance: number, text: string): { entry: RecentLine; was: string } | null {
     const r = this.recent.find((x) => x.utterance === utterance);
-    if (!r || !text.trim()) return;
+    if (!r || !text.trim()) return null;
+    const was = r.text;
     r.text = text;
     r.line = { ...r.line, text };
     this.init.handlers.onTranscript(r.line);
+    return { entry: r, was };
   }
 
   /**
@@ -740,13 +745,28 @@ export class MeetingSessionController {
    * started 4 s after that. A follow-up the better reading contradicts is withdrawn while the answer
    * is still a draft. Only that kind: a turn on the name was heard by name, the greeting was never a
    * reading, and once the character is speaking the turn stands — a sentence cut off by its own
-   * second thoughts is worse than a wrong one. Still never a turn of its own.
+   * second thoughts is worse than a wrong one. Never a *second* turn on the same words.
    */
-  private secondOpinion(utterance: number, text: string, now: number): void {
+  private secondOpinion(utterance: number, text: string, was: string, entry: RecentLine, now: number): void {
+    const d = this.policy.detect(text);
     const turn = this.turnOf;
+    /**
+     * The other direction. Run 79: 「唯イ寮の予定を教えて。」 earned nothing — the name was not in it —
+     * and the rescore 1.4 s later read 「ゆい、今日の予定を教えて」. The person called the character by
+     * name and got silence. A first reading that was not an address, a better one that is, and no
+     * turn taken meanwhile: the better reading is handed to the policy as the line it should have
+     * heard. Only the name earns this — a follow-up or an open-conversation turn on a rescore would be
+     * the "second turn" this path must never produce.
+     */
+    if (turn?.utterance !== utterance && d.addressed && !this.policy.detect(was).addressed && (this.policy.state === "OBSERVING" || this.policy.state === "LISTENING")) {
+      if (this.init.role === "bot") console.log("[rcai:bot] late turn on the rescore:", d.reason, JSON.stringify(text.slice(0, 80)));
+      this.feeding = utterance;
+      this.policy.onTranscript({ text, final: true, speakerName: entry.speaker === "?" ? null : entry.speaker, participantId: entry.participantId }, now);
+      this.feeding = undefined;
+      return;
+    }
     if (!turn || turn.utterance !== utterance || turn.reason !== "engaged follow-up") return;
     if (!this.sanctioned || this.policy.state !== "ADDRESSED") return;
-    const d = this.policy.detect(text);
     if (d.addressed || !d.reason.startsWith("name mentioned")) return;
     if (this.init.role === "bot") {
       console.log("[rcai:bot] turn withdrawn:", d.reason, JSON.stringify(text.slice(0, 80)));
@@ -915,8 +935,8 @@ export class MeetingSessionController {
         break;
       case "user_transcript_revised":
         if (!this.hasExternalTranscripts) {
-          this.reviseTranscript(e.id, e.text);
-          this.secondOpinion(e.id, e.text, now);
+          const revised = this.reviseTranscript(e.id, e.text);
+          if (revised) this.secondOpinion(e.id, e.text, revised.was, revised.entry, now);
         }
         break;
       case "assistant_speech_started":
