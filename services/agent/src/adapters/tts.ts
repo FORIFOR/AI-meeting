@@ -97,7 +97,7 @@ export class SupertonicTTS implements TTSAdapter {
   constructor(
     private readonly dir: string,
     voice = "F1",
-    private readonly opts: { language?: string; steps?: number; speed?: number; precision?: "float" | "int8" } = {},
+    private readonly opts: { language?: string; steps?: number; speed?: number; precision?: "float" | "int8"; threads?: number; log?: (msg: string) => void } = {},
   ) {
     this.voice = this.voices.includes(voice) ? voice : "F1";
   }
@@ -106,7 +106,7 @@ export class SupertonicTTS implements TTSAdapter {
     if (!fsSync.existsSync(path.join(this.dir, "helper.js"))) return;
     try {
       const helper = (await import(/* @vite-ignore */ path.join(this.dir, "helper.js"))) as {
-        loadTextToSpeech(onnxDir: string, useGpu: boolean): Promise<NonNullable<SupertonicTTS["tts"]>>;
+        loadTextToSpeech(onnxDir: string, useGpu: boolean, sessionOptions?: { intraOpNumThreads?: number; interOpNumThreads?: number }): Promise<NonNullable<SupertonicTTS["tts"]>>;
         loadVoiceStyle(paths: string[], verbose: boolean): unknown;
       };
       // int8 when it has been built, float otherwise: a missing quantised build is a reason to be
@@ -114,7 +114,11 @@ export class SupertonicTTS implements TTSAdapter {
       const int8 = path.join(this.dir, "onnx-int8");
       const onnxDir = this.opts.precision === "int8" && fsSync.existsSync(path.join(int8, "vocoder.onnx")) ? int8 : path.join(this.dir, "onnx");
       this.precision = onnxDir === int8 ? "int8" : "float";
-      this.tts = await helper.loadTextToSpeech(onnxDir, false);
+      // A thread cap (config: supertonicThreads) — the runtime's default pool spans the efficiency cores
+      // too and every op waits for the slowest of them. The vendor helper is patched to take session
+      // options (scripts/fetch-supertonic.sh); an unpatched one ignores the argument.
+      const threads = this.opts.threads && this.opts.threads > 0 ? { intraOpNumThreads: this.opts.threads, interOpNumThreads: 1 } : undefined;
+      this.tts = await helper.loadTextToSpeech(onnxDir, false, threads);
       this.loadStyle = helper.loadVoiceStyle;
       this.ready = true;
     } catch (err) {
@@ -146,7 +150,8 @@ export class SupertonicTTS implements TTSAdapter {
 
   async synthesize(text: string, signal?: AbortSignal, voice?: string, language?: string): Promise<TTSResult> {
     if (!this.ready || !this.tts) throw new Error("supertonic not ready");
-    const mine = this.queue.then(() => this.run(text, signal, voice, language));
+    const queuedAt = Date.now();
+    const mine = this.queue.then(() => this.run(text, signal, voice, language, queuedAt));
     // A failure must not wedge the queue for every phrase after it.
     this.queue = mine.catch(() => undefined);
     return mine;
@@ -163,9 +168,13 @@ export class SupertonicTTS implements TTSAdapter {
     return primary && SUPERTONIC_LANGS.has(primary) ? primary : (this.opts.language ?? "ja");
   }
 
-  private async run(text: string, signal?: AbortSignal, voice?: string, language?: string): Promise<TTSResult> {
+  private async run(text: string, signal?: AbortSignal, voice?: string, language?: string, queuedAt = Date.now()): Promise<TTSResult> {
     if (signal?.aborted) throw new Error("aborted");
+    const startedAt = Date.now();
     const { wav, duration } = await this.tts!.call(text, this.langFor(language), this.styleFor(voice), this.opts.steps ?? 8, this.opts.speed ?? 1.05);
+    // Synthesis alone, apart from the wait behind the previous phrase: the session's own timing runs
+    // to the last paced frame and reads like a slow model when it is only playback (sims 52–58).
+    this.opts.log?.(`supertonic ${Date.now() - startedAt}ms${startedAt - queuedAt > 20 ? ` after ${startedAt - queuedAt}ms in queue` : ""} ${text.length}ch "${text.slice(0, 12)}"`);
     if (signal?.aborted) throw new Error("aborted");
     // The model returns a fixed-size buffer; only `duration` says how much of it is speech.
     const used = Math.min(wav.length, Math.floor((duration[0] ?? 0) * this.tts!.sampleRate));

@@ -35,10 +35,23 @@ new = """    if (useGpu) {
         console.log('Using CPU for inference');
     }"""
 if old in s:
-    p.write_text(s.replace(old, new, 1))
+    s = s.replace(old, new, 1)
     print("helper: execution providers enabled")
 else:
     print("helper: patch point not found — upstream changed, leaving as-is")
+# Second patch: let the caller pass ONNX Runtime session options. The runtime's default thread pool
+# spans all ten cores, efficiency cores included, and every op waits for the slowest thread; with the
+# bot's browser saturating the host, four threads synthesise 15–20 % sooner (agent config, SUPERTONIC_THREADS).
+old2 = """export async function loadTextToSpeech(onnxDir, useGpu = false) {
+    const opts = {};"""
+new2 = """export async function loadTextToSpeech(onnxDir, useGpu = false, sessionOptions = {}) {
+    const opts = { ...sessionOptions };"""
+if old2 in s:
+    s = s.replace(old2, new2, 1)
+    print("helper: session options accepted")
+else:
+    print("helper: session-options patch point not found — upstream changed, leaving as-is")
+p.write_text(s)
 PYEOF
 curl -fsSL "https://raw.githubusercontent.com/supertone-inc/supertonic/main/LICENSE" -o "$DIR/LICENSE"
 # The vendor's helper imports onnxruntime-node / fft.js / js-yaml by bare specifier, and it lives

@@ -19,6 +19,9 @@ import { pcm16BytesToFloat32, type ClientMessage } from "./protocol.js";
 import { planWithLocalLlm } from "./planner.js";
 import { evaluateLocally } from "./evaluation-bridge.js";
 
+/** Session lines carry the wall clock: a meeting run is reconstructed against the harness's UTC timeline. */
+const stamp = (): string => new Date().toISOString().slice(11, 23);
+
 export interface AgentRuntime {
   cfg: AgentConfig;
   stt: STTAdapter;
@@ -140,7 +143,7 @@ export async function selectTts(cfg: AgentConfig): Promise<TTSAdapter> {
    * against the resident daemon's 60 ms to first audio — a quality choice, not a default one.
    */
   if (cfg.tts === "supertonic" && cfg.supertonicDir) {
-    const s3 = new SupertonicTTS(cfg.supertonicDir, cfg.supertonicVoice, { steps: cfg.supertonicSteps, speed: cfg.supertonicSpeed, precision: cfg.supertonicPrecision });
+    const s3 = new SupertonicTTS(cfg.supertonicDir, cfg.supertonicVoice, { steps: cfg.supertonicSteps, speed: cfg.supertonicSpeed, precision: cfg.supertonicPrecision, threads: cfg.supertonicThreads, log: (m) => console.log(`[agent] ${stamp()}`, m) });
     await s3.init();
     if (s3.ready) return s3;
     console.warn("[agent] BLOCKED_BY_SUPERTONIC:", s3.initError ?? "weights not found — run scripts/fetch-supertonic.sh", "— falling back");
@@ -209,7 +212,8 @@ export function createApp(rt: AgentRuntime): Hono {
   return app;
 }
 
-export function attachSessionWs(server: ReturnType<typeof createServer>, rt: AgentRuntime, log = (m: string) => console.log("[agent]", m)): WebSocketServer {
+
+export function attachSessionWs(server: ReturnType<typeof createServer>, rt: AgentRuntime, log = (m: string) => console.log(`[agent] ${stamp()}`, m)): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
   let strictSessions = 0;
   server.on("upgrade", (req, socket, head) => {

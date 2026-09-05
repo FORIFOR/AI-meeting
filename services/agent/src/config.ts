@@ -38,6 +38,7 @@ export interface AgentConfig {
   supertonicSteps: number;
   supertonicSpeed: number;
   supertonicPrecision: "float" | "int8";
+  supertonicThreads: number;
   /** "Speaker — Style" as AivisSpeech names it; empty means the engine's first style. */
   aivisVoice: string;
   /** Acoustic turn-end model; null when it has not been fetched (scripts/fetch-smart-turn.sh). */
@@ -145,8 +146,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      * "int8" halves synthesis time (1120 ms → 569 ms for the same 3.4 s) and the models drop from
      * 297 MB to 76 MB. Built locally by scripts/quantize-supertonic.sh — there is no int8 release —
      * and falls back to float when it has not been built.
+     *
+     * Default int8 since Gate #8 run 89: the agent had been running float (the env var was never
+     * set at a restart) and the first phrase of a reply, 11 characters, took 1466 ms to synthesize
+     * with the bot host on the same cores. Alone, F1 at 4 steps, 3 repeats each: 11 characters
+     * float 389–471 ms / int8 180–186 ms, 30 characters float 774–845 ms / int8 334–351 ms; whisper
+     * reads three int8 replies back verbatim (scratch tts-bench / tts-quality, 2026-09-05). CoreML
+     * was tried and is slower (the graph splits into 35–165 partitions).
      */
-    supertonicPrecision: (env.SUPERTONIC_PRECISION as "float" | "int8") ?? "float",
+    supertonicPrecision: (env.SUPERTONIC_PRECISION as "float" | "int8") ?? "int8",
+    /**
+     * ONNX Runtime intra-op threads. Its default spans all ten cores, efficiency cores included, and
+     * each op waits for its slowest thread. Four (the performance cores) is faster alone (int8 F1, 4
+     * steps: 15 characters 195→180 ms, 45 characters 410→360 ms) and under a saturated host — twelve
+     * busy processes: 780→620 ms / 1640→1440 ms — which is what a reply faces while the bot's browser
+     * renders (scratch tts-contention, 2026-09-05). 0 = runtime default.
+     */
+    supertonicThreads: Number(env.SUPERTONIC_THREADS ?? 4),
     aivisVoice: env.AIVIS_VOICE ?? "",
     /** Acoustic turn-end model (Pipecat Smart Turn v3). Absent ⇒ silence-only endpointing. */
     smartTurnModel:

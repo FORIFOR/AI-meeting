@@ -834,4 +834,26 @@ describe("what the character remembers from earlier in the conversation", () => 
     expect(last[0]!.content).toContain("京都");
     expect(last[1]!.role).toBe("user");
   }, 20000);
+  it("reads the prompt back into the model after a fold, while the voice is still speaking", async () => {
+    // Run 89: the first token after every "memory folded" took 1.9–2.4 s (0.35–0.45 s otherwise) — the
+    // fold's own request had taken the slot's cache and the notes had changed the system message.
+    const warmed: ChatMessage[][] = [];
+    class FoldingLLM extends FakeLLM {
+      async warm(m: ChatMessage[]) { warmed.push(m); }
+      override async complete() { return "- 相手は週末に京都へ行った"; }
+    }
+    const sent: ServerMessage[] = [];
+    const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FoldingLLM("そうなんだ！"), tts: new FakeTTS(), send: (m) => sent.push(m), sendAudio: () => {}, leadMs: 100000, chunkMs: 100, historyChars: 10 });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await waitFor(() => warmed.length === 1, 1000);
+    // Two exchanges fit nothing out of a 10-character window until the third turn cuts it in half.
+    await s.onText("週末に京都に行ってきたんだよ。");
+    await s.onText("抹茶のパフェを食べた。");
+    expect(warmed.length).toBe(1); // nothing folded yet → nothing to re-read
+    await s.onText("犬を飼ってて、モモっていうの。");
+    await waitFor(() => warmed.length === 2, 2000);
+    // What was read is the prompt the next turn will send: the persona with the fresh notes under it.
+    expect(warmed[1]![0]!.role).toBe("system");
+    expect(warmed[1]![0]!.content).toContain("京都");
+  }, 20000);
 });

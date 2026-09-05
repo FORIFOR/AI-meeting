@@ -947,7 +947,14 @@ export class ConversationSession {
         this.history.push({ role: "assistant", content: said });
       }
       // The model is idle while the voice speaks: fold what scrolled out of the window into the notes.
-      void this.memory.fold(this.deps.llm, this.deps.log);
+      // A fold rewrites the notes inside the system message and its own request took the single
+      // llama slot's cache: the next turn re-read the whole prompt (first token 1.9–2.4 s against
+      // 0.35–0.45 s, run 89, every turn after a "memory folded"). Reading the new prompt now, while
+      // the voice is still speaking, puts that cost back where nobody waits. Skipped when a newer
+      // turn owns the model — its own reply caches the prompt.
+      void this.memory.fold(this.deps.llm, this.deps.log).then((folded) => {
+        if (folded && this.started && genId === this.activeGeneration) this.warmPrompt();
+      });
     }
     const spoke = await speakTask;
     if (abort.signal.aborted || genId !== this.activeGeneration) return;
@@ -1074,6 +1081,7 @@ export class ConversationSession {
       let accLen = 0;
       let rate = 0;
       const t0 = this.clock();
+      let firstAt = 0;
       try {
         for await (const chunk of pending.stream) {
           if (signal.aborted) return spoke;
@@ -1085,6 +1093,7 @@ export class ConversationSession {
             startedAt = this.clock();
           }
           if (!turn.firstTtsAudioAt) turn.firstTtsAudioAt = this.clock();
+          if (!firstAt) firstAt = this.clock();
           if (!transcriptSent) {
             transcriptSent = true;
             this.sendGen(genId, { type: "assistant_transcript", text: pending.phrase, final: false });
@@ -1102,7 +1111,8 @@ export class ConversationSession {
           }
         }
         if (accLen > 0 && rate > 0) await sendPcm(rate, mergeInt16(acc, accLen));
-        this.deps.log?.(`tts ${this.clock() - t0}ms (req→done) "${pending.phrase.slice(0, 20)}"`);
+        // Two numbers: the wait for the phrase's first audio, and how long its paced frames took to go out.
+        this.deps.log?.(`tts ${firstAt ? firstAt - t0 : 0}ms to first audio, ${this.clock() - t0}ms to last frame "${pending.phrase.slice(0, 20)}"`);
       } catch (err) {
         if (!signal.aborted) this.deps.send({ type: "error", message: `tts: ${(err as Error).message}` });
       }
