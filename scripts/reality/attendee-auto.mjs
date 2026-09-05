@@ -151,6 +151,26 @@ async function preflightBotPage() {
     return { ok: res.ok, status: res.status, dev: /\/@vite\/client/.test(html), host: new URL(page).host };
   } catch (err) { return { ok: false, error: err.cause?.code ?? err.message, host: new URL(page).host }; }
 }
+/**
+ * The two public URLs the bot page is handed and can only reach through the internet: the broker's relay
+ * (RECALL_PUBLIC_URL) and the agent's WebSocket (RECALL_AGENT_PUBLIC_URL). Run 91: the host had rebooted,
+ * meet-setup.sh had re-opened the broker and page tunnels, and the agent's tunnel — opened by hand — was
+ * gone with its hostname; the page loaded, the room heard nothing, and four passes ran deaf and mute
+ * (`turn=none` ×16) with every pre-flight green. Both must answer from here before a knock.
+ */
+async function preflightPublicUrl(name, url, path) {
+  if (!url) return { ok: false, error: `${name} is not set in services/token-broker/.env` };
+  const http = url.replace(/^ws(s?):\/\//, "http$1://").replace(/\/$/, "");
+  try {
+    const res = await fetch(`${http}${path}`, { signal: AbortSignal.timeout(15_000) });
+    return { ok: res.ok, status: res.status, host: new URL(http).host };
+  } catch (err) { return { ok: false, error: err.cause?.code ?? err.message, host: new URL(http).host }; }
+}
+for (const [name, path] of [["RECALL_PUBLIC_URL", "/health"], ["RECALL_AGENT_PUBLIC_URL", "/health"]]) {
+  const r = await preflightPublicUrl(name, env[name], path);
+  if (!r.ok) { console.log(`BLOCKED_BY_PUBLIC_URL: ${name} ${r.host ?? ""} ${r.error ?? `HTTP ${r.status}`} — the bot page reaches it only through this URL; re-open the tunnel (scripts/reality/meet-setup.sh start) and restart the broker`); process.exit(2); }
+  console.log(`preflight: ${name} ${r.host} · answers`);
+}
 const prePage = await preflightBotPage();
 if (!prePage.ok) { console.log(`BLOCKED_BY_BOT_PAGE: ${prePage.host ?? ""} ${prePage.error ?? `HTTP ${prePage.status}`} — the bot page must answer before a knock`); process.exit(2); }
 if (prePage.dev && process.env.ALLOW_DEV_BOT_PAGE !== "1") { console.log(`BLOCKED_BY_DEV_BOT_PAGE: ${prePage.host} is the Vite dev server (HMR client present) — it reloads the character out of the room on a tunnel hiccup (run 88).\n  pnpm --filter @rcai/web build && pnpm --filter @rcai/web preview --port 5180, point RECALL_BOT_PAGE_URL at it (meet-setup.sh prefers 5180), or ALLOW_DEV_BOT_PAGE=1 to accept the risk`); process.exit(2); }
