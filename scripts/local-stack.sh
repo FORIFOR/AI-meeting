@@ -24,7 +24,12 @@ start_llama() {
   if curl -sf "http://127.0.0.1:$LLM_PORT/v1/models" >/dev/null 2>&1; then echo "llama-server already up on :$LLM_PORT"; return; fi
   [ -f "$LLM_GGUF" ] || { echo "BLOCKED_BY_LOCAL_LLM_MODEL: $LLM_GGUF not found" >&2; exit 1; }
   command -v llama-server >/dev/null || { echo "BLOCKED_BY_LLAMA_CPP: llama-server not installed (brew install llama.cpp)" >&2; exit 1; }
-  nohup llama-server -m "$LLM_GGUF" --host 127.0.0.1 --port "$LLM_PORT" -c "$LLM_CTX" -ngl 99 --jinja -fa on --reasoning off \
+  # --no-clear-idle: by default a new task on one slot saves every *idle* slot's prompt to the host cache
+  # and clears its KV ("save and clear idle slots on new task"). The agent's fold runs while the
+  # conversation slot is idle, so every fold evicted the conversation; the turn after a barge-in then
+  # failed to load it back (its prefix diverges where the reply was cut) and re-read 3300 tokens in
+  # 5 s (Gate #8 runs 92 and 94). With 16384 tokens of unified KV the slots fit side by side.
+  nohup llama-server -m "$LLM_GGUF" --host 127.0.0.1 --port "$LLM_PORT" -c "$LLM_CTX" -ngl 99 --jinja -fa on --reasoning off --no-clear-idle \
     > "$RUN_DIR/llama-server.log" 2>&1 &
   echo $! > "$RUN_DIR/llama-server.pid"
   echo "llama-server starting (pid $(cat "$RUN_DIR/llama-server.pid"), log $RUN_DIR/llama-server.log)"
