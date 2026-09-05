@@ -9,7 +9,11 @@ set -euo pipefail
 MODELS_DIR="${DEEPNOTE_MODELS_DIR:-$HOME/Library/Application Support/DeepNote/models}"
 LLM_GGUF="${LOCAL_LLM_GGUF:-$MODELS_DIR/gemma-4-E2B-it-Q4_K_M.gguf}"
 LLM_PORT="${LOCAL_LLM_PORT:-8080}"
-LLM_CTX="${LOCAL_LLM_CTX:-4096}"
+# llama-server picks -np automatically (4 slots) and shares one unified KV of LLM_CTX tokens across them.
+# The agent's prompt runs to ~3000 tokens (persona + notes + a window at 1.5 budgets) and a fold or a
+# re-warm runs beside the conversation, so 4096 evicted the conversation slot to the host cache on every
+# fold and the next turn re-read the whole prompt (Gate #8 run 92: 3100 tokens, first token 4.6 s).
+LLM_CTX="${LOCAL_LLM_CTX:-16384}"
 WHISPER_MODEL="${WHISPER_MODEL:-$MODELS_DIR/whisper-eval/ggml-kotoba-whisper-v2.0.bin}"
 WHISPER_PORT="${WHISPER_PORT:-8178}"
 LOCAL_STT="${LOCAL_STT:-sherpa}"
@@ -29,6 +33,20 @@ start_llama() {
     sleep 1
   done
   echo "llama-server did not become ready" >&2; exit 1
+}
+
+# The first requests after a start are slow — Metal pipelines compile on first use per batch shape
+# (run 92: 27 tokens in 7.8 s, a 1101-token prompt in 9.0 s; the same prompt read in 2.5 s afterwards,
+# and the greeting waited 7.9 s behind it). Two throwaway completions, short and long, take that hit here.
+warm_llama() {
+  local short long
+  short='{"model":"m","max_tokens":1,"messages":[{"role":"user","content":"はい。"}]}'
+  long=$(python3 -c 'import json; print(json.dumps({"model":"m","max_tokens":1,"messages":[{"role":"system","content":"あなたは会議に参加しているキャラクターです。" * 60},{"role":"user","content":"こんにちは。"}]}, ensure_ascii=False))')
+  local t0 t1; t0=$(date +%s)
+  curl -sf -o /dev/null --max-time 120 -H 'content-type: application/json' -d "$short" "http://127.0.0.1:$LLM_PORT/v1/chat/completions" || true
+  curl -sf -o /dev/null --max-time 120 -H 'content-type: application/json' -d "$long" "http://127.0.0.1:$LLM_PORT/v1/chat/completions" || true
+  t1=$(date +%s)
+  echo "llama-server warmed (short + ~1000-token prompt) in $((t1 - t0)) s"
 }
 
 start_whisper() {
@@ -59,8 +77,9 @@ case "${1:-start}" in
   start)
     build_tts_daemon
     start_llama
+    warm_llama
     if [ "$LOCAL_STT" = "whisper" ]; then start_whisper; fi
-    echo "agent: pnpm --filter @rcai/agent dev   (LOCAL_LLM_URL=http://127.0.0.1:$LLM_PORT/v1)"
+    echo "agent: cd services/agent && LOCAL_TTS=supertonic LOCAL_STT_FINAL=whisper-async pnpm -s exec tsx src/server.ts   (LOCAL_LLM_URL=http://127.0.0.1:$LLM_PORT/v1; 'pnpm dev' is tsx watch and reloads the agent on every edit — not for a room run)"
     ;;
   stop)
     stop_one llama-server; stop_one whisper-server ;;
