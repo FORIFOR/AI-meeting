@@ -61,6 +61,8 @@ const PARK_RESTART_WORKER = process.env.PARK_RESTART_WORKER === "1";
  * ones that were admitted.
  */
 const KEEP_ROOM = process.env.KEEP_ROOM === "1";
+/** How far before T0 (the Tester's admission) a greeting still counts: the whole admission wait. */
+const GREETING_LOOKBACK_MS = Number(process.env.ADMIT_TIMEOUT ?? 1800) * 1000;
 /** The Tester's recording: Yui's tile is read from it, so 1080p unless the bot host cannot keep up (self-hosted, emulated). */
 const TESTER_RESOLUTION = process.env.TESTER_RESOLUTION ?? "1080p";
 /**
@@ -540,7 +542,10 @@ for (const cue of CUES) {
       // Yui greets on admission, and admission is per bot: when she is let in first, the greeting is
       // over before the Tester (and T0) exists. Run 14 greeted at T0−26 s, 174 frames spoken by T0−18 s,
       // and scored 0 against the window. The greeting is judged from its own event, not from T0.
-      const greeting = eventsBetween(ev, T0 - 60_000, end, "greeting");
+      // Run 96: Yui was let in 118 s before the Tester and greeted at T0−118 s — outside a 60 s look-back,
+      // scored `greeting=none` against a greeting the admitter heard. The admission gap is however long
+      // the admitter takes; the greeting is once per admission, so the whole admission is the window.
+      const greeting = eventsBetween(ev, T0 - GREETING_LOOKBACK_MS, end, "greeting");
       const gAt = greeting[0]?.at ?? start;
       // A greeting sanctioned late in the window is still judged on its own 15 s (run 69: greeted at
       // 22.4 s, speaking at 25.8 s against a window closing at 25 s — scored FAIL on the clock).
@@ -569,7 +574,7 @@ for (const cue of CUES) {
     }
     case "third": case "chat": case "silence": {
       // The greeting's own audio starting inside the next window is the greeting, not an interruption.
-      const greetings = eventsBetween(ev, T0 - 60_000, end, "greeting");
+      const greetings = eventsBetween(ev, T0 - GREETING_LOOKBACK_MS, end, "greeting");
       const own = speaking.filter((e) => !greetings.some((g) => e.at >= g.at && e.at - g.at < 15_000));
       // Run 78 pass 1: the admitter's microphone held the floor until 24 s, the greeting came at 26 s — into
       // the chat cue, where its `turn` event failed a cue whose speaking it was already forgiven.

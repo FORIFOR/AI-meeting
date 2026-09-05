@@ -31,4 +31,15 @@ describe("sound-alikes of the name at an utterance onset", () => {
     it(`not addressed: ${line}`, () => expect(s.detect(line).addressed).toBe(false));
   }
   it("without the option nothing changes", () => expect(d.detect("つい今どう思う？").addressed).toBe(false));
+
+  it("a question ending in 「と思う？」 asks the character, it does not talk about her (run 96)", () => {
+    const d = new AddressDetector({ names: ["Yui", "ゆい", "ユイ", "結衣", "唯"] });
+    // 「ゆい、これはどう思う？」 with 「どう」 lost in an ears hole, as the streaming recogniser wrote it …
+    expect(d.detect("唯イ、これはと思う？")).toMatchObject({ addressed: true, reason: "name + question/request" });
+    // … and as the rescore rewrote it.
+    expect(d.detect("ゆいこれはと思う?")).toMatchObject({ addressed: true });
+    // Narration stays narration.
+    expect(d.detect("ゆいはそれでいいと思う。")).toMatchObject({ addressed: false, reason: "name mentioned in third person" });
+    expect(d.detect("ゆいが昨日そう言ってたよね")).toMatchObject({ addressed: false, reason: "name mentioned in third person" });
+  });
 });
