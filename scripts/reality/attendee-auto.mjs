@@ -177,8 +177,26 @@ if (prePage.dev && process.env.ALLOW_DEV_BOT_PAGE !== "1") { console.log(`BLOCKE
 console.log(`preflight: bot page ${prePage.host} · ${prePage.dev ? "vite dev server (HMR client present — accepted by ALLOW_DEV_BOT_PAGE)" : "built app, no HMR client"}`);
 if (process.env.PREFLIGHT_ONLY) process.exit(0); // `PREFLIGHT_ONLY=1 pnpm reality:attendee:auto`: check the agent and the bot host, create nothing
 
+/**
+ * Run 93: the bot host's Docker VM stopped mid-pass (its disk image hit write errors on a 98 %-full host
+ * disk) and the first `fetch` to the vendor threw ECONNREFUSED out of `speak()` — the harness died with
+ * both bots' records still open and no report for the passes it had. A vendor that cannot be reached is a
+ * failed call, not a crash: it is reported like any other non-2xx and the pass keeps its verdicts.
+ */
+let vendorDownSince = 0;
 const api = async (path, init = {}) => {
-  const r = await fetch(`${attendee}/api/v1/bots${path}`, { ...init, headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) } });
+  let r;
+  try {
+    r = await fetch(`${attendee}/api/v1/bots${path}`, { ...init, signal: init.signal ?? AbortSignal.timeout(15_000), headers: { Authorization: `Token ${env.ATTENDEE_API_KEY}`, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...(init.headers ?? {}) } });
+  } catch (err) {
+    const code = err.cause?.code ?? err.name ?? err.message;
+    if (!vendorDownSince) { vendorDownSince = Date.now(); console.log(`BLOCKED_BY_BOT_HOST: the vendor API at ${attendee} did not answer (${code}) — the bot host is down; the pass continues on what the room still delivers`); }
+    return { ok: false, status: 0, body: String(code) };
+  }
+  if (vendorDownSince) { console.log(`   (vendor API back after ${Math.round((Date.now() - vendorDownSince) / 1000)} s)`); vendorDownSince = 0; }
+  return await apiBody(r);
+};
+const apiBody = async (r) => {
   const text = await r.text();
   let body = null;
   try { body = JSON.parse(text); } catch { body = text; }
