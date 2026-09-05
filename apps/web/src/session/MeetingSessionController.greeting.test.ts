@@ -111,6 +111,35 @@ describe("greeting on arrival", () => {
   });
 
   /**
+   * Offline sims 52 and 60: 「ゆい、今日の予定を教えて」 ended 0.4 s before the greeting took the floor,
+   * and its final transcript arrived while the greeting was being spoken — no barge-in to cut it, and a
+   * policy that only counted it. The question is answered as the next turn, the moment the greeting ends.
+   */
+  it("a name whose transcript lands while the greeting is spoken is answered right after it", async () => {
+    const c = botPage();
+    await c.start();
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    c.onMeetingTranscript("Yui、今日の予定を教えて。", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("RESPONDING"); // the greeting is not cut for it
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_ended", at: Date.now() });
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(2);
+    const [prompt] = sendText.mock.calls[1] as unknown as [string];
+    expect(prompt).toContain("今日の予定を教えて");
+    expect(prompt).not.toContain("【入室】");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    emit({ type: "assistant_speech_ended", at: Date.now() });
+    expect(c.policy.state).toBe("OBSERVING"); // taken once
+    await c.leave();
+  });
+
+  /**
    * Gate #8 runs 6–8, with the recogniser finally hearing 「ゆい、今日の予定を教えて」: the page sanctioned
    * the turn, sent its text, and the agent's `interrupted` for the draft it had been writing on its own
    * made the page drop the sanction — so the real answer was cut as unsanctioned the moment it began.

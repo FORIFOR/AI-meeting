@@ -658,6 +658,59 @@ None of this is a meeting: the recogniser heard a wav, not a room, and nobody wa
 answered. It is the evidence that the path the next admitted run will exercise — ladder, second
 filler, recovery lines, warm prompt, greeting — works end to end on the engine that run will use.
 
+## The reply path after run 89, without a meeting (measured 2026-09-05)
+
+Run 89 left the words right and the sound late: turn → audible 5–7 s, `ask2` stretched with 2.6 s
+gaps. Between that run and the next knock the agent's own timings were taken apart on the same
+engine (offline sims 51–63, `attendee-sim.mjs` with `ask1-16k.wav`, the built bot page on :5180, a
+stand-in Attendee on :8799; scratch benches in the session's scratchpad). Five findings, four fixes:
+
+- **The agent the room had been talking to was running the float voice.** `SUPERTONIC_PRECISION` was
+  unset on the process behind runs 63–89, so the int8 build the docs credited was never loaded. int8
+  is the default now (`config.ts`); the session log carries a UTC stamp on every line so the agent's
+  timeline can be laid against the harness's. Sim 51 on the restarted agent: 3 / 3 conversation rows
+  PASS, first audio 720 ms after the text turn.
+- **Every turn after a `memory folded` paid 1.9–2.4 s for its first token** (0.35–0.45 s otherwise,
+  run 89's agent log). The fold rewrites the notes inside the system message and its own request
+  takes the single llama slot's cache, so the next turn re-read the whole prompt. The composed prompt
+  is now read back into the model right after a successful fold, while the voice is still speaking
+  (`session.ts`; agent test *reads the prompt back into the model after a fold*). Sim 52: `llm warm
+  171 ms` between turns, first token 200–264 ms on the turn after a fold.
+- **The old `tts Nms (req→done)` line measured playback, not synthesis** — it ran to the last *paced*
+  frame, so a 3 s phrase always read as ~3 s of "TTS" and sims 52–58 were analysed against it.
+  Replaced by two numbers (`to first audio` / `to last frame`) plus a `supertonic Xms [after Yms in
+  queue] Nch` line from the adapter itself.
+- **Two ONNX Runtimes in one process made the voice 2.2–2.7× slower.** `@huggingface/transformers@4.2.0`
+  (the smart-turn detector's feature extractor) pins `onnxruntime-node@1.24.3`; Supertonic runs on
+  1.29.0. Merely loading the second dylib slowed every synthesis — 6 ch 117 → 220 ms, 14 ch 170 → 380,
+  32 ch 265 → 700 (bisected with MODE=none/turn/hf/ort124/sharp: the import alone does it, `sharp`
+  and the detector's session are innocent) — and loading it *after* the Supertonic sessions exist
+  aborts the process (`bad_array_new_length`). A pnpm override pins `onnxruntime-node` to 1.29.0 for
+  the whole workspace (root `package.json`); the detector still reports `ready` on it. In the agent,
+  detector loaded: 6 ch 130 ms · 12 ch 166 · 14 ch 200 · 32 ch 320. Sim 60 under the bot page's
+  Chromium: 196–275 ms per phrase, first audio 221 ms after the text turn (sim 53 had 777).
+- **Four intra-op threads beat the runtime's ten.** The default pool spans the six efficiency cores
+  and each op waits for its slowest thread: alone, 15 ch 195 → 180 ms and 45 ch 410 → 360; with
+  twelve busy processes (what a reply faces while the bot's browser renders) 780 → 620 and
+  1640 → 1440. `SUPERTONIC_THREADS=4` by default (`config.ts`, the vendor helper patched to take
+  session options in `scripts/fetch-supertonic.sh`); whisper and llama running at the same time
+  barely move the voice.
+
+And one conversation defect the sims caught twice (52, 60) that no room run had named: 「ゆい、今日の
+予定を教えて」 ended 0.4 s before the room went quiet enough for the greeting, and its final transcript
+landed while the greeting was being spoken. Nothing had cut the greeting (the speech was over), and in
+RESPONDING the policy only counted the line — the question was never answered (`entered a conversation
+FAIL PASSIVE`). An addressed final transcript that lands mid-reply is now held and taken as the next
+turn the moment the reply ends; a reply that is cut off drops it (whoever cut in brings their own
+transcript) (`ParticipationPolicy.heldAddress`, 2 policy tests + 1 controller test through `answer()`).
+Sims 61–63 with the fix all PASS on the barge-in path — the race is timing-dependent and did not
+recur in three tries, so the room-side evidence is the unit tests and the next admitted run.
+
+Measured, not yet heard in a room: the int8 voice, the single runtime, the thread cap and the held
+turn have run only in sims. `pnpm gate` 64 files / 640 tests after all of it. Still open from run 89:
+the 2.2 s from utterance end to turn (vendor transport + endpoint), `ask2`'s gaps under load, the
+muffled f99, 「数字」 → 「数理」, the two missing `spoke` reports, run 88's inaudible stretch.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —

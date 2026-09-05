@@ -143,6 +143,41 @@ describe("greeting on arrival", () => {
     expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
   });
 
+  it("a name whose transcript lands mid-greeting is answered when the greeting ends (sims 52, 60)", () => {
+    // 「ゆい、今日の予定を教えて」 ended 0.4 s before the room went quiet enough for the greeting; its
+    // final transcript arrived 2 s later, while the greeting was being spoken, and was only counted.
+    const p = quiet();
+    p.onSpeechActivity(true, 500);
+    expect(p.onJoined(1000)).toBe(false);
+    p.onSpeechActivity(false, 1800);
+    p.tick(4400); // silence → OBSERVING
+    p.tick(4600); // the greeting takes the floor
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.detection.reason).toBe("joined the meeting");
+    p.markResponding(5000);
+    p.onTranscript({ text: "ゆい、今日の予定を教えて。", final: true, speakerName: "Tester" }, 5800);
+    expect(p.state).toBe("RESPONDING"); // never interrupts itself
+    p.onAssistantDone(9000);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.text).toBe("ゆい、今日の予定を教えて。");
+    expect(p.addressedBy?.speakerName).toBe("Tester");
+    expect(p.engagementState).toBe("ENGAGED");
+    // Consumed once: the turn after this one ends on the silence as usual.
+    p.markResponding(9100);
+    p.onAssistantDone(12_000);
+    expect(p.state).toBe("OBSERVING");
+  });
+
+  it("a held name is dropped when the reply is cut off: whoever cut in brings their own transcript", () => {
+    const p = quiet();
+    p.onJoined(1000);
+    p.markResponding(1100);
+    p.onTranscript({ text: "ゆい、こんにちは", final: true }, 1500);
+    p.onInterrupted(2000);
+    expect(p.state).toBe("OBSERVING");
+    expect(p.addressedBy).toBeNull();
+  });
+
   it("a name spoken before the greeting's silence replaces it: no belated greeting afterwards", () => {
     const p = quiet();
     p.onSpeechActivity(true, 500);

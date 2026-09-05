@@ -159,6 +159,8 @@ export class ParticipationPolicy {
   private lastResponseEndAt = -1e9;
   private consecutive = 0;
   private pendingQuestion: { text: string; at: number; key: string | null; speakerName?: string | null } | null = null;
+  /** Called by name while the character was already speaking (see `onTranscript`): answered next. */
+  private heldAddress: { seg: TranscriptSegment; detection: AddressDetection } | null = null;
   private history: PolicyTransition[] = [];
   private listeners = new Set<(t: PolicyTransition) => void>();
   /** The utterance that triggered ADDRESSED (for the assistant's context). */
@@ -230,6 +232,8 @@ export class ParticipationPolicy {
     this.greeting = false;
     this.addressedBy = null;
     this.pendingQuestion = null;
+    // Whoever cut in brings their own transcript; a line held from before the cut is not the next turn.
+    this.heldAddress = null;
     // Being cut off does not count as a turn the character took: it did not get to finish one.
     this.consecutive = 0;
     // Cut off this many times in a row, the character was never being listened to: it stops taking
@@ -311,6 +315,15 @@ export class ParticipationPolicy {
       // Others talking while we respond: if they address someone else, reset the consecutive counter.
       const d = this.detector.detect(seg.text);
       if (!d.addressed && seg.final) this.consecutive = 0;
+      /**
+       * Called by name while the character is talking. Speech that overlaps the reply is a barge-in and
+       * the session cuts the reply before its transcript lands here; the one that lands *during* the
+       * reply is speech that had already ended when the character started — 「ゆい、今日の予定を教えて」
+       * finished 0.4 s before the greeting took the floor (offline sims 52, 60), and its transcript
+       * arrived mid-greeting to a branch that only counted it. Held, and taken as the next turn the
+       * moment this one ends: to the person asking, the character heard them and answered.
+       */
+      if (d.addressed && seg.final) this.heldAddress = { seg, detection: d };
       return d;
     }
     if (!seg.final) return null;
@@ -473,6 +486,16 @@ export class ParticipationPolicy {
     }
     this.interruptedInARow = 0;
     this.addressedBy = null;
+    const held = this.heldAddress;
+    this.heldAddress = null;
+    if (held) {
+      // Spoken to while speaking (see `onTranscript`): that line is the next turn, not the silence.
+      this.addressedBy = { text: held.seg.text, speakerName: held.seg.speakerName, detection: held.detection };
+      this.pendingQuestion = null;
+      this.engage(this.speakerKey(held.seg), now);
+      this.transition("ADDRESSED", now, `${held.detection.reason} (held while speaking)`);
+      return;
+    }
     this.transition("OBSERVING", now, "assistant done");
   }
 
@@ -483,6 +506,7 @@ export class ParticipationPolicy {
     this.greetingPending = false;
     this.addressedBy = null;
     this.pendingQuestion = null;
+    this.heldAddress = null;
     this.engagement = null;
     this.transition("OBSERVING", now, "reset");
   }
