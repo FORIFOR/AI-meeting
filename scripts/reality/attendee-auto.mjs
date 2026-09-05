@@ -432,6 +432,15 @@ while (Date.now() - t0 < admitTimeoutS * 1000) {
 }
 console.log("");
 if (!joined) { console.log(`FAIL: both bots were not admitted in time (${knocks} knock${knocks > 1 ? "s" : ""})`); await leaveAll(); process.exit(1); }
+/**
+ * Let the bot host settle before the first cue. Run 97: the Tester was admitted 715 s after Yui and the
+ * script started the moment it was in — while its browser was still joining and the recording spinning
+ * up. The first question landed in that spike: a cache-hit prompt of 87 tokens took 10.2 s to the first
+ * token (117 ms a token against 2), the rescore 3.6 s, and the Tester heard 1.0 s of the answer inside
+ * the window. Twenty seconds of quiet first (`SETTLE_MS` to change).
+ */
+const settleMs = Number(process.env.SETTLE_MS ?? 20_000);
+if (settleMs > 0) { console.log(`   (両方入室 — bot host が落ち着くまで ${Math.round(settleMs / 1000)} s 待機)`); await sleep(settleMs); }
 let T0 = Date.now();
 console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト開始。${KEEP_ROOM ? ` (KEEP_ROOM: 退室せず、${dir}/rerun で再実行、${dir}/stop で終了)` : ""}\n`);
 
