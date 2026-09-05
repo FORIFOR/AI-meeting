@@ -423,6 +423,29 @@ let audio = []; // per answered cue: { id, quality, reply, echo }
 let finalPage = {};
 let passNo = 0;
 let hostSamples = [];
+/**
+ * `spoke` is logged when the page finishes playing, which is often after the cue's window has closed
+ * (run 47: ask1 answered inside the window, `spoke` at 81.2 s against a window ending at 80 s — read
+ * as `reply=""`, and the parrot check came out UNKNOWN on a run with two perfectly good answers). The
+ * page state has it; an answer that began in the window is that cue's, wherever it ended. Read at each
+ * pass's end as well as the run's — on a kept room only the last pass reached this step, and runs 89
+ * and 90 filed two good answers a pass as `reply=""`.
+ */
+function readLateReplies() {
+  for (const a of audio) {
+    if (a.reply) continue;
+    // An answer that was cut carries its text on `interrupted` instead (run 63: three cut answers, 0 replies read).
+    const late = eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "spoke");
+    const cut = late.length ? [] : eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "interrupted").filter((e) => e.data?.text);
+    if (!late.length && !cut.length) continue;
+    a.reply = (late.length ? late : cut).map((e) => e.data?.text ?? "").join(" / ") + (cut.length ? " (cut)" : "");
+    a.echo = NAME_ECHO.test(a.reply);
+    const sentS = late.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+    if (late.length) a.quality = audioQuality(a.start, a.end, spoken, sentS) ?? a.quality;
+    const r = results.find((x) => x.id === a.id);
+    if (r) r.detail = r.detail.replace('reply=""', `reply=${JSON.stringify(a.reply.slice(0, 60))}${a.echo ? " NAME-ECHO" : ""} (spoke after the window)`);
+  }
+}
 for (;;) {
 results = [];
 audio = [];
@@ -574,6 +597,8 @@ if (passRelay?.audio) {
 }
 if (!KEEP_ROOM) break;
 // ---- stay: the room is kept, the script is repeated on request ----------------------------------
+readLateReplies();
+for (const r of results) if (r.detail.includes("spoke after the window")) console.log(`  ${r.id}: ${r.detail.match(/reply=("[^"]*"[^·]*)/)?.[1] ?? ""}`);
 writeFileSync(join(dir, `report-pass${passNo}.json`), JSON.stringify({ T0, results, audio, pageEvents: finalPage.pageEvents, relay: passRelay, host: hostSamples }, null, 2));
 console.log(`\n(KEEP_ROOM) pass ${passNo} 終了、退室せずに待機。再実行: touch ${dir}/rerun · 終了: touch ${dir}/stop`);
 let again = false;
@@ -592,23 +617,7 @@ await leaveAll();
 earsOpen = false;
 ears.close();
 const beat = finalPage.pageHeartbeat?.data ?? {};
-// `spoke` is logged when the page finishes playing, which is often after the cue's window has closed
-// (run 47: ask1 answered inside the window, `spoke` at 81.2 s against a window ending at 80 s — read
-// as `reply=""`, and the parrot check came out UNKNOWN on a run with two perfectly good answers). The
-// final page state has it; an answer that began in the window is that cue's, wherever it ended.
-for (const a of audio) {
-  if (a.reply) continue;
-  // An answer that was cut carries its text on `interrupted` instead (run 63: three cut answers, 0 replies read).
-  const late = eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "spoke");
-  const cut = late.length ? [] : eventsBetween(finalPage.pageEvents ?? [], a.start, a.end + 20_000, "interrupted").filter((e) => e.data?.text);
-  if (!late.length && !cut.length) continue;
-  a.reply = (late.length ? late : cut).map((e) => e.data?.text ?? "").join(" / ") + (cut.length ? " (cut)" : "");
-  a.echo = NAME_ECHO.test(a.reply);
-  const sentS = late.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
-  if (late.length) a.quality = audioQuality(a.start, a.end, spoken, sentS) ?? a.quality;
-  const r = results.find((x) => x.id === a.id);
-  if (r) r.detail = r.detail.replace('reply=""', `reply=${JSON.stringify(a.reply.slice(0, 60))}${a.echo ? " NAME-ECHO" : ""} (spoke after the window)`);
-}
+readLateReplies();
 console.log(`\n| step | status | detail |\n|---|---|---|`);
 const row = (n, s, d) => console.log(`| ${n} | ${s} | ${d} |`);
 row("voice agent page started", finalPage.activations > 0 ? "PASS" : "FAIL", finalPage.activations > 0 ? `activated at ${new Date(finalPage.botPageActivatedAt).toISOString()}` : "the page never loaded");
