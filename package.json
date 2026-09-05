@@ -46,5 +46,10 @@
     "jsdom": "^26.1.0",
     "tsx": "^4.20.0",
     "concurrently": "^9.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "onnxruntime-node": "1.29.0"
+    }
   }
 }
