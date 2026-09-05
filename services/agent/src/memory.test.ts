@@ -30,17 +30,60 @@ describe("ConversationMemory", () => {
     expect(out).toContain("z");
   });
 
-  it("over budget, cuts back to half the budget (not to just-fit) and keeps the cut turns pending", () => {
+  it("over budget, stages a cut back to half the budget (not to just-fit) and lands it with the fold", async () => {
     const mem = new ConversationMemory({ recentChars: 170 });
     const history = [...turn(1), ...turn(2), ...turn(3)];
     const out = mem.compose("sys", history);
     expect(out[0]!.content).toBe("sys");
-    expect(out.slice(1)).toEqual(history.slice(4));
-    expect(mem.dropped).toBe(4);
+    // Run 90: applied here, the cut cost the turn that crossed the budget a cold prompt (1.6 s) and the
+    // fold's notes cost the next one another (2.3 s). Shown verbatim until the fold makes both one change.
+    expect(out.slice(1)).toEqual(history);
+    expect(mem.dropped).toBe(0);
     expect(mem.pendingChars).toBe(160);
+    expect(await mem.fold(new NotesLLM())).toBe(true);
+    expect(mem.dropped).toBe(4);
+    expect(mem.pendingChars).toBe(0);
+    expect(mem.compose("sys", history).slice(1)).toEqual(history.slice(4));
     // The prefix now stays put for the next turns: nothing more is dropped while the half fits.
     mem.compose("sys", [...history, ...turn(4)]);
     expect(mem.dropped).toBe(4);
+  });
+
+  it("a compose during the fold, and a failed fold, never hand the same message over twice", async () => {
+    const mem = new ConversationMemory({ recentChars: 170 });
+    const h3 = [...turn(1), ...turn(2), ...turn(3)];
+    mem.compose("sys", h3); // stages turns 1–2
+    const llm = new NotesLLM("- メモ", 30);
+    const folding = mem.fold(llm);
+    const h4 = [...h3, ...turn(4)]; // 320 chars: the hard cap cuts at once, while the fold is running
+    mem.compose("sys", h4);
+    expect(mem.dropped).toBe(6);
+    expect(await folding).toBe(true);
+    expect(mem.dropped).toBe(6);
+    expect(mem.compose("sys", h4).slice(1)).toEqual(h4.slice(6));
+    expect(await mem.fold(llm)).toBe(true);
+    const folded = llm.calls.flatMap((c) => c.map((m) => m.content).join("\n"));
+    for (const m of h4.slice(0, 6)) expect(folded.filter((f) => f.includes(m.content.slice(0, 8)))).toHaveLength(1);
+    expect(mem.pendingChars).toBe(0);
+
+    // A failing fold gives the staged cut back, still shown verbatim, still counted as pending.
+    class FailingLLM extends NotesLLM { override async complete(): Promise<string> { throw new Error("down"); } }
+    const mem2 = new ConversationMemory({ recentChars: 170 });
+    mem2.compose("sys", h3);
+    expect(await mem2.fold(new FailingLLM())).toBe(false);
+    expect(mem2.dropped).toBe(0);
+    expect(mem2.pendingChars).toBe(160);
+    expect(await mem2.fold(new NotesLLM())).toBe(true);
+    expect(mem2.dropped).toBe(4);
+  });
+
+  it("past one and a half budgets the cut is applied at once, folds or no folds", () => {
+    const mem = new ConversationMemory({ recentChars: 170 });
+    const history = [...turn(1), ...turn(2), ...turn(3), ...turn(4)]; // 320 > 255
+    const out = mem.compose("sys", history);
+    expect(out.slice(1)).toEqual(history.slice(6));
+    expect(mem.dropped).toBe(6);
+    expect(mem.pendingChars).toBe(240);
   });
 
   it("starts the window on a user turn but never drops the character's own last turn", () => {

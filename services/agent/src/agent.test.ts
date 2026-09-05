@@ -856,4 +856,38 @@ describe("what the character remembers from earlier in the conversation", () => 
     expect(warmed[1]![0]!.role).toBe("system");
     expect(warmed[1]![0]!.content).toContain("京都");
   }, 20000);
+  it("folds only once every phrase of the reply is synthesised, and before the voice has finished", async () => {
+    // Run 90, pass 3: the fold's 6 s request ran alongside Supertonic and each phrase took 1.4 s
+    // instead of 0.3 s. Synthesis ends seconds before playback does — the fold fits in between.
+    const marks: { at: number; what: string }[] = [];
+    class FoldingLLM extends FakeLLM {
+      async warm() {}
+      override async complete() { marks.push({ at: Date.now(), what: "fold" }); return "- 相手は週末に京都へ行った"; }
+    }
+    class SlowTTS extends FakeTTS {
+      override async synthesize(text: string, signal?: AbortSignal, voice?: string, language?: string) {
+        const r = await super.synthesize(text, signal, voice, language);
+        await new Promise((res) => setTimeout(res, 60));
+        marks.push({ at: Date.now(), what: `synth ${text}` });
+        return r;
+      }
+    }
+    const sent: ServerMessage[] = [];
+    const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FoldingLLM("はい。そうです。"), tts: new SlowTTS(), send: (m) => { sent.push(m); if (m.type === "assistant_speech_ended") marks.push({ at: Date.now(), what: "ended" }); }, sendAudio: () => {}, leadMs: 0, chunkMs: 100, historyChars: 10 });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await s.onText("週末に京都に行ってきたんだよ。");
+    await s.onText("抹茶のパフェを食べた。");
+    await s.onText("犬を飼ってて、モモっていうの。"); // the window is over budget: this turn folds
+    await waitFor(() => marks.filter((m) => m.what === "fold").length >= 1, 5000);
+    const synths = marks.filter((m) => m.what.startsWith("synth"));
+    const fold = marks.find((m) => m.what === "fold")!;
+    const ended = marks.filter((m) => m.what === "ended");
+    // The fold started after the last phrase of that reply came back from the voice …
+    const lastSynth = synths[synths.length - 1]!;
+    expect(lastSynth.what).toBe("synth そうです。");
+    expect(fold.at).toBeGreaterThanOrEqual(lastSynth.at);
+    // … and while the two one-second phrases were still being paced out to the room.
+    expect(ended.length).toBe(3);
+    expect(fold.at).toBeLessThan(ended[2]!.at - 500);
+  }, 20000);
 });

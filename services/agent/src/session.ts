@@ -165,6 +165,9 @@ export class ConversationSession {
   private history: ChatMessage[] = [];
   /** Turns in a row on which the model said nothing; picks the recovery line, reset by any answer. */
   private failedTurns = 0;
+  /** Work parked until the current reply has finished synthesising (the memory fold), and the speak loop's re-check. */
+  private onSynthIdle: (() => void) | null = null;
+  private synthCheck: (() => void) | null = null;
   private memory = new ConversationMemory({ recentChars: 2400 });
   private systemPrompt = "";
   private language = "ja-JP";
@@ -752,6 +755,7 @@ export class ConversationSession {
     this.gen.generationId++;
     this.gen.sequence = 0;
     this.activeGeneration = this.gen.generationId;
+    this.onSynthIdle = null; // a fold parked behind a reply that was cut off waits for the next turn
     return this.activeGeneration;
   }
 
@@ -947,14 +951,28 @@ export class ConversationSession {
         this.history.push({ role: "assistant", content: said });
       }
       // The model is idle while the voice speaks: fold what scrolled out of the window into the notes.
-      // A fold rewrites the notes inside the system message and its own request took the single
-      // llama slot's cache: the next turn re-read the whole prompt (first token 1.9–2.4 s against
-      // 0.35–0.45 s, run 89, every turn after a "memory folded"). Reading the new prompt now, while
-      // the voice is still speaking, puts that cost back where nobody waits. Skipped when a newer
-      // turn owns the model — its own reply caches the prompt.
-      void this.memory.fold(this.deps.llm, this.deps.log).then((folded) => {
-        if (folded && this.started && genId === this.activeGeneration) this.warmPrompt();
-      });
+      // A fold rewrites the notes inside the system message, so the next turn's prompt differs from
+      // the cached one from the notes on and llama.cpp re-reads everything after them (first token
+      // 1.9–2.4 s against 0.35–0.45 s, run 89, every turn after a "memory folded"). Reading the new
+      // prompt back now, while the voice is still speaking, puts that cost where nobody waits.
+      // Skipped when a newer turn owns the model — its own reply caches the prompt.
+      //
+      // Started once the reply has finished synthesising, not when the model finished writing it:
+      // the fold's 6 s request ran alongside Supertonic and each phrase took 1.4 s instead of 0.3 s
+      // (run 90, pass 3). Synthesis is over seconds before the voice is — pass 3 would have folded
+      // and re-read from 33.4 s to 40.8 s with the voice speaking until 43.2 s. A reply that was cut
+      // off does not fold at all (a barge-in turn is about to use the model); the next turn folds.
+      if (!abort.signal.aborted) {
+        const fold = () => void this.memory.fold(this.deps.llm, this.deps.log).then((folded) => {
+          if (folded && this.started && genId === this.activeGeneration) this.warmPrompt();
+        });
+        if (this.synthCheck) {
+          this.onSynthIdle = fold;
+          this.synthCheck();
+        } else {
+          fold();
+        }
+      }
     }
     const spoke = await speakTask;
     if (abort.signal.aborted || genId !== this.activeGeneration) return;
@@ -1042,6 +1060,25 @@ export class ConversationSession {
    * Returns true if any audio was sent.
    */
   private async speakQueue(queue: AsyncQueue<string>, signal: AbortSignal, turn: TurnClock, genId: number): Promise<boolean> {
+    // Phrases requested from the voice whose first audio has not come back yet. Once the model has
+    // finished (queue closed), the queue is drained and nothing is in flight, every phrase of the
+    // reply is synthesised and parked work (the memory fold) may take the CPU.
+    let inFlight = 0;
+    const check = (): void => {
+      if (!queue.isClosed || queue.size > 0 || inFlight > 0 || signal.aborted) return;
+      const cb = this.onSynthIdle;
+      this.onSynthIdle = null;
+      cb?.();
+    };
+    this.synthCheck = check;
+    try {
+      return await this.speakPhrases(queue, signal, turn, genId, { onRequested: () => { inFlight++; }, onSynthesized: () => { inFlight--; check(); } });
+    } finally {
+      if (this.synthCheck === check) this.synthCheck = null;
+    }
+  }
+
+  private async speakPhrases(queue: AsyncQueue<string>, signal: AbortSignal, turn: TurnClock, genId: number, synth: { onRequested: () => void; onSynthesized: () => void }): Promise<boolean> {
     let spoke = false;
     let startedAt = 0;
     let sentMs = 0;
@@ -1051,10 +1088,12 @@ export class ConversationSession {
     const take = async (): Promise<{ phrase: string; stream: AsyncIterable<TTSResult>; requestedAt: number } | null> => {
       const s = await queue.next();
       if (s === null) return null;
+      synth.onRequested();
       try {
         return { phrase: s, stream: this.ttsStream(s, signal), requestedAt: this.clock() };
       } catch (err) {
         if (!signal.aborted) this.deps.send({ type: "error", message: `tts: ${(err as Error).message}` });
+        synth.onSynthesized();
         return { phrase: s, stream: { async *[Symbol.asyncIterator]() {} }, requestedAt: this.clock() };
       }
     };
@@ -1082,9 +1121,12 @@ export class ConversationSession {
       let rate = 0;
       const t0 = this.clock();
       let firstAt = 0;
+      let synthesized = false;
+      const synthesizedNow = (): void => { if (!synthesized) { synthesized = true; synth.onSynthesized(); } };
       try {
         for await (const chunk of pending.stream) {
           if (signal.aborted) return spoke;
+          synthesizedNow();
           if (chunk.pcm16.length === 0) continue;
           if (!spoke) {
             spoke = true;
@@ -1116,6 +1158,7 @@ export class ConversationSession {
       } catch (err) {
         if (!signal.aborted) this.deps.send({ type: "error", message: `tts: ${(err as Error).message}` });
       }
+      synthesizedNow();
       if (signal.aborted) return spoke;
       pending = await nextP;
     }

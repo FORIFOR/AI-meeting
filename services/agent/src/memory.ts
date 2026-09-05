@@ -27,7 +27,11 @@ export interface ConversationMemoryOptions {
 export class ConversationMemory {
   notes = "";
   private cursor = 0;
+  /** First message of `history` not yet handed to `pending` or `staged` — never below `cursor`. */
+  private queued = 0;
   private pending: ChatMessage[] = [];
+  /** The cut `compose` decided on, waiting to land together with the fold that absorbs it. */
+  private staged: { start: number; msgs: ChatMessage[] } | null = null;
   private folding: AbortController | null = null;
   private readonly foldAfterChars: number;
   private readonly maxNotesChars: number;
@@ -41,12 +45,14 @@ export class ConversationMemory {
     this.cancelFold();
     this.notes = "";
     this.cursor = 0;
+    this.queued = 0;
     this.pending = [];
+    this.staged = null;
   }
 
-  /** Characters waiting to be folded into the notes. */
+  /** Characters waiting to be folded into the notes (a staged cut included). */
   get pendingChars(): number {
-    return this.pending.reduce((n, m) => n + m.content.length, 0);
+    return [...this.pending, ...(this.staged?.msgs ?? [])].reduce((n, m) => n + m.content.length, 0);
   }
 
   /** How many of `history`'s oldest messages are no longer shown verbatim. */
@@ -66,8 +72,15 @@ export class ConversationMemory {
        * Over budget: cut back to half, not to just-fit. A window that slides one message per turn
        * changes the prompt's prefix every turn, and llama.cpp's prompt cache is a prefix cache —
        * measured on the local model, first-token went from 130 ms to 1.2 s the moment sliding
-       * began. Cutting in halves means one cold prompt per half-window (a dozen turns locally),
-       * and the fold that follows changes the notes at the same moment, so the two misses are one.
+       * began. Cutting in halves means one cold prompt per half-window (a dozen turns locally).
+       *
+       * The cut itself is not applied here but staged for the fold that absorbs it (`fold`). Applied
+       * here, the prompt changed twice a half-window apart: once at the cut, on the turn that
+       * happened to cross the budget (Gate #8 run 90: 763 tokens re-read, first token 1.6 s), and
+       * again when the fold wrote the notes into the system message (1283 tokens, 2.3 s). Landing
+       * both in the fold makes them one change, read back while the voice is still speaking. Until
+       * the fold lands the window runs over budget, verbatim — bounded below, in case folds keep
+       * failing, by cutting at once past one and a half budgets.
        */
       let keep = 0;
       let start = history.length;
@@ -79,8 +92,17 @@ export class ConversationMemory {
       }
       // Start the window on the user's side of an exchange (stepping back, so nothing kept is lost).
       while (start > this.cursor && history[start]!.role !== "user") start--;
-      this.pending.push(...history.slice(this.cursor, start));
-      this.cursor = start;
+      // Slices start at `queued`, not `cursor`: what a running fold took, or an earlier stage holds,
+      // is never handed over twice.
+      const fresh = start > this.queued ? history.slice(this.queued, start) : [];
+      this.queued = Math.max(this.queued, start);
+      if (chars > this.opts.recentChars * 1.5) {
+        this.pending.push(...(this.staged?.msgs ?? []), ...fresh);
+        this.staged = null;
+        this.cursor = Math.max(this.cursor, start);
+      } else if (fresh.length) {
+        this.staged = { start, msgs: [...(this.staged?.msgs ?? []), ...fresh] };
+      }
     }
     // One system message, notes last. As a second system message the notes changed the character:
     // replies went from two sentences to five, the register slipped (「君」), and it recalled things the
@@ -96,8 +118,10 @@ export class ConversationMemory {
    */
   async fold(llm: LLMAdapter, log?: (msg: string) => void): Promise<boolean> {
     if (this.folding || this.pendingChars < this.foldAfterChars) return false;
-    const batch = this.pending;
+    const staged = this.staged;
+    const batch = [...this.pending, ...(staged?.msgs ?? [])];
     this.pending = [];
+    this.staged = null;
     const ac = new AbortController();
     this.folding = ac;
     const t0 = Date.now();
@@ -106,10 +130,15 @@ export class ConversationMemory {
       const next = text.trim();
       if (!next) throw new Error("empty notes");
       this.notes = next.length > this.maxNotesChars ? next.slice(0, this.maxNotesChars) : next;
+      // The staged cut lands with the notes: one change to the prompt, not two.
+      if (staged && staged.start > this.cursor) this.cursor = staged.start;
       log?.(`memory folded ${batch.length} msgs in ${Date.now() - t0}ms → ${this.notes.length} chars of notes:\n${this.notes}`);
       return true;
     } catch (err) {
-      this.pending = [...batch, ...this.pending];
+      this.pending = [...batch.slice(0, batch.length - (staged?.msgs.length ?? 0)), ...this.pending];
+      // The staged cut goes back to waiting, ahead of anything staged since (later messages).
+      const since = this.staged as { start: number; msgs: ChatMessage[] } | null; // staged during the await
+      if (staged) this.staged = since ? { start: since.start, msgs: [...staged.msgs, ...since.msgs] } : staged;
       if (!ac.signal.aborted) log?.(`memory fold failed: ${(err as Error).message}`);
       return false;
     } finally {
