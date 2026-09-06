@@ -24,6 +24,8 @@ export interface AgentConfig {
   llmHistoryChars: number;
   /** Ask the model a second time when its first token is later than this (HedgedLLM); 0 disables. */
   llmHedgeMs: number;
+  /** Touch the local model this often while idle so its weights stay resident (ms); 0 disables. */
+  llmKeepWarmMs: number;
   /** Directory to write each committed utterance's audio to as a wav (diagnostics; unset ⇒ off). */
   dumpUtterancesDir: string | null;
   tts: "say" | "sbv2" | "avspeech" | "aivis" | "supertonic" | "auto";
@@ -118,6 +120,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
      * it is off on loopback.
      */
     llmHedgeMs: Number(env.LOCAL_LLM_HEDGE_MS ?? (isLoopbackUrl(env.LOCAL_LLM_URL ?? "http://127.0.0.1:8080/v1") ? 0 : 1800)),
+    /**
+     * A 16 GB host with a 12 GB bot-host VM keeps the local model's 3 GB of weights only while they are
+     * being used: after a quiet quarter of an hour the first request paged them back in at 150–250 ms
+     * a token (Gate #8 runs 92–98: the pre-flight's 27 tokens in 4.8–6.7 s, the greeting's first token
+     * 3.5 s). One one-token request every 45 s keeps them warm; a remote model is never touched.
+     */
+    llmKeepWarmMs: Number(env.LOCAL_LLM_KEEPWARM_MS ?? 45_000),
     dumpUtterancesDir: env.RCAI_DUMP_UTTERANCES || null,
     tts: (env.LOCAL_TTS as AgentConfig["tts"]) ?? "auto",
     sbv2Url: env.SBV2_URL ?? "http://127.0.0.1:5000",

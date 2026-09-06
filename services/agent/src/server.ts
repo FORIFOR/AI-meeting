@@ -76,6 +76,11 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
   }
   const llm = new OpenAICompatibleLLM(cfg.llmUrl, cfg.llmModel, undefined, cfg.llmKey || undefined, cfg.llmReasoning || undefined);
   await llm.init();
+  if (cfg.llmKeepWarmMs > 0) {
+    // `warm` is a no-op for anything but the local server, so this costs a remote model nothing.
+    const tick = setInterval(() => { llm.warm([{ role: "user", content: "." }]).catch(() => {}); }, cfg.llmKeepWarmMs);
+    tick.unref();
+  }
   const conversationLlm: LLMAdapter = cfg.llmHedgeMs > 0 ? new HedgedLLM(llm, { afterMs: cfg.llmHedgeMs, log: (l) => console.log(`[agent] ${l}`) }) : llm;
 
   /**
