@@ -458,6 +458,31 @@ console.log(`両方入室 (${Math.round((T0 - t0) / 1000)}s)。スクリプト�
 /** The broker's view of the character's ears: chunk/hole counts and the last holes with their times. */
 const relayStatus = async () => { try { return await (await fetch(`${broker}/api/meeting/recall/relay-status/${encodeURIComponent(yui.botId)}`)).json(); } catch { return null; } };
 
+/**
+ * The room has to be audible before a cue is worth playing. Run 104: both bots joined, the page
+ * activated, and neither bot's audio ever reached the broker (0 chunks on either relay) — four passes
+ * ran against a deaf character before anyone looked. The character's relay must carry chunks within
+ * AUDIO_CHECK_S of the settle; otherwise the run is `BLOCKED_BY_BOT_AUDIO` and the bots leave.
+ */
+{
+  const audioCheckS = Number(process.env.AUDIO_CHECK_S ?? 30);
+  const started = Date.now();
+  let chunks = 0;
+  while (Date.now() - started < audioCheckS * 1000) {
+    const st = await relayStatus();
+    chunks = st?.audio?.chunks ?? 0;
+    if (chunks > 0) break;
+    await sleep(2000);
+  }
+  if (chunks === 0) {
+    console.log(`BLOCKED_BY_BOT_AUDIO: no audio reached the character's relay within ${audioCheckS} s of admission (the vendor's mixed-audio websocket never connected) — leaving`);
+    await leaveAll();
+    process.exit(2);
+  }
+  console.log(`   (relay carrying audio: ${chunks} chunks)`);
+}
+T0 = Date.now(); // the clock starts once the room is known to be audible
+
 const pageState = async () => {
   try { return await (await fetch(`${broker}/api/meeting/session/${yui.sessionId}`, { headers: { authorization: `Bearer ${yui.clientToken}` } })).json(); } catch { return {}; }
 };
