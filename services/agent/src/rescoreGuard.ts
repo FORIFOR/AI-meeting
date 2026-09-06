@@ -58,9 +58,30 @@ export function rescoreRejection(streamed: string, rescored: string, seconds: nu
   const norm = normalize(rescored);
   if (norm === normalize(streamed)) return undefined;
   if (STOCK_HALLUCINATIONS.has(rescored.replace(/[\s\p{P}]/gu, ""))) return "stock hallucination";
-  if (seconds < SHORT_CLIP_S) {
-    const overlap = readingOverlap(streamed, rescored);
-    if (overlap < MIN_OVERLAP) return `short clip ${seconds.toFixed(2)}s, overlap ${overlap.toFixed(2)}`;
-  }
+  const overlap = readingOverlap(streamed, rescored);
+  if (seconds < SHORT_CLIP_S && overlap < MIN_OVERLAP) return `short clip ${seconds.toFixed(2)}s, overlap ${overlap.toFixed(2)}`;
+  // The two readings agree on the sentence and differ by a name nobody said: the name is whisper's.
+  // A wholesale disagreement on a long clip is still left to the second pass (the first was garble).
+  const alien = alienKatakana(streamed, rescored);
+  if (alien && overlap >= MIN_OVERLAP) return `katakana the first pass never heard: ${alien} (overlap ${overlap.toFixed(2)})`;
   return undefined;
+}
+
+
+/**
+ * A katakana word of three characters or more that the first pass did not hear at all — in any
+ * script. Whisper's names are the hallucinations that reach the reply: 「メタリオ」 for 「見たよ。」
+ * (run 84), 「エリメ」 for a holey 「ア定ージ目…」 (run 90), 「リノース」 for 「昨日そう」 inside
+ * 「ユイが昨日そう言ってたよね」 (run 100: 「リノースさんが言っていた内容について…」 was the answer).
+ * A real katakana word the streaming recogniser wrote in kana or kanji still reads the same once both
+ * are folded to hiragana (「スケジュール」 / 「すけじゅーる」); a name nobody said does not. The
+ * streaming text keeps its reading; the rest of the rescore is lost with it, which is the cheaper error.
+ */
+export function alienKatakana(streamed: string, rescored: string): string | null {
+  const heard = normalize(streamed);
+  for (const run of rescored.match(/[ァ-ヶー]{3,}/g) ?? []) {
+    const folded = normalize(run);
+    if (!heard.includes(folded)) return run;
+  }
+  return null;
 }
