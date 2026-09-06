@@ -84,7 +84,7 @@ case "${1:-start}" in
     start_llama
     warm_llama
     if [ "$LOCAL_STT" = "whisper" ]; then start_whisper; fi
-    echo "agent: cd services/agent && LOCAL_TTS=supertonic LOCAL_STT_FINAL=whisper-async pnpm -s exec tsx src/server.ts   (LOCAL_LLM_URL=http://127.0.0.1:$LLM_PORT/v1; 'pnpm dev' is tsx watch and reloads the agent on every edit — not for a room run)"
+    echo "agent: cd services/agent && LOCAL_TTS=supertonic LOCAL_STT_FINAL=whisper-async LOCAL_TTS_READINGS=\"Yui=ゆい\" pnpm -s exec tsx src/server.ts   (LOCAL_LLM_URL=http://127.0.0.1:$LLM_PORT/v1; 'pnpm dev' is tsx watch and reloads the agent on every edit — not for a room run)"
     ;;
   stop)
     stop_one llama-server; stop_one whisper-server ;;

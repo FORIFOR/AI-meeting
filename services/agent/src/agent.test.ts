@@ -7,7 +7,7 @@ import { OpenAICompatibleLLM, parseSse } from "./adapters/llm.js";
 import { StyleBertVits2TTS } from "./adapters/tts.js";
 import { WhisperServerSTT } from "./adapters/stt.js";
 import { EnergyVADAdapter, type VADAdapter, type VADAdapterEvent } from "./adapters/vad.js";
-import { AsyncQueue, ConversationSession } from "./session.js";
+import { applyReadings, AsyncQueue, ConversationSession } from "./session.js";
 import { IncrementalOfflineSTT } from "./adapters/stt-streaming.js";
 import type { ServerMessage } from "./protocol.js";
 import type { ChatMessage, LLMAdapter } from "./adapters/llm.js";
@@ -856,6 +856,19 @@ describe("what the character remembers from earlier in the conversation", () => 
     expect(warmed[1]![0]!.role).toBe("system");
     expect(warmed[1]![0]!.content).toContain("京都");
   }, 20000);
+  it("reads the character's Latin name in kana for the voice, and only for the voice (runs 98, 101)", async () => {
+    expect(applyReadings("こんにちは、Yuiです。Yuiと声をかけてください。", { Yui: "ゆい" })).toBe("こんにちは、ゆいです。ゆいと声をかけてください。");
+    expect(applyReadings("YUI, hello. Yuichi stays.", { Yui: "ゆい" })).toBe("ゆい, hello. Yuichi stays.");
+    expect(applyReadings("Yuiです", undefined)).toBe("Yuiです");
+    const sent: ServerMessage[] = [];
+    const tts = new FakeTTS();
+    const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new FakeLLM("Yuiです。"), tts, ttsReadings: { Yui: "ゆい" }, send: (m) => sent.push(m), sendAudio: () => {}, leadMs: 100000, chunkMs: 100 });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await s.onText("名前は？");
+    expect(tts.calls).toContain("ゆいです。");
+    const shown = sent.filter((m) => m.type === "assistant_transcript").map((m) => (m as { text: string }).text);
+    expect(shown.some((x) => x.includes("Yuiです"))).toBe(true);
+  });
   it("a barge-in cancels the fold running behind the reply it cut off (run 99)", async () => {
     // The fold's notes would change the prompt for the yield turn arriving in seconds, and its
     // re-warm cannot run because that turn owns the model: 3.7 s to the first token in run 99.

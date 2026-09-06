@@ -51,6 +51,8 @@ export interface SessionDeps {
   leadMs?: number;
   /** Output chunk size in ms. Default 40. */
   chunkMs?: number;
+  /** Words the voice must read another way (a Latin name → its kana); applied to each phrase at synthesis only. */
+  ttsReadings?: Record<string, string>;
   /** LLM max tokens per reply. Default 120 (replies are 1–3 sentences by policy). */
   maxTokens?: number;
   /**
@@ -1096,7 +1098,7 @@ export class ConversationSession {
       if (s === null) return null;
       synth.onRequested();
       try {
-        return { phrase: s, stream: this.ttsStream(s, signal), requestedAt: this.clock() };
+        return { phrase: s, stream: this.ttsStream(applyReadings(s, this.deps.ttsReadings), signal), requestedAt: this.clock() };
       } catch (err) {
         if (!signal.aborted) this.deps.send({ type: "error", message: `tts: ${(err as Error).message}` });
         synth.onSynthesized();
@@ -1173,6 +1175,24 @@ export class ConversationSession {
     if (spoke && remaining > 0) await sleep(remaining, signal);
     return spoke;
   }
+}
+
+/**
+ * Give the voice the reading of a word it gets wrong — the character's own Latin name above all: 「Yuiです」
+ * came out of Meet's captions as 「ゆうです」 (run 98) and 「イです。ユーと…」 (run 101). Latin keys match
+ * whole words case-insensitively (「Yuichi」 is left alone); other scripts match as written. The transcript
+ * shown to the room keeps the spelling the model wrote; only the audio changes.
+ */
+export function applyReadings(text: string, readings?: Record<string, string>): string {
+  if (!readings) return text;
+  let out = text;
+  for (const [word, reading] of Object.entries(readings)) {
+    if (!word) continue;
+    const latin = /^[A-Za-z][A-Za-z'-]*$/.test(word);
+    const re = latin ? new RegExp(`(?<![A-Za-z])${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z])`, "gi") : new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+    out = out.replace(re, reading);
+  }
+  return out;
 }
 
 function mergeInt16(parts: Int16Array[], total: number): Int16Array {

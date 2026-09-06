@@ -235,6 +235,7 @@ export function attachSessionWs(server: ReturnType<typeof createServer>, rt: Age
       vad: rt.createVad(),
       llm: rt.conversationLlm,
       tts: rt.tts,
+      ttsReadings: rt.cfg.ttsReadings,
       turn: rt.turn ?? undefined,
       send: (msg) => ws.readyState === ws.OPEN && ws.send(JSON.stringify(msg)),
       sendAudio: (frame) => ws.readyState === ws.OPEN && ws.send(frame, { binary: true }),
