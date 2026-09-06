@@ -865,6 +865,23 @@ times and the character repeated the garble. Reverted; the name hallucination is
 vocabulary-aware drop as the next idea. The host reached the edge in this run: swap 12.4 of 13 GB and
 the disk down to 4.1 GiB — below where run 93's VM died — with the bot-host VM still allotted 12 GB.
 
+### After run 101, in the recommended order (2026-09-06, afternoon)
+
+1. **The bot-host VM's allotment: 12 → 8 GiB** (Docker Desktop `MemoryMiB`, the VM restarted, the seven
+   containers started again, API 200, worker clean). Swap 12.4 of 13 GB → 8.0 of 9.2 GB within minutes,
+   host disk 4.1 → 8.2 GiB. The VM used ≈ 4 GB during the passes; 8 GiB leaves it room and gives the host
+   the 4 GiB the local model, whisper and the voice were fighting over. Not yet measured in a run.
+2. **The character's name for the voice** (6dca32d): `LOCAL_TTS_READINGS="Yui=ゆい"` rewrites the Latin
+   name to kana in each phrase at synthesis only — the transcript keeps the model's spelling. Sim 70: the
+   greeting synthesised as 「ゆいです。」「ゆいと声をかけて…」 (Meet's captions had heard 「ゆうです」 and
+   「イです。ユーと…」 in runs 98 and 101). Not yet heard in a room.
+3. **The 6.2 s after a barge-in was the harness's** (150c905). Run 101's Tester recording, decoded and
+   laid against the pass-1 schedule (recording = T0 + 20 s, the settle): after the `interrupted` there is
+   the answer's in-flight tail and 「はい。」 (2.1 s), then 1.1 s more — the cut-in's own words, which
+   reach the relay 2–3 s after the harness sends them and fell outside the exclusion window. Once per
+   admission the timing lined up that way (runs 90, 98, 100, 101). Windows are padded by the transport
+   lag now; the microphone was never the cause.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —
