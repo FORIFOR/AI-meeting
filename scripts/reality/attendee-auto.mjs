@@ -628,7 +628,15 @@ for (const cue of CUES) {
       }
       const tailS = iAt ? (stopAt - iAt) / 1000 : null;
       const afterCut = cutAt ? audibleSeconds(cutAt + 1500, cutAt + 5000, spoken) : 0;
-      status = speaking.length && interrupted.length && tailS <= STOP_TAIL_S ? "PASS" : speaking.length ? "PARTIAL" : "FAIL";
+      /**
+       * The verdict is the character's own sound after the cut-in — `afterCut`, 1.5–5 s after it, the
+       * Tester's lines excluded — not the tail scan. The scan looks for 1.5 s of quiet after the
+       * `interrupted`, and with the Tester's cut-in excluded (padded by its transport lag) the quiet it
+       * finds is broken by the yield 「はい。」 and its own gaps: run 102 read 5.9–7.0 s in three passes
+       * whose `afterCut` was 0.0 s, as run 101's recording had shown. The tail stays in the detail.
+       */
+      const AFTER_CUT_S = Number(process.env.AFTER_CUT_S ?? 1.0);
+      status = speaking.length && interrupted.length && afterCut < AFTER_CUT_S ? "PASS" : speaking.length ? "PARTIAL" : "FAIL";
       const rel = (t) => (t ? `+${((t - start) / 1000).toFixed(1)}s` : "none");
       detail = `speaking=${speaking.length} interrupted=${interrupted.length} · heard her ${rel(heardAt)} cut-in ${rel(cutAt)} interrupted ${rel(iAt)}${tailS != null ? ` quiet ${tailS.toFixed(1)}s after that` : ""} · audible 1.5–5s after the cut-in=${afterCut.toFixed(1)}s`;
       const cutText = interrupted.map((e) => e.data?.text ?? "").filter(Boolean).join(" / ");
