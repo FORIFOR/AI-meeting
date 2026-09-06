@@ -334,9 +334,19 @@ const listen = () => {
 };
 listen();
 const FLOOR_DB = Number(process.env.FLOOR_DB ?? -45);
+/**
+ * A Tester line is excluded from "room audio" by the window in which the harness sent it — but its sound
+ * reaches the relay only after Attendee → Meet → Yui's bot → broker, 2–3 s later, so the clip's tail
+ * landed outside its window and counted as the character. Runs 90, 98, 100 and 101 each had one `bargein`
+ * PARTIAL on "6.2–6.4 s of sound after the interrupted" while the Tester's recording (run 101, decoded)
+ * showed the yield 「はい。」, the answer's in-flight tail and the cut-in's own words — nothing else. The
+ * exclusion window is padded by the transport lag (SPOKEN_LAG_MS).
+ */
+const SPOKEN_LAG_MS = Number(process.env.SPOKEN_LAG_MS ?? 2500);
+const inSpoken = (t, windows) => windows.some(([a, b]) => t >= a && t <= b + SPOKEN_LAG_MS);
 /** Seconds of audible room audio inside [from, to] (epoch ms), excluding what the Tester itself was saying. */
 const audibleSeconds = (from, to, exclude = []) => {
-  const pts = heard.filter((h) => h.t >= from && h.t <= to && !exclude.some(([a, b]) => h.t >= a && h.t <= b));
+  const pts = heard.filter((h) => h.t >= from && h.t <= to && !inSpoken(h.t, exclude));
   if (pts.length < 2) return 0;
   const span = (pts[pts.length - 1].t - pts[0].t) / 1000;
   return (pts.filter((h) => h.db > FLOOR_DB).length / pts.length) * span;
@@ -607,7 +617,7 @@ for (const cue of CUES) {
       const iAt = interrupted[0]?.at ?? null;
       let stopAt = null;
       if (iAt) {
-        const pts = heard.filter((h) => h.t >= iAt && h.t <= end && !spoken.some(([a, b]) => h.t >= a && h.t <= b));
+        const pts = heard.filter((h) => h.t >= iAt && h.t <= end && !inSpoken(h.t, spoken));
         let quietFrom = null;
         stopAt = iAt;
         for (const h of pts) {
