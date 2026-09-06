@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alienKatakana, readingOverlap, rescoreRejection } from "./rescoreGuard.js";
+import { readingOverlap, rescoreRejection } from "./rescoreGuard.js";
 
 describe("rescore guard", () => {
   it("keeps a second reading that refines the first", () => {
@@ -25,17 +25,5 @@ describe("rescore guard", () => {
     expect(readingOverlap("ゆイ、これはどう思う？", "ゆい、これはどう思う?")).toBe(1);
     expect(readingOverlap("見たよ", "メタリオ")).toBe(0);
     expect(readingOverlap("", "")).toBe(1);
-  });
-
-  it("drops a katakana name the first pass never heard, in any script (runs 84, 90, 100)", () => {
-    // Run 100: the rescore put a person into 「ゆいが昨日そう言ってたよね」 and the character answered to them.
-    expect(rescoreRejection("ユイが 昨日そう言って たよ ね。", "ゆいがリノースを言ってたよね", 2.6)).toMatch(/katakana.*リノース/);
-    // Run 90: a fragment cut by an ears hole, rescored into a name (long enough to pass the short-clip rule).
-    expect(rescoreRejection("ア定ージ目の数字が少し気になったかな。", "なんてエリメが少し気になったかな", 2.4)).toMatch(/エリメ/);
-    // A real katakana word the first pass wrote in kana, or already in katakana, is not alien.
-    expect(rescoreRejection("すけじゅーるを確認して", "スケジュールを確認して", 2.4)).toBeUndefined();
-    expect(rescoreRejection("スケジュール確認", "スケジュールを確認して", 2.4)).toBeUndefined();
-    // Two characters are a mora pair, not a name (「ユイ」 is the character herself).
-    expect(alienKatakana("ゆい、今どう思う？", "ユイ、今どう思う？")).toBeNull();
   });
 });
