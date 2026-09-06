@@ -133,7 +133,14 @@ export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui" }:
   const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? "参加者"}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
   const hint = "text" in asked ? yieldHint(asked.text) || shortAskHint(asked.text, displayName) || demonstrativeHint(asked.text) : "";
   const ctx = context.join("\n");
-  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}短く（1〜2文で）答えてください。`;
+  /**
+   * The recent lines are for bearings, not for answering. Run 110: after 「ちょっと待って、その前に
+   * こっちの話先にさせて」 cut a reply short, the next question (「ゆい、今どう思う？」) was answered three
+   * times with 「まずは相手の方の意図をしっかり聞くのが大事」 — an opinion on the interruption, not on
+   * the matter asked about.
+   */
+  const bearings = ctx ? "【会議の直近の発言】は状況を知るためのものです。答えるのは【あなたへの質問】だけで、「ちょっと待って」のようにあなたに黙るよう求めた発言について、あとから意見や感想を述べないでください。\n\n" : "";
+  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}${bearings}短く（1〜2文で）答えてください。`;
 }
 
 /**

@@ -68,6 +68,13 @@ export interface ParticipationPolicyOptions {
    * (「うん」「はい」「Yeah.」) and does not earn a turn. Default 6.
    */
   openMinChars?: number;
+  /**
+   * How long an engaged follow-up whose text opens with a fragment waits for the recogniser's second
+   * reading before it is answered (ms). Run 109: 「ゆいが昨日そう言ってたよね」 reached the streaming
+   * recogniser as 「いいが、昨日そう言ってたよね。」 — the name gone into a hole — and was answered as a
+   * follow-up 1.1 s before the rescore restored the name and the third person. 0 disables.
+   */
+  fragmentHoldMs?: number;
   detector?: AddressDetector;
   /** Names that identify the character itself (its own transcript is ignored). */
   selfNames?: string[];
@@ -123,6 +130,15 @@ const BACKCHANNELS = new Set([
 ]);
 
 /**
+ * A sentence that starts where a sentence does not: on punctuation, on a one-to-three-kana word cut off
+ * by a comma, or on a particle. Where the streaming recogniser lost its first mora to a hole.
+ */
+export function opensWithFragment(text: string): boolean {
+  const t = text.trim();
+  return /^(?:[、。,.]|[ぁ-んァ-ンー]{1,3}[、,]|[がはをにへとでも](?![ぁ-んァ-ン]))/.test(t);
+}
+
+/**
  * A follow-up is a sentence, not a noise. The recogniser writes a single word — in whatever
  * language the sound resembled most — for a cough or a chair over an open mic, and an engaged
  * character answered 「你。」「Great.」「Okay.」 in a room where nobody had spoken (Gate #8 run 14).
@@ -159,6 +175,8 @@ export class ParticipationPolicy {
   private lastResponseEndAt = -1e9;
   private consecutive = 0;
   private pendingQuestion: { text: string; at: number; key: string | null; speakerName?: string | null } | null = null;
+  /** An engaged follow-up that opened with a fragment, waiting for the second reading (or `fragmentHoldMs`). */
+  private heldFollowUp: { seg: TranscriptSegment; key: string | null; at: number; detection: AddressDetection } | null = null;
   /** Called by name while the character was already speaking (see `onTranscript`): answered next. */
   private heldAddress: { seg: TranscriptSegment; detection: AddressDetection } | null = null;
   private history: PolicyTransition[] = [];
@@ -180,6 +198,7 @@ export class ParticipationPolicy {
       silenceGapMs: options.silenceGapMs ?? 2500,
       activeSilenceMs: options.activeSilenceMs ?? 1800,
       openMinChars: options.openMinChars ?? 6,
+      fragmentHoldMs: options.fragmentHoldMs ?? 2500,
       visualTurns: options.visualTurns ?? true,
       yieldGraceMs: options.yieldGraceMs ?? 700,
       selfNames: options.selfNames ?? options.names,
@@ -253,6 +272,31 @@ export class ParticipationPolicy {
    * finishing (no cooldown, no consecutive turn): the character simply did not speak. Only while the
    * answer is still being drafted; once it is speaking, the turn stands.
    */
+  private takeTurn(seg: TranscriptSegment, key: string | null, d: AddressDetection, now: number, reason: string): void {
+    if (d.addressed) this.interruptedInARow = 0;
+    this.addressedBy = { text: seg.text, speakerName: seg.speakerName, detection: d };
+    this.pendingQuestion = null;
+    this.heldFollowUp = null;
+    this.engage(key, now);
+    if (this._state !== "ADDRESSED") this.transition("ADDRESSED", now, reason);
+  }
+
+  /**
+   * The second reading of a held follow-up. `was` is the streamed text the hold was taken on; `text`
+   * the rescore. Talk about the character drops the hold (no turn was owed); an address takes the turn
+   * on the name; any other reading is the follow-up it looked like, answered now with the better words.
+   * Returns what happened, or null when nothing was held on those words.
+   */
+  reviseHeld(was: string, text: string, now: number): "dropped" | "taken" | null {
+    const held = this.heldFollowUp;
+    if (!held || held.seg.text !== was) return null;
+    this.heldFollowUp = null;
+    const d = this.detector.detect(text);
+    if (!d.addressed && d.reason.startsWith("name mentioned")) return "dropped"; // no turn was owed
+    this.takeTurn({ ...held.seg, text }, held.key, d, now, d.addressed ? `${d.reason} (rescore of a held follow-up)` : "engaged follow-up (rescore)");
+    return "taken";
+  }
+
   withdraw(now: number, reason: string): boolean {
     if (this._state !== "ADDRESSED") return false;
     this.lastTickAt = Math.max(this.lastTickAt, now);
@@ -356,11 +400,17 @@ export class ParticipationPolicy {
     const explicitly = d.addressed || engagedFollowUp;
     const invited = d.invited && (this.opts.proactivity === "invited" || this.opts.proactivity === "active");
     if ((explicitly || invited) && !inCooldown && !capped) {
-      if (d.addressed) this.interruptedInARow = 0;
-      this.addressedBy = { text: seg.text, speakerName: seg.speakerName, detection: d };
-      this.pendingQuestion = null;
-      this.engage(key, now);
-      if (this._state !== "ADDRESSED") this.transition("ADDRESSED", now, engagedFollowUp && !d.addressed ? "engaged follow-up" : explicitly ? d.reason : "invited");
+      /**
+       * A follow-up that opens with a fragment — 「、昨日…」「いいが、昨日…」「が昨日…」 — is a sentence
+       * whose first mora the recogniser lost, and the mora it lost may have been the name: talk about
+       * the character wearing a follow-up's clothes. It waits for the second reading (`reviseHeld`) or
+       * `fragmentHoldMs`, whichever is first; a whole sentence is answered as before.
+       */
+      if (engagedFollowUp && !d.addressed && !invited && this.opts.fragmentHoldMs > 0 && opensWithFragment(seg.text)) {
+        this.heldFollowUp = { seg, key, at: now, detection: d };
+        return d;
+      }
+      this.takeTurn(seg, key, d, now, engagedFollowUp && !d.addressed ? "engaged follow-up" : explicitly ? d.reason : "invited");
       return d;
     }
     if (this.opts.proactivity === "active" && !explicitly && !inCooldown && !capped && /[？?]\s*$|ですか|ますか|でしょうか/.test(seg.text)) {
@@ -441,6 +491,12 @@ export class ParticipationPolicy {
   tick(now: number): void {
     this.lastTickAt = Math.max(this.lastTickAt, now);
     this.expireEngagement(now);
+    if (this.heldFollowUp && now - this.heldFollowUp.at >= this.opts.fragmentHoldMs) {
+      // No second reading came: the follow-up is answered as heard.
+      const h = this.heldFollowUp;
+      this.takeTurn(h.seg, h.key, h.detection, now, "engaged follow-up (held)");
+      return;
+    }
     if (this.greetingPending && now >= this.greetingExpiresAt) {
       // The pause never came; the moment for a hello has passed.
       this.greetingPending = false;
@@ -506,6 +562,7 @@ export class ParticipationPolicy {
     this.greetingPending = false;
     this.addressedBy = null;
     this.pendingQuestion = null;
+    this.heldFollowUp = null;
     this.heldAddress = null;
     this.engagement = null;
     this.transition("OBSERVING", now, "reset");

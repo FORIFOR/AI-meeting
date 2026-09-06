@@ -760,6 +760,12 @@ export class MeetingSessionController {
    * second thoughts is worse than a wrong one. Never a *second* turn on the same words.
    */
   private secondOpinion(utterance: number, text: string, was: string, entry: RecentLine, now: number): void {
+    // A follow-up held on a fragment (run 109: 「いいが、昨日そう言ってたよね」) is decided by this reading.
+    const held = this.policy.reviseHeld(was, text, now);
+    if (held) {
+      if (this.init.role === "bot") console.log(`[rcai:bot] held follow-up ${held}:`, JSON.stringify(text.slice(0, 80)));
+      return;
+    }
     const d = this.policy.detect(text);
     const turn = this.turnOf;
     /**

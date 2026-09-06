@@ -89,6 +89,36 @@ describe("the rescore as a second opinion on a follow-up turn", () => {
   beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); sendText.mockClear(); interrupt.mockClear(); });
   afterEach(() => { vi.useRealTimers(); });
 
+  it("holds a follow-up that opens with a fragment and lets the rescore decide it (run 109)", async () => {
+    const lines: MeetingTranscriptLine[] = [];
+    const c = controller(lines);
+    await c.start();
+    await engaged(c);
+    const before = sendText.mock.calls.length;
+    room!({ type: "speech", participant: { id: "tester", name: null }, active: true, at: Date.now() });
+    emit!({ type: "user_transcript", text: "いいが、昨日そう言ってたよね。", final: true, id: 2 });
+    expect(c.policy.state).not.toBe("ADDRESSED"); // held, not answered
+    await tick();
+    expect(sendText).toHaveBeenCalledTimes(before); // no draft either
+    emit!({ type: "user_transcript_revised", id: 2, text: "ゆいが昨日そう言ってたよね" });
+    await tick();
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    expect(sendText).toHaveBeenCalledTimes(before); // talk about her: nothing said, nothing drafted
+    expect(c.policy.engagedWith?.participantId).toBe("tester"); // still in conversation
+    // The same shape with a real follow-up behind it is answered on the rescore.
+    vi.setSystemTime(Date.now() + 1000);
+    room!({ type: "speech", participant: { id: "tester", name: null }, active: true, at: Date.now() });
+    emit!({ type: "user_transcript", text: "、来週までに終わりそう？", final: true, id: 3 });
+    expect(c.policy.state).not.toBe("ADDRESSED");
+    emit!({ type: "user_transcript_revised", id: 3, text: "それって、来週までに終わりそう？" });
+    expect(c.policy.state).toBe("ADDRESSED");
+    expect(c.policy.getHistory().at(-1)?.reason).toBe("engaged follow-up (rescore)");
+    await tick();
+    expect(sendText).toHaveBeenCalledTimes(before + 1);
+    expect(String((sendText.mock.calls.at(-1) as unknown as [string] | undefined)?.[0])).toContain("それって、来週までに終わりそう？");
+    await c.leave();
+  });
+
   it("withdraws a follow-up the better reading says was talk about the character (run 78 pass 3)", async () => {
     const lines: MeetingTranscriptLine[] = [];
     const c = controller(lines);

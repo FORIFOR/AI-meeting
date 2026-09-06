@@ -43,6 +43,47 @@ describe("open participation", () => {
     expect(p.state).toBe("OBSERVING");
   });
 
+  it("a follow-up that opens with a fragment waits for the second reading (run 109)", () => {
+    // 「ゆいが昨日そう言ってたよね」 arrived as 「いいが、昨日そう言ってたよね。」 — the name in a hole — and was
+    // answered as a follow-up 1.1 s before the rescore restored the name and the third person.
+    const engagedWith = (text: string, at: number) => {
+      const p = make();
+      p.onTranscript({ text: "そういえば新しい店ができたらしいよ", final: true, participantId: "p1", speakerName: "Aoi" }, at);
+      p.tick(at + 2600);
+      p.markResponding(at + 2600);
+      p.onAssistantDone(at + 3600);
+      const t = at + 3600 + 4500;
+      p.onTranscript({ text, final: true, participantId: "p1", speakerName: "Aoi" }, t);
+      return { p, t };
+    };
+    // Held: no turn yet …
+    const a = engagedWith("いいが、昨日そう言ってたよね。", 1000);
+    expect(a.p.state).not.toBe("ADDRESSED");
+    a.p.tick(a.t + 1000);
+    expect(a.p.state).not.toBe("ADDRESSED");
+    // … and the rescore says it was talk about the character: dropped, no turn at all.
+    expect(a.p.reviseHeld("いいが、昨日そう言ってたよね。", "ゆいが昨日そう言ってたよね", a.t + 1500)).toBe("dropped");
+    a.p.tick(a.t + 5000);
+    expect(a.p.state).not.toBe("ADDRESSED");
+    // A rescore that is the follow-up it looked like is answered at once, with the better words.
+    const b = engagedWith("、来週までに終わりそう？", 1000);
+    expect(b.p.state).not.toBe("ADDRESSED");
+    expect(b.p.reviseHeld("、来週までに終わりそう？", "それって来週までに終わりそう？", b.t + 1200)).toBe("taken");
+    expect(b.p.state).toBe("ADDRESSED");
+    expect(b.p.addressedBy?.text).toBe("それって来週までに終わりそう？");
+    expect(b.p.getHistory().at(-1)?.reason).toBe("engaged follow-up (rescore)");
+    // No second reading in time: answered as heard.
+    const c = engagedWith("が昨日そう言ってたよね。", 1000);
+    expect(c.p.state).not.toBe("ADDRESSED");
+    c.p.tick(c.t + 2600);
+    expect(c.p.state).toBe("ADDRESSED");
+    expect(c.p.getHistory().at(-1)?.reason).toBe("engaged follow-up (held)");
+    // A whole sentence is answered straight away, as before.
+    const d = engagedWith("駅前のところ、行ってみたいんだよね", 1000);
+    expect(d.p.state).toBe("ADDRESSED");
+    expect(d.p.reviseHeld("駅前のところ、行ってみたいんだよね", "駅前のところ、行ってみたいんだよね", d.t + 1000)).toBeNull();
+  });
+
   it("the person it answered keeps its attention: their next line is a follow-up, no wait for silence", () => {
     const p = make();
     let t = 1000;

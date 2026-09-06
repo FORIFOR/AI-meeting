@@ -15,7 +15,7 @@ describe("meeting prompt text", () => {
 
   it("renders a turn as the room's recent lines, what was seen, and the line that addressed the character", () => {
     const text = meetingTurnPrompt({ context: ["Tester: 3ページ目の数字が気になる。", "Tester: 後で直すね。"], seen: "【見えていること】うなずき", asked: { speakerName: "Tester", text: "ゆいはどう思う？" } });
-    expect(text).toBe("【会議の直近の発言】\nTester: 3ページ目の数字が気になる。\nTester: 後で直すね。\n\n【見えていること】うなずき\n\n【あなたへの質問】Tester: ゆいはどう思う？\n\n短く（1〜2文で）答えてください。");
+    expect(text).toBe("【会議の直近の発言】\nTester: 3ページ目の数字が気になる。\nTester: 後で直すね。\n\n【見えていること】うなずき\n\n【あなたへの質問】Tester: ゆいはどう思う？\n\n【会議の直近の発言】は状況を知るためのものです。答えるのは【あなたへの質問】だけで、「ちょっと待って」のようにあなたに黙るよう求めた発言について、あとから意見や感想を述べないでください。\n\n短く（1〜2文で）答えてください。");
   });
 
   it("leaves out what is empty, names an unknown speaker 参加者, and describes a wordless reaction", () => {
@@ -53,5 +53,12 @@ describe("canonicalizeName", () => {
     expect(canonicalizeName("昨日の資料、見てくれた?", "Yui", names)).toBe("昨日の資料、見てくれた?");
     expect(canonicalizeName("結衣が言ってた", "Yui", [])).toBe("結衣が言ってた");
     expect(canonicalizeName("結衣", "", [])).toBe("結衣");
+  });
+
+  it("tells the model the recent lines are bearings, and an interruption is not a topic (run 110)", () => {
+    const withContext = meetingTurnPrompt({ context: ["?: ちょっと待って、その前にこっちの話先にさせて", "?: ゆい、今どう思う?"], seen: "", asked: { text: "ゆい、今どう思う？", speakerName: "Tester" } });
+    expect(withContext).toContain("あなたに黙るよう求めた発言について、あとから意見や感想を述べないでください");
+    const without = meetingTurnPrompt({ context: [], seen: "", asked: { text: "ゆい、今どう思う？", speakerName: "Tester" } });
+    expect(without).not.toContain("黙るよう求めた");
   });
 });
