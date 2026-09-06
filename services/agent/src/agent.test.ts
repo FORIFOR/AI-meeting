@@ -856,6 +856,36 @@ describe("what the character remembers from earlier in the conversation", () => 
     expect(warmed[1]![0]!.role).toBe("system");
     expect(warmed[1]![0]!.content).toContain("京都");
   }, 20000);
+  it("a barge-in cancels the fold running behind the reply it cut off (run 99)", async () => {
+    // The fold's notes would change the prompt for the yield turn arriving in seconds, and its
+    // re-warm cannot run because that turn owns the model: 3.7 s to the first token in run 99.
+    let foldSignal: AbortSignal | undefined;
+    let folds = 0;
+    class SlowFoldLLM implements LLMAdapter {
+      engine = "fake"; model = "fake"; ready = true;
+      async *stream(_m: unknown, opts: { signal?: AbortSignal }) {
+        for (const ch of "はい。そうです。") { if (opts.signal?.aborted) return; await new Promise((r) => setTimeout(r, 2)); yield ch; }
+      }
+      async warm() {}
+      async complete(_m: ChatMessage[], opts: { signal?: AbortSignal } = {}) {
+        folds++;
+        foldSignal = opts.signal;
+        await new Promise((res, rej) => { const t = setTimeout(res, 3000); opts.signal?.addEventListener("abort", () => { clearTimeout(t); rej(new Error("aborted")); }); });
+        return "- メモ";
+      }
+    }
+    const sent: ServerMessage[] = [];
+    const s = new ConversationSession({ stt: new FakeSTT(), vad: new ScriptedVAD(), llm: new SlowFoldLLM(), tts: new FakeTTS(), send: (m) => sent.push(m), sendAudio: () => {}, leadMs: 0, chunkMs: 100, historyChars: 10 });
+    s.start({ systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "strict_local" });
+    await s.onText("週末に京都に行ってきたんだよ。");
+    await s.onText("抹茶のパフェを食べた。");
+    const third = s.onText("犬を飼ってて、モモっていうの。"); // over budget: the fold starts once this reply is synthesised
+    await waitFor(() => folds === 1, 3000);
+    expect(foldSignal?.aborted).toBe(false);
+    s.interrupt("barge-in"); // the room cut the reply off while the fold was running
+    expect(foldSignal?.aborted).toBe(true);
+    await third;
+  }, 20000);
   it("folds only once every phrase of the reply is synthesised, and before the voice has finished", async () => {
     // Run 90, pass 3: the fold's 6 s request ran alongside Supertonic and each phrase took 1.4 s
     // instead of 0.3 s. Synthesis ends seconds before playback does — the fold fits in between.

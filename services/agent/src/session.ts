@@ -740,6 +740,12 @@ export class ConversationSession {
     this.deps.log?.(`interrupt (${reason}) gen=${this.activeGeneration}`);
     this.abort.abort();
     this.abort = null;
+    // A fold running behind the reply that was just cut off is about to change the notes for a turn
+    // that arrives in seconds — and its re-warm cannot run, because that turn owns the model. Run 99,
+    // pass 2: the fold finished 1.2 s after the barge-in, the yield turn read the whole prompt again
+    // (first token 3.7 s). Cancelled here, the fold picks up after the next reply instead.
+    this.memory.cancelFold();
+    this.onSynthIdle = null;
     // Cancel order: abort LLM/TTS → close the generation (late chunks become stale) → tell the client.
     const cancelled: WireGen = { turnId: this.gen.turnId, generationId: this.activeGeneration, sequence: this.gen.sequence };
     this.activeGeneration = 0;
