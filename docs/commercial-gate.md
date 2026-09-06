@@ -936,6 +936,25 @@ Run 111 (row 111), microphone muted again: two clean passes, then the ears gave 
 pass 4 on a bot host at 500 % and a host swapping 13 GB — and the questions arrived as fragments with
 no name in them. Nothing for the character to do; the host is the limit, as it was in run 95's pass 4.
 
+### After run 111 — the last two items on the character's side (2026-09-07)
+
+1. **A follow-up that opens with a fragment waits for the second reading** (53592d0). Run 109's
+   「いいが、昨日そう言ってたよね。」 — a sentence that starts on a one-to-three-kana word cut off by a comma,
+   on punctuation, or on a particle — is one whose first mora the streaming recogniser lost, and the mora
+   may have been the name. Engaged, such a line used to be answered at once as a follow-up; it now waits
+   for the rescore or 2.5 s (`fragmentHoldMs`), whichever is first: talk about the character drops it (no
+   turn was owed), an address takes the turn on the name, anything else is answered with the better words.
+   A whole sentence is answered as before. Policy `reviseHeld` + the controller's second opinion; 2 tests.
+2. **The recent lines are bearings, not a topic** (53592d0). Run 110's `ask2` after the barge-in was
+   answered three times with an opinion on 「ちょっと待って」; the turn prompt now says the recent lines are
+   for bearings and a request to be quiet is not something to comment on later. 1 test.
+
+`pnpm gate` 64 files / 649 tests, the bot page rebuilt. Sims 72 and 73 PASS (greeting, then the question
+held behind it answered). Sim 71 missed the question: it reached the policy in the ~300 ms between the
+greeting's decision and its first audio — before `RESPONDING`, so `heldAddress` did not apply and the
+greeting's text was the turn that went out. A race older than these changes, seen once in three sims;
+noted, not fixed. Neither change has been heard in a room.
+
 ## Cost, because it is a production requirement
 
 Pay-as-you-go is $0.50/bot-hour, and `web_gpu` — which Live2D needs, since no other variant has WebGL —
