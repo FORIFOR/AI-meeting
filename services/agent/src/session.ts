@@ -608,7 +608,21 @@ export class ConversationSession {
 
   /** The deferred second pass: a revision goes out only when it read something different. */
   private reviseLater(u: Utterance, streamed: string): void {
-    void this.offReplyPath().then(() => this.rescore(u, streamed)).then((text) => {
+    void this.offReplyPath().then(async () => {
+      /**
+       * Not every line is worth a second recogniser. The pass shares the GPU with the model and the
+       * voice; in a room it ran on every fragment of chatter (Gate #8 run 106: ~20 rescores a pass of
+       * lines nobody addressed to the character), and under that load the voice took 1–2 s a phrase
+       * and the ears opened holes. A line that earned no turn is re-read only when a better reading
+       * could change something: a question or request in it, a name-sized token, or a fragment start
+       * (the mora the streaming recogniser lost may have been the name, runs 79 and 109).
+       */
+      if (this.replyPhase === "idle" && !worthRescoring(streamed)) {
+        this.deps.log?.(`rescore skipped (no turn, nothing to gain) "${streamed.slice(0, 30)}"`);
+        return streamed;
+      }
+      return this.rescore(u, streamed);
+    }).then((text) => {
       if (text !== streamed && text.trim()) this.deps.send({ type: "user_transcript_revised", id: u.seq, text });
     });
   }
@@ -1193,6 +1207,20 @@ export function applyReadings(text: string, readings?: Record<string, string>): 
     out = out.replace(re, reading);
   }
   return out;
+}
+
+/**
+ * Whether a line the page took no turn on deserves the second recogniser: a question or request, a
+ * short name-sized token before punctuation, or a fragment start. Plain statements do not.
+ */
+export function worthRescoring(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (t.length <= 12) return true; // short lines are cheap, and a lost name is most of them (run 79: 「唯イ寮の予定…」)
+  if (/[？?]|教えて|説明して|お願い|ですか|ますか|でしょうか|どう思|かな[。]?$|くれる|もらえ|いくつ|なに|何|誰|どこ|いつ/.test(t)) return true;
+  if (/^(?:[、。,.]|[ぁ-んァ-ンー]{1,3}[、,]|[がはをにへとでも](?![ぁ-んァ-ン]))/.test(t)) return true; // a fragment start
+  if (/^[ぁ-んァ-ンーA-Za-z]{1,4}[、,]/.test(t)) return true; // a name-sized token before a comma
+  return false;
 }
 
 function mergeInt16(parts: Int16Array[], total: number): Int16Array {

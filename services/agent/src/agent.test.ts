@@ -7,7 +7,7 @@ import { OpenAICompatibleLLM, parseSse } from "./adapters/llm.js";
 import { StyleBertVits2TTS } from "./adapters/tts.js";
 import { WhisperServerSTT } from "./adapters/stt.js";
 import { EnergyVADAdapter, type VADAdapter, type VADAdapterEvent } from "./adapters/vad.js";
-import { applyReadings, AsyncQueue, ConversationSession } from "./session.js";
+import { applyReadings, AsyncQueue, ConversationSession, worthRescoring } from "./session.js";
 import { IncrementalOfflineSTT } from "./adapters/stt-streaming.js";
 import type { ServerMessage } from "./protocol.js";
 import type { ChatMessage, LLMAdapter } from "./adapters/llm.js";
@@ -868,6 +868,15 @@ describe("what the character remembers from earlier in the conversation", () => 
     expect(tts.calls).toContain("ゆいです。");
     const shown = sent.filter((m) => m.type === "assistant_transcript").map((m) => (m as { text: string }).text);
     expect(shown.some((x) => x.includes("Yuiです"))).toBe(true);
+  });
+  it("re-reads a line nobody addressed to the character only when a better reading could matter", () => {
+    expect(worthRescoring("昨日の資料、見てくれた？")).toBe(true); // a question
+    expect(worthRescoring("イ、今日の予定を教えて")).toBe(true); // a request, a name-sized token
+    expect(worthRescoring("いいが、昨日そう言ってたよね。")).toBe(true); // a fragment start (run 109)
+    expect(worthRescoring("見たよ。3ページ目の数字が少し気になったかな。")).toBe(true); // 「かな」 asks
+    expect(worthRescoring("ありがとう、助かる。")).toBe(true); // short: cheap, and a name would be most of it
+    expect(worthRescoring("あそこは後で直しておくね。")).toBe(false); // a statement
+    expect(worthRescoring("ただのバラエティー番組に見えてきたって話をしてたんだよ")).toBe(false); // the room's own talk (run 106)
   });
   it("a barge-in cancels the fold running behind the reply it cut off (run 99)", async () => {
     // The fold's notes would change the prompt for the yield turn arriving in seconds, and its

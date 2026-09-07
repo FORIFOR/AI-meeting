@@ -196,10 +196,33 @@ index 0461f77..f6d0373 100644
              except Exception as e:
                  if num_retries >= max_retries:
 diff --git a/bots/webpage_streamer/webpage_streamer.py b/bots/webpage_streamer/webpage_streamer.py
-index d2f4b7d..710ac73 100644
+index d2f4b7d..6fe5010 100644
 --- a/bots/webpage_streamer/webpage_streamer.py
 +++ b/bots/webpage_streamer/webpage_streamer.py
-@@ -255,6 +255,12 @@ class WebpageStreamer:
+@@ -178,7 +178,7 @@ class WebpageStreamer:
+                 ! appsink name=video_sink emit-signals=false max-buffers=1 drop=true
+ 
+             alsasrc device=default
+-                ! audio/x-raw,format=S16LE,channels=1,rate=16000
++                ! audio/x-raw,format=S16LE,channels=1,rate=48000
+                 ! audioconvert
+                 ! audioresample
+                 ! queue max-size-buffers=8000 leaky=downstream
+@@ -207,9 +207,12 @@ class WebpageStreamer:
+             height=height,
+             framerate=15,
+         )
++        # rcai (not upstream): the page plays the character's voice at 48 kHz; captured at 16 kHz the room
++        # heard her through a telephone (Gate #8 runs 89–112: f99 1.6–2.5 kHz on most replies). Opus in
++        # the meeting is fullband at 48 kHz, so the capture matches it; mono, as before.
+         self._audio_track = GstAudioStreamTrack(
+             sink=self._gst_audio_sink,
+-            sample_rate=16000,
++            sample_rate=48000,
+             channels=1,
+         )
+ 
+@@ -255,6 +258,12 @@ class WebpageStreamer:
              logger.info("Chrome sandboxing is enabled")
          logger.info(f"Video frame size: {self.video_frame_size}")
  
