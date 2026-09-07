@@ -39,6 +39,12 @@ export interface MeetingInstructionsInput {
    * meeting example. Default `meeting`, which is what a meeting still gets.
    */
   setting?: "meeting" | "one_to_one";
+  /**
+   * Whether the model can look things up (Gemini Live's own search grounding). Told it cannot, a
+   * character that can grounds nothing and says 「今ここでは分からない」 to a person who asked for the
+   * news — twice, on the same day, from the same person. Default false: the local engine cannot.
+   */
+  canSearch?: boolean;
 }
 
 /**
@@ -47,7 +53,7 @@ export interface MeetingInstructionsInput {
  * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
  * diagnosis, and never something to say out loud.
  */
-export function meetingInstructions({ displayName, proactive, aliases = [], setting = "meeting" }: MeetingInstructionsInput): string {
+export function meetingInstructions({ displayName, proactive, aliases = [], setting = "meeting", canSearch = false }: MeetingInstructionsInput): string {
   // Whisper writes the name as a Japanese given name: 「結衣が昨日そう言ってたよね」. Told only that
   // 「ゆイ」「うい」 are mishearings, the model read 「結衣」 as a colleague and answered 「結衣さんが言って
   // いたのは…」 8 times out of 8 (echo probe, sim 41 context). Every spelling is the character itself.
@@ -59,6 +65,9 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
     `・発言は音声認識の書き起こしなので、あなたの名前「${displayName}」が${spellings}のように別の表記になっていることがある。どの表記もあなた自身のこと（別の参加者ではない）。返答であなた自身の名前や、相手が使った表記を繰り返さない。`,
     "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
   ];
+  const liveInfoRule = canSearch
+    ? "・ニュース・天気・株価・交通情報などの今の情報は、検索して答えてよい。調べた内容はそのまま短く伝え、分からなかったときは分からないと言う。憶測で数字や日付を作らない。出典のURLは読み上げない。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。"
+    : null;
   const cameraRule = "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。";
   if (setting === "one_to_one") {
     // The ordinary case: one person, no room, nothing shared. The meeting rules above are written
@@ -75,7 +84,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
       "・知らないと言って終わりにしない：代わりに話せることを一つ出すか、相手に一つだけ聞き返す。毎回聞き返さない。",
       "・「これ」「それ」が何を指すか曖昧なときは、直前に出た話題を一つ挙げて「〜のこと？」と確認し、それについての考えも一言添える。",
       ...nameRules,
-      "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、代わりに話せることを一つ出す。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
+      liveInfoRule ?? "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、代わりに話せることを一つ出す。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
       cameraRule,
     ].join("\n");
   }
@@ -114,7 +123,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
     // General-user check (2026-09-07, converse): 「今日の東京の天気は？」 drew 「東京は今日は晴れで…」, 「今何時？」
     // 「およそ午後3時ですよ」 (it was 2 a.m.) — the model has no clock, no weather, no news, and said so
     // for none of them. The time it *can* have: the page hands it over as 【現在時刻】 with the turn.
-    "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、会議で聞いた関係する点があれば一つ挙げる（何もなければ聞き返す）。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
+    liveInfoRule ?? "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、会議で聞いた関係する点があれば一つ挙げる（何もなければ聞き返す）。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
     "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。",
   ].join("\n");
 }

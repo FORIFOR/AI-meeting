@@ -111,3 +111,24 @@ describe("one to one is not a meeting", () => {
     expect(meetingTurnPrompt({ context: ["A: x"], asked: { speakerName: "A", text: "これどう思う？" } })).toContain("【会議の直近の発言】");
   });
 });
+
+/**
+ * 「ニュースを教えてくれません」, said twice on 2026-09-07. The rule was right for a model that cannot
+ * look anything up and wrong for one that can: the provider says which it is.
+ */
+describe("what it may say about today", () => {
+  it("is told to look it up when the provider can", () => {
+    const canSearch = meetingInstructions({ displayName: "Yui", proactive: true, canSearch: true, setting: "one_to_one" });
+    expect(canSearch).toContain("検索して答えてよい");
+    expect(canSearch).toContain("憶測で数字や日付を作らない");
+    expect(canSearch).not.toContain("インターネット検索は使えない");
+  });
+
+  it("is told it cannot when the provider cannot", () => {
+    for (const setting of ["one_to_one", "meeting"] as const) {
+      const cannot = meetingInstructions({ displayName: "Yui", proactive: true, setting });
+      expect(cannot).toContain("インターネット検索は使えない");
+      expect(cannot).not.toContain("検索して答えてよい");
+    }
+  });
+})

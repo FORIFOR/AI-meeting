@@ -129,7 +129,8 @@ describe("GeminiLiveProvider", () => {
     const setup = (ws.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
     expect(setup.proactivity).toEqual({ proactiveAudio: true });
     expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
-    expect(setup.tools?.[0]?.functionDeclarations[0]?.name).toBe("lookup");
+    const declared = setup.tools?.find((t) => "functionDeclarations" in t);
+    expect(declared && "functionDeclarations" in declared ? declared.functionDeclarations[0]?.name : null).toBe("lookup");
     expect(p.capabilities().extras?.proactiveAudio).toBe(true);
   });
 
@@ -350,12 +351,27 @@ describe("the Live setup a meeting asks for", () => {
       { systemPrompt: "あなたは会議のYuiです。", mode: "free_talk", language: "ja-JP", privacyMode: "default", ...config } as never,
     );
 
-  it("asks 3.1 Flash Live for minimal thinking and Kore, and says so rather than trusting a default", () => {
+  it("asks 3.1 Flash Live for minimal thinking and the friendly voice, and says so rather than trusting a default", () => {
     const s = setup();
     expect(s.model).toBe("models/gemini-3.1-flash-live-preview");
     expect(s.generationConfig?.thinkingConfig).toEqual({ thinkingLevel: "minimal" });
-    expect(s.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Kore");
+    // "Firm" is the wrong first impression for a character; the default is "Friendly" and the pack
+    // or the setting may still name any of the others.
+    expect(s.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Achird");
+    expect(setup({}, { voice: "Leda" }).generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Leda");
     expect(s.generationConfig?.responseModalities).toEqual(["AUDIO"]);
+  });
+
+  /**
+   * Asked for the news, a character that cannot look anything up can only say so — and did, to the
+   * same person twice in one day. The Live API grounds its own answer when the tool is declared.
+   */
+  it("declares Google Search so today's questions have an answer", () => {
+    expect(setup().tools).toEqual([{ googleSearch: {} }]);
+    expect(setup({ googleSearch: false }).tools).toBeUndefined();
+    const withFn = setup({}, { tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
+    expect(withFn.tools).toHaveLength(2);
+    expect(withFn.tools?.[1]).toEqual({ googleSearch: {} });
   });
 
   it("lets the character's own voice and another thinking level through, and can send neither", () => {

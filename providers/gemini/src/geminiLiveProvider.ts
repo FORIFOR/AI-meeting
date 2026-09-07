@@ -77,6 +77,13 @@ export interface GeminiLiveProviderOptions {
    * `false` restores the continuous stream (server VAD decides).
    */
   gateAudioOnSpeech?: boolean;
+  /**
+   * Let the model look things up with Google Search. Without it 「今日のニュースを教えて」 can only be
+   * answered honestly by saying it cannot be known — which is what a person asking for the news hears
+   * as a broken assistant (2026-09-07, twice). The Live API grounds the answer itself; no tool call
+   * comes back to us. Default on for the cloud path.
+   */
+  googleSearch?: boolean;
   /** Quiet required before the turn closes (ms). Default 250; the VAD's hangover is the first guard. */
   gateHangoverMs?: number;
   /** Max automatic reconnect attempts after goAway / abnormal close (default 3). */
@@ -190,6 +197,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       localOnly: false,
       extras: {
         bargeIn: true,
+        // The model grounds its own answers with Google Search: what it may say about today changes.
+        search: this.opts.googleSearch !== false,
         proactiveAudio: this.opts.proactiveAudio ?? false,
         affectiveDialog: this.opts.enableAffectiveDialog ?? true,
         vision: true,
@@ -355,9 +364,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
      * lower-latency one and has neither feature.
      */
     if (this.opts.proactiveAudio && nativeAudio) setup.proactivity = { proactiveAudio: true };
-    if (config.tools?.length) {
-      setup.tools = [{ functionDeclarations: config.tools.map((t) => ({ name: t.name, description: t.description, parameters: t.parameters })) }];
-    }
+    const tools: NonNullable<GeminiSetup["tools"]> = [];
+    if (config.tools?.length) tools.push({ functionDeclarations: config.tools.map((t) => ({ name: t.name, description: t.description, parameters: t.parameters })) });
+    if (this.opts.googleSearch !== false) tools.push({ googleSearch: {} });
+    if (tools.length) setup.tools = tools;
     if (this.resumptionHandle) setup.sessionResumption = { handle: this.resumptionHandle };
     return setup;
   }

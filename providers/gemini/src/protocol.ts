@@ -13,13 +13,33 @@ export const GEMINI_WSS_BASE = "wss://generativelanguage.googleapis.com/ws/googl
 export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
 
 /**
- * The voice the character speaks with when the character pack names none. Google publishes 30 prebuilt
- * voices and no per-language ranking, so this is a starting point to A/B in Japanese rather than a
- * finding: Kore ("Firm"), against Iapetus ("Clear"), Schedar ("Even"), Achird ("Friendly"), Sulafat ("Warm").
+ * The voice the character speaks with when the character pack names none.
+ *
+ * Kore is Google's "Firm" — a capable, businesslike voice, and the wrong first impression for a
+ * character somebody is meant to want to talk to again (「現在の声はあまり好きじゃないです」,
+ * 2026-09-07). "Friendly" is the safer default for a character used for half an hour at a time:
+ * likeable without being a mascot. Google publishes no per-language ranking, so this is a starting
+ * point to compare in Japanese, not a finding.
  */
-export const DEFAULT_GEMINI_LIVE_VOICE = "Kore";
-/** Voices worth comparing in Japanese, in the order to try them (`VOICE=` on the reality harnesses). */
-export const GEMINI_LIVE_VOICES_TO_COMPARE = ["Kore", "Iapetus", "Schedar", "Achird", "Sulafat"] as const;
+export const DEFAULT_GEMINI_LIVE_VOICE = "Achird";
+/**
+ * The three worth comparing, with the character on screen and the same twenty lines: Achird
+ * ("Friendly"), Leda ("Youthful"), Sulafat ("Warm"). The wider set — Kore ("Firm"), Iapetus
+ * ("Clear"), Schedar ("Even"), Vindemiatrix ("Gentle"), Zephyr ("Bright") — stays selectable.
+ */
+export const GEMINI_LIVE_VOICES_TO_COMPARE = ["Achird", "Leda", "Sulafat"] as const;
+/**
+ * What a person choosing a voice actually picks between. The Google names mean nothing to them, so
+ * the setting offers the character, not the vendor's catalogue.
+ */
+export const GEMINI_LIVE_VOICE_CHOICES = [
+  { id: "friendly", voice: "Achird", label: "親しみやすい", detail: "自然で話しやすい" },
+  { id: "youthful", voice: "Leda", label: "明るい", detail: "若々しく元気" },
+  { id: "warm", voice: "Sulafat", label: "やさしい", detail: "落ち着いていて穏やか" },
+  { id: "gentle", voice: "Vindemiatrix", label: "ていねい", detail: "柔らかく丁寧" },
+  { id: "cool", voice: "Kore", label: "落ち着いた", detail: "知的でしっかりした" },
+] as const;
+
 export const GEMINI_INPUT_RATE = 16_000;
 export const GEMINI_OUTPUT_RATE = 24_000;
 
@@ -64,7 +84,11 @@ export interface GeminiSetup {
     maxOutputTokens?: number;
   };
   systemInstruction?: GeminiContent;
-  tools?: { functionDeclarations: { name: string; description: string; parameters?: Record<string, unknown> }[] }[];
+  /**
+   * Tools the model may use. `googleSearch` is the Live API's own grounding tool: with it the model
+   * looks today's answer up instead of saying it cannot know. Everything else is our own functions.
+   */
+  tools?: ({ functionDeclarations: { name: string; description: string; parameters?: Record<string, unknown> }[] } | { googleSearch: Record<string, never> })[];
   realtimeInputConfig?: { automaticActivityDetection?: AutomaticActivityDetection };
   inputAudioTranscription?: Record<string, never>;
   outputAudioTranscription?: Record<string, never>;

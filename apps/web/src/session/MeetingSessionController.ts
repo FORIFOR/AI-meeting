@@ -508,7 +508,9 @@ export class MeetingSessionController {
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
     const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
     this.provider = provider as unknown as { gateStats?: Record<string, number> };
-    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting });
+    // What the character may say about today depends on whether this provider can look it up.
+    const canSearch = provider.capabilities().extras?.search === true;
+    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting, canSearch });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
