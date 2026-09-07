@@ -426,4 +426,24 @@ describe("the gate's fallback", () => {
     await p.disconnect();
   });
 });
+
+describe("the call must not howl", () => {
+  it("holds the room's return path while the character speaks, and lets a real barge-in through", async () => {
+    const { p, ws } = await connected();
+    // She starts speaking: a second of audio comes back from the model.
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 1000)) } }] } } });
+    await ws.flush();
+    const before = ws.sent.filter((m) => "realtimeInput" in m).length;
+    // Her own voice returning through a speaker into the microphone next to it: loud enough for the
+    // gate's fallback, not loud enough to be someone talking over her.
+    let ts = 0;
+    for (let i = 0; i < 30; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.02), 48000, ts)); ts += 20; }
+    expect(ws.sent.filter((m) => "realtimeInput" in m).length).toBe(before); // nothing sent back to the model
+    expect(p.gateStats.held).toBeGreaterThan(0);
+    // Someone actually talking over her does get through.
+    for (let i = 0; i < 30; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.5), 48000, ts)); ts += 20; }
+    expect(ws.sent.filter((m) => "realtimeInput" in m).length).toBeGreaterThan(before);
+    await p.disconnect();
+  });
+});
 });

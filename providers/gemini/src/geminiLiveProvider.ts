@@ -120,6 +120,15 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private static readonly GATE_LEVEL_DB = -45;
   private static readonly GATE_HANGOVER_MS = 700;
   private loudUntil = 0;
+  /**
+   * Half duplex while the character speaks, because the room is a room. Her voice leaves the page,
+   * reaches the call, and comes back — through the vendor's mix, or through a laptop speaker into the
+   * microphone next to it. Sent on, the model hears itself, answers itself, and the call howls
+   * (2026-09-07, one-to-one on Gemini). So input is held while she is speaking, and only real
+   * loudness — someone talking over her, well above her own return path — opens the gate again.
+   */
+  private static readonly BARGE_IN_LEVEL_DB = -28;
+  private static readonly SELF_TAIL_MS = 400;
   /** Observability: audio chunks sent to the API and chunks the gate kept out of it. */
   readonly gateStats = { sent: 0, held: 0 };
   /**
@@ -370,6 +379,14 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const now = frame.timestamp ?? this.clock();
     if (level > GeminiLiveProvider.GATE_LEVEL_DB) this.loudUntil = now + GeminiLiveProvider.GATE_HANGOVER_MS;
     const loud = now < this.loudUntil;
+    // While the character is speaking (and for a beat after), only a voice over her own gets through.
+    const selfSpeaking = this.turn.hasAudio && this.clock() - (this.turn.firstAudioAt + this.turn.audioMs) < GeminiLiveProvider.SELF_TAIL_MS;
+    if (selfSpeaking && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
+      if (this.speechOpen) { this.speechOpen = false; this.send({ realtimeInput: { activityEnd: {} } }); }
+      this.gateStats.held++;
+      this.preroll.length = 0;
+      return;
+    }
     if (this.gating && (opened || loud) && !this.speechOpen) {
       this.speechOpen = true;
       this.send({ realtimeInput: { activityStart: {} } });
