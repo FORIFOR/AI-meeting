@@ -16,6 +16,16 @@ export interface EnergyVADOptions {
   hangoverMs?: number;
   /** Noise floor adaptation rate (0..1 per frame). Default 0.02. */
   adaptRate?: number;
+  /**
+   * How long the room is listened to before anything counts as speech (ms).
+   *
+   * The floor starts at an assumed -60 dBFS, and a room louder than that is speech from the first
+   * frame: a meeting stream with automatic gain opened a turn on its own hiss and the model answered
+   * six seconds of silence (P0 gate, 2026-09-07). So the opening moments set the floor instead of
+   * being judged against it. Capped at -45 dBFS so someone who starts talking immediately cannot
+   * deafen it. Default 400 ms; 0 disables.
+   */
+  calibrationMs?: number;
 }
 
 /**
@@ -25,6 +35,9 @@ export interface EnergyVADOptions {
  */
 export class EnergyVAD {
   private noiseFloorDb = -60;
+  /** Milliseconds of room heard so far; below `calibrationMs` the floor is being set, not used. */
+  private heardMs = 0;
+  private static readonly CALIBRATION_CEILING_DB = -45;
   private speaking = false;
   private speechAccumMs = 0;
   private silenceAccumMs = 0;
@@ -38,6 +51,7 @@ export class EnergyVAD {
       minSpeechMs: opts.minSpeechMs ?? 60,
       hangoverMs: opts.hangoverMs ?? 500,
       adaptRate: opts.adaptRate ?? 0.02,
+      calibrationMs: opts.calibrationMs ?? 400,
     };
   }
 
@@ -61,6 +75,14 @@ export class EnergyVAD {
     const level = dbfs(rms(frame.data));
     this.lastLevelDb = level;
     const dur = frameDurationMs(frame);
+    if (this.heardMs < this.opts.calibrationMs) {
+      // Setting the floor, not judging against it.
+      this.heardMs += dur;
+      const seen = Math.max(level, -90);
+      this.noiseFloorDb = this.heardMs <= dur ? seen : Math.max(this.noiseFloorDb, seen);
+      this.noiseFloorDb = Math.min(this.noiseFloorDb, EnergyVAD.CALIBRATION_CEILING_DB);
+      return events;
+    }
     const isLoud = level > this.opts.absoluteFloorDb && level > this.noiseFloorDb + this.opts.thresholdDb;
 
     {
@@ -104,5 +126,7 @@ export class EnergyVAD {
     this.speaking = false;
     this.speechAccumMs = 0;
     this.silenceAccumMs = 0;
+    this.heardMs = 0;
+    this.noiseFloorDb = -60;
   }
 }

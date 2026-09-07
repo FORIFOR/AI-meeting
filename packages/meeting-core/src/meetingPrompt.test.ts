@@ -132,3 +132,13 @@ describe("what it may say about today", () => {
     }
   });
 })
+
+describe("being misheard is worse than asking", () => {
+  it("tells both settings to ask back for the part it lost, not to fill it in", () => {
+    for (const setting of ["one_to_one", "meeting"] as const) {
+      const t = meetingInstructions({ displayName: "Yui", proactive: true, setting });
+      expect(t).toContain("聞き取れなかったところは推測で埋めない");
+      expect(t).toContain("その部分だけを短く聞き返す");
+    }
+  });
+});

@@ -68,6 +68,12 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
   const liveInfoRule = canSearch
     ? "・ニュース・天気・株価・交通情報などの今の情報は、検索して答えてよい。調べた内容はそのまま短く伝え、分からなかったときは分からないと言う。憶測で数字や日付を作らない。出典のURLは読み上げない。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。"
     : null;
+  /**
+   * The recogniser drops words, and a model handed half a sentence answers the half it got as though
+   * it were the whole. 「田中さんが……までやります」 answered as a date the character invented is worse
+   * than asking; the one thing a person cannot forgive is being confidently misheard.
+   */
+  const misheardRule = "・聞き取れなかったところは推測で埋めない。文の一部（日付・数字・名前など）が欠けていたら、その部分だけを短く聞き返す（例:「すみません、期限だけ聞き取れませんでした。いつまででしょう？」）。全体が聞き取れなければ「ごめん、もう一度いい？」とだけ言う。相手の発言が「それっ？」のような断片だけのときは、相槌（「うん」「聞いてるよ」）で終わらせずに、必ず短く聞き返す。";
   const cameraRule = "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。";
   if (setting === "one_to_one") {
     // The ordinary case: one person, no room, nothing shared. The meeting rules above are written
@@ -83,6 +89,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
       "・答えの材料は、この会話で聞いたことと自分の考えだけ。相手の予定・担当・数字・出来事など、聞いていないことは作らない。知らないことは知らないと（自分の口調で）正直に言う。",
       "・知らないと言って終わりにしない：代わりに話せることを一つ出すか、相手に一つだけ聞き返す。毎回聞き返さない。",
       "・「これ」「それ」が何を指すか曖昧なときは、直前に出た話題を一つ挙げて「〜のこと？」と確認し、それについての考えも一言添える。",
+      misheardRule,
       ...nameRules,
       liveInfoRule ?? "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、代わりに話せることを一つ出す。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
       cameraRule,
@@ -116,6 +123,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
     // Addressed by "Tester" the model answered 「〇〇さんは何か確認しておきたいことでもあった？」 — a
     // placeholder said out loud. Names are used as written in the transcript or not at all.
     "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
+    misheardRule,
     // Run 75: 「ゆい英坊を思う？」 (どう思う) was answered about a colleague called 英坊. No rule fixed it:
     // told that nonsense words are mishearings and not to repeat them, the 2B model quoted the line
     // back (「ゆい英坊を思う？」と聞かれましたね, 2/6) or invented 「ゆい英坊さん」 — below the no-rule

@@ -281,8 +281,9 @@ describe("GeminiLiveProvider reconnection", () => {
     expect(types.filter((t) => t === "session_ready").length).toBe(2);
     expect(types).not.toContain("session_closed");
     expect(p.diagnostics.reconnects).toBe(1);
-    // Audio flows on the new socket.
-    for (let i = 0; i < 10; i++) p.pushAudio(createFrame(sine(48000, 20), 48000, i * 20));
+    // Audio flows on the new socket. Long enough to cover the VAD's calibration, which starts again
+    // with the new session: the first 400 ms of any room sets the floor rather than opening a turn.
+    for (let i = 0; i < 40; i++) p.pushAudio(createFrame(sine(48000, 20), 48000, i * 20));
     expect(ws2.sent.some((m) => "realtimeInput" in m)).toBe(true);
     await p.disconnect();
   });
@@ -497,6 +498,25 @@ describe("the gate's fallback", () => {
  * The words have to reach the page while they still matter. Delivered with `turnComplete` — the end
  * of the model's own reply — the transcript arrives after everything that needed it has decided.
  */
+describe("the first second of a session", () => {
+  /**
+   * The VAD's floor starts at -60 dBFS and has to hear the room before it knows what quiet is. Until
+   * it does, the level fallback would open a turn on the room's own hiss and hand the model a second
+   * of nothing to answer — six seconds of silence drew a reply on the P0 gate (07 Sep).
+   */
+  it("belongs to the room: only the VAD may open a turn while the floor is still being learnt", async () => {
+    const { p, ws } = await connected();
+    let ts = 0;
+    // Room tone that clears the fallback's bar but is nobody speaking.
+    for (let i = 0; i < 50; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.01), 48000, ts)); ts += 20; }
+    expect(ws.sent.filter((m) => "realtimeInput" in m)).toHaveLength(0);
+    // Someone actually speaking in that first second is still heard: the VAD opens it.
+    for (let i = 0; i < 10; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.4), 48000, ts)); ts += 20; }
+    expect(ws.sent.filter((m) => "realtimeInput" in m && (m as { realtimeInput: { activityStart?: unknown } }).realtimeInput.activityStart)).toHaveLength(1);
+    await p.disconnect();
+  });
+});
+
 describe("when the user's words are delivered", () => {
   it("is when the user stops talking, not when the model finishes answering", async () => {
     const { p, ws, events } = await connected();
@@ -522,17 +542,38 @@ describe("when the user's words are delivered", () => {
 
 describe("the call must not howl", () => {
   it("holds the room's return path while the character speaks, and lets a real barge-in through", async () => {
-    const { p, ws } = await connected();
+    const { p, ws, events } = await connected();
     // She starts speaking: a second of audio comes back from the model.
     ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 1000)) } }] } } });
     await ws.flush();
     const before = ws.sent.filter((m) => "realtimeInput" in m).length;
     // Her own voice returning through a speaker into the microphone next to it: loud enough for the
-    // gate's fallback, not loud enough to be someone talking over her.
-    let ts = 0;
+    // gate's fallback, not loud enough to be someone talking over her. Past the gate's warm-up, so the
+    // room's floor is learnt and the fallback is live.
+    let ts = 2000;
     for (let i = 0; i < 30; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.02), 48000, ts)); ts += 20; }
     expect(ws.sent.filter((m) => "realtimeInput" in m).length).toBe(before); // nothing sent back to the model
     expect(p.gateStats.held).toBeGreaterThan(0);
+    // Her reply stops the moment somebody talks over her, without waiting for the model to notice.
+    expect(events.filter((e) => e.type === "interrupted")).toHaveLength(0);
+    for (let i = 0; i < 12; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.5), 48000, ts)); ts += 20; }
+    expect(events.filter((e) => e.type === "interrupted").length).toBeGreaterThanOrEqual(1);
+    expect(p.gateStats.bargeIns).toBeGreaterThanOrEqual(1);
+    // The tail of the cut reply keeps arriving from the server; none of it reaches the host.
+    const audioBefore = events.filter((e) => e.type === "assistant_audio").length;
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 200)) } }] } } });
+    await ws.flush();
+    expect(events.filter((e) => e.type === "assistant_audio")).toHaveLength(audioBefore);
+    // The server's own "interrupted" is an acknowledgement, not the end of the tail.
+    ws.receive({ serverContent: { interrupted: true } });
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 200)) } }] } } });
+    await ws.flush();
+    expect(events.filter((e) => e.type === "assistant_audio")).toHaveLength(audioBefore);
+    // Once a turn has ended, the next reply plays normally.
+    ws.receive({ serverContent: { turnComplete: true } });
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 200)) } }] } } });
+    await ws.flush();
+    expect(events.filter((e) => e.type === "assistant_audio").length).toBeGreaterThan(audioBefore);
     // Someone actually talking over her does get through.
     for (let i = 0; i < 30; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.5), 48000, ts)); ts += 20; }
     expect(ws.sent.filter((m) => "realtimeInput" in m).length).toBeGreaterThan(before);

@@ -274,7 +274,8 @@ describe("greeting on arrival", () => {
     expect(c.policy.state).toBe("ADDRESSED");
     emit({ type: "assistant_speech_started", at: Date.now() });
     expect(c.policy.state).toBe("RESPONDING");
-    for (let i = 0; i < 30; i++) c.onMeetingAudio(loud());
+    // 600 ms: the local VAD spends its first 400 ms learning what this room's quiet sounds like.
+    for (let i = 0; i < 60; i++) c.onMeetingAudio(loud());
     expect(providerInterrupt).toHaveBeenCalledTimes(1);
     clock.mockRestore();
     await c.leave();

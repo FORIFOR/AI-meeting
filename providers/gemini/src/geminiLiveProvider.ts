@@ -148,6 +148,14 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private static readonly MAX_OPEN_MS = 8000;
   private openedAt = 0;
   /**
+   * The first second of a session belongs to the room, not to the character. The VAD's noise floor
+   * starts at -60 dBFS and has to hear the room before it knows what quiet is, so until it does, only
+   * the VAD may open a turn — the level fallback would open on the room's own hiss and hand the model
+   * a second of nothing to answer (P0 gate, 07 Sep: six seconds of silence drew a reply).
+   */
+  private static readonly WARMUP_MS = 1500;
+  private firstFrameAt = 0;
+  /**
    * After a forced close, the gate stays shut until the room is quiet again (or the VAD reports a new
    * onset). Without it a loud room reopens on the very next frame and the "turn" resumes for ever.
    */
@@ -161,8 +169,18 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
    */
   private static readonly BARGE_IN_LEVEL_DB = -28;
   private static readonly SELF_TAIL_MS = 400;
+  /**
+   * How long a voice must stay over hers before her reply is cut, and the cut is ours: waiting for the
+   * model to notice took 4.3 s of her talking over a person who had asked her to stop (P0 gate, 07 Sep).
+   * A cough is not an interruption, so it is not the first loud frame either — but 140 ms of somebody
+   * talking is, and stopping is local, immediate, and owes nothing to a round trip.
+   */
+  private static readonly BARGE_IN_CONFIRM_MS = 140;
+  private bargeInSince = 0;
+  /** Set while the tail of a locally cut reply is still arriving; cleared by the server's own turn end. */
+  private droppingUntilTurn = false;
   /** Observability: audio chunks sent to the API and chunks the gate kept out of it. */
-  readonly gateStats = { sent: 0, held: 0, opens: 0, closes: 0, forced: 0, openMs: 0 };
+  readonly gateStats = { sent: 0, held: 0, opens: 0, closes: 0, forced: 0, openMs: 0, bargeIns: 0 };
   /**
    * What a conversation is judged on, kept apart from what is easy to measure. `turnComplete` arrives
    * when the model has finished *sending* a reply — for a ten-second answer that is ten seconds after
@@ -243,6 +261,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.preroll = [];
     this.reconnectAttempts = 0;
     this.searchWanted = this.opts.googleSearch !== false;
+    this.firstFrameAt = 0;
     const token = await this.fetchToken();
     const model = token.model ?? this.model;
     const wss = geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token);
@@ -450,11 +469,26 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const selfSpeaking = this.turn.hasAudio && this.clock() - (this.turn.firstAudioAt + this.turn.audioMs) < GeminiLiveProvider.SELF_TAIL_MS;
     if (selfSpeaking && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
       if (this.speechOpen) this.closeTurn(now);
+      this.bargeInSince = 0;
       this.gateStats.held++;
       this.preroll.length = 0;
       return;
     }
-    if (this.gating && (opened || (loud && !this.rearm)) && !this.speechOpen) {
+    /**
+     * Somebody is talking over her. Her own reply stops here, not when the model gets round to it: the
+     * person who said 「ちょっと待って」 has already waited long enough by the time a round trip lands.
+     */
+    if (selfSpeaking) {
+      if (!this.bargeInSince) this.bargeInSince = now;
+      if (now - this.bargeInSince >= GeminiLiveProvider.BARGE_IN_CONFIRM_MS) {
+        this.bargeInSince = 0;
+        this.gateStats.bargeIns++;
+        void this.interrupt();
+      }
+    } else this.bargeInSince = 0;
+    if (!this.firstFrameAt) this.firstFrameAt = now;
+    const warming = now - this.firstFrameAt < GeminiLiveProvider.WARMUP_MS;
+    if (this.gating && (opened || (loud && !this.rearm && !warming)) && !this.speechOpen) {
       this.speechOpen = true;
       this.openedAt = now;
       this.gateStats.opens++;
@@ -487,6 +521,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   /** End the open activity window: the model's cue that the user's turn is over and it may answer. */
   private closeTurn(now: number): void {
     this.speechOpen = false;
+    // Whatever the model says next answers this turn, so it is not the tail of the cut one.
+    this.droppingUntilTurn = false;
     this.gateStats.closes++;
     this.gateStats.openMs += Math.max(0, Math.round(now - this.openedAt));
     this.send({ realtimeInput: { activityEnd: {} } });
@@ -525,6 +561,13 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
    */
   async interrupt(): Promise<void> {
     this.send({ clientContent: { turnComplete: false } });
+    /**
+     * The reply we just cut keeps arriving for a moment: the server is mid-generation and does not
+     * hear about it until our message lands. Ten frames of a cut answer reached the host on the P0
+     * gate (07 Sep). They belong to a turn nobody is listening to any more, so they stop here rather
+     * than at every host that has to know to drop them.
+     */
+    this.droppingUntilTurn = true;
     this.onInterrupted(this.clock());
   }
 
@@ -567,12 +610,15 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (!sc) return;
 
     if (sc.interrupted) {
+      // The server's acknowledgement, not the end of the tail: audio for the cut reply arrives after
+      // it. What ends the drop is a turn ending — the model's (`turnComplete`) or the room's next one.
       this.onInterrupted(now);
     }
     if (sc.inputTranscription?.text) {
       this.userTranscript += sc.inputTranscription.text;
       this.emit({ type: "user_transcript", text: this.userTranscript, final: false });
     }
+    if (sc.modelTurn?.parts?.length && this.droppingUntilTurn) return; // the tail of a cut reply
     if (sc.modelTurn?.parts?.length) {
       this.flushUserTranscript();
       this.openGeneration();
@@ -595,6 +641,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       this.emit({ type: "assistant_transcript", text: sc.outputTranscription.text, final: false, gen: this.genCounter.stamp() });
     }
     if (sc.turnComplete) {
+      this.droppingUntilTurn = false;
       this.flushUserTranscript();
       if (this.assistantTranscript) {
         this.emit({ type: "assistant_transcript", text: this.assistantTranscript, final: true, gen: this.genCounter.stamp() });
