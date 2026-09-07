@@ -67,6 +67,14 @@ export interface GeminiLiveProviderOptions {
   setupTimeoutMs?: number;
   /** Local VAD used to emit user_speech_* (Gemini sends no user-activity events). */
   localVad?: boolean;
+  /**
+   * Send audio only while someone is speaking (default). A meeting is mostly silence and paper noise,
+   * and streaming all of it to a metered API pays for the silence twice: in tokens, and in the model
+   * hearing the room's every cough. The local VAD opens the turn, a short pre-roll keeps the first
+   * mora, and `activityEnd` closes it — which is why the setup then disables the server's own VAD.
+   * `false` restores the continuous stream (server VAD decides).
+   */
+  gateAudioOnSpeech?: boolean;
   /** Max automatic reconnect attempts after goAway / abnormal close (default 3). */
   maxReconnects?: number;
   /** Backoff base in ms (1000 → 1 s, 2 s, 4 s). */
@@ -96,6 +104,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private closing = false;
   private setupDone = false;
   private turn = { audioMs: 0, firstAudioAt: 0, hasAudio: false, id: 0 };
+  /** Audio gating: whether a turn is open, and the pre-roll kept for the moment it opens. */
+  private speechOpen = false;
+  private preroll: string[] = [];
+  private static readonly PREROLL_CHUNKS = 15; // 640 B at 16 kHz = 20 ms each → 300 ms
   /**
    * What a conversation is judged on, kept apart from what is easy to measure. `turnComplete` arrives
    * when the model has finished *sending* a reply — for a ten-second answer that is ten seconds after
@@ -142,6 +154,11 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.listeners.add(callback);
   }
 
+  /** Audio is gated on speech unless the operator asked for the continuous stream. */
+  private get gating(): boolean {
+    return this.opts.gateAudioOnSpeech !== false && !!this.vad;
+  }
+
   get model(): string {
     return this.opts.model ?? DEFAULT_GEMINI_LIVE_MODEL;
   }
@@ -155,6 +172,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.outbound = new OutboundAudioConverter({ targetRate: GEMINI_INPUT_RATE, chunkMs: 20 });
     this.inbound = new AudioNormalizer();
     this.vad?.reset();
+    this.speechOpen = false;
+    this.preroll = [];
     this.reconnectAttempts = 0;
     const token = await this.fetchToken();
     const model = token.model ?? this.model;
@@ -274,7 +293,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       inputAudioTranscription: {},
       outputAudioTranscription: {},
       realtimeInputConfig: {
-        automaticActivityDetection: this.opts.automaticActivityDetection ?? { disabled: false, silenceDurationMs: 500, prefixPaddingMs: 100 },
+        automaticActivityDetection:
+          this.opts.automaticActivityDetection ??
+          (this.gating ? { disabled: true } : { disabled: false, silenceDurationMs: 500, prefixPaddingMs: 100 }),
       },
     };
     /**
@@ -311,23 +332,44 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
 
   pushAudio(frame: PCMFrame): void {
     if (!this.outbound || !this.ws || this.ws.readyState !== OPEN || !this.setupDone) return;
+    let opened = false;
+    let closed = false;
     if (this.vad) {
       for (const ev of this.vad.process(frame)) {
         if (ev.type === "speech_start") {
           this.genCounter.nextTurn();
           this.timing.userSpeechStartAt = ev.timestamp ?? this.clock();
           this.timing.source = "speech";
+          opened = true;
           this.emit({ type: "user_speech_started", at: ev.timestamp });
         }
         else {
           this.timing.userSpeechEndAt = ev.timestamp ?? this.clock();
+          closed = true;
           this.emit({ type: "user_speech_ended", at: ev.timestamp });
         }
       }
     }
-    for (const chunk of this.outbound.push(frame)) {
-      this.send({ realtimeInput: { audio: { data: bytesToBase64(int16ToBytes(chunk)), mimeType: `audio/pcm;rate=${GEMINI_INPUT_RATE}` } } });
+    if (this.gating && opened && !this.speechOpen) {
+      this.speechOpen = true;
+      this.send({ realtimeInput: { activityStart: {} } });
+      for (const b64 of this.preroll.splice(0)) this.sendAudioChunk(b64);
     }
+    for (const chunk of this.outbound.push(frame)) {
+      const b64 = bytesToBase64(int16ToBytes(chunk));
+      if (!this.gating || this.speechOpen) { this.sendAudioChunk(b64); continue; }
+      // Silence: keep the last 300 ms so the first mora survives the moment the turn opens.
+      this.preroll.push(b64);
+      if (this.preroll.length > GeminiLiveProvider.PREROLL_CHUNKS) this.preroll.shift();
+    }
+    if (this.gating && closed && this.speechOpen) {
+      this.speechOpen = false;
+      this.send({ realtimeInput: { activityEnd: {} } });
+    }
+  }
+
+  private sendAudioChunk(data: string): void {
+    this.send({ realtimeInput: { audio: { data, mimeType: `audio/pcm;rate=${GEMINI_INPUT_RATE}` } } });
   }
 
   pushImage(image: ImageFrame): void {

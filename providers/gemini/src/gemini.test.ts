@@ -106,7 +106,9 @@ describe("GeminiLiveProvider", () => {
     expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
     expect(setup.inputAudioTranscription).toEqual({});
     expect(setup.outputAudioTranscription).toEqual({});
-    expect(setup.realtimeInputConfig?.automaticActivityDetection?.disabled).toBe(false);
+    // Audio is gated on our own VAD (see pushAudio), so the server's detector is off and the turn
+    // boundaries are ours: activityStart / activityEnd.
+    expect(setup.realtimeInputConfig?.automaticActivityDetection?.disabled).toBe(true);
     const sys = setup.systemInstruction?.parts[0]?.text ?? "";
     expect(sys).toContain("あなたは面接官です。");
     expect(sys).toContain("【会話ルール】");
@@ -146,8 +148,15 @@ describe("GeminiLiveProvider", () => {
     for (let i = 0; i < 20; i++) { p.pushAudio(quiet()); ts += 20; }
     for (let i = 0; i < 15; i++) { p.pushAudio(createFrame(sine(48000, 20), 48000, ts)); ts += 20; }
     for (let i = 0; i < 40; i++) { p.pushAudio(quiet()); ts += 20; }
-    const audio = ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { audio: { data: string; mimeType: string } } }[];
-    expect(audio.length).toBe(75);
+    const inputs = ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { audio?: { data: string; mimeType: string }; activityStart?: unknown; activityEnd?: unknown } }[];
+    const audio = inputs.filter((m) => m.realtimeInput.audio) as { realtimeInput: { audio: { data: string; mimeType: string } } }[];
+    // 75 frames went in; the 40 quiet ones at the end are not paid for. What is sent is the speech and
+    // the 300 ms of pre-roll before it, between one activityStart and one activityEnd.
+    expect(inputs.filter((m) => m.realtimeInput.activityStart).length).toBe(1);
+    expect(inputs.filter((m) => m.realtimeInput.activityEnd).length).toBe(1);
+    expect(inputs[0]!.realtimeInput.activityStart).toBeDefined(); // nothing before the turn opens
+    expect(audio.length).toBeGreaterThanOrEqual(15);
+    expect(audio.length).toBeLessThan(75);
     expect(audio.every((m) => m.realtimeInput.audio.mimeType === "audio/pcm;rate=16000")).toBe(true);
     expect(audio.every((m) => Buffer.from(m.realtimeInput.audio.data, "base64").length === 640)).toBe(true);
     expect(events.filter((e) => e.type === "user_speech_started").length).toBe(1);
@@ -272,7 +281,7 @@ describe("GeminiLiveProvider reconnection", () => {
     expect(types).not.toContain("session_closed");
     expect(p.diagnostics.reconnects).toBe(1);
     // Audio flows on the new socket.
-    p.pushAudio(createFrame(sine(48000, 20), 48000, 0));
+    for (let i = 0; i < 10; i++) p.pushAudio(createFrame(sine(48000, 20), 48000, i * 20));
     expect(ws2.sent.some((m) => "realtimeInput" in m)).toBe(true);
     await p.disconnect();
   });
@@ -385,4 +394,21 @@ describe("what a turn is timed on", () => {
     expect(m!.turn.source).toBe("speech");
     await p.disconnect();
   });
+
+describe("what the API is charged for", () => {
+  it("sends the room's silence to nobody, and can be told to stream everything", async () => {
+    const quietFrames = 40;
+    const run = async (extra = {}) => {
+      const { p, ws } = await connected(extra);
+      let ts = 0;
+      for (let i = 0; i < quietFrames; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+      const inputs = () => ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { audio?: unknown } }[];
+      const audio = inputs().filter((m) => m.realtimeInput.audio).length;
+      await p.disconnect();
+      return audio;
+    };
+    expect(await run()).toBe(0); // 800 ms of silence: nothing sent, nothing billed
+    expect(await run({ gateAudioOnSpeech: false })).toBe(quietFrames); // the old continuous stream, on request
+  });
+});
 });
