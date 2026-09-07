@@ -9,6 +9,8 @@ import {
   int16ToFloat32,
   type ImageFrame,
   type PCMFrame,
+  dbfs,
+  rms,
 } from "@rcai/audio-core";
 import { GenerationCounter,
   conversationPolicyFor,
@@ -108,6 +110,18 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private speechOpen = false;
   private preroll: string[] = [];
   private static readonly PREROLL_CHUNKS = 15; // 640 B at 16 kHz = 20 ms each → 300 ms
+  /**
+   * The gate's own fallback. The adaptive VAD tracks the room's noise floor, and in a room that is
+   * never quiet — a television, a fan, a mic with gain — the floor climbs until speech no longer clears
+   * it by 12 dB and the gate never opens: the character goes deaf with every meter reading healthy
+   * (2026-09-07, one-to-one on Gemini: 2 437 frames forwarded, 0 transcripts). Sound this loud is
+   * somebody talking whatever the floor says, and it holds the gate open for `GATE_HANGOVER_MS`.
+   */
+  private static readonly GATE_LEVEL_DB = -45;
+  private static readonly GATE_HANGOVER_MS = 700;
+  private loudUntil = 0;
+  /** Observability: audio chunks sent to the API and chunks the gate kept out of it. */
+  readonly gateStats = { sent: 0, held: 0 };
   /**
    * What a conversation is judged on, kept apart from what is easy to measure. `turnComplete` arrives
    * when the model has finished *sending* a reply — for a ten-second answer that is ten seconds after
@@ -350,22 +364,33 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         }
       }
     }
-    if (this.gating && opened && !this.speechOpen) {
+    const level = dbfs(rms(frame.data));
+    // Media time, not wall time: the gate has to hold for a stretch of *audio*, and a burst of frames
+    // delivered together must not look like a room that has been loud for a second.
+    const now = frame.timestamp ?? this.clock();
+    if (level > GeminiLiveProvider.GATE_LEVEL_DB) this.loudUntil = now + GeminiLiveProvider.GATE_HANGOVER_MS;
+    const loud = now < this.loudUntil;
+    if (this.gating && (opened || loud) && !this.speechOpen) {
       this.speechOpen = true;
       this.send({ realtimeInput: { activityStart: {} } });
       for (const b64 of this.preroll.splice(0)) this.sendAudioChunk(b64);
     }
     for (const chunk of this.outbound.push(frame)) {
       const b64 = bytesToBase64(int16ToBytes(chunk));
-      if (!this.gating || this.speechOpen) { this.sendAudioChunk(b64); continue; }
+      if (!this.gating || this.speechOpen) { this.gateStats.sent++; this.sendAudioChunk(b64); continue; }
+      this.gateStats.held++;
       // Silence: keep the last 300 ms so the first mora survives the moment the turn opens.
       this.preroll.push(b64);
       if (this.preroll.length > GeminiLiveProvider.PREROLL_CHUNKS) this.preroll.shift();
     }
-    if (this.gating && closed && this.speechOpen) {
+    // The turn closes when both signals agree the room has stopped: the VAD is out of speech and the
+    // level has been under the gate for its hangover. Closing on the VAD event alone left the gate
+    // open for ever whenever the fallback was still holding it at that moment.
+    if (this.gating && this.speechOpen && !loud && !(this.vad?.isSpeaking ?? false)) {
       this.speechOpen = false;
       this.send({ realtimeInput: { activityEnd: {} } });
     }
+    void closed;
   }
 
   private sendAudioChunk(data: string): void {

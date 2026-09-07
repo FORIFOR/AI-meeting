@@ -411,4 +411,19 @@ describe("what the API is charged for", () => {
     expect(await run({ gateAudioOnSpeech: false })).toBe(quietFrames); // the old continuous stream, on request
   });
 });
+
+describe("the gate's fallback", () => {
+  it("opens on sound the adaptive VAD refuses to call speech (2026-09-07: 2437 frames, 0 transcripts)", async () => {
+    const { p, ws } = await connected();
+    let ts = 0;
+    // A room that is never quiet: the VAD's noise floor climbs to meet it and nothing ever clears
+    // floor + 12 dB, so speech_start never fires. The level is plainly somebody talking.
+    for (let i = 0; i < 120; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.3), 48000, ts)); ts += 20; }
+    const inputs = ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { audio?: unknown; activityStart?: unknown } }[];
+    expect(inputs.filter((m) => m.realtimeInput.activityStart).length).toBe(1);
+    expect(inputs.filter((m) => m.realtimeInput.audio).length).toBeGreaterThan(50);
+    expect(p.gateStats.sent).toBeGreaterThan(50);
+    await p.disconnect();
+  });
+});
 });
