@@ -142,3 +142,23 @@ describe("being misheard is worse than asking", () => {
     }
   });
 });
+
+/**
+ * A provider that decides its own turns never sees the per-turn prompt, so the instructions are the
+ * only place it learns what day it is. Without it 「来週の水曜」 came back as a date three weeks out,
+ * stated with confidence (one-to-one script, 07 Sep).
+ */
+describe("what day it is", () => {
+  it("is in the instructions when the page knows it, in both settings", () => {
+    for (const setting of ["one_to_one", "meeting"] as const) {
+      const t = meetingInstructions({ displayName: "Yui", proactive: true, setting, now: "2026-09-07 21:05" });
+      expect(t).toContain("【2026-09-07 21:05】");
+      expect(t).toContain("日付の計算");
+    }
+  });
+
+  it("is left out rather than guessed at when it is not known", () => {
+    const t = meetingInstructions({ displayName: "Yui", proactive: true, setting: "one_to_one" });
+    expect(t).not.toContain("日付の計算");
+  });
+});

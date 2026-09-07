@@ -112,6 +112,9 @@ const BOT_BARGE_IN_CONFIRM_MS = 600;
 const LEVEL_LEDGER_MS = 20_000;
 /** The loudest stream over an utterance must carry this many times the runner-up's energy to be its speaker. */
 const ATTRIBUTION_MARGIN = 3;
+/** How often the character is told the time again, so a long meeting's dates stay true. */
+const CLOCK_REFRESH_MS = 10 * 60_000;
+
 /**
  * How long a sanctioned turn may go without the character starting to speak before the page gives
  * it up. A local agent needs ~3 s for its first token and up to ~7 s for its first phrase of audio;
@@ -178,6 +181,9 @@ export class MeetingSessionController {
   private provider: { gateStats?: Record<string, number> } | null = null;
   /** Whether this session declared the live lookup, which is also what the instructions were told. */
   private canLookUp = false;
+  /** Rebuilds the session instructions for a given wall clock; used to keep the date true. */
+  private instructions: ((now: string) => string) | null = null;
+  private clockTimer: ReturnType<typeof setInterval> | null = null;
   /** Live lookups made and how many came back with something, for the heartbeat. */
   private lookups = { asked: 0, answered: 0 };
   private spokeFrames = 0;
@@ -334,6 +340,18 @@ export class MeetingSessionController {
       this.drawLoop = requestAnimationFrame(tick);
       this.lastBeatAt = performance.now();
     }
+    /**
+     * The clock in the instructions is right when the session opens and wrong an hour later. A meeting
+     * can run longer than that, so it is said again — as context, which providers accept mid-session.
+     */
+    this.clockTimer = setInterval(() => {
+      if (!this.instructions) return;
+      void this.runtime?.updateContext({
+        systemPrompt: this.instructions(localClock(new Date())),
+        mode: this.init.persona.mode,
+        language: this.init.persona.language,
+      });
+    }, CLOCK_REFRESH_MS);
     this.heartbeat = setInterval(() => {
       const t = performance.now();
       const fps = this.lastBeatAt ? Math.round((this.drawn * 1000) / Math.max(1, t - this.lastBeatAt)) : null;
@@ -515,7 +533,9 @@ export class MeetingSessionController {
     this.canLookUp = false;
     // What the character may say about today depends on whether this provider can look it up.
     const canSearch = provider.capabilities().extras?.search === true || this.canLookUp;
-    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting, canSearch });
+    this.instructions = (now: string) =>
+      `${persona.systemPrompt}\n\n${meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting, canSearch, now })}`;
+    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting, canSearch, now: localClock(new Date()) });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
@@ -1222,6 +1242,8 @@ export class MeetingSessionController {
     this.behavior?.stop();
     await this.runtime?.stop().catch(() => {});
     await this.mic?.stop().catch(() => {});
+    if (this.clockTimer) clearInterval(this.clockTimer);
+    this.clockTimer = null;
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.heartbeat = null;
     if (this.drawLoop !== null && typeof cancelAnimationFrame === "function") cancelAnimationFrame(this.drawLoop);

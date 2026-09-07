@@ -45,6 +45,13 @@ export interface MeetingInstructionsInput {
    * news — twice, on the same day, from the same person. Default false: the local engine cannot.
    */
   canSearch?: boolean;
+  /**
+   * The wall clock at the start of the session, as the page knows it ("2026-09-07 21:05" plus the
+   * weekday). A provider that decides its own turns never sees the per-turn prompt, so this is the
+   * only place it learns what day it is — and without it 「来週の水曜」 came back as a date three
+   * weeks out, stated with confidence (one-to-one script, 07 Sep).
+   */
+  now?: string;
 }
 
 /**
@@ -53,7 +60,7 @@ export interface MeetingInstructionsInput {
  * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
  * diagnosis, and never something to say out loud.
  */
-export function meetingInstructions({ displayName, proactive, aliases = [], setting = "meeting", canSearch = false }: MeetingInstructionsInput): string {
+export function meetingInstructions({ displayName, proactive, aliases = [], setting = "meeting", canSearch = false, now }: MeetingInstructionsInput): string {
   // Whisper writes the name as a Japanese given name: 「結衣が昨日そう言ってたよね」. Told only that
   // 「ゆイ」「うい」 are mishearings, the model read 「結衣」 as a colleague and answered 「結衣さんが言って
   // いたのは…」 8 times out of 8 (echo probe, sim 41 context). Every spelling is the character itself.
@@ -74,6 +81,9 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
    * than asking; the one thing a person cannot forgive is being confidently misheard.
    */
   const misheardRule = "・聞き取れなかったところは推測で埋めない。文の一部（日付・数字・名前など）が欠けていたら、その部分だけを短く聞き返す（例:「すみません、期限だけ聞き取れませんでした。いつまででしょう？」）。全体が聞き取れなければ「ごめん、もう一度いい？」とだけ言う。相手の発言が「それっ？」のような断片だけのときは、相槌（「うん」「聞いてるよ」）で終わらせずに、必ず短く聞き返す。";
+  const clockRule = now
+    ? `・今は【${now}】。日付の計算（明日・明後日・来週の◯曜日など）は必ずこれを基準にする。これ以外の日付は自分では分からないので、分からないと言う。`
+    : null;
   const cameraRule = "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。";
   if (setting === "one_to_one") {
     // The ordinary case: one person, no room, nothing shared. The meeting rules above are written
@@ -90,6 +100,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
       "・知らないと言って終わりにしない：代わりに話せることを一つ出すか、相手に一つだけ聞き返す。毎回聞き返さない。",
       "・「これ」「それ」が何を指すか曖昧なときは、直前に出た話題を一つ挙げて「〜のこと？」と確認し、それについての考えも一言添える。",
       misheardRule,
+      ...(clockRule ? [clockRule] : []),
       ...nameRules,
       liveInfoRule ?? "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、代わりに話せることを一つ出す。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
       cameraRule,
@@ -124,6 +135,7 @@ export function meetingInstructions({ displayName, proactive, aliases = [], sett
     // placeholder said out loud. Names are used as written in the transcript or not at all.
     "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
     misheardRule,
+    ...(clockRule ? [clockRule] : []),
     // Run 75: 「ゆい英坊を思う？」 (どう思う) was answered about a colleague called 英坊. No rule fixed it:
     // told that nonsense words are mishearings and not to repeat them, the 2B model quoted the line
     // back (「ゆい英坊を思う？」と聞かれましたね, 2/6) or invented 「ゆい英坊さん」 — below the no-rule
