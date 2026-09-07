@@ -302,3 +302,43 @@ describe("a turn the provider took on its own", () => {
     expect(p.acceptSelfTurn(1000 + 60_000)).toBe(false);
   });
 });
+
+/**
+ * The transcript can arrive after the answer it belongs to. Gemini transcribes and answers in one
+ * pass and delivers the user's final text with `turnComplete` — the end of *its own* reply — so a
+ * turn that waits for the words is refused every time: 14 answers begun, 8 cut, 4 transcripts in ten
+ * minutes of a real one-to-one (2026-09-07). Being heard is enough.
+ */
+describe("a turn taken before the words arrive", () => {
+  it("is taken on the room having spoken, with no transcript yet", () => {
+    const p = make();
+    let t = 1000;
+    p.onSpeechActivity(true, t, "Tester");
+    p.onSpeechActivity(false, t + 1200, "Tester");
+    expect(p.acceptSelfTurn(t + 1500)).toBe(true);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.detection.reason).toBe("answered on its own");
+  });
+
+  it("still refuses when nothing was heard, and when it was heard before the last answer", () => {
+    const p = make();
+    let t = 1000;
+    expect(p.acceptSelfTurn(t)).toBe(false); // silence
+    p.onSpeechActivity(true, t, "Tester");
+    expect(p.acceptSelfTurn(t + 500)).toBe(true);
+    p.markResponding(t + 500);
+    p.onAssistantDone(t + 3000);
+    expect(p.acceptSelfTurn(t + 3200)).toBe(false); // nothing said since she finished
+    p.onSpeechActivity(true, t + 4000, "Tester");
+    expect(p.acceptSelfTurn(t + 4200)).toBe(true);
+  });
+
+  it("prefers the transcript when there is one, so the answer knows what it answers", () => {
+    const p = make();
+    let t = 1000;
+    p.onSpeechActivity(true, t, "Tester");
+    p.onTranscript({ text: "今日は雨がひどかったですね", final: true, participantId: "p1" }, t + 800);
+    expect(p.acceptSelfTurn(t + 1200)).toBe(true);
+    expect(p.addressedBy?.text).toBe("今日は雨がひどかったですね");
+  });
+});

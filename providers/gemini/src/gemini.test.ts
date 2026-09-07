@@ -464,6 +464,33 @@ describe("the gate's fallback", () => {
   });
 });
 
+/**
+ * The words have to reach the page while they still matter. Delivered with `turnComplete` — the end
+ * of the model's own reply — the transcript arrives after everything that needed it has decided.
+ */
+describe("when the user's words are delivered", () => {
+  it("is when the user stops talking, not when the model finishes answering", async () => {
+    const { p, ws, events } = await connected();
+    let ts = 0;
+    for (let i = 0; i < 10; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    for (let i = 0; i < 20; i++) { p.pushAudio(createFrame(sine(48000, 20), 48000, ts)); ts += 20; }
+    ws.receive({ serverContent: { inputTranscription: { text: "今日の資料" } } });
+    ws.receive({ serverContent: { inputTranscription: { text: "見てくれた？" } } });
+    await ws.flush();
+    expect(events.filter((e) => e.type === "user_transcript" && e.final === true)).toHaveLength(0);
+    // The room goes quiet: our gate closes the turn, and the words go with it.
+    for (let i = 0; i < 60; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    const finals = events.filter((e) => e.type === "user_transcript" && e.final === true) as { text: string }[];
+    expect(finals).toHaveLength(1);
+    expect(finals[0]!.text).toBe("今日の資料見てくれた？");
+    // And it is not said twice when the model's own turn completes.
+    ws.receive({ serverContent: { turnComplete: true } });
+    await ws.flush();
+    expect(events.filter((e) => e.type === "user_transcript" && e.final === true)).toHaveLength(1);
+    await p.disconnect();
+  });
+});
+
 describe("the call must not howl", () => {
   it("holds the room's return path while the character speaks, and lets a real barge-in through", async () => {
     const { p, ws } = await connected();

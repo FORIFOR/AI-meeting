@@ -453,6 +453,15 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.gateStats.closes++;
     this.gateStats.openMs += Math.max(0, Math.round(now - this.openedAt));
     this.send({ realtimeInput: { activityEnd: {} } });
+    /**
+     * What the person just said, delivered now rather than after the answer to it.
+     *
+     * The final transcript used to wait for `turnComplete` — the end of the *model's* reply — so
+     * anything downstream that decides whether a reply may be spoken had nothing to decide on when it
+     * began. In a one-to-one on Gemini that was every reply: 14 answers begun, 8 cut, 4 transcripts
+     * (2026-09-07 20:5x). We closed the user's turn ourselves; the words in it are complete.
+     */
+    this.flushUserTranscript();
   }
 
   private sendAudioChunk(data: string): void {

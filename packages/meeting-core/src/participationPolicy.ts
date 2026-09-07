@@ -574,10 +574,18 @@ export class ParticipationPolicy {
   acceptSelfTurn(now: number): boolean {
     if (this.opts.proactivity !== "open") return false;
     if (this._state === "RESPONDING" || this._state === "ADDRESSED") return false;
-    const heard = this.lastFinal;
+    /**
+     * What the room said, if the recogniser has delivered it yet — and if it has not, the fact that
+     * the room was heard speaking at all. A provider that transcribes and answers in one pass can
+     * start the answer before the words arrive, and a turn refused for want of a transcript is an
+     * answer nobody hears.
+     */
+    const heard = this.lastFinal && now - this.lastFinal.at <= this.opts.selfTurnWindowMs && this.lastFinal.at > this.lastResponseEndAt
+      ? this.lastFinal
+      : this.lastSpeechAt > this.lastResponseEndAt && now - this.lastSpeechAt <= this.opts.selfTurnWindowMs
+        ? { text: "", at: this.lastSpeechAt, key: this.engagement?.participantId ?? null, speakerName: null }
+        : null;
     if (!heard) return false;
-    if (now - heard.at > this.opts.selfTurnWindowMs) return false;
-    if (heard.at <= this.lastResponseEndAt) return false;
     if (this.consecutive >= this.opts.maxConsecutiveResponses) return false;
     this.pendingQuestion = null;
     this.heldFollowUp = null;
