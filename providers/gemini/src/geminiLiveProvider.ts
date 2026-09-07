@@ -77,6 +77,8 @@ export interface GeminiLiveProviderOptions {
    * `false` restores the continuous stream (server VAD decides).
    */
   gateAudioOnSpeech?: boolean;
+  /** Quiet required before the turn closes (ms). Default 250; the VAD's hangover is the first guard. */
+  gateHangoverMs?: number;
   /** Max automatic reconnect attempts after goAway / abnormal close (default 3). */
   maxReconnects?: number;
   /** Backoff base in ms (1000 → 1 s, 2 s, 4 s). */
@@ -124,7 +126,12 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
    */
   private static readonly GATE_MARGIN_DB = 6;
   private static readonly GATE_ABSOLUTE_FLOOR_DB = -55;
-  private static readonly GATE_HANGOVER_MS = 700;
+  /**
+   * How long the level must stay under the bar before the turn is closed. It is a second guard, not the
+   * first: the VAD's own hangover (500 ms) is what decides the person has stopped, and every millisecond
+   * here is added to the wait before the model may answer. Overridable for measurement.
+   */
+  private static readonly GATE_HANGOVER_MS = 250;
   private loudUntil = 0;
   /**
    * No utterance runs this long. Whatever the meters say, a turn held open past this is a gate that
@@ -398,7 +405,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const now = frame.timestamp ?? this.clock();
     // Above the room's own floor by a margin the room's noise cannot reach on its own.
     const bar = Math.max(GeminiLiveProvider.GATE_ABSOLUTE_FLOOR_DB, (this.vad?.noiseFloor ?? -60) + GeminiLiveProvider.GATE_MARGIN_DB);
-    if (level > bar) this.loudUntil = now + GeminiLiveProvider.GATE_HANGOVER_MS;
+    if (level > bar) this.loudUntil = now + (this.opts.gateHangoverMs ?? GeminiLiveProvider.GATE_HANGOVER_MS);
     const loud = now < this.loudUntil;
     // A gate armed shut after a forced close opens again only once the room has actually gone quiet.
     if (this.rearm && !loud) this.rearm = false;
