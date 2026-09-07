@@ -14,6 +14,16 @@ import { SHORT_QUESTIONS } from "./participationPolicy.js";
 
 export const MEETING_PERSONA_ID = "meeting_colleague_ja";
 
+/**
+ * Which setting a persona puts the character in. The same signal that decides whether it waits to be
+ * called (`defaultProactivityFor`) decides whether it is told there is a meeting around it: a
+ * character that answers unasked in a one-to-one must not also believe there are minutes and shared
+ * documents in the room.
+ */
+export function settingFor(input: { personaId?: string | null; mode?: string | null }): "meeting" | "one_to_one" {
+  return input.personaId === MEETING_PERSONA_ID || input.mode === "meeting" ? "meeting" : "one_to_one";
+}
+
 export interface MeetingInstructionsInput {
   /** The name the character joined under — what the room calls it. */
   displayName: string;
@@ -21,6 +31,14 @@ export interface MeetingInstructionsInput {
   proactive: boolean;
   /** Other spellings of the name the recognisers produce (the character pack's aliases: 「ゆい」「ユイ」「結衣」). */
   aliases?: string[];
+  /**
+   * Where the conversation is happening. `meeting` is a room with other people, minutes and shared
+   * material; `one_to_one` is the ordinary case — one person talking with the character, with none of
+   * those things. Told it was in a meeting, the character talked about documents nobody had shared
+   * (「共有していない資料の話をしてきます」, 2026-09-07) because every example it was given was a
+   * meeting example. Default `meeting`, which is what a meeting still gets.
+   */
+  setting?: "meeting" | "one_to_one";
 }
 
 /**
@@ -29,7 +47,7 @@ export interface MeetingInstructionsInput {
  * person in a real meeting. Cues are uncertain observations that may earn a reply, never a
  * diagnosis, and never something to say out loud.
  */
-export function meetingInstructions({ displayName, proactive, aliases = [] }: MeetingInstructionsInput): string {
+export function meetingInstructions({ displayName, proactive, aliases = [], setting = "meeting" }: MeetingInstructionsInput): string {
   // Whisper writes the name as a Japanese given name: 「結衣が昨日そう言ってたよね」. Told only that
   // 「ゆイ」「うい」 are mishearings, the model read 「結衣」 as a colleague and answered 「結衣さんが言って
   // いたのは…」 8 times out of 8 (echo probe, sim 41 context). Every spelling is the character itself.
@@ -37,6 +55,30 @@ export function meetingInstructions({ displayName, proactive, aliases = [] }: Me
   // One rule per line. As a single paragraph the later rules were the ones the model dropped: with
   // the demonstrative rule appended, the invented schedule the honesty rule had cured came back in
   // two runs out of three (conversation gate, meeting-gate scenario).
+  const nameRules = [
+    `・発言は音声認識の書き起こしなので、あなたの名前「${displayName}」が${spellings}のように別の表記になっていることがある。どの表記もあなた自身のこと（別の参加者ではない）。返答であなた自身の名前や、相手が使った表記を繰り返さない。`,
+    "・相手の名前は、書き起こしにある表記のまま使う（訳したり言い換えたりしない。読みをカタカナにするのはよい）。分からなければ名前を使わずに話す。「〇〇さん」のような伏せ字は絶対に言わない。",
+  ];
+  const cameraRule = "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。";
+  if (setting === "one_to_one") {
+    // The ordinary case: one person, no room, nothing shared. The meeting rules above are written
+    // around a meeting's material — its minutes, its documents, its decisions — and a character given
+    // them with none of that present invents it: asked anything at all it opened with the state of a
+    // document nobody had sent (「資料の共有をしていないのに共有されている資料の話をしてきます」).
+    return [
+      `あなたは「${displayName}」です。相手と1対1で話しています。会議ではありません。簡潔に（1〜2文で）答えます。`,
+      proactive ? "名前で呼ばれなくても、話しかけられたら自然に応じます。ただし相手が話している間は割り込みません。" : "名前で呼ばれたときだけ答えます。",
+      "守ること：",
+      // The one rule this setting exists for.
+      "・見ていないものを見たことにしない：資料・画面・ファイル・写真などは、この会話で実際に共有されたときだけ話題にする。共有されていないものについて「見た」「読んだ」と言わない。相手が出していない資料・会議・議事録の話を自分から始めない。",
+      "・答えの材料は、この会話で聞いたことと自分の考えだけ。相手の予定・担当・数字・出来事など、聞いていないことは作らない。知らないことは知らないと（自分の口調で）正直に言う。",
+      "・知らないと言って終わりにしない：代わりに話せることを一つ出すか、相手に一つだけ聞き返す。毎回聞き返さない。",
+      "・「これ」「それ」が何を指すか曖昧なときは、直前に出た話題を一つ挙げて「〜のこと？」と確認し、それについての考えも一言添える。",
+      ...nameRules,
+      "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、代わりに話せることを一つ出す。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
+      cameraRule,
+    ].join("\n");
+  }
   return [
     `あなたはオンライン会議に参加している「${displayName}」です。簡潔に（1〜2文で）答えます。`,
     proactive ? "会話に自然に参加しますが、人が話している間は割り込みません。" : "会議の参加者に名前で呼ばれたときだけ答え、呼ばれていない間は発言しません。",
@@ -88,6 +130,8 @@ export interface MeetingTurnInput {
   asked: { speakerName?: string | null; text: string } | { reaction: string };
   /** The character's name as it appears in the line (stripped before judging how much of a question is left). */
   displayName?: string;
+  /** A meeting's room, or the ordinary one-to-one. See MeetingInstructionsInput.setting. */
+  setting?: "meeting" | "one_to_one";
 }
 
 /**
@@ -104,8 +148,11 @@ const DEMONSTRATIVE = /(これ|それ|あれ)(は|を|が|って|について|�
  * whose referent was clear it named the topic and answered (「リリース日の変更についてですね。…」)
  * six in six, without echoing anyone's name.
  */
-function demonstrativeHint(text: string): string {
-  return DEMONSTRATIVE.test(text) ? "「これ」「それ」が何を指すか曖昧です。この会議で直前に出た具体的な話題（人・資料・数字など）を一つ挙げて「〜のこと？」と確認し、それについての考えを一言。\n\n" : "";
+function demonstrativeHint(text: string, setting: "meeting" | "one_to_one"): string {
+  if (!DEMONSTRATIVE.test(text)) return "";
+  return setting === "one_to_one"
+    ? "「これ」「それ」が何を指すか曖昧です。直前のやりとりに出た具体的な話題を一つ挙げて「〜のこと？」と確認し、それについての考えを一言。まだ何も出ていなければ、推測せずに「何のこと？」と聞き返してください。\n\n"
+    : "「これ」「それ」が何を指すか曖昧です。この会議で直前に出た具体的な話題（人・資料・数字など）を一つ挙げて「〜のこと？」と確認し、それについての考えを一言。\n\n";
 }
 
 /**
@@ -135,9 +182,9 @@ function shortAskHint(text: string, displayName: string): string {
 }
 
 /** The text sent for one turn in which the room addressed the character. */
-export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui", now }: MeetingTurnInput): string {
-  const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? "参加者"}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
-  const hint = "text" in asked ? yieldHint(asked.text) || shortAskHint(asked.text, displayName) || demonstrativeHint(asked.text) : "";
+export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui", now, setting = "meeting" }: MeetingTurnInput): string {
+  const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? (setting === "one_to_one" ? "相手" : "参加者")}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
+  const hint = "text" in asked ? yieldHint(asked.text) || shortAskHint(asked.text, displayName) || demonstrativeHint(asked.text, setting) : "";
   const ctx = context.join("\n");
   /**
    * The recent lines are for bearings, not for answering. Run 110: after 「ちょっと待って、その前に
@@ -145,9 +192,10 @@ export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui", n
    * times with 「まずは相手の方の意図をしっかり聞くのが大事」 — an opinion on the interruption, not on
    * the matter asked about.
    */
-  const bearings = ctx ? "【会議の直近の発言】は状況を知るためのものです。答えるのは【あなたへの質問】だけで、「ちょっと待って」のようにあなたに黙るよう求めた発言について、あとから意見や感想を述べないでください。\n\n" : "";
+  const heading = setting === "one_to_one" ? "【直前のやりとり】" : "【会議の直近の発言】";
+  const bearings = ctx ? `${heading}は状況を知るためのものです。答えるのは【あなたへの質問】だけで、「ちょっと待って」のようにあなたに黙るよう求めた発言について、あとから意見や感想を述べないでください。\n\n` : "";
   const clock = now ? `【現在時刻】${now}\n\n` : "";
-  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${clock}${line}\n\n${hint}${bearings}短く（1〜2文で）答えてください。`;
+  return `${ctx ? `${heading}\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${clock}${line}\n\n${hint}${bearings}短く（1〜2文で）答えてください。`;
 }
 
 /**

@@ -70,3 +70,44 @@ describe("canonicalizeName", () => {
     expect(without).not.toContain("【現在時刻】");
   });
 });
+
+/**
+ * The ordinary case is one person talking with the character, and the meeting rules are written
+ * around a meeting's material. Given them with none of it present, the character invented it: it
+ * opened with the state of a document nobody had shared (「資料の共有をしていないのに共有されている
+ * 資料の話をしてきます」, real one-to-one run, 2026-09-07).
+ */
+describe("one to one is not a meeting", () => {
+  const oneToOne = meetingInstructions({ displayName: "Yui", proactive: true, aliases: ["ゆい"], setting: "one_to_one" });
+
+  it("says it is not a meeting, and forbids talk of material nobody shared", () => {
+    expect(oneToOne).toContain("1対1");
+    expect(oneToOne).toContain("会議ではありません");
+    expect(oneToOne).toContain("見ていないものを見たことにしない");
+    expect(oneToOne).toContain("相手が出していない資料・会議・議事録の話を自分から始めない");
+    // None of the meeting's own furniture is described to it.
+    expect(oneToOne).not.toContain("オンライン会議に参加している");
+    expect(oneToOne).not.toContain("この会議で聞いたこと");
+  });
+
+  it("keeps the rules that are about the person, not the room", () => {
+    expect(oneToOne).toContain("リアルタイム情報やインターネット検索は使えない");
+    expect(oneToOne).toContain("うなずきや首振り");
+    expect(oneToOne).toContain("「〇〇さん」のような伏せ字は絶対に言わない");
+    expect(oneToOne).toContain("別の表記になっていることがある");
+  });
+
+  it("a meeting still gets the meeting's instructions", () => {
+    const meeting = meetingInstructions({ displayName: "Yui", proactive: false, aliases: ["ゆい"] });
+    expect(meeting).toContain("オンライン会議に参加している");
+    expect(meeting).not.toContain("会議ではありません");
+  });
+
+  it("the turn prompt drops the meeting's headings too", () => {
+    const turn = meetingTurnPrompt({ context: ["相手: 昨日は疲れたよ"], asked: { speakerName: "相手", text: "これどう思う？" }, setting: "one_to_one" });
+    expect(turn).toContain("【直前のやりとり】");
+    expect(turn).not.toContain("【会議の直近の発言】");
+    expect(turn).toContain("まだ何も出ていなければ"); // the demonstrative hint, without a meeting's documents
+    expect(meetingTurnPrompt({ context: ["A: x"], asked: { speakerName: "A", text: "これどう思う？" } })).toContain("【会議の直近の発言】");
+  });
+});

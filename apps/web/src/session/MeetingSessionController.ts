@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { JOINED_REASON, ParticipationPolicy, SELF_TURN_REASON, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, ParticipationPolicy, SELF_TURN_REASON, settingFor, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -284,6 +284,11 @@ export class MeetingSessionController {
     });
   }
 
+  /** A meeting's room, or the ordinary one-to-one: what the character is told is around it. */
+  private get setting(): "meeting" | "one_to_one" {
+    return settingFor({ personaId: this.init.persona.id, mode: this.init.persona.mode });
+  }
+
   get providerId(): ProviderId {
     return this.decision.conversation;
   }
@@ -503,7 +508,7 @@ export class MeetingSessionController {
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
     const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
     this.provider = provider as unknown as { gateStats?: Record<string, number> };
-    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names });
+    const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
     // A room is not a headset: coughs, backchannels and open mics fire the recogniser's VAD all the
@@ -895,7 +900,7 @@ export class MeetingSessionController {
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
-      : meetingTurnPrompt({ context, seen, displayName: this.init.displayName, now: localClock(new Date()), asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
+      : meetingTurnPrompt({ context, seen, displayName: this.init.displayName, now: localClock(new Date()), setting: this.setting, asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });
