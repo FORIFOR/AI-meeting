@@ -75,6 +75,8 @@ export interface AttendeeDeps {
   store?: { createIntent(o: { meetingUrl: string; botName?: string; source?: string }): { id: string }; update(id: string, patch: Record<string, unknown>, event?: string): unknown };
 }
 
+import { modeAvailable, platformAvailable, releaseChannel } from "@rcai/conversation-core";
+
 export interface RouteResult<T> {
   status: number;
   body: T;
@@ -86,6 +88,8 @@ export async function createAttendeeBot(
   fetchImpl: typeof fetch,
   deps: AttendeeDeps,
 ): Promise<RouteResult<Record<string, unknown>>> {
+  if (body.botPageQuery?.persona === "companion_ja" && !modeAvailable("companion", releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "MODE_NOT_RELEASED" } };
+  if (body.meetingUrl && !platformAvailable(body.meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
   if (!env.ATTENDEE_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_ATTENDEE_KEY" } };
   const publicUrl = env.RECALL_PUBLIC_URL;
   if (!publicUrl) return { status: 503, body: { error: "BLOCKED_BY_PUBLIC_URL", detail: "Attendee needs a public wss endpoint to stream audio to" } };

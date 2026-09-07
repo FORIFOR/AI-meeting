@@ -18,6 +18,7 @@ import type { SessionOutcome } from "./session/SessionController.js";
 import { loadSettings, saveSettings, settingsReducer, type Availability } from "./state/settings.js";
 import { loadRecent, saveRecent, type Recent } from "./state/recent.js";
 import { disposeActiveSession } from "./session/activeSession.js";
+import { availableMode } from "./content/release.js";
 
 type Screen =
   | { name: "home" }
@@ -85,9 +86,9 @@ export function App() {
       const [p, c] = await Promise.all([loadPersonas(), loadCharacterEntries()]);
       if (!alive) return;
       const notes: string[] = [];
-      if (p.personas.length) setPersonas(p.personas);
+      if (p.personas.length) setPersonas(p.personas.filter((persona) => availableMode(persona.mode)));
       else {
-        setPersonas(FALLBACK_PERSONAS);
+        setPersonas(FALLBACK_PERSONAS.filter((persona) => availableMode(persona.mode)));
         notes.push(`personas: built-in fallback (${p.error ?? "empty"})`);
       }
       const entries = withRealistic(c.entries);

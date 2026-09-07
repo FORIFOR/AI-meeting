@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-09-07T14:39:13.529Z",
+  "scope": "real Gemini connection lifecycle only; no voice, platform or human gate claim",
+  "status": "FAIL",
+  "rows": [
+    {
+      "check": "setup requests resumption and compression",
+      "status": "PASS"
+    },
+    {
+      "check": "real initial connection",
+      "status": "PASS"
+    },
+    {
+      "check": "live lifecycle completion",
+      "status": "FAIL",
+      "detail": "Live connection or observation failed: observation timed out"
+    }
+  ]
+}

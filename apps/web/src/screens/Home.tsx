@@ -5,6 +5,8 @@ import { blockedReason } from "../components/characters.js";
 import type { CharacterEntry } from "../integrations/registry.js";
 import type { Settings, SettingsAction } from "../state/settings.js";
 import { whenLabel, type Recent } from "../state/recent.js";
+import { RELEASE_POLICY, RELEASE_LABEL, stageAvailable } from "@rcai/conversation-core";
+import { RELEASE_CHANNEL } from "../content/release.js";
 
 export const PRODUCTS: { mode: ConversationMode; kana: string; name: string; desc: string }[] = [
   { mode: "interview", kana: "Interview Practice", name: "面接練習", desc: "職種・企業のスタイル・難易度を決めて、本番と同じ形式で。" },
@@ -59,12 +61,13 @@ export function Home(p: HomeProps) {
         {items.map((x) => (
           <button key={x.mode} type="button" className="act" disabled={!!blocked} onClick={() => p.onContinue(x.mode)}>
             {x.name}
+            <span className="act__note">{RELEASE_LABEL[RELEASE_POLICY.modes[x.mode]]}</span>
           </button>
         ))}
-        {p.onMeeting && (
+        {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
           <button type="button" className="act" disabled={!!blocked || strict} onClick={p.onMeeting}>
             会議
-            <span className="act__note">Google Meet · Zoom に同席</span>
+            <span className="act__note">Google Meet · Zoom ベータ · Teams 未対応</span>
           </button>
         )}
       </div>
@@ -80,7 +83,7 @@ export function Home(p: HomeProps) {
       )}
 
       <hr className="home__rule" />
-      {p.recent ? (
+      {p.recent && available.has(p.recent.mode) ? (
         <button type="button" className="cont" onClick={() => p.onContinue(p.recent!.mode)}>
           <span>
             前回のつづき — <b>{p.recent.characterName}</b> · {MODE_NAME[p.recent.mode] ?? p.recent.mode} · {whenLabel(p.recent.at)}

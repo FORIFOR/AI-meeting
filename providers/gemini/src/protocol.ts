@@ -94,6 +94,7 @@ export interface GeminiSetup {
   outputAudioTranscription?: Record<string, never>;
   proactivity?: { proactiveAudio?: boolean };
   sessionResumption?: { handle?: string };
+  contextWindowCompression?: { slidingWindow: { targetTokens?: string }; triggerTokens?: string };
 }
 
 export type GeminiClientMessage =

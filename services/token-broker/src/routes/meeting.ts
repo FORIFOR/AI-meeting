@@ -3,6 +3,7 @@ import type { RouteResult } from "./openai.js";
 import type { MeetingSessionRegistry, MeetingTokenRole } from "../meeting-session.js";
 import type { MeetingStore } from "../recall/store.js";
 import { RecallApiError, RecallClient } from "../recall/client.js";
+import { modeAvailable, platformAvailable, releaseChannel } from "@rcai/conversation-core";
 
 /**
  * Recall.ai meeting bots (docs.recall.ai). Verified endpoints/fields (2026-08-30):
@@ -132,6 +133,8 @@ export function streamingTranscript(language: string): Record<string, unknown> {
 }
 
 export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetchImpl: typeof fetch, deps: MeetingDeps): Promise<RouteResult<Record<string, unknown>>> {
+  if (body.botPageQuery?.persona === "companion_ja" && !modeAvailable("companion", releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "MODE_NOT_RELEASED" } };
+  if (body.meetingUrl && !platformAvailable(body.meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
   if (!env.RECALL_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_RECALL_KEY" } };
   if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
   const mode = body.mode ?? "output_media";

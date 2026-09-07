@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "core": "beta",
+  "meeting": "beta",
+  "modes": {
+    "free_talk": "beta",
+    "task_planning": "beta",
+    "english_lesson": "beta",
+    "interview": "beta",
+    "career": "beta",
+    "sales_roleplay": "beta",
+    "tutor": "beta",
+    "companion": "private_beta"
+  },
+  "platforms": {
+    "google_meet": "beta",
+    "zoom": "beta",
+    "microsoft_teams": "disabled"
+  }
+}

@@ -196,6 +196,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private resumptionHandle: string | null = null;
   private reconnecting = false;
   private reconnectAttempts = 0;
+  private sessionEpoch = 0;
+  private sessionAbort = new AbortController();
+  private cancelSetup: (() => void) | null = null;
   /** Diagnostics for harnesses. */
   readonly diagnostics = { reconnects: 0, reconnectFailures: 0 };
 
@@ -251,6 +254,12 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
 
   async connect(config: SessionConfig): Promise<void> {
     privacyGuard.assert(config.privacyMode, "cloud_conversation");
+    // Public connect always starts a new conversation; only reconnect may reuse its handle.
+    const disconnected = this.disconnect();
+    const epoch = this.sessionEpoch;
+    await disconnected;
+    if (epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
+    this.sessionAbort = new AbortController();
     this.config = config;
     this.closing = false;
     this.outbound = new OutboundAudioConverter({ targetRate: GEMINI_INPUT_RATE, chunkMs: 20 });
@@ -263,6 +272,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.searchWanted = this.opts.googleSearch !== false;
     this.firstFrameAt = 0;
     const token = await this.fetchToken();
+    if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
     const model = token.model ?? this.model;
     const wss = geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token);
     try {
@@ -270,11 +280,15 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     } catch (err) {
       // A model that will not take the search tool refuses the whole session. Come back without it.
       const refusedTool = this.searchWanted && /quota|invalid argument|unsupported/i.test(err instanceof Error ? err.message : String(err));
-      if (!refusedTool) throw err;
+      if (!refusedTool || this.closing || epoch !== this.sessionEpoch) throw err;
       this.searchWanted = false;
       this.emit({ type: "error", error: new Error("Gemini Live refused search grounding; continuing without it"), fatal: false });
-      await this.openSocket(wss, model, config);
+      // Tokens are single-use. A refused setup may already have consumed the first one.
+      const retryToken = await this.fetchToken();
+      if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
+      await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", retryToken.token), retryToken.model ?? model, config);
     }
+    if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
     this.timing.setupCompleteAt = this.clock();
     this.emit({ type: "session_ready", providerId: this.id });
     // Opening line is owned by the provider (see integration contracts): ask for it as a client turn.
@@ -288,6 +302,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ model: this.model }),
+      signal: AbortSignal.any([this.sessionAbort.signal, AbortSignal.timeout(this.opts.setupTimeoutMs ?? 10_000)]),
     });
     if (!res.ok) {
       let detail = "";
@@ -310,7 +325,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       try {
         const u = new URL(url);
         const cred = u.searchParams.get("access_token") ?? u.searchParams.get("key");
-        return `${u.pathname.split(".").slice(-3, -1).join(".")} cred=${cred ? `${cred.split("/")[0]}/…(${cred.length})` : "NONE"}`;
+        return `${u.pathname.split(".").slice(-3, -1).join(".")} credential=${cred ? "present" : "missing"}`;
       } catch {
         return "unparseable url";
       }
@@ -319,21 +334,31 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const ws = factory(url);
     this.ws = ws;
     this.setupDone = false;
+    const epoch = this.sessionEpoch;
+    const ownsSocket = () => !this.closing && epoch === this.sessionEpoch && this.ws === ws;
     return new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Gemini Live setup timed out")), this.opts.setupTimeoutMs ?? 10_000);
       let settled = false;
+      const cancel = () => done(new Error("Gemini Live connection cancelled"));
+      const timeout = setTimeout(() => done(new Error("Gemini Live setup timed out")), this.opts.setupTimeoutMs ?? 10_000);
       const done = (err?: Error) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
+        if (this.cancelSetup === cancel) this.cancelSetup = null;
+        if (err) {
+          if (this.ws === ws) this.ws = null;
+          try { ws.close(1000, "setup ended"); } catch { /* already closed */ }
+        }
         err ? reject(err) : resolve();
       };
+      this.cancelSetup = cancel;
       ws.onopen = () => {
-        this.send({ setup: this.buildSetup(model, config) });
+        if (!ownsSocket()) { cancel(); return; }
+        ws.send(JSON.stringify({ setup: this.buildSetup(model, config) }));
       };
       ws.onmessage = (ev) => {
         void this.decode(ev.data).then((msg) => {
-          if (!msg) return;
+          if (!msg || !ownsSocket()) return;
           if (msg.setupComplete && !this.setupDone) {
             this.setupDone = true;
             done();
@@ -342,12 +367,13 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         });
       };
       ws.onerror = () => {
+        if (!ownsSocket()) return;
         done(new Error("Gemini Live websocket error"));
         if (this.setupDone) this.emit({ type: "error", error: new Error("Gemini Live websocket error") });
       };
       ws.onclose = (ev) => {
         done(new Error(`Gemini Live socket closed before setup [${where}] (${ev?.code ?? ""} ${ev?.reason ?? ""})`.trim()));
-        if (this.ws !== ws) return; // stale socket (already replaced by a reconnect)
+        if (!ownsSocket()) return;
         this.ws = null;
         if (this.closing || !this.setupDone || this.reconnecting) return;
         if (ev?.code === 1000) {
@@ -414,16 +440,21 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
      */
     if (this.searchWanted && (nativeAudio || this.opts.googleSearch === true)) tools.push({ googleSearch: {} });
     if (tools.length) setup.tools = tools;
-    if (this.resumptionHandle) setup.sessionResumption = { handle: this.resumptionHandle };
+    // Request handles from the first connection, not only after receiving one.
+    setup.sessionResumption = this.resumptionHandle ? { handle: this.resumptionHandle } : {};
+    setup.contextWindowCompression = { slidingWindow: {} };
     return setup;
   }
 
   async disconnect(): Promise<void> {
     this.closing = true;
-    this.clearEndedTimer();
+    this.sessionEpoch++;
+    this.sessionAbort.abort();
+    this.cancelSetup?.();
+    this.onInterrupted(this.clock());
     const ws = this.ws;
     this.ws = null;
-    if (ws && ws.readyState === OPEN) {
+    if (ws && ws.readyState < 2) {
       try {
         ws.close(1000, "client disconnect");
       } catch {
@@ -431,6 +462,22 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       }
     }
     this.setupDone = false;
+    this.config = null;
+    this.resumptionHandle = null;
+    this.userTranscript = "";
+    this.outbound = null;
+    this.inbound.reset();
+    this.vad?.reset();
+    this.preroll = [];
+    this.speechOpen = false;
+    this.rearm = false;
+    this.droppingUntilTurn = false;
+    this.bargeInSince = 0;
+    this.loudUntil = 0;
+    this.openedAt = 0;
+    this.genCounter.nextTurn();
+    this.timing = { setupCompleteAt: 0, userSpeechStartAt: 0, userSpeechEndAt: 0, source: "speech" };
+    this.reconnecting = false;
   }
 
   // ---- input ------------------------------------------------------------------
@@ -735,21 +782,36 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private async reconnect(reason = "goAway"): Promise<void> {
     if (!this.config || this.closing || this.reconnecting) return;
     this.reconnecting = true;
+    const epoch = this.sessionEpoch;
+    const config = this.config;
     const old = this.ws;
+    this.ws = null;
+    this.setupDone = false;
+    try { if (old && old.readyState < 2) old.close(1000, "reconnect"); } catch { /* already closed */ }
+    this.speechOpen = false;
+    this.preroll = [];
+    this.rearm = false;
+    this.droppingUntilTurn = false;
+    this.bargeInSince = 0;
+    this.userTranscript = "";
+    this.outbound = new OutboundAudioConverter({ targetRate: GEMINI_INPUT_RATE, chunkMs: 20 });
+    this.vad?.reset();
     this.clearEndedTimer();
     if (this.turn.hasAudio) this.onInterrupted(this.clock());
     this.emit({ type: "error", error: new Error(`Gemini Live: ${reason}; reconnecting`), fatal: false });
     const max = this.opts.maxReconnects ?? 3;
     const base = this.opts.reconnectBackoffMs ?? 1000;
     try {
-      while (this.reconnectAttempts < max && !this.closing) {
+      while (this.reconnectAttempts < max && !this.closing && epoch === this.sessionEpoch) {
         const attempt = ++this.reconnectAttempts;
         // goAway gives us a live socket for a while: try immediately, then back off.
         if (!(reason === "goAway" && attempt === 1)) await new Promise((r) => setTimeout(r, base * 2 ** (attempt - 1)));
-        if (this.closing) return;
+        if (this.closing || epoch !== this.sessionEpoch) return;
         try {
           const token = await this.fetchToken();
-          await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token), token.model ?? this.model, this.config);
+          if (this.closing || epoch !== this.sessionEpoch) return;
+          await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token), token.model ?? this.model, config);
+          if (this.closing || epoch !== this.sessionEpoch) return;
           try {
             if (old && old !== this.ws && old.readyState === OPEN) old.close(1000, "reconnect");
           } catch {
@@ -760,23 +822,24 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
           this.emit({ type: "session_ready", providerId: this.id });
           return;
         } catch (err) {
+          if (this.closing || epoch !== this.sessionEpoch) return;
           this.diagnostics.reconnectFailures++;
           this.emit({ type: "error", error: err instanceof Error ? err : new Error(String(err)), fatal: false });
         }
       }
-      if (!this.closing) {
+      if (!this.closing && epoch === this.sessionEpoch) {
         this.emit({ type: "error", error: new Error(`Gemini Live: reconnect failed after ${max} attempts`), fatal: true });
         this.emit({ type: "session_closed", reason: "reconnect exhausted" });
       }
     } finally {
-      this.reconnecting = false;
+      if (epoch === this.sessionEpoch) this.reconnecting = false;
     }
   }
 
   // ---- plumbing -------------------------------------------------------------------
 
   private send(msg: GeminiClientMessage): void {
-    if (!this.ws || this.ws.readyState !== OPEN) return;
+    if (this.closing || !this.ws || this.ws.readyState !== OPEN || !this.setupDone) return;
     this.ws.send(JSON.stringify(msg));
   }
 

@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
   PORT?: string;
+  /** Must match VITE_RCAI_RELEASE_CHANNEL. Unverified features never open on public. */
+  RCAI_RELEASE_CHANNEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_REALTIME_MODEL?: string;
   OPENAI_PLAN_MODEL?: string;
