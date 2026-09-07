@@ -366,12 +366,25 @@ describe("the Live setup a meeting asks for", () => {
    * Asked for the news, a character that cannot look anything up can only say so — and did, to the
    * same person twice in one day. The Live API grounds its own answer when the tool is declared.
    */
-  it("declares Google Search so today's questions have an answer", () => {
-    expect(setup().tools).toEqual([{ googleSearch: {} }]);
-    expect(setup({ googleSearch: false }).tools).toBeUndefined();
-    const withFn = setup({}, { tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
+  it("declares Google Search where the model takes it, and not where it closes the session", () => {
+    // 3.1 Flash Live refuses the socket outright when the tool is declared (1011, "exceeded your
+    // current quota") while the same key grounds happily on native audio and answers with the day's
+    // actual news. So it is asked for where it works, and forced only on request.
+    expect(setup().tools).toBeUndefined();
+    const native = setup({ model: "gemini-2.5-flash-preview-native-audio-dialog" });
+    expect(native.tools).toEqual([{ googleSearch: {} }]);
+    expect(setup({ googleSearch: true }).tools).toEqual([{ googleSearch: {} }]);
+    expect(setup({ model: "gemini-2.5-flash-preview-native-audio-dialog", googleSearch: false }).tools).toBeUndefined();
+    const withFn = setup({ googleSearch: true }, { tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
     expect(withFn.tools).toHaveLength(2);
     expect(withFn.tools?.[1]).toEqual({ googleSearch: {} });
+  });
+
+  it("reports the capability the way the session is actually configured", () => {
+    const on = new GeminiLiveProvider({ brokerUrl: "http://b", model: "gemini-2.5-flash-preview-native-audio-dialog" });
+    const off = new GeminiLiveProvider({ brokerUrl: "http://b" });
+    expect(on.capabilities().extras?.search).toBe(true);
+    expect(off.capabilities().extras?.search).toBe(false);
   });
 
   it("lets the character's own voice and another thinking level through, and can send neither", () => {

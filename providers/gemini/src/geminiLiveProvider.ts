@@ -184,6 +184,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   constructor(private readonly opts: GeminiLiveProviderOptions) {
     this.clock = opts.clock ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
     this.vad = opts.localVad === false ? null : new EnergyVAD();
+    this.searchWanted = opts.googleSearch !== false;
   }
 
   capabilities(): ProviderCapabilities {
@@ -198,7 +199,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       extras: {
         bargeIn: true,
         // The model grounds its own answers with Google Search: what it may say about today changes.
-        search: this.opts.googleSearch !== false,
+        // False once a session has been refused the tool, so the instructions match what it can do.
+        search: this.searchWanted && (/native-audio/i.test(this.model) || this.opts.googleSearch === true),
         proactiveAudio: this.opts.proactiveAudio ?? false,
         affectiveDialog: this.opts.enableAffectiveDialog ?? true,
         vision: true,
@@ -210,6 +212,13 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   onEvent(callback: ConversationEventListener): void {
     this.listeners.add(callback);
   }
+
+  /**
+   * Whether this session asks for search grounding at all. Cleared for the life of the session when a
+   * setup carrying the tool is refused, so the reconnect comes back without it: a character that can
+   * talk about everything except today beats one that cannot connect.
+   */
+  private searchWanted: boolean;
 
   /** Audio is gated on speech unless the operator asked for the continuous stream. */
   private get gating(): boolean {
@@ -233,9 +242,20 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.rearm = false;
     this.preroll = [];
     this.reconnectAttempts = 0;
+    this.searchWanted = this.opts.googleSearch !== false;
     const token = await this.fetchToken();
     const model = token.model ?? this.model;
-    await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token), model, config);
+    const wss = geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token);
+    try {
+      await this.openSocket(wss, model, config);
+    } catch (err) {
+      // A model that will not take the search tool refuses the whole session. Come back without it.
+      const refusedTool = this.searchWanted && /quota|invalid argument|unsupported/i.test(err instanceof Error ? err.message : String(err));
+      if (!refusedTool) throw err;
+      this.searchWanted = false;
+      this.emit({ type: "error", error: new Error("Gemini Live refused search grounding; continuing without it"), fatal: false });
+      await this.openSocket(wss, model, config);
+    }
     this.timing.setupCompleteAt = this.clock();
     this.emit({ type: "session_ready", providerId: this.id });
     // Opening line is owned by the provider (see integration contracts): ask for it as a client turn.
@@ -366,7 +386,14 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (this.opts.proactiveAudio && nativeAudio) setup.proactivity = { proactiveAudio: true };
     const tools: NonNullable<GeminiSetup["tools"]> = [];
     if (config.tools?.length) tools.push({ functionDeclarations: config.tools.map((t) => ({ name: t.name, description: t.description, parameters: t.parameters })) });
-    if (this.opts.googleSearch !== false) tools.push({ googleSearch: {} });
+    /**
+     * Search grounding, where the model will take it. Declared to `gemini-3.1-flash-live-preview` the
+     * socket is refused outright — 1011, "You exceeded your current quota" — while the same key grounds
+     * happily on the native-audio family and answers with the day's actual news. A tool that closes the
+     * session is worse than a question left unanswered, so it is asked for where it is known to work
+     * and `googleSearch: true` forces it anywhere else.
+     */
+    if (this.searchWanted && (nativeAudio || this.opts.googleSearch === true)) tools.push({ googleSearch: {} });
     if (tools.length) setup.tools = tools;
     if (this.resumptionHandle) setup.sessionResumption = { handle: this.resumptionHandle };
     return setup;
