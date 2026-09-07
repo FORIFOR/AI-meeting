@@ -11,6 +11,15 @@ export const GEMINI_WSS_BASE = "wss://generativelanguage.googleapis.com/ws/googl
  * Latency was never the transport — it was the model.
  */
 export const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+
+/**
+ * The voice the character speaks with when the character pack names none. Google publishes 30 prebuilt
+ * voices and no per-language ranking, so this is a starting point to A/B in Japanese rather than a
+ * finding: Kore ("Firm"), against Iapetus ("Clear"), Schedar ("Even"), Achird ("Friendly"), Sulafat ("Warm").
+ */
+export const DEFAULT_GEMINI_LIVE_VOICE = "Kore";
+/** Voices worth comparing in Japanese, in the order to try them (`VOICE=` on the reality harnesses). */
+export const GEMINI_LIVE_VOICES_TO_COMPARE = ["Kore", "Iapetus", "Schedar", "Achird", "Sulafat"] as const;
 export const GEMINI_INPUT_RATE = 16_000;
 export const GEMINI_OUTPUT_RATE = 24_000;
 
@@ -45,6 +54,12 @@ export interface GeminiSetup {
     };
     /** Maps from the SDK's `enableAffectiveDialog` (v1beta). */
     enableAffectiveDialog?: boolean;
+    /**
+     * How much the model thinks before it answers. 3.1 Flash Live's own default is "minimal", which is
+     * what a meeting wants: a few hundred milliseconds of reasoning buys less than it costs in a
+     * conversation where the reply has to start while the room is still listening.
+     */
+    thinkingConfig?: { thinkingLevel?: "minimal" | "standard" | "high" };
     temperature?: number;
     maxOutputTokens?: number;
   };

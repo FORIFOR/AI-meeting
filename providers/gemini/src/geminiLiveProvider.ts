@@ -21,6 +21,7 @@ import { privacyGuard, type ProviderCapabilities, type RealtimeAIProvider } from
 import { geminiPromptAdapter } from "./promptAdapter.js";
 import {
   DEFAULT_GEMINI_LIVE_MODEL,
+  DEFAULT_GEMINI_LIVE_VOICE,
   GEMINI_INPUT_RATE,
   geminiWssUrl,
   parsePcmRate,
@@ -52,6 +53,10 @@ export interface GeminiLiveProviderOptions {
   brokerUrl: string;
   model?: string;
   apiVersion?: "v1beta" | "v1alpha";
+  /** Voice for the character when its pack names none (default `Kore`). */
+  defaultVoice?: string;
+  /** Reasoning budget before a reply; "off" sends nothing and leaves the model's own default. */
+  thinkingLevel?: "minimal" | "standard" | "high" | "off";
   fetchImpl?: typeof fetch;
   wsFactory?: (url: string) => WebSocketLike;
   clock?: () => number;
@@ -240,10 +245,16 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       generationConfig: {
         responseModalities: ["AUDIO"],
         speechConfig: {
-          ...(config.voice ? { voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voice } } } : {}),
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voice || this.opts.defaultVoice || DEFAULT_GEMINI_LIVE_VOICE } },
           // Native-audio models auto-detect language (docs); languageCode is only sent for half-cascade models.
           ...(nativeAudio ? {} : { languageCode: config.language }),
         },
+        /**
+         * A meeting wants the reply to start, not to be reasoned about: 3.1 Flash Live's own default is
+         * "minimal" and this states it, so a model whose default changes does not quietly slow the room
+         * down. `thinkingLevel: "off"` sends nothing (for a model that rejects the field).
+         */
+        ...(this.opts.thinkingLevel === "off" ? {} : { thinkingConfig: { thinkingLevel: this.opts.thinkingLevel ?? "minimal" } }),
         // Affective dialog is a native-audio feature: the newer live models reject the field outright
         // (1007 "Request contains an invalid argument"), which looks like a broken setup rather than an
         // unsupported option.

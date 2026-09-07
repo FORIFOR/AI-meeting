@@ -4,7 +4,7 @@ import type { ConversationEvent, SessionConfig } from "@rcai/conversation-core";
 import { PrivacyViolationError } from "@rcai/provider-core";
 import { GeminiLiveProvider, type WebSocketLike } from "./geminiLiveProvider.js";
 import { createGeminiEvaluationProvider } from "./evaluation.js";
-import { geminiWssUrl, parsePcmRate } from "./protocol.js";
+import { geminiWssUrl, parsePcmRate , DEFAULT_GEMINI_LIVE_MODEL } from "./protocol.js";
 
 class FakeWS implements WebSocketLike {
   static instances: FakeWS[] = [];
@@ -333,4 +333,35 @@ describe("the operator pins the native-audio model", () => {
     const setup = (FakeWS.instances[0]!.sent[0] as { setup: ReturnType<GeminiLiveProvider["buildSetup"]> }).setup;
     expect(setup.generationConfig?.enableAffectiveDialog).toBeUndefined();
   });
+
+describe("the Live setup a meeting asks for", () => {
+  const setup = (opts = {}, config = {}) =>
+    new GeminiLiveProvider({ brokerUrl: "http://localhost:8787", ...opts }).buildSetup(
+      (opts as { model?: string }).model ?? DEFAULT_GEMINI_LIVE_MODEL,
+      { systemPrompt: "あなたは会議のYuiです。", mode: "free_talk", language: "ja-JP", privacyMode: "default", ...config } as never,
+    );
+
+  it("asks 3.1 Flash Live for minimal thinking and Kore, and says so rather than trusting a default", () => {
+    const s = setup();
+    expect(s.model).toBe("models/gemini-3.1-flash-live-preview");
+    expect(s.generationConfig?.thinkingConfig).toEqual({ thinkingLevel: "minimal" });
+    expect(s.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Kore");
+    expect(s.generationConfig?.responseModalities).toEqual(["AUDIO"]);
+  });
+
+  it("lets the character's own voice and another thinking level through, and can send neither", () => {
+    expect(setup({ defaultVoice: "Schedar" }).generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Schedar");
+    expect(setup({}, { voice: "Iapetus" }).generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName).toBe("Iapetus");
+    expect(setup({ thinkingLevel: "standard" }).generationConfig?.thinkingConfig).toEqual({ thinkingLevel: "standard" });
+    expect(setup({ thinkingLevel: "off" }).generationConfig?.thinkingConfig).toBeUndefined();
+  });
+
+  it("keeps the Japanese conversation rules in the system instruction", () => {
+    const text = setup().systemInstruction?.parts?.[0]?.text ?? "";
+    expect(text).toContain("あなたは会議のYuiです。");
+    expect(text).toContain("返答は原則1〜3文");
+    expect(text).toContain("ユーザーが話している途中では割り込まない");
+    expect(text).toContain("必ず日本語（ja-JP）で");
+  });
+});
 });
