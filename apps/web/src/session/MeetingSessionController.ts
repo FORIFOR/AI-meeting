@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { JOINED_REASON, ParticipationPolicy, SELF_TURN_REASON, settingFor, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, LIVE_LOOKUP_TOOL, ParticipationPolicy, SELF_TURN_REASON, parseLookupArguments, renderLookup, settingFor, type LiveLookupResult, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -176,6 +176,10 @@ export class MeetingSessionController {
   private cuts = 0;
   /** The conversation provider, kept for its own diagnostics (the Gemini gate's counters). */
   private provider: { gateStats?: Record<string, number> } | null = null;
+  /** Whether this session declared the live lookup, which is also what the instructions were told. */
+  private canLookUp = false;
+  /** Live lookups made and how many came back with something, for the heartbeat. */
+  private lookups = { asked: 0, answered: 0 };
   private spokeFrames = 0;
   /** The current sanctioned reply, as the provider transcribed it and as seconds of audio actually sent. */
   private spokeText = "";
@@ -339,7 +343,7 @@ export class MeetingSessionController {
         heard: this.heard, heardMs: Math.round(this.heardMs), zeroFrames: this.zeroFrames, gaps: this.gaps, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
         cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel, sanctioned: this.sanctioned,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
-        answers: this.answers, cuts: this.cuts, gate: this.provider?.gateStats,
+        answers: this.answers, cuts: this.cuts, gate: this.provider?.gateStats, lookups: this.lookups,
         fps, avatar: this.avatarFailure ?? (this.avatar ? "ok" : "none"),
       };
       console.log("[rcai:bot] " + JSON.stringify(beat));
@@ -508,8 +512,9 @@ export class MeetingSessionController {
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
     const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
     this.provider = provider as unknown as { gateStats?: Record<string, number> };
+    this.canLookUp = false;
     // What the character may say about today depends on whether this provider can look it up.
-    const canSearch = provider.capabilities().extras?.search === true;
+    const canSearch = provider.capabilities().extras?.search === true || this.canLookUp;
     const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names, setting: this.setting, canSearch });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
@@ -520,6 +525,15 @@ export class MeetingSessionController {
     // those as text turns. The recogniser must not draft a reply to every room fragment on its own:
     // each draft was cut unsanctioned (Gate #8 run 10: 25 drafts, an LLM call each), and one that
     // began speaking before the sanctioned text arrived was cancelled by it, turn and all.
+    /**
+     * What is true right now is the one thing the model cannot know, and 「今日のニュースを教えて」 is
+     * the most ordinary question there is. The lookup runs in the broker; the character only reads out
+     * what comes back.
+     */
+    if (provider.capabilities().toolCalling && this.init.settings.privacyMode !== "strict_local" && this.activated?.clientToken) {
+      config.tools = [...(config.tools ?? []), { ...LIVE_LOOKUP_TOOL, parameters: { ...LIVE_LOOKUP_TOOL.parameters } }];
+      this.canLookUp = true;
+    }
     config.providerOptions = {
       ...config.providerOptions,
       opening: undefined,
@@ -885,6 +899,35 @@ export class MeetingSessionController {
   }
 
   /** Hand the addressing utterance (plus recent context) to the AI as text — provider-agnostic. */
+  /**
+   * Run a tool the model asked for and hand the result back. Only the lookup exists, and only what it
+   * returns is sent on: a tool nobody declared, or arguments that are not a lookup, get an error the
+   * model can say out loud rather than an empty result it will fill in itself.
+   */
+  private async runTool(call: { id: string; name: string; arguments: Record<string, unknown> }): Promise<void> {
+    const a = this.activated;
+    const respond = (response: Record<string, unknown>) => this.runtime?.sendToolResponse([{ id: call.id, name: call.name, response }]);
+    if (call.name !== LIVE_LOOKUP_TOOL.name || !a?.clientToken) return respond({ error: `unknown tool ${call.name}` });
+    const req = parseLookupArguments(call.arguments);
+    if (!req) return respond({ error: "kind must be news or weather" });
+    this.lookups.asked++;
+    const base = (this.init.botBrokerUrl ?? this.init.settings.brokerUrl).replace(/\/$/, "");
+    try {
+      const res = await fetch(`${base}/api/meeting/session/${encodeURIComponent(a.sessionId)}/lookup`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${a.clientToken}` },
+        body: JSON.stringify(req),
+      });
+      const result = (await res.json()) as LiveLookupResult;
+      if ((result.facts ?? []).length) this.lookups.answered++;
+      if (this.init.role === "bot") console.log("[rcai:bot] lookup", JSON.stringify({ kind: req.kind, facts: result.facts?.length ?? 0, error: result.error }));
+      this.report("lookup", { kind: req.kind, facts: result.facts?.length ?? 0, error: result.error });
+      respond(renderLookup(result));
+    } catch (err) {
+      respond({ error: err instanceof Error ? err.message.slice(0, 120) : "lookup failed" });
+    }
+  }
+
   private async answer(): Promise<void> {
     const rt = this.runtime;
     const by = this.policy.addressedBy;
@@ -957,6 +1000,9 @@ export class MeetingSessionController {
     this.behavior?.handleEvent(e);
     this.init.handlers.onEvent?.(e);
     switch (e.type) {
+      case "tool_call":
+        void this.runTool(e.call);
+        break;
       case "user_transcript":
         /**
          * The AI's recogniser is the only one on this path, so its transcripts are what the policy

@@ -19,6 +19,8 @@ export interface ConversationSource {
   attachInputStream?(stream: MediaStream): void;
   /** Optional: providers that can look at a still image alongside the audio. */
   pushImage?(image: { data: Uint8Array | string; mimeType: string }): void;
+  /** Answer a `tool_call`. Providers that do not call tools do not implement it. */
+  sendToolResponse?(responses: { id?: string; name: string; response: Record<string, unknown> }[]): void;
 }
 
 export type ConversationState = "idle" | "listening" | "thinking" | "speaking" | "interrupted";
@@ -168,6 +170,14 @@ export class ConversationRuntime {
    * during a reply is worth a frame; a face during silence is not), and the runtime does not know
    * that. Providers that cannot take images ignore it — vision is an extra, never a requirement.
    */
+  /**
+   * Hand a tool's result back to the model. The answer to 「今日のニュースは？」 is only as live as this
+   * round trip, so it is a direct call, not a queued event.
+   */
+  sendToolResponse(responses: { id?: string; name: string; response: Record<string, unknown> }[]): void {
+    this.provider?.sendToolResponse?.(responses);
+  }
+
   pushImage(image: { data: Uint8Array | string; mimeType: string }): void {
     this.provider?.pushImage?.(image);
   }

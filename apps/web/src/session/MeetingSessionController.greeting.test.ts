@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const sendText = vi.fn(async () => {});
 const connect = vi.fn(async (_config: unknown) => {});
 const providerInterrupt = vi.fn(async () => {});
+/** What the page sent back for a `tool_call`. */
+const toolResponses: { id?: string; name: string; response: Record<string, unknown> }[][] = [];
 /** What the fake agent says to the runtime — a test drives the provider side of a turn through this. */
 const listeners: ((e: unknown) => void)[] = [];
 const emit = (e: Record<string, unknown>) => { for (const l of listeners) l(e); };
@@ -37,6 +39,7 @@ vi.mock("../integrations/registry.js", () => ({
   createConversationProvider: async () => ({
     id: "local", capabilities: () => ({}), connect, pushAudio() {}, sendText,
     interrupt: providerInterrupt, async updateContext() {}, async disconnect() {}, onEvent(cb: (e: unknown) => void) { listeners.push(cb); },
+    sendToolResponse(r: { id?: string; name: string; response: Record<string, unknown> }[]) { toolResponses.push(r); },
   }),
   // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
   createMeetingConnector: async () => ({
@@ -73,7 +76,7 @@ function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only"
     role,
     connectorMode: "relay",
     stage: null as unknown as HTMLElement,
-    botActivation: { sessionId: "s", botId: "bot_test" },
+    botActivation: { sessionId: "s", botId: "bot_test", clientToken: "ct" },
     attendeeAttach: { botId: "bot_test", clientWsUrl: "ws://localhost:1/relay" },
     handlers: { onStatus() {}, onTranscript() {}, onPolicy() {}, onError() {} },
   });
@@ -318,6 +321,44 @@ describe("an answer the provider decided to give", () => {
     c.onMeetingTranscript("今日は雨がひどかったですね", true, "Tester", "p-1");
     emit({ type: "assistant_speech_started", at: Date.now() });
     expect(providerInterrupt).toHaveBeenCalledTimes(1);
+    await c.leave();
+  });
+});
+
+/**
+ * 「今日のニュースを教えて」 is the most ordinary question there is, and the honest answer from a model
+ * with no feed — that it cannot know — reads as a broken assistant. The character calls a tool; the
+ * page runs it against the broker and hands back only what came back.
+ */
+describe("the character looking up what is true right now", () => {
+  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; toolResponses.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it("runs the lookup and answers the model with the facts", async () => {
+    const calls: { url: string; body: unknown }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: { body?: string }) => {
+      calls.push({ url: String(url), body: init?.body ? JSON.parse(init.body) : null });
+      return { ok: true, json: async () => ({ facts: ["伊豆諸島に土砂災害特別警報"], at: "2026-09-07T12:00:00.000Z" }) };
+    }));
+    const c = botPage("bot", "open");
+    await c.start();
+    emit({ type: "tool_call", call: { id: "c1", name: "lookup_live_info", arguments: { kind: "news" } } });
+    await vi.advanceTimersByTimeAsync(10);
+    const lookup = calls.find((x) => x.url.includes("/lookup"));
+    expect(lookup?.body).toEqual({ kind: "news", query: undefined, location: undefined });
+    expect(toolResponses).toEqual([[{ id: "c1", name: "lookup_live_info", response: { facts: ["伊豆諸島に土砂災害特別警報"], at: "2026-09-07T12:00:00.000Z" } }]]);
+    await c.leave();
+  });
+
+  it("answers a tool it does not have, and bad arguments, instead of leaving the model waiting", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ facts: [], at: "x" }) })));
+    const c = botPage("bot", "open");
+    await c.start();
+    emit({ type: "tool_call", call: { id: "c2", name: "delete_everything", arguments: {} } });
+    emit({ type: "tool_call", call: { id: "c3", name: "lookup_live_info", arguments: { kind: "web_search" } } });
+    await vi.advanceTimersByTimeAsync(10);
+    expect(toolResponses[0]?.[0]?.response).toEqual({ error: "unknown tool delete_everything" });
+    expect(toolResponses[1]?.[0]?.response).toEqual({ error: "kind must be news or weather" });
     await c.leave();
   });
 });

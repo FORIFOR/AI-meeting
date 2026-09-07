@@ -1,3 +1,5 @@
+import { lookupLiveInfo } from "./routes/lookup.js";
+import { parseLookupArguments } from "@rcai/meeting-core";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import type { EvaluationInput } from "@rcai/provider-core";
@@ -12,7 +14,7 @@ import { planWithOpenAI } from "./routes/plan.js";
 import { recordFeedback, type FeedbackEntry } from "./routes/feedback.js";
 import { recordIncident, type IncidentBody } from "./routes/incidents.js";
 import { recordTelemetry } from "./routes/telemetry.js";
-import { publicWsBase, activateBotPage, createRecallBot, getMeetingSession, reportFromBotPage, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
+import { publicWsBase, activateBotPage, authorizeOperator, createRecallBot, getMeetingSession, reportFromBotPage, getRecallBot, leaveRecallBot, outputRecallAudio, refreshMeetingToken, restartOutputMedia, revokeMeetingSession, type CreateBotBody } from "./routes/meeting.js";
 import { RelayHub } from "./meeting-relay.js";
 import { MeetingSessionRegistry } from "./meeting-session.js";
 import { fallbackHeuristic, loadEvaluationModule } from "./evaluation-bridge.js";
@@ -321,6 +323,18 @@ export function createApp(deps: AppDeps): Hono {
   app.post("/api/meeting/session/:id/report", async (c) => {
     const r = reportFromBotPage(sessions, c.req.param("id"), c.req.header("authorization"), await json<{ type?: string; data?: Record<string, unknown> }>(c));
     return c.json(r.body, r.status as 200);
+  });
+  /**
+   * The character's live lookup (news / weather). Same authorisation as its reports: only the page
+   * holding this session's client token may ask, and only for the two kinds the tool declares.
+   */
+  app.post("/api/meeting/session/:id/lookup", async (c) => {
+    const auth = authorizeOperator(sessions, c.req.param("id"), c.req.header("authorization"));
+    if (auth.status !== 200) return c.json(auth.body as Record<string, unknown>, auth.status as 200);
+    const req = parseLookupArguments((await json<Record<string, unknown>>(c)) ?? {});
+    if (!req) return c.json({ error: "kind must be news or weather" }, 400);
+    const r = await lookupLiveInfo(req);
+    return c.json(r.body as unknown as Record<string, unknown>, r.status as 200);
   });
   app.post("/api/meeting/session/:id/revoke", (c) => {
     const r = revokeMeetingSession(sessions, relay, c.req.param("id"), c.req.header("authorization"));
