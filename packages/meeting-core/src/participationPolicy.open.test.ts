@@ -252,3 +252,53 @@ describe("how forward the character is by default", () => {
   });
 });
 });
+
+/**
+ * A speech-to-speech provider does its own turn-taking: it hears the room stop and starts answering
+ * about a second later, while this policy is still waiting out the pause. On 2026-09-07 a one-to-one
+ * Gemini run took 48 transcripts and gave no answer at all, because every reply the model began was
+ * cut for arriving before the page had decided the turn was ours.
+ */
+describe("a turn the provider took on its own", () => {
+  it("is adopted in a one-to-one, as an answer to what the room just said", () => {
+    const p = make();
+    let t = 1000;
+    p.onTranscript({ text: "今日は雨がひどかったですね", final: true, participantId: "p1" }, t);
+    t += 900; // the provider endpoints and starts talking, long before the policy's own timer
+    expect(p.acceptSelfTurn(t)).toBe(true);
+    expect(p.state).toBe("ADDRESSED");
+    expect(p.addressedBy?.text).toBe("今日は雨がひどかったですね");
+    expect(p.engagedWith?.participantId).toBe("p1");
+    // And the page must not then ask for the answer a second time.
+    expect(p.addressedBy?.detection.reason).toBe("answered on its own");
+  });
+
+  it("is refused where the character speaks only when spoken to", () => {
+    const p = new ParticipationPolicy({ names: ["Yui", "ゆい"], proactivity: "addressed_only" });
+    let t = 1000;
+    p.onTranscript({ text: "今日は雨がひどかったですね", final: true }, t);
+    expect(p.acceptSelfTurn(t + 900)).toBe(false);
+    expect(p.state).toBe("LISTENING");
+  });
+
+  it("is refused when the room has not spoken since the last answer, and when nobody has spoken at all", () => {
+    const p = make();
+    let t = 1000;
+    expect(p.acceptSelfTurn(t)).toBe(false); // a model talking to itself
+    p.onTranscript({ text: "今日は雨がひどかったですね", final: true }, t);
+    t += 900;
+    expect(p.acceptSelfTurn(t)).toBe(true);
+    p.markResponding(t);
+    p.onAssistantDone(t + 2000);
+    // Nothing new was said: the next thing the model starts is a monologue, not an answer.
+    expect(p.acceptSelfTurn(t + 2500)).toBe(false);
+    p.onTranscript({ text: "そうですね、傘が壊れました", final: true }, t + 3000);
+    expect(p.acceptSelfTurn(t + 3600)).toBe(true);
+  });
+
+  it("is refused for a reply to something said a minute ago", () => {
+    const p = make();
+    p.onTranscript({ text: "今日は雨がひどかったですね", final: true }, 1000);
+    expect(p.acceptSelfTurn(1000 + 60_000)).toBe(false);
+  });
+});

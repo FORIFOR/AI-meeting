@@ -425,6 +425,43 @@ describe("the gate's fallback", () => {
     expect(p.gateStats.sent).toBeGreaterThan(50);
     await p.disconnect();
   });
+
+  /**
+   * The fallback's own regression. An absolute -45 dBFS bar reads a meeting stream with automatic
+   * gain as "loud" even in its silences, so the gate opened on the room's hiss and never closed: the
+   * model was never told the turn ended, transcribed every word and answered none (2026-09-07,
+   * one-to-one on Gemini: 48 transcripts, 0 replies). A turn that has been forced shut stays shut
+   * while the room is still loud — and the room going quiet is what lets the next one open.
+   */
+  it("stops paying for a room that never goes quiet, and reopens when it does", async () => {
+    const { p, ws } = await connected();
+    let ts = 0;
+    const push = (amp: number, n: number) => { for (let i = 0; i < n; i++) { p.pushAudio(createFrame(amp > 0.01 ? sine(48000, 20, amp) : new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; } };
+    push(0.3, 500); // ten seconds of unbroken sound: forced shut at eight
+    const audioSent = () => ws.sent.filter((m) => "realtimeInput" in m && (m as { realtimeInput: { audio?: unknown } }).realtimeInput.audio).length;
+    const paidFor = audioSent();
+    push(0.3, 200); // still loud: not one more chunk is bought
+    expect(audioSent()).toBe(paidFor);
+    push(0, 60); // the room finally goes quiet
+    push(0.3, 40); // and someone speaks again
+    const starts = ws.sent.filter((m) => "realtimeInput" in m && (m as { realtimeInput: { activityStart?: unknown } }).realtimeInput.activityStart).length;
+    expect(starts).toBe(2);
+    expect(audioSent()).toBeGreaterThan(paidFor);
+    await p.disconnect();
+  });
+
+  it("ends a turn that never ends, so the model always gets a boundary to answer at", async () => {
+    const { p, ws } = await connected();
+    let ts = 0;
+    // Ten seconds of unbroken speech-level sound: the meters never agree that the room stopped.
+    for (let i = 0; i < 500; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.3), 48000, ts)); ts += 20; }
+    const inputs = ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { activityStart?: unknown; activityEnd?: unknown } }[];
+    expect(p.gateStats.forced).toBeGreaterThanOrEqual(1);
+    expect(inputs.filter((m) => m.realtimeInput.activityEnd).length).toBeGreaterThanOrEqual(1);
+    // Closed once and left closed: a loud room must not reopen the turn on the next frame.
+    expect(inputs.filter((m) => m.realtimeInput.activityStart).length).toBe(1);
+    await p.disconnect();
+  });
 });
 
 describe("the call must not howl", () => {

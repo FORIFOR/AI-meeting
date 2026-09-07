@@ -91,6 +91,11 @@ export interface ParticipationPolicyOptions {
    */
   fragmentHoldMs?: number;
   detector?: AddressDetector;
+  /**
+   * How recently the room must have spoken for a provider-decided turn (`acceptSelfTurn`) to count as
+   * an answer to it. Beyond this the provider is talking to itself. Default 15 s.
+   */
+  selfTurnWindowMs?: number;
   /** Names that identify the character itself (its own transcript is ignored). */
   selfNames?: string[];
   /**
@@ -136,6 +141,14 @@ export interface PolicyTransition {
 
 /** `addressedBy.detection.reason` for the one turn the character takes without being spoken to. */
 export const JOINED_REASON = "joined the meeting";
+/**
+ * The reason a turn carries when the AI's own provider decided to answer. Speech-to-speech providers
+ * (Gemini Live) do their own endpointing and start replying about a second after the room stops; the
+ * page's own decision arrives later, so a reply cut for being unsanctioned was every reply the
+ * character had (2026-09-07, one-to-one on Gemini: 48 transcripts, 0 answers). The page recognises
+ * this reason and does not ask for the answer a second time.
+ */
+export const SELF_TURN_REASON = "answered on its own";
 
 /** Acknowledgements, in the languages a room mix gets transcribed into — none of them is a turn. */
 const BACKCHANNELS = new Set([
@@ -190,6 +203,8 @@ export class ParticipationPolicy {
   private lastResponseEndAt = -1e9;
   private consecutive = 0;
   private pendingQuestion: { text: string; at: number; key: string | null; speakerName?: string | null } | null = null;
+  /** The last thing the room actually said: what a provider-decided turn is an answer to. */
+  private lastFinal: { text: string; at: number; key: string | null; speakerName?: string | null } | null = null;
   /** An engaged follow-up that opened with a fragment, waiting for the second reading (or `fragmentHoldMs`). */
   private heldFollowUp: { seg: TranscriptSegment; key: string | null; at: number; detection: AddressDetection } | null = null;
   /** Called by name while the character was already speaking (see `onTranscript`): answered next. */
@@ -213,6 +228,7 @@ export class ParticipationPolicy {
       silenceGapMs: options.silenceGapMs ?? 2500,
       activeSilenceMs: options.activeSilenceMs ?? 1800,
       openMinChars: options.openMinChars ?? 6,
+      selfTurnWindowMs: options.selfTurnWindowMs ?? 15_000,
       fragmentHoldMs: options.fragmentHoldMs ?? 2500,
       visualTurns: options.visualTurns ?? true,
       yieldGraceMs: options.yieldGraceMs ?? 700,
@@ -401,6 +417,7 @@ export class ParticipationPolicy {
     }
     this.expireEngagement(now);
     const key = this.speakerKey(seg);
+    this.lastFinal = { text: seg.text, at: now, key, speakerName: seg.speakerName };
     /**
      * A follow-up from the person the character is already talking with. Not a name match, and
      * deliberately not a proactivity tier either: this is the same conversation continuing.
@@ -541,6 +558,33 @@ export class ParticipationPolicy {
       this.pendingQuestion = null;
       this.transition("OBSERVING", now, "silence");
     }
+  }
+
+  /**
+   * The AI's own provider has started an answer nobody asked it for.
+   *
+   * A speech-to-speech provider *is* a turn-taker: it hears the room, decides the person has finished
+   * and starts talking, all before this policy's timer has finished waiting for the pause. In a
+   * one-to-one — the "open" tier, where ordinary conversation earns a turn anyway — that decision is
+   * the same decision this policy would have made, only sooner, so it is adopted rather than cut. The
+   * conditions are the ones that make it an answer rather than a monologue: the room said something,
+   * it said it since the character last finished, and the character has not already run past the
+   * consecutive cap. In every other tier the character still speaks only when it is spoken to.
+   */
+  acceptSelfTurn(now: number): boolean {
+    if (this.opts.proactivity !== "open") return false;
+    if (this._state === "RESPONDING" || this._state === "ADDRESSED") return false;
+    const heard = this.lastFinal;
+    if (!heard) return false;
+    if (now - heard.at > this.opts.selfTurnWindowMs) return false;
+    if (heard.at <= this.lastResponseEndAt) return false;
+    if (this.consecutive >= this.opts.maxConsecutiveResponses) return false;
+    this.pendingQuestion = null;
+    this.heldFollowUp = null;
+    this.addressedBy = { text: heard.text, speakerName: heard.speakerName, detection: { addressed: false, invited: true, confidence: 0.5, reason: SELF_TURN_REASON } };
+    this.engage(heard.key, now);
+    this.transition("ADDRESSED", now, SELF_TURN_REASON);
+    return true;
   }
 
   /** The assistant has started answering. */

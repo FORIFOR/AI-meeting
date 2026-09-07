@@ -3,7 +3,7 @@ import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@r
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { JOINED_REASON, ParticipationPolicy, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
+import { JOINED_REASON, ParticipationPolicy, SELF_TURN_REASON, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
@@ -171,6 +171,11 @@ export class MeetingSessionController {
   private lastHeardAt = 0;
   private forwarded = 0;
   private transcripts = 0;
+  /** Answers the provider began, and turns the page refused — the two ends of "why is she silent". */
+  private answers = 0;
+  private cuts = 0;
+  /** The conversation provider, kept for its own diagnostics (the Gemini gate's counters). */
+  private provider: { gateStats?: Record<string, number> } | null = null;
   private spokeFrames = 0;
   /** The current sanctioned reply, as the provider transcribed it and as seconds of audio actually sent. */
   private spokeText = "";
@@ -264,7 +269,9 @@ export class MeetingSessionController {
           console.log("[rcai:bot] turn", JSON.stringify(turn));
           this.report("turn", turn);
         }
-        void this.answer();
+        // A turn the provider took on its own is already being spoken; asking for it again would
+        // answer twice.
+        if (t.reason !== SELF_TURN_REASON) void this.answer();
       }
       /**
        * The character's face follows the conversation, not only the audio. Being spoken to and
@@ -327,6 +334,7 @@ export class MeetingSessionController {
         heard: this.heard, heardMs: Math.round(this.heardMs), zeroFrames: this.zeroFrames, gaps: this.gaps, forwarded: this.forwarded, transcripts: this.transcripts, spoke: this.spokeFrames,
         cues: this.cueCount, faces: this.faceCount, shown: this.shownToModel, sanctioned: this.sanctioned,
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
+        answers: this.answers, cuts: this.cuts, gate: this.provider?.gateStats,
         fps, avatar: this.avatarFailure ?? (this.avatar ? "ok" : "none"),
       };
       console.log("[rcai:bot] " + JSON.stringify(beat));
@@ -494,6 +502,7 @@ export class MeetingSessionController {
 
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
     const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+    this.provider = provider as unknown as { gateStats?: Record<string, number> };
     const extra = meetingInstructions({ displayName: this.init.displayName, proactive: this.init.proactivity !== "addressed_only", aliases: this.names });
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, extra, voiceId: this.voiceId(def?.manifest.id) });
     // Meetings never auto-open: suppress the persona's opening line.
@@ -963,6 +972,10 @@ export class MeetingSessionController {
          * let it run: the audio is muted either way, and a model talking into a muted channel costs
          * tokens and leaves the character mid-sentence when it is finally spoken to.
          */
+        // A provider that does its own turn-taking beats the policy's timer to the same conclusion in
+        // a one-to-one: adopt its turn instead of cutting the only answer the character gives.
+        this.answers++;
+        if (!this.sanctioned) this.policy.acceptSelfTurn(now);
         if (!this.sanctioned) {
           this.cut("unsanctioned");
           break;
@@ -1131,7 +1144,11 @@ export class MeetingSessionController {
 
   /** Stop whatever the character is saying, and tell the broker why (a bot's log is all we get from a room). */
   private cut(reason: string): void {
-    if (this.init.role === "bot") this.report("cut", { reason, state: this.policy.state, sanctioned: this.sanctioned });
+    this.cuts++;
+    if (this.init.role === "bot") {
+      console.log("[rcai:bot] cut", JSON.stringify({ reason, state: this.policy.state, sanctioned: this.sanctioned }));
+      this.report("cut", { reason, state: this.policy.state, sanctioned: this.sanctioned });
+    }
     void this.runtime?.interrupt();
   }
 

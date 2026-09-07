@@ -67,7 +67,11 @@ if (engine && !KNOWN_ENGINES.includes(engine)) {
  * ask for more, and `open` is the setting that proves the voice path without depending on the
  * recogniser getting a two-mora name right.
  */
-const proactivity = process.env.PROACTIVITY ?? "addressed_only";
+/**
+ * One person talking to the character: it answers what is said to it, without being called by name
+ * first (defaultProactivityFor). `PROACTIVITY=addressed_only` puts it back for a meeting.
+ */
+const proactivity = process.env.PROACTIVITY ?? "open";
 const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({

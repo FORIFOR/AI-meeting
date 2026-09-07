@@ -45,6 +45,14 @@ export class EnergyVAD {
     return this.speaking;
   }
 
+  /**
+   * The room's learnt noise floor in dBFS. Read by gates that need a *relative* idea of "quiet": an
+   * absolute threshold is either deaf in a loud room or permanently open in one with a raised floor.
+   */
+  get noiseFloor(): number {
+    return this.noiseFloorDb;
+  }
+
   /** Current level of the last processed frame in dBFS. */
   lastLevelDb = -180;
 

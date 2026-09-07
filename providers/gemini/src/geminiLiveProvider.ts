@@ -111,15 +111,33 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private preroll: string[] = [];
   private static readonly PREROLL_CHUNKS = 15; // 640 B at 16 kHz = 20 ms each → 300 ms
   /**
-   * The gate's own fallback. The adaptive VAD tracks the room's noise floor, and in a room that is
-   * never quiet — a television, a fan, a mic with gain — the floor climbs until speech no longer clears
-   * it by 12 dB and the gate never opens: the character goes deaf with every meter reading healthy
-   * (2026-09-07, one-to-one on Gemini: 2 437 frames forwarded, 0 transcripts). Sound this loud is
-   * somebody talking whatever the floor says, and it holds the gate open for `GATE_HANGOVER_MS`.
+   * The gate's own fallback, for the room the VAD gives up on. The adaptive VAD tracks the noise floor,
+   * and in a room that is never quiet — a television, a fan, a mic with gain — the floor climbs until
+   * speech no longer clears it by 12 dB and the gate never opens: the character goes deaf with every
+   * meter reading healthy (2026-09-07, one-to-one on Gemini: 2 437 frames forwarded, 0 transcripts).
+   *
+   * The fallback is *relative* to that same floor, never an absolute level. A fixed -45 dBFS bar was
+   * the next failure and a worse one: a meeting stream with automatic gain sits above it even in
+   * silence, so the gate opened on the room's own hiss and never closed — the model was sent a turn
+   * that never ended, transcribed every word of it and answered none (same day, 48 transcripts, not
+   * one reply). Speech clears the learnt floor; the room's own noise, by definition, does not.
    */
-  private static readonly GATE_LEVEL_DB = -45;
+  private static readonly GATE_MARGIN_DB = 6;
+  private static readonly GATE_ABSOLUTE_FLOOR_DB = -55;
   private static readonly GATE_HANGOVER_MS = 700;
   private loudUntil = 0;
+  /**
+   * No utterance runs this long. Whatever the meters say, a turn held open past this is a gate that
+   * has stopped tracking the room, and a model that is never told the turn ended never answers — so
+   * it is closed, the model gets its turn boundary, and the next onset opens a new one.
+   */
+  private static readonly MAX_OPEN_MS = 8000;
+  private openedAt = 0;
+  /**
+   * After a forced close, the gate stays shut until the room is quiet again (or the VAD reports a new
+   * onset). Without it a loud room reopens on the very next frame and the "turn" resumes for ever.
+   */
+  private rearm = false;
   /**
    * Half duplex while the character speaks, because the room is a room. Her voice leaves the page,
    * reaches the call, and comes back — through the vendor's mix, or through a laptop speaker into the
@@ -130,7 +148,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private static readonly BARGE_IN_LEVEL_DB = -28;
   private static readonly SELF_TAIL_MS = 400;
   /** Observability: audio chunks sent to the API and chunks the gate kept out of it. */
-  readonly gateStats = { sent: 0, held: 0 };
+  readonly gateStats = { sent: 0, held: 0, opens: 0, closes: 0, forced: 0, openMs: 0 };
   /**
    * What a conversation is judged on, kept apart from what is easy to measure. `turnComplete` arrives
    * when the model has finished *sending* a reply — for a ten-second answer that is ten seconds after
@@ -196,6 +214,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.inbound = new AudioNormalizer();
     this.vad?.reset();
     this.speechOpen = false;
+    this.rearm = false;
     this.preroll = [];
     this.reconnectAttempts = 0;
     const token = await this.fetchToken();
@@ -377,18 +396,25 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     // Media time, not wall time: the gate has to hold for a stretch of *audio*, and a burst of frames
     // delivered together must not look like a room that has been loud for a second.
     const now = frame.timestamp ?? this.clock();
-    if (level > GeminiLiveProvider.GATE_LEVEL_DB) this.loudUntil = now + GeminiLiveProvider.GATE_HANGOVER_MS;
+    // Above the room's own floor by a margin the room's noise cannot reach on its own.
+    const bar = Math.max(GeminiLiveProvider.GATE_ABSOLUTE_FLOOR_DB, (this.vad?.noiseFloor ?? -60) + GeminiLiveProvider.GATE_MARGIN_DB);
+    if (level > bar) this.loudUntil = now + GeminiLiveProvider.GATE_HANGOVER_MS;
     const loud = now < this.loudUntil;
+    // A gate armed shut after a forced close opens again only once the room has actually gone quiet.
+    if (this.rearm && !loud) this.rearm = false;
     // While the character is speaking (and for a beat after), only a voice over her own gets through.
     const selfSpeaking = this.turn.hasAudio && this.clock() - (this.turn.firstAudioAt + this.turn.audioMs) < GeminiLiveProvider.SELF_TAIL_MS;
     if (selfSpeaking && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
-      if (this.speechOpen) { this.speechOpen = false; this.send({ realtimeInput: { activityEnd: {} } }); }
+      if (this.speechOpen) this.closeTurn(now);
       this.gateStats.held++;
       this.preroll.length = 0;
       return;
     }
-    if (this.gating && (opened || loud) && !this.speechOpen) {
+    if (this.gating && (opened || (loud && !this.rearm)) && !this.speechOpen) {
       this.speechOpen = true;
+      this.openedAt = now;
+      this.gateStats.opens++;
+      if (opened) this.rearm = false;
       this.send({ realtimeInput: { activityStart: {} } });
       for (const b64 of this.preroll.splice(0)) this.sendAudioChunk(b64);
     }
@@ -404,10 +430,22 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     // level has been under the gate for its hangover. Closing on the VAD event alone left the gate
     // open for ever whenever the fallback was still holding it at that moment.
     if (this.gating && this.speechOpen && !loud && !(this.vad?.isSpeaking ?? false)) {
-      this.speechOpen = false;
-      this.send({ realtimeInput: { activityEnd: {} } });
+      this.closeTurn(now);
+    } else if (this.gating && this.speechOpen && now - this.openedAt >= GeminiLiveProvider.MAX_OPEN_MS) {
+      // The meters never agreed. The model still needs to be told the turn ended.
+      this.gateStats.forced++;
+      this.rearm = true;
+      this.closeTurn(now);
     }
     void closed;
+  }
+
+  /** End the open activity window: the model's cue that the user's turn is over and it may answer. */
+  private closeTurn(now: number): void {
+    this.speechOpen = false;
+    this.gateStats.closes++;
+    this.gateStats.openMs += Math.max(0, Math.round(now - this.openedAt));
+    this.send({ realtimeInput: { activityEnd: {} } });
   }
 
   private sendAudioChunk(data: string): void {

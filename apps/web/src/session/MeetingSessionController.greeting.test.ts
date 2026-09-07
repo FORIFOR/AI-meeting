@@ -61,7 +61,7 @@ vi.mock("@rcai/avatar-core", async (importOriginal) => {
 
 import { MeetingSessionController } from "./MeetingSessionController.js";
 
-function botPage(role: "bot" | "operator" = "bot") {
+function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only") {
   return new MeetingSessionController({
     settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
     availability: { openai: false, google: false, local: true },
@@ -69,7 +69,7 @@ function botPage(role: "bot" | "operator" = "bot") {
     character: { id: "yui", name: "Yui", renderer: "live2d", baseUrl: "/c/yui" },
     meetingUrl: "https://meet.google.com/aaa-bbbb-ccc",
     displayName: "Yui",
-    proactivity: "addressed_only",
+    proactivity,
     role,
     connectorMode: "relay",
     stage: null as unknown as HTMLElement,
@@ -285,5 +285,39 @@ describe("greeting on arrival", () => {
     await botPage("operator").start();
     const op = connect.mock.calls.at(-1)![0] as { providerOptions?: Record<string, unknown> };
     expect(op.providerOptions?.bargeInConfirmMs).toBeUndefined();
+  });
+});
+
+/**
+ * Gemini Live and the other speech-to-speech providers *are* turn-takers: they endpoint the room
+ * themselves and start answering about a second after it stops, well before this page's own timer has
+ * finished waiting out the pause. On 2026-09-07 a one-to-one run on Gemini heard 48 utterances and
+ * answered none of them — every reply it began was cut for being unsanctioned.
+ */
+describe("an answer the provider decided to give", () => {
+  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  afterEach(() => vi.useRealTimers());
+
+  it("is spoken in a one-to-one, and not asked for a second time", async () => {
+    const c = botPage("bot", "open");
+    await c.start();
+    c.onMeetingTranscript("今日は雨がひどかったですね", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("LISTENING"); // the page's own timer has not fired yet
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    expect(c.policy.state).toBe("RESPONDING");
+    expect(sendText).not.toHaveBeenCalled(); // the answer is already being spoken
+    emit({ type: "assistant_speech_ended", at: Date.now() });
+    expect(c.policy.state).toBe("OBSERVING");
+    await c.leave();
+  });
+
+  it("is still cut where the character speaks only when spoken to", async () => {
+    const c = botPage("bot", "addressed_only");
+    await c.start();
+    c.onMeetingTranscript("今日は雨がひどかったですね", true, "Tester", "p-1");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(providerInterrupt).toHaveBeenCalledTimes(1);
+    await c.leave();
   });
 });
