@@ -53,6 +53,16 @@ const CUES = [
  */
 const engine = process.env.ENGINE ?? "google";
 /**
+ * The page knows four engines — auto, openai, google, local — and silently keeps its own setting for
+ * anything else. `ENGINE=gemini` (2026-09-07) therefore ran a Gemini gate on OpenAI, which had no
+ * credits: the character rendered, said nothing, and put a 429 on its own tile in the meeting.
+ */
+const KNOWN_ENGINES = ["auto", "openai", "google", "local"];
+if (engine && !KNOWN_ENGINES.includes(engine)) {
+  console.log(`BLOCKED_BY_ENGINE: ENGINE=${engine} is not one of ${KNOWN_ENGINES.join(", ")} (Gemini is "google")`);
+  process.exit(2);
+}
+/**
  * How much the character needs before it speaks. `addressed_only` is the product default; the gate can
  * ask for more, and `open` is the setting that proves the voice path without depending on the
  * recogniser getting a two-mora name right.

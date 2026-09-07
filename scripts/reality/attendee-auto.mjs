@@ -78,6 +78,16 @@ const YUI_RECORDING = process.env.YUI_RECORDING_FORMAT ? { recording: { format: 
  */
 const TESTER_RECORDING = process.env.TESTER_RECORDING_FORMAT ?? "mp4";
 
+/**
+ * The page knows four engines — auto, openai, google, local — and silently keeps its own setting for
+ * anything else. `ENGINE=gemini` (2026-09-07) therefore ran a Gemini gate on OpenAI, which had no
+ * credits: the character rendered, said nothing, and put a 429 on its own tile in the meeting.
+ */
+const KNOWN_ENGINES = ["auto", "openai", "google", "local"];
+if (engine && !KNOWN_ENGINES.includes(engine)) {
+  console.log(`BLOCKED_BY_ENGINE: ENGINE=${engine} is not one of ${KNOWN_ENGINES.join(", ")} (Gemini is "google")`);
+  process.exit(2);
+}
 const platform = detectPlatform(url ?? "");
 if (!url || platform === "unknown") { console.log(`BLOCKED_BY_MEET_URL: set MEET_URL to a Google Meet, Zoom or Teams link (got ${url ?? "nothing"})`); process.exit(2); }
 if (!env.ATTENDEE_API_KEY) { console.log("BLOCKED_BY_ATTENDEE_KEY"); process.exit(2); }
