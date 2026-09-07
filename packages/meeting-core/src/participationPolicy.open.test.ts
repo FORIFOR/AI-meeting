@@ -1,5 +1,6 @@
+import { MEETING_PERSONA_ID } from "./meetingPrompt.js";
 import { describe, expect, it } from "vitest";
-import { ParticipationPolicy } from "./participationPolicy.js";
+import { ParticipationPolicy , defaultProactivityFor} from "./participationPolicy.js";
 
 /**
  * "open": the character joins a conversation it was not called into. The point of the tier is that it
@@ -238,4 +239,16 @@ describe("greeting on arrival", () => {
     expect(p.onJoined(1100)).toBe(false);
     expect(p.addressedBy?.text).toBe("ゆい、聞こえる？");
   });
+
+describe("how forward the character is by default", () => {
+  it("opens up for one-to-one and keeps a meeting to its name", () => {
+    // The ordinary case: someone talks to the character. Waiting to be called by name is a summons.
+    expect(defaultProactivityFor({ mode: "free_talk" })).toBe("open");
+    expect(defaultProactivityFor({ personaId: "friend_ja", mode: "companion" })).toBe("open");
+    expect(defaultProactivityFor({})).toBe("open");
+    // A meeting is several people talking to each other: answering everything said is the failure.
+    expect(defaultProactivityFor({ personaId: MEETING_PERSONA_ID })).toBe("addressed_only");
+    expect(defaultProactivityFor({ mode: "meeting" })).toBe("addressed_only");
+  });
+});
 });

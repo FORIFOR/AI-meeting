@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Persona } from "@rcai/persona-core";
-import { MEETING_PERSONA_ID, type MeetingStatus, type ParticipationState, type Proactivity } from "@rcai/meeting-core";
+import { MEETING_PERSONA_ID, defaultProactivityFor, type MeetingStatus, type ParticipationState, type Proactivity } from "@rcai/meeting-core";
 import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
 import { settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
@@ -29,7 +29,13 @@ export function Meeting(p: MeetingProps) {
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [personaId, setPersonaId] = useState("");
-  const [proactivity, setProactivity] = useState<Proactivity>("addressed_only");
+  /**
+   * Talking to the character one to one is the ordinary case, and there waiting to be called by name
+   * is a summons rather than a conversation: the default opens up and only a meeting keeps
+   * `addressed_only` (see defaultProactivityFor). The operator can still change it, and a bot page
+   * carries its own in the URL.
+   */
+  const [proactivity, setProactivity] = useState<Proactivity | null>(null);
   /**
    * "cues" reads the webcam in this page only — nods, expressions, gaze — and nothing leaves it.
    * "model" also sends frames to the conversational provider, which is a different privacy decision
@@ -95,7 +101,7 @@ export function Meeting(p: MeetingProps) {
         character,
         meetingUrl: url,
         displayName,
-        proactivity: (isBot ? (botConfig?.proactivity as Proactivity | undefined) : undefined) ?? proactivity,
+        proactivity: (isBot ? (botConfig?.proactivity as Proactivity | undefined) : undefined) ?? proactivity ?? defaultProactivityFor({ personaId: persona?.id, mode: persona?.mode }),
         role,
         botToken: isBot ? p.botParams?.token : undefined,
         botBrokerUrl: isBot ? (botOrigins.brokerUrl ?? p.botParams?.brokerUrl) : undefined,
@@ -249,11 +255,11 @@ export function Meeting(p: MeetingProps) {
           </select>
         </div>
         <div className="field"><label>発言のしかた</label>
-          <select className="select" value={proactivity} onChange={(e) => setProactivity(e.target.value as Proactivity)} disabled={joined}>
-            <option value="addressed_only">名前で呼ばれたときだけ（推奨）</option>
+          <select className="select" value={proactivity ?? defaultProactivityFor({ personaId: persona?.id, mode: persona?.mode })} onChange={(e) => setProactivity(e.target.value as Proactivity)} disabled={joined}>
+            <option value="addressed_only">名前で呼ばれたときだけ（会議向け）</option>
             <option value="invited">「誰か意見ある？」にも答える</option>
             <option value="active">未回答の質問にも自発的に答える</option>
-            <option value="open">呼ばれなくても会話に入る</option>
+            <option value="open">呼ばれなくても会話に入る（1対1の既定）</option>
           </select>
         </div>
         <div className="field">
