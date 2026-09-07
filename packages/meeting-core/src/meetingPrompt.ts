@@ -69,11 +69,17 @@ export function meetingInstructions({ displayName, proactive, aliases = [] }: Me
     // told that nonsense words are mishearings and not to repeat them, the 2B model quoted the line
     // back (「ゆい英坊を思う？」と聞かれましたね, 2/6) or invented 「ゆい英坊さん」 — below the no-rule
     // baseline on the same probe (meeting-garble scenario). That one is the recogniser's to fix.
+    // General-user check (2026-09-07, converse): 「今日の東京の天気は？」 drew 「東京は今日は晴れで…」, 「今何時？」
+    // 「およそ午後3時ですよ」 (it was 2 a.m.) — the model has no clock, no weather, no news, and said so
+    // for none of them. The time it *can* have: the page hands it over as 【現在時刻】 with the turn.
+    "・ニュース・天気・株価・交通情報などのリアルタイム情報やインターネット検索は使えない。聞かれたら、それは今ここでは分からないと短く言い、会議で聞いた関係する点があれば一つ挙げる（何もなければ聞き返す）。現在時刻は【現在時刻】が添えられているときだけ、それを使って答える。",
     "・カメラから得た情報（うなずき・首振り・表情・視線）は不確実な観測。相手の感情や心理状態を断定しない（「不安そう」「怒っている」などと言わない）。うなずきや首振りは、言葉がなくても返事として扱ってよい。",
   ].join("\n");
 }
 
 export interface MeetingTurnInput {
+  /** The wall clock at the turn, as the page knows it ("2026-09-07 02:05"); the one live fact the model may state. */
+  now?: string;
   /** The room's recent lines before the one that addressed the character, oldest first, as "speaker: text". */
   context: string[];
   /** The rendered visual observations, if any (see MeetingSessionController.visualContext). */
@@ -129,7 +135,7 @@ function shortAskHint(text: string, displayName: string): string {
 }
 
 /** The text sent for one turn in which the room addressed the character. */
-export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui" }: MeetingTurnInput): string {
+export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui", now }: MeetingTurnInput): string {
   const line = "text" in asked ? `【あなたへの質問】${asked.speakerName ?? "参加者"}: ${asked.text}` : `【言葉のない反応】${asked.reaction}`;
   const hint = "text" in asked ? yieldHint(asked.text) || shortAskHint(asked.text, displayName) || demonstrativeHint(asked.text) : "";
   const ctx = context.join("\n");
@@ -140,7 +146,8 @@ export function meetingTurnPrompt({ context, seen, asked, displayName = "Yui" }:
    * the matter asked about.
    */
   const bearings = ctx ? "【会議の直近の発言】は状況を知るためのものです。答えるのは【あなたへの質問】だけで、「ちょっと待って」のようにあなたに黙るよう求めた発言について、あとから意見や感想を述べないでください。\n\n" : "";
-  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${line}\n\n${hint}${bearings}短く（1〜2文で）答えてください。`;
+  const clock = now ? `【現在時刻】${now}\n\n` : "";
+  return `${ctx ? `【会議の直近の発言】\n${ctx}\n\n` : ""}${seen ? `${seen}\n\n` : ""}${clock}${line}\n\n${hint}${bearings}短く（1〜2文で）答えてください。`;
 }
 
 /**

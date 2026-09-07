@@ -886,7 +886,7 @@ export class MeetingSessionController {
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
-      : meetingTurnPrompt({ context, seen, displayName: this.init.displayName, asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
+      : meetingTurnPrompt({ context, seen, displayName: this.init.displayName, now: localClock(new Date()), asked: by.text ? { speakerName: by.speakerName, text: canon(by.text) } : { reaction: by.detection.reason } });
     this.avatarRuntime?.handleEvent({ type: "assistant_thinking" });
     try {
       await rt.sendText(prompt, { hidden: true });
@@ -1175,4 +1175,10 @@ export class MeetingSessionController {
       voice: { characterId: entry.id, voices: {} },
     };
   }
+}
+
+/** "2026-09-07 02:05" in the page's own time zone — the one live fact the character may state. */
+export function localClock(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }

@@ -61,4 +61,12 @@ describe("canonicalizeName", () => {
     const without = meetingTurnPrompt({ context: [], seen: "", asked: { text: "ゆい、今どう思う？", speakerName: "Tester" } });
     expect(without).not.toContain("黙るよう求めた");
   });
+
+  it("has no news, weather or clock of its own — and states the clock only when the page hands it over", () => {
+    expect(meetingInstructions({ displayName: "Yui", proactive: false })).toContain("リアルタイム情報やインターネット検索は使えない");
+    const withClock = meetingTurnPrompt({ context: [], seen: "", now: "2026-09-07 02:05", asked: { text: "ゆい、今何時？", speakerName: "Tester" } });
+    expect(withClock).toContain("【現在時刻】2026-09-07 02:05");
+    const without = meetingTurnPrompt({ context: [], seen: "", asked: { text: "ゆい、今何時？", speakerName: "Tester" } });
+    expect(without).not.toContain("【現在時刻】");
+  });
 });
