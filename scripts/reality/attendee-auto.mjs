@@ -40,7 +40,12 @@ const url = process.env.MEET_URL;
 const broker = process.env.BROKER_URL ?? "http://localhost:8787";
 const attendee = env.ATTENDEE_API_BASE_URL ?? "https://app.attendee.dev";
 const engine = process.env.ENGINE ?? "local";
-const proactivity = process.env.PROACTIVITY ?? "addressed_only";
+/**
+ * A meeting waits to be called; a one-to-one does not. The scenario decides, so the script and the
+ * character's own rules cannot disagree — a room script run against an always-answering character
+ * fails every cue that asks it to stay out of a conversation.
+ */
+const proactivity = process.env.PROACTIVITY ?? ((process.env.SCENARIO ?? "meeting") === "one_to_one" ? "open" : "addressed_only");
 const botName = env.RECALL_BOT_NAME ?? "Yui";
 /**
  * The room may take a while to let two bots in; nobody is billed for the script until they are. Meet itself
@@ -228,7 +233,7 @@ const VOICE_B = process.env.VOICE_B ?? "Eddy";
  * name keeps its attention without repeating the name). So the conversation it must stay out of comes
  * first, before anything has engaged it; the addresses follow.
  */
-const CUES = [
+const MEETING_CUES = [
   { id: "greet", at: 0, kind: "listen", expect: "入室の挨拶をする", window: 25 },
   { id: "chat", at: 25, kind: "conversation", lines: [[VOICE_A, "昨日の資料、見てくれた？"], [VOICE_B, "見たよ。三ページ目の数字が少し気になったかな。"], [VOICE_A, "あそこは後で直しておくね。"], [VOICE_B, "ありがとう、助かる。"]], expect: "割り込まない", window: 30 },
   { id: "ask1", at: 65, kind: "say", voice: VOICE_A, text: "ゆい、今日の予定を教えて。", expect: "答える", window: 15 },
@@ -239,7 +244,39 @@ const CUES = [
   { id: "ask2", at: 220, kind: "say", voice: VOICE_A, text: "ゆい、今どう思う？", expect: "答える", window: 15 },
   { id: "silence", at: 260, kind: "listen", expect: "勝手に話さない", window: 30 },
 ];
-const SCRIPT_END = 300;
+
+/**
+ * What the thing is actually for: one person talking with the character, no meeting around it.
+ *
+ * The meeting script above tests a room — who holds the floor, who was addressed, who is being talked
+ * about. This one tests the ordinary day: talking to her without saying her name, asking what is true
+ * right now, dates and numbers, a company she has never heard of, a document nobody sent her, changing
+ * your mind mid-sentence, cutting her off, and a fragment the recogniser mangled. Every line here is
+ * one somebody actually said to her during the runs of 07 Sep, or one they complained she got wrong.
+ */
+const ONE_TO_ONE_CUES = [
+  { id: "greet", at: 0, kind: "listen", expect: "入室の挨拶をする", window: 25 },
+  // No name, no question mark: the ordinary way a person opens.
+  { id: "open_chat", at: 25, kind: "say", voice: VOICE_A, text: "おはよう。今日はなんだか疲れてるんだよね。", expect: "呼びかけなしでも答える", want: "answer", window: 22 },
+  { id: "news", at: 50, kind: "say", voice: VOICE_A, text: "今日のニュース教えて。", expect: "実際のニュースを答える（作らない）", want: "answer", window: 25 },
+  { id: "weather", at: 80, kind: "say", voice: VOICE_A, text: "今日の東京の天気は？", expect: "実際の天気を答える", want: "answer", window: 25 },
+  // The same person, no name: the conversation continues.
+  { id: "followup", at: 110, kind: "say", voice: VOICE_A, text: "じゃあ傘いるかな？", expect: "名前なしでも続けて答える", want: "answer", window: 20 },
+  { id: "numbers", at: 135, kind: "say", voice: VOICE_A, text: "来週の水曜、十五時から一時間で打ち合わせできる？", expect: "日付と数字を取り違えない", want: "answer", window: 22 },
+  { id: "company", at: 162, kind: "say", voice: VOICE_A, text: "株式会社ネクストスタンダーズって知ってる？", expect: "知らないものを知っているふりをしない", want: "answer", window: 22 },
+  // The complaint of 07 Sep: she talked about a document nobody had shared.
+  { id: "materials", at: 189, kind: "say", voice: VOICE_A, text: "さっき送った資料、もう見た？", expect: "共有されていない資料を見たと言わない", want: "answer", window: 22 },
+  { id: "selfcorrect", at: 216, kind: "say", voice: VOICE_A, text: "明日、あ、ちがう、明後日の予定ってどうなってる？", expect: "言い直しに従う（明後日）", want: "answer", window: 22 },
+  { id: "bargein", at: 243, kind: "interrupt", voice: VOICE_A, text: "これってどう思う？", cutIn: { voice: VOICE_B, text: "ちょっと待って、その前にこっちの話を先にさせて。" }, expect: "AIが止まる", window: 30 },
+  { id: "fragment", at: 280, kind: "say", voice: VOICE_A, text: "それっ？", expect: "推測で答えず聞き返す", want: "answer", window: 20 },
+  { id: "silence", at: 305, kind: "listen", expect: "勝手に話さない", window: 30 },
+];
+
+const SCENARIOS = { meeting: { cues: MEETING_CUES, end: 300 }, one_to_one: { cues: ONE_TO_ONE_CUES, end: 345 } };
+const SCENARIO = process.env.SCENARIO ?? "meeting";
+if (!SCENARIOS[SCENARIO]) { console.log(`BLOCKED_BY_SCENARIO: SCENARIO=${SCENARIO} is not one of ${Object.keys(SCENARIOS).join(", ")}`); process.exit(2); }
+const CUES = SCENARIOS[SCENARIO].cues;
+const SCRIPT_END = SCENARIOS[SCENARIO].end;
 
 // ---- the Tester's voice, rendered before anyone is billed --------------------------------------
 const dir = join(tmpdir(), `rcai-auto-${Date.now()}`);
@@ -283,7 +320,7 @@ async function knock() {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({
       meetingUrl: url, botName, ...YUI_RECORDING,
-      botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), ...(process.env.YUI_PAGE_FPS ? { fps: process.env.YUI_PAGE_FPS } : {}), outbound: "page" },
+      botPageQuery: { engine, character: process.env.CHARACTER_ID ?? "yui", name: botName, language: "ja-JP", proactivity, persona: process.env.PERSONA_ID ?? (SCENARIO === "one_to_one" ? "friend_ja" : "meeting_colleague_ja"), vision: process.env.VISION ?? "cues", ...(process.env.VOICE ? { voice: process.env.VOICE } : {}), ...(process.env.FRAMING ? { framing: process.env.FRAMING } : {}), ...(process.env.YUI_PAGE_FPS ? { fps: process.env.YUI_PAGE_FPS } : {}), outbound: "page" },
     }),
   })).json();
   if (!yui.botId) { console.log(`FAIL: ${yui.error ?? "join failed"} ${yui.detail ?? ""}`); process.exit(1); }
@@ -678,7 +715,30 @@ for (const cue of CUES) {
       if (cutText) { const echo = NAME_ECHO.test(cutText); audio.push({ id: cue.id, quality: null, reply: cutText, echo, start, end }); detail += ` · reply(cut)=${JSON.stringify(cutText.slice(0, 60))}${echo ? " NAME-ECHO" : ""}`; }
       break;
     }
-    default: status = "INFO"; detail = "";
+    default: {
+      /**
+       * A cue that says what it wants: an answer, or silence. What she actually said is printed with
+       * it, because for these the words are the test — a company nobody has heard of and a document
+       * nobody sent are both answered "correctly" by a character that simply makes something up.
+       */
+      if (cue.want === "answer" || cue.want === "silence") {
+        const spoke = eventsBetween(ev, start, end, "spoke");
+        const reply = spoke.map((e) => e.data?.text ?? "").join(" / ");
+        const sentS = spoke.reduce((n, e) => n + (e.data?.seconds ?? 0), 0);
+        if (cue.want === "answer") {
+          status = turns.length && speaking.length && heardS > 0.5 ? "PASS" : turns.length && speaking.length && sentS > 1 ? "UNHEARD" : turns.length ? "PARTIAL" : "FAIL";
+        } else {
+          const own = speaking.filter((e) => !eventsBetween(ev, T0 - GREETING_LOOKBACK_MS, end, "greeting").some((g) => e.at >= g.at && e.at - g.at < 15_000));
+          status = !turns.length && !own.length ? "PASS" : "FAIL";
+        }
+        const q = cue.want === "answer" ? audioQuality(start, end, spoken, sentS) : null;
+        const echo = reply ? NAME_ECHO.test(reply) : false;
+        if (reply) audio.push({ id: cue.id, quality: q, reply, echo, start, end });
+        detail = `turn=${turns.map((e) => e.data.reason).join(",") || "none"} speaking=${speaking.length} heard=${heardS.toFixed(1)}s · reply=${JSON.stringify(reply.slice(0, 90))}${echo ? " NAME-ECHO" : ""}${q ? ` · audio: ${audioLine(q)}` : ""}`;
+        break;
+      }
+      status = "INFO"; detail = "";
+    }
   }
   results.push({ id: cue.id, expect: cue.expect, status, detail });
   console.log(`        → ${status}  ${detail}\n`);
