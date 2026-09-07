@@ -364,4 +364,25 @@ describe("the Live setup a meeting asks for", () => {
     expect(text).toContain("必ず日本語（ja-JP）で");
   });
 });
+
+});
+
+describe("what a turn is timed on", () => {
+  it("reports first audio from speech end, and keeps turnComplete out of the latency", async () => {
+    const { p, ws, events } = await connected();
+    // The room stopped talking 900 ms ago …
+    (p as unknown as { timing: { userSpeechEndAt: number; source: string } }).timing.userSpeechEndAt = Date.now() - 900;
+    // … and the first sound of the reply arrives now, with more to come.
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 1000)) } }] } } });
+    await ws.flush();
+    ws.receive({ serverContent: { turnComplete: true } });
+    await ws.flush();
+    const m = events.find((e) => e.type === "metrics") as { turn: { firstAudioSentMs?: number; totalMs?: number; source?: string } } | undefined;
+    expect(m).toBeDefined();
+    expect(m!.turn.firstAudioSentMs).toBeGreaterThanOrEqual(850);
+    expect(m!.turn.firstAudioSentMs).toBeLessThan(1200);
+    expect(m!.turn.totalMs).toBeGreaterThanOrEqual(m!.turn.firstAudioSentMs!); // the reply's own length, not latency
+    expect(m!.turn.source).toBe("speech");
+    await p.disconnect();
+  });
 });

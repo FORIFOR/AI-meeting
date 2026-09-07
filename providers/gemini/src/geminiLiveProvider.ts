@@ -96,6 +96,15 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private closing = false;
   private setupDone = false;
   private turn = { audioMs: 0, firstAudioAt: 0, hasAudio: false, id: 0 };
+  /**
+   * What a conversation is judged on, kept apart from what is easy to measure. `turnComplete` arrives
+   * when the model has finished *sending* a reply — for a ten-second answer that is ten seconds after
+   * the first sound, and reading it as latency would condemn a fast turn. The number that decides
+   * whether a meeting feels alive is the first one: the room stops talking, and how long until it
+   * hears something. Both are recorded; only the first is latency.
+   */
+  private timing: { setupCompleteAt: number; userSpeechStartAt: number; userSpeechEndAt: number; source: "speech" | "text" } =
+    { setupCompleteAt: 0, userSpeechStartAt: 0, userSpeechEndAt: 0, source: "speech" };
   private userTranscript = "";
   private assistantTranscript = "";
   private endedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -150,6 +159,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const token = await this.fetchToken();
     const model = token.model ?? this.model;
     await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token), model, config);
+    this.timing.setupCompleteAt = this.clock();
     this.emit({ type: "session_ready", providerId: this.id });
     // Opening line is owned by the provider (see integration contracts): ask for it as a client turn.
     const opening = (config.providerOptions?.opening as string | undefined)?.trim();
@@ -305,9 +315,14 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       for (const ev of this.vad.process(frame)) {
         if (ev.type === "speech_start") {
           this.genCounter.nextTurn();
+          this.timing.userSpeechStartAt = ev.timestamp ?? this.clock();
+          this.timing.source = "speech";
           this.emit({ type: "user_speech_started", at: ev.timestamp });
         }
-        else this.emit({ type: "user_speech_ended", at: ev.timestamp });
+        else {
+          this.timing.userSpeechEndAt = ev.timestamp ?? this.clock();
+          this.emit({ type: "user_speech_ended", at: ev.timestamp });
+        }
       }
     }
     for (const chunk of this.outbound.push(frame)) {
@@ -322,6 +337,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   }
 
   async sendText(text: string): Promise<void> {
+    // A typed turn has no speech to end; the clock starts when it goes out.
+    this.timing.source = "text";
+    this.timing.userSpeechStartAt = this.timing.userSpeechEndAt = this.clock();
     this.send({ clientContent: { turns: [{ role: "user", parts: [{ text }] }], turnComplete: true } });
   }
 
@@ -405,6 +423,21 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       this.flushUserTranscript();
       if (this.assistantTranscript) {
         this.emit({ type: "assistant_transcript", text: this.assistantTranscript, final: true, gen: this.genCounter.stamp() });
+      }
+      const from = this.timing.userSpeechEndAt;
+      if (from) {
+        this.emit({
+          type: "metrics",
+          gen: this.genCounter.stamp(),
+          turn: {
+            source: this.timing.source,
+            // speech end → the first sound of the reply: the conversation's latency.
+            ...(this.turn.hasAudio ? { firstAudioSentMs: this.turn.firstAudioAt - from } : {}),
+            // speech end → the model finished sending. The reply's own length lives in here; not latency.
+            totalMs: now - from,
+            engines: { llm: this.model },
+          },
+        });
       }
       this.scheduleSpeechEnded(now);
       this.genOpen = false; // the next modelTurn is a new generation
