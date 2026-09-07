@@ -208,10 +208,19 @@ const rec = created.meetingRecordId ? await (await fetch(`${broker}/api/meetings
 const page = await pageState();
 row("voice agent page started", page.activations > 0 ? "PASS" : "FAIL", page.activations > 0 ? `activated at ${new Date(page.botPageActivatedAt).toISOString()}` : "the page never loaded — Attendee did not launch it");
 row("avatar rendered", page.activations > 0 ? "SEEN_LIVE" : "UNKNOWN", "Live2D rendered on the Meet tile in the first live run — at Attendee's base rate, with no GPU surcharge.");
-row("meeting audio reached us", stats.heard > 0 ? "PASS" : "FAIL", `${stats.heard} chunks`);
-row("speech transcribed", stats.transcripts > 0 ? "PASS" : "FAIL", `${stats.transcripts} utterances`);
-row("addressed by name", stats.addressed > 0 ? "PASS" : "FAIL", `${stats.addressed} times`);
-row("answered", stats.replies > 0 ? "PASS" : "FAIL", `${stats.replies} replies`);
+/**
+ * What the character did, from the character's own page — not from this harness's parallel copy of
+ * the room. The copy is a second subscriber on the relay and can be empty while the character is
+ * hearing and answering perfectly (run of 2026-09-07 20:12: 0 chunks here, 7 utterances and 4 spoken
+ * answers there), which reads as a total failure of a run that worked.
+ */
+const beat = page?.pageHeartbeat?.data ?? {};
+const spokeEvents = (page?.pageEvents ?? []).filter((e) => e.type === "spoke");
+row("meeting audio reached the character", (beat.heard ?? 0) > 0 ? "PASS" : "FAIL", `${beat.heard ?? 0} frames at the page (${stats.heard} on this harness's own copy of the relay)`);
+row("speech transcribed", (beat.transcripts ?? 0) > 0 ? "PASS" : "FAIL", `${beat.transcripts ?? 0} utterances`);
+row("turns taken", (beat.answers ?? 0) > 0 ? "PASS" : "FAIL", `${beat.answers ?? 0} answers begun · ${beat.cuts ?? 0} cut unsanctioned`);
+row("answered out loud", spokeEvents.length > 0 ? "PASS" : "FAIL", spokeEvents.map((e) => `${e.data.seconds}s`).join(" · ") || "nothing spoken");
+row("audio gate", beat.gate ? ((beat.gate.forced ?? 0) === 0 ? "PASS" : "INFO") : "UNKNOWN", beat.gate ? `${beat.gate.opens} opens / ${beat.gate.closes} closes / ${beat.gate.forced} forced · ${beat.gate.sent} chunks sent to the model` : "no gate counters");
 const spokeFrames = page?.pageHeartbeat?.data?.spoke ?? 0;
 row(
   "character's audio reached the meeting",
