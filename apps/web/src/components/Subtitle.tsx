@@ -31,7 +31,7 @@ export function TranscriptLog({ items }: { items: Caption[] }) {
   return (
     <div className="sr-only" aria-live="polite" aria-atomic="false">
       {items.map((c) => (
-        <p key={c.id} className={`caption caption--${c.role} ${c.final ? "" : "caption--partial"}`}>
+        <p key={c.id} data-caption-id={c.id} className={`caption caption--${c.role} ${c.final ? "" : "caption--partial"}`}>
           <span className="caption__who">{c.role === "user" ? "You" : "AI"}</span>
           {c.text}
         </p>

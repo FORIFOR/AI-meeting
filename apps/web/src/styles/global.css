@@ -336,3 +336,22 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .dialogue__who { display: flex; align-items: baseline; gap: var(--app-space-3); font-size: var(--app-size-secondary); font-weight: var(--app-weight-bold); color: var(--app-text-secondary); }
 .dialogue__at { font-size: var(--app-size-secondary); font-weight: var(--app-weight-normal); color: var(--app-text-tertiary); }
 .dialogue__text { margin: 0; color: var(--app-text-primary); line-height: var(--app-leading-body); }
+
+.lookup-sources {
+  position: absolute; top: 110px; right: 24px; z-index: 12;
+  width: min(360px, calc(100vw - 48px)); max-height: 42vh; overflow: auto;
+  padding: 12px 16px; border: 1px solid #777; border-radius: 10px;
+  background: #181818; color: #f5f5f5; font-size: 13px; line-height: 1.6;
+}
+.lookup-sources summary { cursor: pointer; }
+.lookup-sources a { color: #b9d8ff; text-decoration: underline; }
+.lookup-sources small { display: block; color: #ddd; }
+.lookup-sources li { margin-bottom: 12px; }
+.task-ledger { padding: 12px 16px; background: #181818; color: #f5f5f5; border: 1px solid #777; border-radius: 10px; font-size: 14px; }
+.task-ledger h2 { font-size: 15px; margin: 0 0 8px; }
+.task-ledger small { display: block; color: #ddd; }
+.task-ledger li { margin-bottom: 10px; }
+.stage > .task-ledger { position: absolute; top: 110px; right: 24px; z-index: 12; width: min(360px, calc(100vw - 48px)); max-height: 42vh; overflow: auto; }
+.task-review { border-top: 1px solid #777; margin-top: 16px; padding-top: 12px; }
+.task-review h3 { font-size: 15px; margin: 0 0 8px; }
+.task-review button { color: #111; background: #eee; border: 1px solid #999; border-radius: 6px; padding: 8px; cursor: pointer; }

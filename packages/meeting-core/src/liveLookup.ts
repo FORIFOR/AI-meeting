@@ -31,7 +31,16 @@ export interface LiveLookupRequest {
   location?: string;
 }
 
+export interface NewsArticle {
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+}
+
 export interface LiveLookupResult {
+  /** Feed publication date, not the date of the underlying event. */
+  articles?: NewsArticle[];
   /** Short lines the character may read out. Empty means the lookup found nothing. */
   facts: string[];
   /** When the facts were fetched, for the model to say "as of" if it wants to. */
@@ -41,8 +50,16 @@ export interface LiveLookupResult {
 }
 
 /** What the model is handed back. Kept tiny: a long tool result becomes a long spoken answer. */
+export function currentNewsOnly(result: LiveLookupResult): LiveLookupResult {
+  if (result.error || !result.articles) return result;
+  const day = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+  const articles = result.articles.filter(a => Number.isFinite(Date.parse(a.publishedAt)) && day(a.publishedAt) === day(result.at));
+  return articles.length ? { ...result, articles, facts: articles.map(a => a.title) } : { facts: [], articles: [], at: result.at, error: "No articles published today (Asia/Tokyo) were found. Do not present older articles as today's news." };
+}
+
 export function renderLookup(result: LiveLookupResult): Record<string, unknown> {
-  return result.error ? { error: result.error, at: result.at } : { facts: result.facts.slice(0, 5), at: result.at };
+  result = currentNewsOnly(result);
+  return result.error ? { error: result.error, at: result.at } : { facts: result.facts.slice(0, 5), at: result.at, ...(result.articles ? { articles: result.articles.slice(0, 5) } : {}) };
 }
 
 /** Read a request out of whatever the model actually sent, without trusting any of it. */

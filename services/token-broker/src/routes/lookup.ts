@@ -5,7 +5,7 @@
  * ship: Google News' public RSS for headlines, Open-Meteo for weather. Both are read-only GETs of
  * public data, and what leaves this machine is a topic word or a place name — never the meeting.
  */
-import type { LiveLookupRequest, LiveLookupResult } from "@rcai/meeting-core";
+import type { LiveLookupRequest, LiveLookupResult, NewsArticle } from "@rcai/meeting-core";
 
 export interface RouteResult<T> {
   status: number;
@@ -38,6 +38,25 @@ function decodeXml(s: string): string {
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
     .replace(/&amp;/g, "&")
     .replace(/<[^>]+>/g, "");
+}
+
+/** Only articles with a verifiable feed date and safe navigable source link are returned. */
+export function articlesFromRss(xml: string, max = 5): NewsArticle[] {
+  const articles: NewsArticle[] = [];
+  const seen = new Set<string>();
+  for (const item of xml.split("<item>").slice(1)) {
+    const field = (name: string) => decodeXml(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`).exec(item)?.[1] ?? "").trim();
+    const title = field("title"), source = field("source"), link = field("link"), date = Date.parse(field("pubDate"));
+    if (!title || !source || !Number.isFinite(date)) continue;
+    try {
+      const url = new URL(link);
+      if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || seen.has(url.href)) continue;
+      seen.add(url.href);
+      articles.push({ title, url: url.href, source, publishedAt: new Date(date).toISOString() });
+      if (articles.length >= max) break;
+    } catch { /* malformed feed link */ }
+  }
+  return articles;
 }
 
 /** Open-Meteo's numeric weather codes, in the words a person would use. */
@@ -90,10 +109,12 @@ export async function lookupLiveInfo(req: LiveLookupRequest, fetchImpl: typeof f
   const at = now().toISOString();
   try {
     if (req.kind === "news") {
-      const res = await fetchImpl(req.query ? newsSearch(req.query) : NEWS_TOP, { headers: { accept: "application/rss+xml" } });
+      const res = await fetchImpl(req.query ? newsSearch(req.query) : NEWS_TOP, { signal: AbortSignal.timeout(10000), headers: { accept: "application/rss+xml" } });
       if (!res.ok) return { status: 200, body: { facts: [], at, error: `news source responded ${res.status}` } };
-      const facts = headlinesFromRss(await res.text());
-      return { status: 200, body: { facts, at, ...(facts.length ? {} : { error: "no headlines found" }) } };
+      const xml = await res.text();
+      const facts = headlinesFromRss(xml);
+      const articles = articlesFromRss(xml);
+      return { status: 200, body: { facts, articles, at, ...(facts.length ? {} : { error: "no headlines found" }) } };
     }
     const place = req.location ?? "東京";
     const geo = await fetchImpl(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(geocodeName(place))}&count=1&language=ja&format=json`);

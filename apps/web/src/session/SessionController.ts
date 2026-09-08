@@ -1,3 +1,6 @@
+import { configureSessionTools, TaskTranscript } from "./sessionTools.js";
+import { TASK_TOOL, USER_CONTEXT_TOOL, TaskLedger, type ConversationTask, type TaskProposal } from "@rcai/conversation-core";
+import { LIVE_LOOKUP_TOOL, currentNewsOnly, parseLookupArguments, renderLookup, type LiveLookupResult } from "@rcai/meeting-core";
 import { MicCapture, SpeakerOutput, dbfs, rms, type LatencyTracker } from "@rcai/audio-core";
 import { ConversationRuntime, type ConversationEvent, type SessionRecord } from "@rcai/conversation-core";
 import type { ProviderId } from "@rcai/conversation-core";
@@ -26,6 +29,9 @@ export interface SessionHandlers {
   onError(message: string, code?: string): void;
   onProviderChange(id: ProviderId): void;
   onDeferred?(f: DeferredFeedback): void;
+  onLookup?(result: LiveLookupResult): void;
+  onTasks?(tasks: ConversationTask[]): void;
+  onTaskProposals?(proposals: TaskProposal[]): void;
 }
 
 export interface SessionInit {
@@ -39,6 +45,7 @@ export interface SessionInit {
 }
 
 export interface SessionOutcome {
+  tasks?: ConversationTask[];
   record: SessionRecord;
   evaluation: EvaluationResult | null;
   evaluationError?: string;
@@ -58,6 +65,8 @@ export interface SessionOutcome {
  * { SpeakerOutput, AvatarRuntime, BehaviorEngine, EvaluationSidecar }. The UI only sees events.
  */
 export class SessionController {
+  private tasks = new TaskLedger();
+  private taskSource = new TaskTranscript();
   private speaker: SpeakerOutput | null = null;
   private mic: MicCapture | null = null;
   private runtime: ConversationRuntime | null = null;
@@ -225,7 +234,17 @@ export class SessionController {
       // A provider that says "rotating, reconnecting" is doing its job; only a failure the user can act
       // on becomes a toast. Non-fatal notices stay in the incident record, which is where they belong.
       if (e.type === "error" && e.fatal !== false) handlers.onError(e.error.message, "PROVIDER");
+      if (e.type === "user_speech_started") this.taskSource.start();
+      if (e.type === "user_transcript") this.taskSource.update(e.text, e.final);
+      if (persona.mode === "task_planning" && e.type === "tool_call" && e.call.name === TASK_TOOL.name) {
+        void this.recordTaskCall(e.call);
+      }
+      if ((persona.mode === "career" || persona.mode === "interview") && e.type === "tool_call" && e.call.name === USER_CONTEXT_TOOL.name) {
+        const statements = runtime.getRecord().turns.filter(t=>t.role === "user").slice(-20).map(t=>t.text);
+        runtime.sendToolResponse([{id:e.call.id,name:e.call.name,response:{statements,priority:"Latest correction and constraints take precedence. Do not invent unspoken experience."}}]);
+      }
       handlers.onEvent(e);
+      if (e.type === "tool_call" && e.call.name === LIVE_LOOKUP_TOOL.name) void this.lookup(e.call);
     });
 
     // 7. Microphone → runtime (48k frames) + behavior energy.
@@ -244,6 +263,7 @@ export class SessionController {
     const provider = await createConversationProvider(this.decision.conversation, this.factoryOptions);
     this.checkpoint();
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
+    configureSessionTools(config, provider.capabilities().toolCalling);
     await runtime.start(provider, config);
     this.checkpoint();
     runtime.attachMicStream(stream);
@@ -252,6 +272,62 @@ export class SessionController {
 
     // 9. Opening line: owned by the provider (config.providerOptions.opening) — each adapter starts it natively
     //    (OpenAI response.create, Local agent TTS, Gemini hidden client turn). Nothing to send here.
+  }
+
+  private async recordTaskCall(call: {id?:string;name:string;arguments:Record<string,unknown>}): Promise<void> {
+    // Live audio may deliver the tool call before its transcription has caught up.
+    // Never relax quote validation; briefly wait for the actual user transcript instead.
+    let result = this.tasks.apply(call.arguments, this.taskSource.text());
+    const deadline = Date.now() + 1200;
+    while (result.error === "quote must occur in the latest user statement" && Date.now() < deadline && !this.disposed) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      if (this.disposed) return;
+      result = this.tasks.apply(call.arguments, this.taskSource.text());
+    }
+    if (this.disposed) return;
+    if (result.error === "quote must occur in the latest user statement") {
+      const pending = this.tasks.propose(call.arguments);
+      if (pending.proposal) {
+        this.init.handlers.onTaskProposals?.(this.tasks.pending());
+        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更は未実行です。聞き取りを確認できなかったため、画面の「この変更を反映」で確認をお願いしてください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
+        return;
+      }
+    }
+    if (result.error) this.init.handlers.onError("タスクの変更を確認できませんでした。変更内容をもう一度伝えてください。", "TASK_RECORD");
+    this.init.handlers.onTasks?.(result.tasks);
+    this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:result}]);
+  }
+
+  resolveTaskProposal(id: string, accept: boolean): void {
+    if (this.disposed) return;
+    const result=this.tasks.resolve(id,accept);
+    this.init.handlers.onTaskProposals?.(this.tasks.pending());
+    this.init.handlers.onTasks?.(result.tasks);
+    if(result.error) { this.init.handlers.onError("タスクの状態が変わりました。変更をもう一度伝えてください。", "TASK_RECORD"); return; }
+    // A UI correction must not inject a competing turn while the microphone is active.
+    // The model reads the current ledger through session_tasks before its next summary.
+  }
+
+  private async lookup(call: { id?: string; name: string; arguments: Record<string, unknown> }): Promise<void> {
+    if (this.disposed || this.init.settings.privacyMode === "strict_local") return;
+    const req = parseLookupArguments(call.arguments);
+    let result: LiveLookupResult = { facts: [], at: new Date().toISOString(), error: "invalid lookup arguments" };
+    try {
+      if (req) {
+        const response = await fetch(`${this.init.settings.brokerUrl.replace(/\/$/, "")}/api/lookup`, {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(req),
+          signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(12000)]),
+        });
+        if (!response.ok) throw new Error("lookup unavailable");
+        result = await response.json() as LiveLookupResult;
+        if (!Array.isArray(result.facts) || typeof result.at !== "string") throw new Error("invalid lookup response");
+        if (req.kind === "news" && !result.articles?.length) result = { facts: [], at: result.at, error: "No news with publication dates and sources was found" };
+      }
+    } catch { result = { facts: [], at: new Date().toISOString(), error: "Live information is unavailable; do not invent it" }; }
+    if (this.disposed) return;
+    result = currentNewsOnly(result);
+    this.init.handlers.onLookup?.(result);
+    this.runtime?.sendToolResponse([{ id: call.id, name: call.name, response: renderLookup(result) }]);
   }
 
   /** Gate D: swap the AI provider; avatar/UI untouched. */
@@ -354,7 +430,7 @@ export class SessionController {
     let evaluation: EvaluationResult | null = null;
     let evaluationError: string | undefined;
     let fallbackUsed = false;
-    try {
+    if (record.mode !== "companion" && record.mode !== "task_planning") try {
       const out = await this.sidecar!.finalize(record);
       evaluation = out.result;
       fallbackUsed = out.fallbackUsed;
@@ -362,7 +438,7 @@ export class SessionController {
     } catch (err) {
       evaluationError = err instanceof Error ? err.message : String(err);
     }
-    return { record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
+    return { tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
   }
 
   /** Idempotent; safe during start(). Order: abort → mic tracks → runtime/provider → avatar → speaker/context. */

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-03T10:06:37.887Z",
-  "count": 379,
+  "generatedAt": "2026-09-08T16:48:21.475Z",
+  "count": 391,
   "packages": [
     {
       "name": "@asamuzakjp/css-color",
@@ -1426,7 +1426,6 @@
     {
       "name": "adm-zip",
       "versions": [
-        "0.5.18",
         "0.6.0"
       ],
       "license": "MIT",
@@ -1527,6 +1526,16 @@
       "description": "Match balanced character pairs, like \"{\" and \"}\""
     },
     {
+      "name": "base64-js",
+      "versions": [
+        "1.5.1"
+      ],
+      "license": "MIT",
+      "author": "T. Jameson Little",
+      "homepage": "https://github.com/beatgammit/base64-js",
+      "description": "Base64 encoding/decoding in pure JS"
+    },
+    {
       "name": "baseline-browser-mapping",
       "versions": [
         "2.11.20"
@@ -1537,14 +1546,14 @@
       "description": "A library for obtaining browser versions with their maximum supported Baseline feature set and Widely Available status."
     },
     {
-      "name": "boolean",
+      "name": "bignumber.js",
       "versions": [
-        "3.2.0"
+        "9.3.1"
       ],
       "license": "MIT",
-      "author": "",
-      "homepage": "https://github.com/thenativeweb/boolean#readme",
-      "description": "boolean converts lots of things to boolean."
+      "author": "Michael Mclaughlin",
+      "homepage": "https://github.com/MikeMcl/bignumber.js#readme",
+      "description": "A library for arbitrary-precision decimal and non-decimal arithmetic"
     },
     {
       "name": "bowser",
@@ -1575,6 +1584,16 @@
       "author": "Andrey Sitnik",
       "homepage": "https://github.com/browserslist/browserslist#readme",
       "description": "Share target browsers between different front-end tools, like Autoprefixer, Stylelint and babel-env-preset"
+    },
+    {
+      "name": "buffer-equal-constant-time",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "BSD-3-Clause",
+      "author": "GoInstant Inc., a salesforce.com company",
+      "homepage": "https://github.com/goinstant/buffer-equal-constant-time#readme",
+      "description": "Constant-time comparison of Buffers"
     },
     {
       "name": "cac",
@@ -1758,6 +1777,16 @@
       "description": "Strict TypeScript and Flow types for style based on MDN data"
     },
     {
+      "name": "data-uri-to-buffer",
+      "versions": [
+        "4.0.1"
+      ],
+      "license": "MIT",
+      "author": "Nathan Rajlich",
+      "homepage": "https://github.com/TooTallNate/node-data-uri-to-buffer",
+      "description": "Generate a Buffer instance from a Data URI string"
+    },
+    {
       "name": "data-urls",
       "versions": [
         "5.0.0"
@@ -1838,16 +1867,6 @@
       "description": "Node.js module to detect the C standard library (libc) implementation family and version"
     },
     {
-      "name": "detect-node",
-      "versions": [
-        "2.1.0"
-      ],
-      "license": "MIT",
-      "author": "Ilya Kantor",
-      "homepage": "https://github.com/iliakan/detect-node",
-      "description": "Detect Node.JS (as opposite to browser environment) (reliable)"
-    },
-    {
       "name": "devtools-protocol",
       "versions": [
         "0.0.1666840"
@@ -1876,6 +1895,16 @@
       "author": "Vladimir Agafonkin",
       "homepage": "https://github.com/mapbox/earcut#readme",
       "description": "The fastest and smallest JavaScript polygon triangulation library for your WebGL apps"
+    },
+    {
+      "name": "ecdsa-sig-formatter",
+      "versions": [
+        "1.0.11"
+      ],
+      "license": "Apache-2.0",
+      "author": "D2L Corporation",
+      "homepage": "https://github.com/Brightspace/node-ecdsa-sig-formatter#readme",
+      "description": "Translate ECDSA signatures between ASN.1/DER and JOSE-style concatenation"
     },
     {
       "name": "electron-to-chromium",
@@ -1959,16 +1988,6 @@
       "description": "ES Object-related atoms: Object, ToObject, RequireObjectCoercible"
     },
     {
-      "name": "es6-error",
-      "versions": [
-        "4.1.1"
-      ],
-      "license": "MIT",
-      "author": "Ben Youngblood",
-      "homepage": "https://github.com/bjyoungblood/es6-error",
-      "description": "Easily-extendable error for use with ES6 classes"
-    },
-    {
       "name": "esbuild",
       "versions": [
         "0.28.2"
@@ -2040,6 +2059,16 @@
       "description": ""
     },
     {
+      "name": "extend",
+      "versions": [
+        "3.0.2"
+      ],
+      "license": "MIT",
+      "author": "Stefan Thomas",
+      "homepage": "https://github.com/justmoon/node-extend#readme",
+      "description": "Port of jQuery.extend for node.js and the browser"
+    },
+    {
       "name": "fdir",
       "versions": [
         "6.5.0"
@@ -2048,6 +2077,16 @@
       "author": "thecodrr",
       "homepage": "https://github.com/thecodrr/fdir#readme",
       "description": "The fastest directory crawler & globbing alternative to glob, fast-glob, & tiny-glob. Crawls 1m files in < 1s"
+    },
+    {
+      "name": "fetch-blob",
+      "versions": [
+        "3.2.0"
+      ],
+      "license": "MIT",
+      "author": "Jimmy Wärting",
+      "homepage": "https://github.com/node-fetch/fetch-blob#readme",
+      "description": "Blob & File implementation in Node.js, originally from node-fetch."
     },
     {
       "name": "fflate",
@@ -2120,6 +2159,16 @@
       "description": "Memory Efficient Serialization Library"
     },
     {
+      "name": "formdata-polyfill",
+      "versions": [
+        "4.0.10"
+      ],
+      "license": "MIT",
+      "author": "Jimmy Wärting",
+      "homepage": "https://github.com/jimmywarting/FormData#readme",
+      "description": "HTML5 `FormData` for Browsers and Node."
+    },
+    {
       "name": "fs-extra",
       "versions": [
         "8.1.0"
@@ -2158,6 +2207,26 @@
       "author": "Raynos",
       "homepage": "https://github.com/Raynos/function-bind",
       "description": "Implementation of Function.prototype.bind"
+    },
+    {
+      "name": "gaxios",
+      "versions": [
+        "7.3.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google, LLC",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/gaxios",
+      "description": "A simple common HTTP client specifically for Google APIs and services."
+    },
+    {
+      "name": "gcp-metadata",
+      "versions": [
+        "9.0.3"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google LLC",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/gcp-metadata",
+      "description": "Get the metadata from a Google Cloud Platform environment"
     },
     {
       "name": "gensync",
@@ -2232,7 +2301,6 @@
     {
       "name": "global-agent",
       "versions": [
-        "3.0.0",
         "4.1.3"
       ],
       "license": "BSD-3-Clause",
@@ -2259,6 +2327,26 @@
       "author": "Sindre Sorhus",
       "homepage": "https://github.com/sindresorhus/globby#readme",
       "description": "Extends `glob` with support for multiple patterns and exposes a Promise API"
+    },
+    {
+      "name": "google-auth-library",
+      "versions": [
+        "11.0.2"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google Inc.",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/google-auth-library-nodejs",
+      "description": "Google APIs Authentication Client Library for Node.js"
+    },
+    {
+      "name": "google-logging-utils",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google API Authors",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/logging-utils",
+      "description": "A debug logger package for other Google libraries"
     },
     {
       "name": "gopd",
@@ -2473,14 +2561,14 @@
       "description": "Given some data, jsesc returns the shortest possible stringified & ASCII-safe representation of that data."
     },
     {
-      "name": "json-stringify-safe",
+      "name": "json-bigint",
       "versions": [
-        "5.0.1"
+        "1.0.0"
       ],
-      "license": "ISC",
-      "author": "Isaac Z. Schlueter",
-      "homepage": "https://github.com/isaacs/json-stringify-safe",
-      "description": "Like JSON.stringify, but doesn't blow up on circular refs."
+      "license": "MIT",
+      "author": "Andrey Sidorov",
+      "homepage": "https://github.com/sidorares/json-bigint#readme",
+      "description": "JSON.parse with bigints support"
     },
     {
       "name": "json5",
@@ -2501,6 +2589,26 @@
       "author": "JP Richardson",
       "homepage": "https://github.com/jprichardson/node-jsonfile#readme",
       "description": "Easily read/write JSON files."
+    },
+    {
+      "name": "jwa",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Brian J. Brennan",
+      "homepage": "https://github.com/brianloveswords/node-jwa#readme",
+      "description": "JWA implementation (supports all JWS algorithms)"
+    },
+    {
+      "name": "jws",
+      "versions": [
+        "4.0.1"
+      ],
+      "license": "MIT",
+      "author": "Brian J Brennan",
+      "homepage": "https://github.com/brianloveswords/node-jws#readme",
+      "description": "Implementation of JSON Web Signatures"
     },
     {
       "name": "livekit-client",
@@ -2616,7 +2724,6 @@
     {
       "name": "matcher",
       "versions": [
-        "3.0.0",
         "4.0.0"
       ],
       "license": "MIT",
@@ -2695,6 +2802,26 @@
       "description": "A tiny (116 bytes), secure URL-friendly unique string ID generator"
     },
     {
+      "name": "node-domexception",
+      "versions": [
+        "1.0.0"
+      ],
+      "license": "MIT",
+      "author": "Jimmy Wärting",
+      "homepage": "https://github.com/jimmywarting/node-domexception#readme",
+      "description": "An implementation of the DOMException class from NodeJS"
+    },
+    {
+      "name": "node-fetch",
+      "versions": [
+        "3.3.2"
+      ],
+      "license": "MIT",
+      "author": "David Frank",
+      "homepage": "https://github.com/node-fetch/node-fetch",
+      "description": "A light-weight module that brings Fetch API to node.js"
+    },
+    {
       "name": "node-releases",
       "versions": [
         "2.0.54"
@@ -2758,7 +2885,6 @@
       "name": "onnxruntime-common",
       "versions": [
         "1.24.0-dev.20251116-b39e144322",
-        "1.24.3",
         "1.29.0"
       ],
       "license": "MIT",
@@ -2769,7 +2895,6 @@
     {
       "name": "onnxruntime-node",
       "versions": [
-        "1.24.3",
         "1.29.0"
       ],
       "license": "MIT",
@@ -3059,16 +3184,6 @@
       "description": "Recursively iterates over specified directory, require()'ing each file, and returning a nested hash structure containing those modules."
     },
     {
-      "name": "roarr",
-      "versions": [
-        "2.15.4"
-      ],
-      "license": "BSD-3-Clause",
-      "author": "Gajus Kuizinas",
-      "homepage": "https://github.com/gajus/roarr#readme",
-      "description": "JSON logger for Node.js and browser."
-    },
-    {
       "name": "rollup",
       "versions": [
         "4.63.1"
@@ -3097,6 +3212,16 @@
       "author": "Ben Lesh",
       "homepage": "https://rxjs.dev",
       "description": "Reactive Extensions for modern JavaScript"
+    },
+    {
+      "name": "safe-buffer",
+      "versions": [
+        "5.2.1"
+      ],
+      "license": "MIT",
+      "author": "Feross Aboukhadijeh",
+      "homepage": "https://github.com/feross/safe-buffer",
+      "description": "Safer Node.js Buffer API"
     },
     {
       "name": "safer-buffer",
@@ -3160,19 +3285,8 @@
       "description": "The semantic version parser used by npm."
     },
     {
-      "name": "semver-compare",
-      "versions": [
-        "1.0.0"
-      ],
-      "license": "MIT",
-      "author": "James Halliday",
-      "homepage": "https://github.com/substack/semver-compare",
-      "description": "compare two semver version strings, returning -1, 0, or 1"
-    },
-    {
       "name": "serialize-error",
       "versions": [
-        "7.0.1",
         "8.1.0"
       ],
       "license": "MIT",
@@ -3279,16 +3393,6 @@
       "author": "Valentin 7rulnik Semirulnik",
       "homepage": "https://github.com/7rulnik/source-map-js",
       "description": "Generates and consumes source maps"
-    },
-    {
-      "name": "sprintf-js",
-      "versions": [
-        "1.1.3"
-      ],
-      "license": "BSD-3-Clause",
-      "author": "Alexandru Mărășteanu",
-      "homepage": "https://github.com/alexei/sprintf.js#readme",
-      "description": "JavaScript sprintf implementation"
     },
     {
       "name": "stackback",
@@ -3528,7 +3632,6 @@
     {
       "name": "type-fest",
       "versions": [
-        "0.13.1",
         "0.20.2"
       ],
       "license": "(MIT OR CC0-1.0)",
@@ -3645,6 +3748,16 @@
       "author": "",
       "homepage": "https://github.com/jsdom/w3c-xmlserializer#readme",
       "description": "A per-spec XML serializer implementation"
+    },
+    {
+      "name": "web-streams-polyfill",
+      "versions": [
+        "3.3.3"
+      ],
+      "license": "MIT",
+      "author": "Mattias Buelens",
+      "homepage": "https://github.com/MattiasBuelens/web-streams-polyfill#readme",
+      "description": "Web Streams, based on the WHATWG spec reference implementation"
     },
     {
       "name": "webdriver-bidi-protocol",

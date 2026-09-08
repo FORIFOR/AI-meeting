@@ -87,6 +87,29 @@ class FakePeerConnection {
 const config: SessionConfig = { systemPrompt: "あなたは友達です。", mode: "free_talk", language: "ja-JP", voice: "marin", privacyMode: "default", providerOptions: { opening: "やあ！" } };
 
 describe("OpenAIRealtimeProvider", () => {
+  it("closes the peer and clears the channel timeout when the SDP request is rejected", async () => {
+    vi.useFakeTimers();
+    const pc = new FakePeerConnection();
+    const p = new OpenAIRealtimeProvider({
+      brokerUrl: "http://localhost:8787",
+      createPeerConnection: () => pc as unknown as RTCPeerConnection,
+      fetch: (async (url: string) => url.endsWith("/api/token/openai")
+        ? new Response(JSON.stringify({ clientSecret: "ephemeral", model: "gpt-realtime", baseUrl: "https://api.openai.com/v1/realtime" }))
+        : new Response("insufficient_quota", { status: 429 })) as typeof fetch,
+    });
+    try {
+      await expect(p.connect(config)).rejects.toThrow("calls 429");
+      expect(pc.closed).toBe(true);
+      expect(pc.dc.readyState).toBe("closed");
+      expect(pc.dc.onopen).toBeNull();
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(16000);
+    } finally {
+      await p.disconnect();
+      vi.useRealTimers();
+    }
+  });
+
   it("refuses to connect under strict_local", async () => {
     const p = new OpenAIRealtimeProvider({ brokerUrl: "http://localhost:8787", fetch: (async () => { throw new Error("no network expected"); }) as never });
     await expect(p.connect({ ...config, privacyMode: "strict_local" })).rejects.toBeInstanceOf(PrivacyViolationError);

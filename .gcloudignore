@@ -14,3 +14,7 @@ services/token-broker/.env
 services/agent/scripts/*.result*.json
 docs/reports
 tmp
+**/target
+**/target/**
+**/.env
+**/.env.*

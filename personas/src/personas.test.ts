@@ -51,4 +51,13 @@ describe("bundled personas", () => {
     expect(cfg.providerOptions?.opening).toContain("自己紹介");
     expect(createPersonaRegistry().list("interview").map((x) => x.id)).toEqual(["interviewer_ja", "interviewer_en"]);
   });
+  it("applies every visible setup parameter to the conversation instructions", () => {
+    for (const persona of personas) {
+      for (const param of persona.params ?? []) {
+        const selected = `selected_${param.key}_for_test`;
+        const config = createSessionConfig({ persona, providerId: "google", privacyMode: "default", params: { [param.key]: selected } });
+        expect(config.systemPrompt + String(config.providerOptions?.opening ?? ""), `${persona.id}.${param.key}`).toContain(selected);
+      }
+    }
+  });
 });
