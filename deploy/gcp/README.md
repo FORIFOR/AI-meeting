@@ -51,8 +51,9 @@ The script builds `deploy/cloud/Dockerfile.broker`, stores secrets in Secret Man
 single Cloud Run instance. It uses `min-instances=0` for the beta cost gate. Set `MAX_INSTANCES=1`
 until session state is moved to a durable store.
 
-Required deploy environment variables are `MEETING_TOKEN_SECRET`, `GEMINI_API_KEY`,
-`ATTENDEE_API_KEY`, and `ATTENDEE_WEBHOOK_SECRET`. The script never prints secret values.
+The first direct-mode deployment requires `MEETING_TOKEN_SECRET` and `GEMINI_API_KEY`. Add
+`ATTENDEE_API_KEY`, `ATTENDEE_WEBHOOK_SECRET`, `BROKER_PUBLIC_URL`, and `WEB_PUBLIC_URL` when the
+meeting transport is ready. The script never prints secret values.
 
 ## Static web hosting
 

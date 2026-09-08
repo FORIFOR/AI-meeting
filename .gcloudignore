@@ -1,0 +1,16 @@
+.git
+.git/**
+node_modules
+node_modules/**
+**/node_modules
+**/node_modules/**
+apps/web/dist/
+apps/web/public/
+vendor/
+reference/
+tools/tts-daemon/bin/
+**/*.log
+services/token-broker/.env
+services/agent/scripts/*.result*.json
+docs/reports
+tmp
