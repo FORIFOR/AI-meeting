@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-09-08T19:54:08.543Z",
-  "buildId": "5e3740c030ced645d38e74b37dc4b310975aa8651148a8fea6e41e7055fce7e4",
-  "status": "FAIL",
+  "measuredAt": "2026-09-08T21:41:24.620Z",
+  "buildId": "18bcaadc814dad9d2d7c720a70c71e5a74331c47fe277ffb1799c65481a56258",
+  "status": "BLOCKED",
   "evidence": "docs/reports/release/evidence.json",
   "scope": {
     "modes": [],
@@ -11,8 +11,8 @@
   "rows": [
     {
       "id": "candidate",
-      "status": "PASS",
-      "detail": "5e3740c030ced645d38e74b37dc4b310975aa8651148a8fea6e41e7055fce7e4"
+      "status": "BLOCKED",
+      "detail": "Evidence must identify this source snapshot and schemaVersion=1."
     },
     {
       "id": "scope.core",
@@ -31,13 +31,13 @@
     },
     {
       "id": "voice.firstAudioP50Ms",
-      "status": "FAIL",
-      "detail": "1138 ms; 143 observations; required lte 700"
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
     },
     {
       "id": "voice.firstAudioP95Ms",
-      "status": "FAIL",
-      "detail": "1676 ms; 143 observations; required lte 1500"
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
     },
     {
       "id": "voice.over4Seconds",
@@ -186,13 +186,13 @@
     },
     {
       "id": "failure.socketDisconnect.recoveryRate",
-      "status": "PASS",
-      "detail": "1 ratio; 3 observations; required gte 1"
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
     },
     {
       "id": "failure.network10Seconds.recoveryRate",
-      "status": "PASS",
-      "detail": "1 ratio; 3 observations; required gte 1"
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
     },
     {
       "id": "failure.deviceSwitch.recoveryRate",
@@ -206,8 +206,8 @@
     },
     {
       "id": "failure.leave.recoveryRate",
-      "status": "PASS",
-      "detail": "1 ratio; 3 observations; required gte 1"
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
     },
     {
       "id": "failure.kick.recoveryRate",
