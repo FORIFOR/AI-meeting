@@ -42,7 +42,9 @@
     "release:reality": "node scripts/release/reality.mjs",
     "performance:assess": "node scripts/performance/assess-soak.mjs",
     "budget:check": "node scripts/cloud/budget-check.mjs",
-    "cloud:hosted:preflight": "node scripts/cloud/hosted-preflight.mjs"
+    "cloud:hosted:preflight": "node scripts/cloud/hosted-preflight.mjs",
+    "cloud:gcp:preflight": "node scripts/cloud/gcp-preflight.mjs",
+    "cloud:gcp:deploy:broker": "node scripts/cloud/gcp-deploy-broker.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
