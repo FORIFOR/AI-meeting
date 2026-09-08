@@ -1,0 +1,437 @@
+{
+  "engine": "google",
+  "minutes": 1,
+  "character": "yui",
+  "mode": "free_talk",
+  "startedAt": "2026-09-08T00:23:41.632Z",
+  "verdict": "PASS",
+  "blocked": null,
+  "preflight": {
+    "broker": {
+      "ok": true,
+      "providers": {
+        "openai": true,
+        "google": true,
+        "livekit": false,
+        "heygen": false,
+        "tavus": false,
+        "recall": true
+      },
+      "meeting": {
+        "recall": true,
+        "creditRefusedAt": null,
+        "recallPublicUrl": true,
+        "recallBotPageUrl": true,
+        "region": "ap-northeast-1",
+        "tokenSecret": "env"
+      }
+    },
+    "agent": {
+      "ok": true,
+      "strictLocalCapable": true,
+      "stt": {
+        "engine": "sherpa-onnx",
+        "ready": true,
+        "model": "sense_voice:sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+        "mode": "incremental",
+        "finalPass": "whisper-server (async)",
+        "pauseMinSilenceMs": 200,
+        "endpoint": {
+          "minSilenceMs": 240,
+          "completeSilenceMs": 320,
+          "unknownSilenceMs": 520,
+          "incompleteSilenceMs": 800,
+          "maxSilenceMs": 900
+        }
+      },
+      "llm": {
+        "engine": "openai-compatible",
+        "ready": true,
+        "model": "gemma-4-E2B-it-Q4_K_M.gguf",
+        "url": "http://127.0.0.1:8080/v1",
+        "hedgeMs": 0
+      },
+      "tts": {
+        "engine": "supertonic-3",
+        "ready": true,
+        "voice": "F1",
+        "voices": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "M5"
+        ],
+        "precision": "int8"
+      },
+      "turn": {
+        "engine": "smart-turn-v3",
+        "ready": true
+      },
+      "vad": {
+        "engine": "silero-vad"
+      }
+    },
+    "blocked": null
+  },
+  "timeline": {
+    "seconds": 63.0075,
+    "timeline": [
+      {
+        "index": 0,
+        "startSec": 3,
+        "endSec": 6.292458333333333,
+        "text": "こんにちは。今日はよろしくお願いします。",
+        "kind": "turn"
+      },
+      {
+        "index": 1,
+        "startSec": 10.339270833333334,
+        "endSec": 14.468458333333333,
+        "text": "最近、仕事で新しいプロジェクトが始まったんです。",
+        "kind": "turn"
+      },
+      {
+        "index": 2,
+        "startSec": 18.716291666666667,
+        "endSec": 21.8181875,
+        "text": "週末は何をするのがおすすめですか？",
+        "kind": "turn"
+      },
+      {
+        "index": 3,
+        "startSec": 29.7258125,
+        "endSec": 33.9229375,
+        "text": "実は昨日、少し失敗してしまって落ち込んでいます。",
+        "kind": "turn"
+      },
+      {
+        "index": 4,
+        "startSec": 40.7190625,
+        "endSec": 43.63552083333333,
+        "text": "でも、チームのみんなが助けてくれました。",
+        "kind": "turn"
+      },
+      {
+        "index": 5,
+        "startSec": 45.63552083333333,
+        "endSec": 48.512708333333336,
+        "text": "すみません、それはどういう意味ですか？",
+        "kind": "barge_in"
+      },
+      {
+        "index": 6,
+        "startSec": 54.598479166666664,
+        "endSec": 57.385416666666664,
+        "text": "あなたは音楽を聴くのは好きですか？",
+        "kind": "turn"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "t": 1,
+      "pill": "Connecting接続中",
+      "hud": {
+        "turn": {
+          "p50": null,
+          "p95": null,
+          "n": null
+        },
+        "bargeIn": {
+          "ms": null,
+          "n": null
+        },
+        "listening": {
+          "ms": null,
+          "n": null
+        },
+        "mouthStop": {
+          "ms": null,
+          "n": null
+        }
+      },
+      "transcript": 0
+    },
+    {
+      "t": 30475,
+      "pill": "Idle待機中",
+      "hud": {
+        "turn": {
+          "p50": 1282,
+          "p95": 1359,
+          "n": 3
+        },
+        "bargeIn": {
+          "ms": 43,
+          "n": 2
+        },
+        "listening": {
+          "ms": 43,
+          "n": 3
+        },
+        "mouthStop": {
+          "ms": 0,
+          "n": 2
+        }
+      },
+      "transcript": 8
+    }
+  ],
+  "pills": [
+    {
+      "t": 1,
+      "pill": "Connecting接続中"
+    },
+    {
+      "t": 2863,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 3365,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 4370,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 5373,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 5874,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 8379,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 8882,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 11894,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 16413,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 16916,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 20436,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 23948,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 24450,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 27966,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 31478,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 35992,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 36494,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 41020,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 42026,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 45537,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 46541,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 47042,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 50556,
+      "pill": "Thinking考え中"
+    },
+    {
+      "t": 51058,
+      "pill": "Speaking話しています"
+    },
+    {
+      "t": 55579,
+      "pill": "Idle待機中"
+    },
+    {
+      "t": 56081,
+      "pill": "Listening聞いています"
+    },
+    {
+      "t": 59599,
+      "pill": "Thinking考え中"
+    }
+  ],
+  "transcript": [
+    {
+      "t": 4370,
+      "role": "assistant",
+      "text": "おつかれー！最近どう？なんかあった？"
+    },
+    {
+      "t": 5373,
+      "role": "user",
+      "text": "「お」と「を」の使い分けを教えてください。"
+    },
+    {
+      "t": 5874,
+      "role": "assistant",
+      "text": "えっ、急にどうした"
+    },
+    {
+      "t": 8882,
+      "role": "user",
+      "text": "は、今日はよろしくお願いします。"
+    },
+    {
+      "t": 11894,
+      "role": "assistant",
+      "text": "お、よろしくお願いね！元気だった？"
+    },
+    {
+      "t": 16916,
+      "role": "user",
+      "text": "最近 、 仕事 で 新しい プロジェクト が 始まっ た ん です 。"
+    },
+    {
+      "t": 20436,
+      "role": "assistant",
+      "text": "へえ、そうなんだ！どんなプロジェクトなの？"
+    },
+    {
+      "t": 24450,
+      "role": "user",
+      "text": "お すすめ です か ?"
+    },
+    {
+      "t": 36494,
+      "role": "user",
+      "text": "実は昨日、少し失敗してしまって落ち込んでいます。"
+    },
+    {
+      "t": 41020,
+      "role": "assistant",
+      "text": "そっか、それはつらいねん。何で失敗しちゃったと思う？"
+    },
+    {
+      "t": 46541,
+      "role": "user",
+      "text": "でも 、 チーム の みんな が 助け て くれ まし た 。"
+    },
+    {
+      "t": 47042,
+      "role": "assistant",
+      "text": "いいチームだね！支え"
+    },
+    {
+      "t": 51058,
+      "role": "user",
+      "text": "は"
+    },
+    {
+      "t": 55579,
+      "role": "assistant",
+      "text": "いいチームじゃん！素敵な仲間だね。それでどうなったの？"
+    }
+  ],
+  "toasts": [],
+  "consoleErrors": [
+    {
+      "t": 62904,
+      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+    }
+  ],
+  "pageErrors": [],
+  "httpErrors": [
+    {
+      "t": 62904,
+      "status": 502,
+      "url": "http://localhost:8787/api/evaluate"
+    }
+  ],
+  "reconnects": [],
+  "hudLast": "latency · google\nturn p50/p95\t1282 / 1541 ms\t< 700 / 1500 · n=6\nbarge-in stop\t43 ms\t< 150 · n=3\n→ listening\t43 ms\t< 100 · n=7\nmouth stop\t0 ms\t< 100 · n=3\nturns\t7 / 8\treconnects 2 · stale 2\nstt / ttft / ttfa\t– / – / – ms\tp50 · n=0\nlip delay / frame\t13 / 17 ms\terrors 2",
+  "result": {
+    "overall": "75"
+  },
+  "summary": {
+    "elapsedMs": 60101,
+    "survived": true,
+    "failReason": null,
+    "userUtterancesHeard": 7,
+    "assistantTurns": 7,
+    "answered": 7,
+    "answeredRatio": 1,
+    "expectedUtterancesFromWav": 7,
+    "speakingEpisodes": 8,
+    "turnLatency": {
+      "p50": 1282,
+      "p95": 1541,
+      "n": 6
+    },
+    "bargeInStop": {
+      "ms": 43,
+      "n": 3
+    },
+    "listeningReact": {
+      "ms": 43,
+      "n": 7
+    },
+    "mouthStop": {
+      "ms": 0,
+      "n": 3
+    },
+    "reconnectEvents": 0,
+    "toasts": 0,
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "httpErrors": 1,
+    "longestNoAssistantSpeechMs": 8528,
+    "replyChars": {
+      "min": 9,
+      "p50": 18,
+      "max": 27,
+      "avg": 18
+    },
+    "resultOverall": "75"
+  },
+  "wav": "/var/folders/qy/086ttpq57jsd36jnc1jffst00000gn/T/rcai-soak/soak-1m.wav",
+  "chrome": "Chrome/152.0.7977.82",
+  "sessionStartMs": 2535,
+  "endedAt": "2026-09-08T00:24:53.605Z"
+}
