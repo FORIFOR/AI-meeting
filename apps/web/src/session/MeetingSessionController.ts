@@ -199,6 +199,8 @@ export class MeetingSessionController {
    * PASSIVE. The gate is the decision, not the symptom of one.
    */
   private sanctioned = false;
+  /** The live provider is already generating a reply to this input transcript. */
+  private providerTranscriptTurn = false;
   /** The arrival greeting has been scheduled (once per page, never per reconnect). */
   private greeted = false;
   /** The AI provider is connected: text turns can be sent (set once `runtime.start` resolves). */
@@ -281,7 +283,7 @@ export class MeetingSessionController {
         }
         // A turn the provider took on its own is already being spoken; asking for it again would
         // answer twice.
-        if (t.reason !== SELF_TURN_REASON) void this.answer();
+        if (t.reason !== SELF_TURN_REASON && !this.providerTranscriptTurn) void this.answer();
       }
       /**
        * The character's face follows the conversation, not only the audio. Being spoken to and
@@ -1030,7 +1032,12 @@ export class MeetingSessionController {
          * something nobody can read.
          */
         if (!this.hasExternalTranscripts && e.final !== false && e.text.trim()) {
-          this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.attribute(now) ?? this.lastSpeakerId, e.id);
+          this.providerTranscriptTurn = this.decision.conversation === "google" || this.decision.conversation === "openai";
+          try {
+            this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.attribute(now) ?? this.lastSpeakerId, e.id);
+          } finally {
+            this.providerTranscriptTurn = false;
+          }
         }
         break;
       case "user_transcript_revised":

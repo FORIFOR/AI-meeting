@@ -63,6 +63,8 @@ export function normalizeForMatch(text: string): string {
     // U+30A1–U+30F6 are the katakana with hiragana counterparts 96 code points below; ー, ・ and the
     // iteration marks have none and are left alone.
     .replace(/[\u30A1-\u30F6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    // Vertex Live separates Japanese transcription tokens with spaces, including within verbs.
+    .replace(/([\p{Script=Hiragana}\p{Script=Han}ー])\s+(?=[\p{Script=Hiragana}\p{Script=Han}ー])/gu, "$1")
     .toLowerCase();
 }
 

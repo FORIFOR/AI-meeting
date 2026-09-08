@@ -30,6 +30,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadEnv, sleep } from "./lib.mjs";
+import { oneToOneCues } from "./scenarios/one-to-one.mjs";
 import { detectPlatform } from "../../packages/meeting-core/src/index.js";
 
 const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
@@ -714,6 +715,7 @@ for (const cue of CUES) {
     }
   }
   results.push({ id: cue.id, expect: cue.expect, status, detail });
+  writeFileSync(join(dir, "progress.json"), JSON.stringify({ T0, results, pageEvents: (await pageState()).pageEvents }));
   console.log(`        → ${status}  ${detail}\n`);
 }
 await at(SCRIPT_END);
