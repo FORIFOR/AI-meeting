@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-09",
+  "scope": "Vertex AI Live one-to-one Meet scenario with Yui and an automated tester; no user speech",
+  "engine": "google",
+  "meeting": "Google Meet",
+  "verdict": "GO",
+  "checks": {
+    "greeting": "PASS",
+    "name_free_opening": "PASS",
+    "news_unknown_handling": "PASS",
+    "weather_unknown_handling": "PASS",
+    "follow_up_without_name": "PASS",
+    "dates_and_numbers": "PASS",
+    "unknown_company": "PASS",
+    "unshared_materials": "PASS",
+    "self_correction": "PASS",
+    "barge_in_stop": "PASS",
+    "fragment_clarification": "PASS",
+    "silence": "PASS",
+    "room_transcript": "PASS"
+  },
+  "notes": [
+    "Local VAD detected the remote tester speech and produced an interrupted event with zero audible character audio after cut-in.",
+    "Audio continuity metrics were DEGRADED by the Attendee test host under load; every scripted reply remained audible and all behavioral checks passed."
+  ],
+  "release_decision": "GO"
+}
