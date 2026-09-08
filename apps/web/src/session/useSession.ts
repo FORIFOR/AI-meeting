@@ -1,3 +1,5 @@
+import type { ConversationTask, TaskProposal } from "@rcai/conversation-core";
+import type { LiveLookupResult } from "@rcai/meeting-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversationEvent, ProviderId } from "@rcai/conversation-core";
 import type { AvatarState } from "@rcai/avatar-core";
@@ -40,7 +42,10 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   const [incidentCount, setIncidentCount] = useState(0);
   const [incidentOptIn, setIncidentOptInState] = useState<IncidentOptIn>({ audio: false, video: false });
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const [tasks, setTasks] = useState<ConversationTask[]>([]);
+  const [taskProposals, setTaskProposals] = useState<TaskProposal[]>([]);
   const [muted, setMuted] = useState(false);
+  const [lookup, setLookup] = useState<LiveLookupResult | null>(null);
   const deferred = useRef<DeferredFeedback[]>([]);
   /** Generation epoch mirror: captions from a cancelled generation are ignored even if a late event slips through. */
   const genRef = useRef({ accepted: 0, current: 0 });
@@ -94,6 +99,9 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
 
   useEffect(() => {
     if (!init || !stageRef.current) return;
+    setLookup(null);
+    setTasks([]);
+    setTaskProposals([]);
     let cancelled = false;
     const c = new SessionController({
       ...init,
@@ -104,6 +112,9 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
         onError: (message, code) => toast(message, code),
         onProviderChange: (id) => setProviderId(id),
         onDeferred: (f) => deferred.current.push(f),
+        onLookup: setLookup,
+        onTasks: setTasks,
+        onTaskProposals: setTaskProposals,
       },
     });
     controller.current = c;
@@ -189,5 +200,8 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
     [toast],
   );
 
-  return { status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
+  const resolveTaskProposal = useCallback((id:string,accept:boolean)=>{
+    controller.current?.resolveTaskProposal(id,accept);
+  },[]);
+  return { tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
 }

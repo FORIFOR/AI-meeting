@@ -1,0 +1,1 @@
+Model files are fetched by `scripts/fetch-sample-character.sh` (Kei_basic from CubismWebMotionSyncComponents, Live2D Free Material License). Git-ignored. The MotionSync Core is supplied separately; fetching the model does not install it.

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Generated 2026-09-03T10:06:37.889Z by `scripts/licenses.mjs`. 379 npm packages.
+Generated 2026-09-08T16:48:21.477Z by `scripts/licenses.mjs`. 391 npm packages.
 
 ## Non-OSS and specially licensed components (curated)
 
@@ -167,7 +167,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @vitest/snapshot | 3.2.7 | MIT |
 | @vitest/spy | 3.2.7 | MIT |
 | @vitest/utils | 3.2.7 | MIT |
-| adm-zip | 0.5.18, 0.6.0 | MIT |
+| adm-zip | 0.6.0 | MIT |
 | agent-base | 7.1.4 | MIT |
 | ansi-regex | 5.0.1, 6.3.0 | MIT |
 | ansi-styles | 4.3.0, 6.2.3 | MIT |
@@ -177,11 +177,13 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | assertion-error | 2.0.1 | MIT |
 | async | 2.6.4 | MIT |
 | balanced-match | 1.0.2 | MIT |
+| base64-js | 1.5.1 | MIT |
 | baseline-browser-mapping | 2.11.20 | Apache-2.0 |
-| boolean | 3.2.0 | MIT |
+| bignumber.js | 9.3.1 | MIT |
 | bowser | 2.14.1 | MIT |
 | brace-expansion | 1.1.18 | MIT |
 | browserslist | 4.28.8 | MIT |
+| buffer-equal-constant-time | 1.0.1 | BSD-3-Clause |
 | cac | 6.7.14 | MIT |
 | call-bind-apply-helpers | 1.0.2 | MIT |
 | call-bound | 1.0.4 | MIT |
@@ -200,6 +202,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | convert-source-map | 2.0.0 | MIT |
 | cssstyle | 4.6.0 | MIT |
 | csstype | 3.2.3 | MIT |
+| data-uri-to-buffer | 4.0.1 | MIT |
 | data-urls | 5.0.0 | MIT |
 | debug | 4.4.3 | MIT |
 | decimal.js | 10.6.0 | MIT |
@@ -208,10 +211,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | define-properties | 1.2.1 | MIT |
 | dequal | 2.0.3 | MIT |
 | detect-libc | 2.1.2 | Apache-2.0 |
-| detect-node | 2.1.0 | MIT |
 | devtools-protocol | 0.0.1666840 | BSD-3-Clause |
 | dunder-proto | 1.0.1 | MIT |
 | earcut | 2.2.4 | ISC |
+| ecdsa-sig-formatter | 1.0.11 | Apache-2.0 |
 | electron-to-chromium | 1.5.416 | ISC |
 | email-addresses | 3.1.0 | MIT |
 | emoji-regex | 8.0.0, 10.6.0 | MIT |
@@ -220,7 +223,6 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | es-errors | 1.3.0 | MIT |
 | es-module-lexer | 1.7.0 | MIT |
 | es-object-atoms | 1.1.2 | MIT |
-| es6-error | 4.1.1 | MIT |
 | esbuild | 0.28.2 | MIT |
 | escalade | 3.2.0 | MIT |
 | escape-string-regexp | 1.0.5, 4.0.0 | MIT |
@@ -228,7 +230,9 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | eventemitter3 | 3.1.2 | MIT |
 | events | 3.3.0 | MIT |
 | expect-type | 1.4.0 | Apache-2.0 |
+| extend | 3.0.2 | MIT |
 | fdir | 6.5.0 | MIT |
+| fetch-blob | 3.2.0 | MIT |
 | fflate | 0.8.3 | MIT |
 | fft.js | 4.0.4 | MIT |
 | filename-reserved-regex | 2.0.0 | MIT |
@@ -236,10 +240,13 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | find-cache-dir | 3.3.2 | MIT |
 | find-up | 4.1.0 | MIT |
 | flatbuffers | 25.9.23 | Apache-2.0 |
+| formdata-polyfill | 4.0.10 | MIT |
 | fs-extra | 8.1.0 | MIT |
 | fs.realpath | 1.0.0 | ISC |
 | fsevents | 2.3.3 | MIT |
 | function-bind | 1.1.2 | MIT |
+| gaxios | 7.3.1 | Apache-2.0 |
+| gcp-metadata | 9.0.3 | Apache-2.0 |
 | gensync | 1.0.0-beta.2 | MIT |
 | get-caller-file | 2.0.5 | ISC |
 | get-east-asian-width | 1.6.0 | MIT |
@@ -247,9 +254,11 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | get-proto | 1.0.1 | MIT |
 | gh-pages | 4.0.0 | MIT |
 | glob | 7.2.3 | ISC |
-| global-agent | 3.0.0, 4.1.3 | BSD-3-Clause |
+| global-agent | 4.1.3 | BSD-3-Clause |
 | globalthis | 1.0.4 | MIT |
 | globby | 6.1.0 | MIT |
+| google-auth-library | 11.0.2 | Apache-2.0 |
+| google-logging-utils | 2.0.1 | Apache-2.0 |
 | gopd | 1.2.0 | MIT |
 | graceful-fs | 4.2.11 | ISC |
 | guid-typescript | 1.0.9 | ISC |
@@ -271,9 +280,11 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | js-yaml | 5.4.1 | MIT |
 | jsdom | 26.1.0 | MIT |
 | jsesc | 3.1.0 | MIT |
-| json-stringify-safe | 5.0.1 | ISC |
+| json-bigint | 1.0.0 | MIT |
 | json5 | 2.2.3 | MIT |
 | jsonfile | 4.0.0 | MIT |
+| jwa | 2.0.1 | MIT |
+| jws | 4.0.1 | MIT |
 | livekit-client | 2.22.1 | Apache-2.0 |
 | livekit-server-sdk | 2.18.0 | Apache-2.0 |
 | locate-path | 5.0.0 | MIT |
@@ -285,7 +296,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | machina | 7.0.1 | (MIT OR GPL) |
 | magic-string | 0.30.21 | MIT |
 | make-dir | 3.1.0 | MIT |
-| matcher | 3.0.0, 4.0.0 | MIT |
+| matcher | 4.0.0 | MIT |
 | math-intrinsics | 1.1.0 | MIT |
 | meshoptimizer | 1.1.1 | MIT |
 | minimatch | 3.1.5 | ISC |
@@ -293,14 +304,16 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | modern-tar | 0.8.4 | MIT |
 | ms | 2.1.3 | MIT |
 | nanoid | 3.3.18 | MIT |
+| node-domexception | 1.0.0 | MIT |
+| node-fetch | 3.3.2 | MIT |
 | node-releases | 2.0.54 | MIT |
 | nwsapi | 2.2.26 | MIT |
 | object-assign | 4.1.1 | MIT |
 | object-inspect | 1.13.4 | MIT |
 | object-keys | 1.1.1 | MIT |
 | once | 1.4.0 | ISC |
-| onnxruntime-common | 1.24.0-dev.20251116-b39e144322, 1.24.3, 1.29.0 | MIT |
-| onnxruntime-node | 1.24.3, 1.29.0 | MIT |
+| onnxruntime-common | 1.24.0-dev.20251116-b39e144322, 1.29.0 | MIT |
+| onnxruntime-node | 1.29.0 | MIT |
 | onnxruntime-web | 1.26.0-dev.20260416-b7804b056c | MIT |
 | p-limit | 2.3.0 | MIT |
 | p-locate | 4.1.0 | MIT |
@@ -329,18 +342,17 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | react-dom | 19.2.8 | MIT |
 | react-refresh | 0.18.0 | MIT |
 | require-directory | 2.1.1 | MIT |
-| roarr | 2.15.4 | BSD-3-Clause |
 | rollup | 4.63.1 | MIT |
 | rrweb-cssom | 0.8.0 | MIT |
 | rxjs | 7.8.2 | Apache-2.0 |
+| safe-buffer | 5.2.1 | MIT |
 | safer-buffer | 2.1.2 | MIT |
 | saxes | 6.0.0 | ISC |
 | scheduler | 0.27.0 | MIT |
 | sdp | 3.2.2 | MIT |
 | sdp-transform | 2.15.0 | MIT |
 | semver | 6.3.1, 7.8.5 | ISC |
-| semver-compare | 1.0.0 | MIT |
-| serialize-error | 7.0.1, 8.1.0 | MIT |
+| serialize-error | 8.1.0 | MIT |
 | sharp | 0.34.5 | Apache-2.0 |
 | shell-quote | 1.9.0 | MIT |
 | sherpa-onnx-darwin-arm64 | 1.13.7 | Apache-2.0 |
@@ -351,7 +363,6 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | side-channel-weakmap | 1.0.2 | MIT |
 | siginfo | 2.0.0 | ISC |
 | source-map-js | 1.2.1 | BSD-3-Clause |
-| sprintf-js | 1.1.3 | BSD-3-Clause |
 | stackback | 0.0.2 | MIT |
 | std-env | 3.10.0 | MIT |
 | string-width | 4.2.3, 7.2.0, 8.2.2 | MIT |
@@ -375,7 +386,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | trim-repeated | 1.0.0 | MIT |
 | tslib | 2.8.1 | 0BSD |
 | tsx | 4.23.12, 4.23.13 | MIT |
-| type-fest | 0.13.1, 0.20.2 | (MIT OR CC0-1.0) |
+| type-fest | 0.20.2 | (MIT OR CC0-1.0) |
 | typed-emitter | 2.1.0 | MIT |
 | typed-query-selector | 2.12.2 | MIT |
 | typescript | 5.9.3 | Apache-2.0 |
@@ -387,6 +398,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | vite-node | 3.2.4 | MIT |
 | vitest | 3.2.7 | MIT |
 | w3c-xmlserializer | 5.0.0 | MIT |
+| web-streams-polyfill | 3.3.3 | MIT |
 | webdriver-bidi-protocol | 0.4.2 | Apache-2.0 |
 | webidl-conversions | 7.0.0 | BSD-2-Clause |
 | webrtc-adapter | 9.0.6 | BSD-3-Clause |

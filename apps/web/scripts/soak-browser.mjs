@@ -147,7 +147,7 @@ while (now() - sessionStart < durationMs) {
       pill: document.querySelector(".pill")?.textContent?.trim() ?? "",
       captions: [...document.querySelectorAll(".caption")].map((c) => {
         const who = c.querySelector(".caption__who")?.textContent?.trim() ?? "";
-        return { who, text: (c.textContent ?? "").trim().replace(/^You|^AI/, "").trim(), partial: c.classList.contains("caption--partial") };
+        return { id: c.getAttribute("data-caption-id"), who, text: (c.textContent ?? "").trim().replace(/^You|^AI/, "").trim(), partial: c.classList.contains("caption--partial") };
       }),
       hud: document.querySelector(".hud")?.innerText ?? null,
       toasts: [...document.querySelectorAll(".toast")].map((t) => t.textContent?.trim()),
@@ -168,12 +168,16 @@ while (now() - sessionStart < durationMs) {
   for (const c of s.captions) {
     if (!c.text) continue;
     if (c.partial) { if (c.who === "You") { partialUser.text = c.text; partialUser.at = t; } continue; }
-    const key = `${c.who}|${c.text}`;
+    const key = c.id === null ? `${c.who}|${c.text}` : `${c.who}|id:${c.id}`;
     if (!seen.has(key)) { seen.add(key); report.transcript.push({ t, role: c.who === "You" ? "user" : "assistant", text: c.text }); }
   }
   for (const tt of s.toasts) if (tt && !report.toasts.some((x) => x.text === tt)) report.toasts.push({ t, text: tt });
   if (s.hud) report.hudLast = s.hud;
-  if (report.samples.length === 0 || t - report.samples[report.samples.length - 1].t >= 30000) report.samples.push({ t, pill: s.pill, hud: parseHud(s.hud), transcript: report.transcript.length });
+  if (report.samples.length === 0 || t - report.samples[report.samples.length - 1].t >= 30000) {
+    const hud = parseHud(s.hud);
+    report.samples.push({ t, pill: s.pill, hud, transcript: report.transcript.length });
+    console.log(`[soak ${engine}] ${Math.floor(t / 1000)}s; first-audio n=${hud.turn?.n ?? 0}, p50=${hud.turn?.p50 ?? "unmeasured"}ms, p95=${hud.turn?.p95 ?? "unmeasured"}ms; pageErrors=${report.pageErrors.length}; toasts=${report.toasts.length}`);
+  }
   if (s.toasts.some((x) => /fatal|BLOCKED_BY|failed|切断|disconnected/i.test(x ?? ""))) {
     // A BLOCKED/fatal toast means the engine is unusable: fail fast instead of burning minutes.
     survived = false; failReason = `fatal toast: ${s.toasts.join(" | ")}`; break;

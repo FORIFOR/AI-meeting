@@ -1,3 +1,4 @@
+import { TaskList } from "../components/TaskList.js";
 import { useEffect, useMemo, useState } from "react";
 import { CRITERION_LABEL, isEvidenceEvaluation, type EvidenceEvaluation } from "@rcai/evaluation";
 import type { SessionOutcome } from "../session/SessionController.js";
@@ -20,7 +21,9 @@ function ms(n: number) {
 
 /** Spec §21 result — the only place scores are shown. */
 export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; onHome: () => void; onAgain: () => void }) {
-  const { record, evaluation, deferred } = outcome;
+  const { record, deferred } = outcome;
+  const companion = record.mode === "companion" || record.mode === "task_planning";
+  const evaluation = companion ? null : outcome.evaluation;
   const minutes = record.endedAt ? (record.endedAt - record.startedAt) / 60000 : 0;
   const tr = outcome.latency.turn_response;
   const ev: EvidenceEvaluation | null = isEvidenceEvaluation(evaluation) ? evaluation : null;
@@ -41,7 +44,9 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
     <div className="result">
       <p className="result__meta">{MODE_JA[record.mode] ?? record.mode} · {minutes < 1 ? "1分未満" : `${minutes.toFixed(0)}分`} · {PROVIDER_LABEL[outcome.providerId]}</p>
 
-      {evaluation ? (
+      {companion ? (
+        <p className="result__verdict">{record.mode === "task_planning" ? "今日の整理はここまで。記録したタスクを確認できます。" : "話してくれてありがとう。また話したくなったら、ここから始められます。"}</p>
+      ) : evaluation ? (
         <>
           <div className="result__score">{Math.round(evaluation.overall)}</div>
           <p className="result__verdict">{verdict}</p>
@@ -50,6 +55,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
       ) : (
         <p className="err" style={{ marginTop: 16 }}>評価を取得できませんでした: {outcome.evaluationError ?? "unknown"}</p>
       )}
+      {record.mode === "task_planning" && <TaskList tasks={outcome.tasks ?? []} />}
       {evaluation && (outcome.fallbackUsed || outcome.evaluationError) && (
         <p className="empty" >評価モデルに接続できなかったため、手元のヒューリスティック評価です。</p>
       )}

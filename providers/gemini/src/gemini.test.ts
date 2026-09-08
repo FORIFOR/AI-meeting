@@ -374,6 +374,9 @@ describe("the Live setup a meeting asks for", () => {
     expect(setup().tools).toBeUndefined();
     const native = setup({ model: "gemini-2.5-flash-preview-native-audio-dialog" });
     expect(native.tools).toEqual([{ googleSearch: {} }]);
+    const declared = setup({ model: "gemini-2.5-flash-preview-native-audio-dialog" }, { tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
+    expect(declared.tools).toHaveLength(1);
+    expect(declared.tools?.[0]).toHaveProperty('functionDeclarations');
     expect(setup({ googleSearch: true }).tools).toEqual([{ googleSearch: {} }]);
     expect(setup({ model: "gemini-2.5-flash-preview-native-audio-dialog", googleSearch: false }).tools).toBeUndefined();
     const withFn = setup({ googleSearch: true }, { tools: [{ name: "lookup", description: "d", parameters: { type: "object" } }] });
@@ -443,6 +446,28 @@ describe("what the API is charged for", () => {
 });
 
 describe("the gate's fallback", () => {
+  it("keeps a brief pause inside a turn, then closes sustained silence without a 500 ms wait", async () => {
+    const { p, ws } = await connected();
+    let ts = 0;
+    const quiet = (ms: number) => {
+      for (let i = 0; i < ms / 20; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    };
+    const speech = () => {
+      for (let i = 0; i < 20; i++) { p.pushAudio(createFrame(sine(48000, 20), 48000, ts)); ts += 20; }
+    };
+    const ends = () => ws.sent.filter((m) => (m as { realtimeInput?: { activityEnd?: unknown } }).realtimeInput?.activityEnd !== undefined).length;
+    quiet(600);
+    speech();
+    quiet(240);
+    expect(ends()).toBe(0);
+    speech();
+    quiet(240);
+    expect(ends()).toBe(0);
+    quiet(40);
+    expect(ends()).toBe(1);
+    await p.disconnect();
+  });
+
   it("opens on sound the adaptive VAD refuses to call speech (2026-09-07: 2437 frames, 0 transcripts)", async () => {
     const { p, ws } = await connected();
     let ts = 0;
@@ -580,4 +605,51 @@ describe("the call must not howl", () => {
     await p.disconnect();
   });
 });
+});
+
+it('delivers a tool-first reply after interruption while dropping cancelled tool calls',async()=>{
+ const {ConversationRuntime}=await import('@rcai/conversation-core');
+ const p=new GeminiLiveProvider({brokerUrl:'http://localhost:8787/',fetchImpl:tokenFetch,wsFactory:u=>new FakeWS(u)});
+ const runtime=new ConversationRuntime({localVad:false});
+ const calls:string[]=[];
+ runtime.on(e=>{if(e.type==='tool_call'){calls.push(e.call.id!);runtime.sendToolResponse([{id:e.call.id,name:e.call.name,response:{ok:true}}]);}});
+ await runtime.start(p,config);const ws=FakeWS.instances.at(-1)!;
+ ws.receive({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:float32ToBase64Pcm16(sine(24000,200))}}]}}});await ws.flush();
+ await runtime.interrupt();
+ ws.receive({toolCall:{functionCalls:[{id:'cancelled',name:'session_tasks',args:{operations:[]}}]}});await ws.flush();
+ expect(calls).toEqual([]);
+ // No model audio precedes the next function request; this must open the next generation itself.
+ await runtime.sendText('残りを教えて');
+ ws.receive({toolCall:{functionCalls:[{id:'fresh',name:'session_tasks',args:{operations:[]}}]}});await ws.flush();
+ expect(calls).toEqual(['fresh']);
+ expect(ws.sent.some(m=>JSON.stringify(m).includes('"functionResponses":[{"id":"fresh"'))).toBe(true);
+ await runtime.stop();
+});
+it('does not cut an already open user utterance when assistant audio overlaps a quiet syllable',async()=>{
+ const {p,ws}=await connected();
+ let ts=2000;
+ for(let i=0;i<60;i++){p.pushAudio(createFrame(new Float32Array(960),48000,ts));ts+=20;}
+ for(let i=0;i<20;i++){p.pushAudio(createFrame(sine(48000,20,.5),48000,ts));ts+=20;}
+ expect(p.gateStats.opens).toBeGreaterThan(0);
+ ws.receive({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:float32ToBase64Pcm16(sine(24000,1000))}}]}}});await ws.flush();
+ const before=p.gateStats.sent,closes=p.gateStats.closes;
+ for(let i=0;i<5;i++){p.pushAudio(createFrame(sine(48000,20,.02),48000,ts));ts+=20;}
+ expect(p.gateStats.sent).toBeGreaterThan(before);
+ expect(p.gateStats.closes).toBe(closes);
+ await p.disconnect();
+});
+it('keeps a default retry available after a ten-second outage and cancels it on leave',async()=>{
+ let offline=false;
+ const fetchImpl=(async(url:string,init?:RequestInit)=>{if(offline)throw new Error('offline');return tokenFetch(url,init);}) as typeof fetch;
+ const {p,ws,events}=await connected({fetchImpl});
+ offline=true;ws.onclose?.({code:1006});await vi.advanceTimersByTimeAsync(10000);
+ expect(events.some(e=>e.type==='session_closed')).toBe(false);
+ expect(p.diagnostics.reconnectFailures).toBe(3);
+ offline=false;await vi.advanceTimersByTimeAsync(5000);
+ expect(events.filter(e=>e.type==='session_ready')).toHaveLength(2);
+ const latest=FakeWS.instances.at(-1)!;
+ offline=true;latest.onclose?.({code:1006});await vi.advanceTimersByTimeAsync(1000);
+ await p.disconnect();const count=FakeWS.instances.length;
+ offline=false;await vi.advanceTimersByTimeAsync(30000);
+ expect(FakeWS.instances.length).toBe(count);
 });
