@@ -75,10 +75,14 @@ export function Home(p: HomeProps) {
       {p.contentNote && <p className="notice">{p.contentNote}</p>}
       {offline && (
         <p className="notice" role="status">
+          {import.meta.env.VITE_RCAI_CLOUD === "true" ? (
+            <span>サービスへの接続を確認しています。しばらく待っても接続できない場合は、ページを再読み込みしてください。</span>
+          ) : (<>
           <b>ローカルサービスが起動していません。</b>
           {desktop ? "デスクトップ版はサービスを同梱していません（beta）。" : ""}
           <br />
           <code>scripts/local-stack.sh start &amp;&amp; pnpm dev</code>
+          </>)}
         </p>
       )}
 
