@@ -410,6 +410,17 @@ describe("the Live setup a meeting asks for", () => {
 });
 
 describe("what a turn is timed on", () => {
+  it("labels metrics with the broker-selected model", async () => {
+    const selected = "gemini-live-2.5-flash-native-audio";
+    const { p, ws, events } = await connected({ fetchImpl: (async () => new Response(JSON.stringify({ token: "test", model: selected }))) as typeof fetch });
+    (p as unknown as { timing: { userSpeechEndAt: number } }).timing.userSpeechEndAt = Date.now() - 500;
+    ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 100)) } }] }, turnComplete: true } });
+    await ws.flush();
+    const metric = events.find(e => e.type === "metrics");
+    expect(metric?.type === "metrics" && metric.turn.engines?.llm).toBe(selected);
+    await p.disconnect();
+  });
+
   it("reports first audio from speech end, and keeps turnComplete out of the latency", async () => {
     const { p, ws, events } = await connected();
     // The room stopped talking 900 ms ago …

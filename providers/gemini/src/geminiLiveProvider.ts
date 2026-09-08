@@ -760,7 +760,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
             ...(this.turn.hasAudio ? { firstAudioSentMs: this.turn.firstAudioAt - from } : {}),
             // speech end → the model finished sending. The reply's own length lives in here; not latency.
             totalMs: now - from,
-            engines: { llm: this.model },
+            engines: { llm: this.connectedModel || this.model },
           },
         });
       }
