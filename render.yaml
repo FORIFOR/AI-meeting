@@ -33,5 +33,4 @@ services:
     runtime: static
     buildCommand: corepack enable && pnpm install --frozen-lockfile && VITE_RCAI_CLOUD=true VITE_RCAI_RELEASE_CHANNEL=beta VITE_RCAI_BROKER_URL=https://ai-meeting-broker.onrender.com pnpm build
     staticPublishPath: ./apps/web/dist
-    region: singapore
     autoDeploy: true
