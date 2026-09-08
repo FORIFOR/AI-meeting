@@ -27,3 +27,4 @@ vendor/mediapipe
 apps/web/public/mediapipe
 vendor/smart-turn
 vendor/supertonic
+.firebase/
