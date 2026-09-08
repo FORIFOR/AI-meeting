@@ -90,6 +90,8 @@ export interface GeminiLiveProviderOptions {
   maxReconnects?: number;
   /** Backoff base in ms (1000 → 1 s, 2 s, 4 s). */
   reconnectBackoffMs?: number;
+  /** Test and migration escape hatch; production Gemini 3.1 uses realtimeInput text. */
+  forceRealtimeText?: boolean;
 }
 
 const OPEN = 1;
@@ -199,6 +201,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private sessionEpoch = 0;
   private sessionAbort = new AbortController();
   private cancelSetup: (() => void) | null = null;
+  private connectedModel = "";
+  private pendingContext = "";
+  private get realtimeTextOnly(): boolean { return this.opts.forceRealtimeText === true || /gemini-3[.\d]*-flash-live/.test(this.connectedModel) && this.opts.wsFactory === undefined; }
   /** Diagnostics for harnesses. */
   readonly diagnostics = { reconnects: 0, reconnectFailures: 0 };
 
@@ -320,6 +325,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   }
 
   private openSocket(url: string, model: string, config: SessionConfig): Promise<void> {
+    this.connectedModel = model;
     // Enough to tell an auth problem from a wrong endpoint without ever printing the credential.
     const where = (() => {
       try {
@@ -463,6 +469,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     }
     this.setupDone = false;
     this.config = null;
+    this.pendingContext = "";
     this.resumptionHandle = null;
     this.userTranscript = "";
     this.outbound = null;
@@ -572,6 +579,11 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.droppingUntilTurn = false;
     this.gateStats.closes++;
     this.gateStats.openMs += Math.max(0, Math.round(now - this.openedAt));
+    // Context is delivered only as part of the next user turn, never as an unsolicited turn.
+    if (this.realtimeTextOnly && this.pendingContext) {
+      this.send({ realtimeInput: { text: this.pendingContext } });
+      this.pendingContext = "";
+    }
     this.send({ realtimeInput: { activityEnd: {} } });
     /**
      * What the person just said, delivered now rather than after the answer to it.
@@ -598,7 +610,16 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     // A typed turn has no speech to end; the clock starts when it goes out.
     this.timing.source = "text";
     this.timing.userSpeechStartAt = this.timing.userSpeechEndAt = this.clock();
-    this.send({ clientContent: { turns: [{ role: "user", parts: [{ text }] }], turnComplete: true } });
+    this.droppingUntilTurn = false;
+    if (this.realtimeTextOnly) {
+      // 3.1 accepts clientContent only for initial history; it does not start a conversational turn.
+      // https://ai.google.dev/gemini-api/docs/live-api/capabilities#incremental-content-updates
+      const content = this.pendingContext ? `${this.pendingContext}\n\n${text}` : text;
+      this.pendingContext = "";
+      this.send({ realtimeInput: { text: content } });
+    } else {
+      this.send({ clientContent: { turns: [{ role: "user", parts: [{ text }] }], turnComplete: true } });
+    }
   }
 
   /**
@@ -607,7 +628,17 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
    * non-turn-completing clientContent and drop local playback state immediately.
    */
   async interrupt(): Promise<void> {
-    this.send({ clientContent: { turnComplete: false } });
+    if (this.realtimeTextOnly) {
+      if (this.opts.automaticActivityDetection?.disabled ?? this.gating) {
+        if (!this.speechOpen) this.send({ realtimeInput: { activityStart: {} } });
+        this.send({ realtimeInput: { activityEnd: {} } });
+        this.speechOpen = false;
+      }
+      // Keep the generation cancellation message as the final frame. Gemini 3.1 treats this
+      // clientContent form as an interrupt control message even though conversational text uses
+      // realtimeInput.text (clientContent text is reserved for initial history).
+      this.send({ clientContent: { turnComplete: false } });
+    } else this.send({ clientContent: { turnComplete: false } });
     /**
      * The reply we just cut keeps arriving for a moment: the server is mid-generation and does not
      * hear about it until our message lands. Ten frames of a cut answer reached the host on the P0
@@ -626,6 +657,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (this.config) this.config = { ...this.config, systemPrompt: context.systemPrompt };
     const ja = context.language.toLowerCase().startsWith("ja");
     const note = ja ? `（システム更新: 以降は次の指示に従うこと）\n${context.systemPrompt}` : `(System update: follow these instructions from now on)\n${context.systemPrompt}`;
+    if (this.realtimeTextOnly) { this.pendingContext = note; return; }
     this.send({ clientContent: { turns: [{ role: "user", parts: [{ text: note }] }], turnComplete: false } });
   }
 
