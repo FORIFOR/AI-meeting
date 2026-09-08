@@ -1,3 +1,4 @@
+import { VertexLiveRelay } from "./vertex-live.js";
 import { lookupLiveInfo } from "./routes/lookup.js";
 import { parseLookupArguments } from "@rcai/meeting-core";
 import { Hono, type Context } from "hono";
@@ -31,6 +32,7 @@ import { calendarEvents, calendarStatus, forwardCalendarCallback, getRule, putRu
 
 export interface AppDeps {
   env: BrokerEnv;
+  vertex?: VertexLiveRelay;
   fetch?: typeof fetch;
   now?: () => number;
   /** Meeting relay hub (shared with the websocket server); created if omitted. */
@@ -57,6 +59,7 @@ export interface AppDeps {
 
 export function createApp(deps: AppDeps): Hono {
   const env = deps.env;
+  const vertex = deps.vertex ?? new VertexLiveRelay(env);
   const fetchImpl = deps.fetch ?? fetch;
   const now = deps.now ?? Date.now;
   /**
@@ -154,7 +157,7 @@ export function createApp(deps: AppDeps): Hono {
       ok: true,
       providers: {
         openai: Boolean(env.OPENAI_API_KEY),
-        google: Boolean(env.GEMINI_API_KEY),
+        google: Boolean(env.GEMINI_BACKEND === "vertex" ? env.GOOGLE_CLOUD_PROJECT : env.GEMINI_API_KEY),
         livekit: Boolean(env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET),
         heygen: Boolean(env.HEYGEN_API_KEY),
         tavus: Boolean(env.TAVUS_API_KEY),
@@ -186,6 +189,10 @@ export function createApp(deps: AppDeps): Hono {
   });
 
   app.post("/api/token/gemini", async (c) => {
+    if (env.GEMINI_BACKEND === "vertex") {
+      if (!env.GOOGLE_CLOUD_PROJECT) return c.json({ error: "BLOCKED_BY_VERTEX_PROJECT" }, 503);
+      return c.json(vertex.mint());
+    }
     const r = await createGeminiEphemeralToken(env, await json<{ model?: string }>(c), fetchImpl, now);
     return c.json(r.body, r.status as 200);
   });
@@ -213,12 +220,12 @@ export function createApp(deps: AppDeps): Hono {
     const badInput = (): string[] => (["mode", "transcript", "timing"] as const).filter((k) => body.input?.[k] === undefined);
     const mod = await loadEvaluationModule();
     if (body.providerId === "google") {
-      if (!env.GEMINI_API_KEY) return c.json({ error: "BLOCKED_BY_GEMINI_KEY" }, 503);
+      if (env.GEMINI_BACKEND !== "vertex" && !env.GEMINI_API_KEY) return c.json({ error: "BLOCKED_BY_GEMINI_KEY" }, 503);
       if (!mod.evaluateWithGemini) return c.json({ ...fallbackHeuristic(body.input), evaluatedBy: "heuristic-fallback" });
       const badG = badInput();
       if (badG.length) return c.json({ error: "invalid_input", detail: `missing: ${badG.join(", ")}` }, 400);
       try {
-        return c.json(await mod.evaluateWithGemini({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_EVAL_MODEL ?? "gemini-2.5-flash", fetch: fetchImpl }, body.input));
+        return c.json(await mod.evaluateWithGemini({ ...(env.GEMINI_BACKEND === "vertex" ? await vertex.evaluationAuth() : { apiKey: env.GEMINI_API_KEY }), model: env.GEMINI_EVAL_MODEL ?? "gemini-2.5-flash", fetch: fetchImpl }, body.input));
       } catch (e) {
         const f = evaluationFailure(e, "GEMINI");
         return c.json(f.body, f.status);

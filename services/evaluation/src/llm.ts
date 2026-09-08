@@ -74,7 +74,8 @@ export async function evaluateWithOpenAICompatible(config: OpenAICompatibleConfi
 }
 
 export interface GeminiConfig {
-  apiKey: string;
+  apiKey?: string;
+  accessToken?: string;
   /** e.g. gemini-2.5-flash */
   model: string;
   fetch?: typeof fetch;
@@ -84,7 +85,7 @@ export interface GeminiConfig {
 
 /** Gemini generateContent with structured output (responseMimeType + responseSchema). */
 export async function evaluateWithGemini(config: GeminiConfig, input: EvaluationInput): Promise<EvaluationResult> {
-  if (!config.apiKey) throw new EvaluationError("config", "BLOCKED_BY_GEMINI_KEY");
+  if (!config.apiKey && !config.accessToken) throw new EvaluationError("config", "BLOCKED_BY_GEMINI_KEY");
   if (!config.model) throw new EvaluationError("config", "model is required");
   const f = config.fetch ?? fetch;
   const prompt = buildEvaluationPrompt(input);
@@ -100,7 +101,7 @@ export async function evaluateWithGemini(config: GeminiConfig, input: Evaluation
     },
   };
   return withTimeout(config.timeoutMs ?? 60_000, async (signal) => {
-    const res = await f(url, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": config.apiKey }, body: JSON.stringify(body), signal });
+    const res = await f(url, { method: "POST", headers: { "content-type": "application/json", ...(config.accessToken ? { Authorization: `Bearer ${config.accessToken}` } : { "x-goog-api-key": config.apiKey! }) }, body: JSON.stringify(body), signal });
     if (!res.ok) throw new EvaluationError("http", `gemini evaluation failed: ${res.status} ${await safeText(res)}`, res.status);
     const json = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
     const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";

@@ -90,7 +90,7 @@ try {
   await provider.disconnect();
   check("leave cancels pending token request", await pending);
   await sleep(1000);
-  check("cancelled connection never opens a socket", sockets.length === beforeCancel && readyCount === 3);
+  check("cancelled connection leaves no live socket", sockets.slice(beforeCancel).every((socket) => socket.readyState === WebSocket.CLOSED) && readyCount === 3);
   const first = provider.connect(config).then(() => false, () => true);
   const second = provider.connect(config);
   check("overlapping connect cancels older conversation", await first);

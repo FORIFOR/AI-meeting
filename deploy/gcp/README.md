@@ -5,7 +5,7 @@ This directory contains the production deployment contract for the split archite
 ```text
 Browser ──> static web hosting
    │
-   ├── direct mode ──> Gemini Live (ephemeral token from Cloud Run)
+   ├── direct mode ──> Cloud Run WebSocket relay → Vertex AI Live (ADC)
    │
    └── meeting mode ──> Cloud Run API ──> Attendee Hosted or GKE Attendee
                                       └─> agent/runtime
@@ -51,7 +51,14 @@ The script builds `deploy/cloud/Dockerfile.broker`, stores secrets in Secret Man
 single Cloud Run instance. It uses `min-instances=0` for the beta cost gate. Set `MAX_INSTANCES=1`
 until session state is moved to a durable store.
 
-The first direct-mode deployment requires `MEETING_TOKEN_SECRET` and `GEMINI_API_KEY`. Add
+The default Vertex AI deployment requires `MEETING_TOKEN_SECRET`, `PROJECT_ID`, the enabled
+`aiplatform.googleapis.com` API, and `roles/aiplatform.user` on the Cloud Run runtime service account.
+It uses ADC; no AI Studio API key or prepaid balance is needed. `GOOGLE_CLOUD_LOCATION` defaults to
+`us-central1`, and `VERTEX_LIVE_MODEL` defaults to `gemini-live-2.5-flash-native-audio`.
+Set `GEMINI_BACKEND=developer` with `GEMINI_API_KEY` only to opt back into the Developer API.
+Keep `MAX_INSTANCES=1`: relay ticket replay tracking and meeting state are instance-local.
+The relay tickets expire after two minutes; each reconnect obtains a new ticket.
+Cloud Run WebSocket requests use a 3600-second timeout. Add
 `ATTENDEE_API_KEY`, `ATTENDEE_WEBHOOK_SECRET`, `BROKER_PUBLIC_URL`, and `WEB_PUBLIC_URL` when the
 meeting transport is ready. The script never prints secret values.
 
@@ -68,7 +75,7 @@ the exact web origin before public release.
 
 ## Rollout order
 
-1. Deploy the broker and verify `/health` and `/api/token/gemini` with a real Gemini key.
+1. Deploy the broker and verify `/health` and `/api/token/gemini` and a real Vertex AI WebSocket handshake.
 2. Publish the web artifact and verify direct 1:1 mode; this path does not consume Attendee time.
 3. Configure Attendee Hosted and run the 5-minute and 30-minute Google Meet Reality Gates.
 4. Verify the same `/agent/runtime` page in Attendee's voice-agent browser.

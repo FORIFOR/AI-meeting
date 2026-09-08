@@ -7,7 +7,7 @@ import type { EvaluationInput, EvaluationProvider, EvaluationResult } from "@rca
  */
 export interface EvaluationModule {
   evaluateWithOpenAICompatible(cfg: { baseUrl: string; apiKey?: string; model: string; fetch?: typeof fetch }, input: EvaluationInput): Promise<EvaluationResult>;
-  evaluateWithGemini(cfg: { apiKey: string; model: string; fetch?: typeof fetch }, input: EvaluationInput): Promise<EvaluationResult>;
+  evaluateWithGemini(cfg: { apiKey?: string; accessToken?: string; baseUrl?: string; model: string; fetch?: typeof fetch }, input: EvaluationInput): Promise<EvaluationResult>;
   HeuristicEvaluator: new () => EvaluationProvider;
 }
 

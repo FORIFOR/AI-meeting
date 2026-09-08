@@ -11,7 +11,7 @@ try {
   const billing = run(["billing", "projects", "describe", project, "--format=value(billingEnabled)"]);
   if (billing !== "True") throw new Error(`billing is not enabled for ${project}`);
   const enabled = new Set(run(["services", "list", "--project", project, "--enabled", "--format=value(config.name)"]).split("\n").filter(Boolean));
-  const required = ["run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "secretmanager.googleapis.com"];
+  const required = ["run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "secretmanager.googleapis.com", "aiplatform.googleapis.com"];
   const missing = required.filter((service) => !enabled.has(service));
   console.log(JSON.stringify({ project, region, account, billingEnabled: true, missingApis: missing }, null, 2));
   if (missing.length) { console.error(`Missing APIs: ${missing.join(", ")}`); process.exit(1); }

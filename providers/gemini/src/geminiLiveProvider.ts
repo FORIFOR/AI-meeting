@@ -46,6 +46,8 @@ export interface WebSocketLike {
 }
 
 export interface GeminiTokenResponse {
+  backend?: "developer" | "vertex";
+  websocketPath?: string;
   token: string;
   expiresAt?: number;
   model?: string;
@@ -280,7 +282,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     const token = await this.fetchToken();
     if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
     const model = token.model ?? this.model;
-    const wss = geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token);
+    const wss = this.socketUrl(token);
     try {
       await this.openSocket(wss, model, config);
     } catch (err) {
@@ -292,7 +294,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       // Tokens are single-use. A refused setup may already have consumed the first one.
       const retryToken = await this.fetchToken();
       if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
-      await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", retryToken.token), retryToken.model ?? model, config);
+      await this.openSocket(this.socketUrl(retryToken), retryToken.model ?? model, config);
     }
     if (this.closing || epoch !== this.sessionEpoch) throw new Error("Gemini Live connection cancelled");
     this.timing.setupCompleteAt = this.clock();
@@ -300,6 +302,18 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     // Opening line is owned by the provider (see integration contracts): ask for it as a client turn.
     const opening = (config.providerOptions?.opening as string | undefined)?.trim();
     if (opening) await this.sendText(`(セッション開始。最初に次の一言で会話を始めてください: 「${opening}」)`);
+  }
+
+  private vertexBackend = false;
+  private socketUrl(token: GeminiTokenResponse): string {
+    this.vertexBackend = token.backend === "vertex";
+    if (!this.vertexBackend) return geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token);
+    const url = new URL(this.opts.brokerUrl);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    url.pathname = "/api/live/vertex";
+    url.search = "";
+    url.searchParams.set("ticket", token.token);
+    return url.toString();
   }
 
   private async fetchToken(): Promise<GeminiTokenResponse> {
@@ -413,7 +427,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
          * "minimal" and this states it, so a model whose default changes does not quietly slow the room
          * down. `thinkingLevel: "off"` sends nothing (for a model that rejects the field).
          */
-        ...(this.opts.thinkingLevel === "off" ? {} : { thinkingConfig: { thinkingLevel: this.opts.thinkingLevel ?? "minimal" } }),
+        ...(this.vertexBackend || this.opts.thinkingLevel === "off" ? {} : { thinkingConfig: { thinkingLevel: this.opts.thinkingLevel ?? "minimal" } }),
         // Affective dialog is a native-audio feature: the newer live models reject the field outright
         // (1007 "Request contains an invalid argument"), which looks like a broken setup rather than an
         // unsupported option.
@@ -847,7 +861,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         try {
           const token = await this.fetchToken();
           if (this.closing || epoch !== this.sessionEpoch) return;
-          await this.openSocket(geminiWssUrl(this.opts.apiVersion ?? "v1beta", token.token), token.model ?? this.model, config);
+          await this.openSocket(this.socketUrl(token), token.model ?? this.model, config);
           if (this.closing || epoch !== this.sessionEpoch) return;
           try {
             if (old && old !== this.ws && old.readyState === OPEN) old.close(1000, "reconnect");

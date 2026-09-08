@@ -1,3 +1,4 @@
+import { VertexLiveRelay } from "./vertex-live.js";
 import { createServer } from "node:http";
 import { serve } from "@hono/node-server";
 import { WebSocketServer, type WebSocket } from "ws";
@@ -18,14 +19,15 @@ const port = Number(env.PORT ?? 8787);
 const relay = new RelayHub(env.RECALL_PUBLIC_URL ? publicWsBase(env.RECALL_PUBLIC_URL) : `ws://localhost:${port}`);
 const sessions = new MeetingSessionRegistry(env.MEETING_TOKEN_SECRET);
 if (sessions.secretSource === "ephemeral") console.warn("[token-broker] MEETING_TOKEN_SECRET not set — using an ephemeral secret (meeting tokens are invalid after restart)");
-const app = createApp({ env, relay, sessions });
+const vertex = new VertexLiveRelay(env);
+const app = createApp({ env, relay, sessions, vertex });
 // TTL sweeper: ended/revoked sessions are dropped after 5 min, idle live sessions after 6 h.
 setInterval(() => {
   for (const id of sessions.sweep()) console.log(`[token-broker] meeting session swept ${id.slice(0, 8)}…`);
 }, 60_000).unref();
 
 const server = serve({ fetch: app.fetch, port, hostname: env.HOST ?? "127.0.0.1", createServer }, (info) => {
-  const configured = Object.entries({ openai: env.OPENAI_API_KEY, google: env.GEMINI_API_KEY, livekit: env.LIVEKIT_API_KEY, heygen: env.HEYGEN_API_KEY, tavus: env.TAVUS_API_KEY, recall: env.RECALL_API_KEY })
+  const configured = Object.entries({ openai: env.OPENAI_API_KEY, google: env.GEMINI_BACKEND === "vertex" ? env.GOOGLE_CLOUD_PROJECT : env.GEMINI_API_KEY, livekit: env.LIVEKIT_API_KEY, heygen: env.HEYGEN_API_KEY, tavus: env.TAVUS_API_KEY, recall: env.RECALL_API_KEY })
     .filter(([, v]) => Boolean(v))
     .map(([k]) => k);
   // Keys are never printed — only which providers are configured.
@@ -37,8 +39,15 @@ const server = serve({ fetch: app.fetch, port, hostname: env.HOST ?? "127.0.0.1"
  *   /api/meeting/recall/relay/{token}/   ← Recall realtime endpoint (public side; reached through RECALL_PUBLIC_URL)
  *   /api/meeting/recall/client/{botId}   ← browser (operator UI / bot page)
  */
-const wss = new WebSocketServer({ noServer: true });
+const wss = new WebSocketServer({ noServer: true, maxPayload: 1_000_000 });
 server.on("upgrade", (req, socket, head) => {
+  const url = new URL(req.url ?? "/", "http://localhost");
+  if (url.pathname === "/api/live/vertex" && env.GEMINI_BACKEND === "vertex") {
+    const model = vertex.consume(url.searchParams.get("ticket") ?? "");
+    if (!model) { socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n"); socket.destroy(); return; }
+    wss.handleUpgrade(req, socket, head, (ws) => { void vertex.connect(ws, model); });
+    return;
+  }
   const auth = authorizeWebSocketUpgrade(req.url ?? "/", sessions, relay);
   if (!auth.ok) {
     if (auth.status === 401) socket.write(`HTTP/1.1 401 Unauthorized\r\nX-Reason: ${auth.reason}\r\n\r\n`);

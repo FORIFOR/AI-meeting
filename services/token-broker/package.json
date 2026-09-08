@@ -19,12 +19,13 @@
     "@rcai/behavior-engine": "workspace:*",
     "@rcai/conversation-core": "workspace:*",
     "@rcai/evaluation": "workspace:*",
+    "@rcai/meeting-core": "workspace:*",
     "@rcai/observability": "workspace:*",
     "@rcai/provider-core": "workspace:*",
+    "google-auth-library": "^11.0.2",
     "hono": "4.13.5",
     "livekit-server-sdk": "latest",
-    "ws": "8.21.3",
-    "@rcai/meeting-core": "workspace:*"
+    "ws": "8.21.3"
   },
   "devDependencies": {
     "@types/ws": "latest",

@@ -12,6 +12,10 @@ export interface BrokerEnv {
   OPENAI_REALTIME_MODEL?: string;
   OPENAI_PLAN_MODEL?: string;
   OPENAI_EVAL_MODEL?: string;
+  GEMINI_BACKEND?: "developer" | "vertex";
+  GOOGLE_CLOUD_PROJECT?: string;
+  GOOGLE_CLOUD_LOCATION?: string;
+  VERTEX_LIVE_MODEL?: string;
   GEMINI_API_KEY?: string;
   GEMINI_LIVE_MODEL?: string;
   /** Attendee API base; supports hosted and self-hosted deployments. */
