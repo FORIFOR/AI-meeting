@@ -95,7 +95,7 @@ export async function sendAttendeeJoinNotice(brokerEnv: BrokerEnv, botId: string
   const name = brokerEnv.RECALL_BOT_NAME ?? "Yui";
   const message = brokerEnv.RECALL_JOIN_NOTICE ??
     `${name}（AIアシスタント）が参加しました。この会議では AI による音声処理・文字起こし・議事録生成を行います。停止をご希望の場合は主催者にお知らせください。`;
-  const res = await fetchImpl(`https://app.attendee.dev/api/v1/bots/${encodeURIComponent(botId)}/send_chat_message`, {
+  const res = await fetchImpl(`${(brokerEnv.ATTENDEE_API_BASE_URL ?? "https://app.attendee.dev").replace(/\/$/, "")}/api/v1/bots/${encodeURIComponent(botId)}/send_chat_message`, {
     method: "POST",
     headers: { Authorization: `Token ${brokerEnv.ATTENDEE_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify({ to: "everyone", message }),

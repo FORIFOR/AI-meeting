@@ -24,12 +24,12 @@ setInterval(() => {
   for (const id of sessions.sweep()) console.log(`[token-broker] meeting session swept ${id.slice(0, 8)}…`);
 }, 60_000).unref();
 
-const server = serve({ fetch: app.fetch, port, hostname: "127.0.0.1", createServer }, (info) => {
+const server = serve({ fetch: app.fetch, port, hostname: env.HOST ?? "127.0.0.1", createServer }, (info) => {
   const configured = Object.entries({ openai: env.OPENAI_API_KEY, google: env.GEMINI_API_KEY, livekit: env.LIVEKIT_API_KEY, heygen: env.HEYGEN_API_KEY, tavus: env.TAVUS_API_KEY, recall: env.RECALL_API_KEY })
     .filter(([, v]) => Boolean(v))
     .map(([k]) => k);
   // Keys are never printed — only which providers are configured.
-  console.log(`[token-broker] listening on http://127.0.0.1:${info.port} configured=[${configured.join(",") || "none"}]`);
+  console.log(`[token-broker] listening on http://${env.HOST ?? "127.0.0.1"}:${info.port} configured=[${configured.join(",") || "none"}]`);
 }) as ReturnType<typeof createServer>;
 
 /**

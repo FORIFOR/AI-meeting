@@ -31,9 +31,9 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  brokerUrl: "http://localhost:8787",
-  agentUrl: "ws://localhost:8788",
-  engine: "auto",
+  brokerUrl: import.meta.env.VITE_RCAI_CLOUD === "true" ? window.location.origin : "http://localhost:8787",
+  agentUrl: import.meta.env.VITE_RCAI_CLOUD === "true" ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/agent` : "ws://localhost:8788",
+  engine: import.meta.env.VITE_RCAI_CLOUD === "true" ? "google" : "auto",
   autoPolicy: "quality_first",
   advanced: {},
   privacyMode: "default",

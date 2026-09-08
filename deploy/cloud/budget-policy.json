@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "currency": "JPY",
+  "normalMonthlyJpy": 5000,
+  "hardMonthlyJpy": 10000,
+  "plannedMeetingHours": { "min": 20, "max": 30 },
+  "providers": { "meeting": "attendee_hosted", "conversation": "gemini-3.1-flash-live-preview", "hostingCandidate": "render" },
+  "countTrialCreditsInRecurringBudget": false,
+  "requireReservationsBeforeSpending": true,
+  "requireActiveSessionShutdown": true,
+  "teamsPublicRelease": false
+}

@@ -84,6 +84,7 @@ export type ConversationEvent =
   | { type: "assistant_speech_ended"; at?: number; gen?: GenerationRef }
   | { type: "interrupted"; at?: number; gen?: GenerationRef }
   | { type: "tool_call"; call: ToolCall; gen?: GenerationRef }
+  | { type: "usage"; provider: string; model: string; at: number; counters: Record<string, number> }
   | { type: "metrics"; turn: TurnMetrics; gen?: GenerationRef }
   | { type: "error"; error: Error; fatal?: boolean };
 

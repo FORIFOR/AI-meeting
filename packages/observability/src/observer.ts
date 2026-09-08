@@ -38,6 +38,7 @@ export class SessionObserver {
   private interruptionsByUser = 0;
   private interruptionsByAssistant = 0;
   private staleDrops = 0;
+  private usage: NonNullable<SessionReport["usage"]> = { source: "provider_reported", observations: [], dropped: 0 };
   private errors = 0;
   private fatal = 0;
   private errorCodes: string[] = [];
@@ -105,6 +106,10 @@ export class SessionObserver {
         }
         this.assistantOpen = false;
         this.speaking = false;
+        break;
+      case "usage":
+        if (this.usage.observations.length < 256) this.usage.observations.push({ provider: e.provider, model: e.model, at: e.at, counters: { ...e.counters } });
+        else this.usage.dropped++;
         break;
       case "metrics": {
         const t = e.turn;
@@ -174,6 +179,7 @@ export class SessionObserver {
     const response = this.response.all();
     return {
       schema: "rcai.session-report.v1",
+      usage: { ...this.usage, observations: this.usage.observations.map(x => ({ ...x, counters: { ...x.counters } })) },
       sessionId: this.sessionId,
       provider: this.provider,
       engines: { ...this.engines },

@@ -8,10 +8,11 @@
  *
  * Cloud engines need real credentials in services/token-broker/.env; without them the run is reported as
  * BLOCKED_BY_OPENAI_KEY / BLOCKED_BY_GEMINI_KEY (exit code 2) — never a fake PASS.
- * Verdict PASS only if the session survived the whole duration, ≥ 80 % of utterances were answered and no
- * fatal error/toast occurred.
+ * Verdict requires performance thresholds and enough samples; missing measurements are BLOCKED.
+ * Content quality and public release require separate evidence.
  */
 import puppeteer from "puppeteer-core";
+import { assessSoak } from "../../../scripts/performance/assess-soak.mjs";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -218,9 +219,14 @@ const aiTurns = report.transcript.filter((x) => x.role === "assistant");
 let answered = 0;
 for (let i = 0; i < userTurns.length; i++) {
   const next = userTurns[i + 1]?.t ?? Infinity;
-  if (aiTurns.some((a) => a.t >= userTurns[i].t && a.t <= next + 15000)) answered++;
+  if (aiTurns.some((a) => a.t >= userTurns[i].t && a.t < next)) answered++;
 }
-const expectedUtterances = report.timeline ? report.timeline.timeline.filter((u) => u.startSec * 1000 <= elapsedMs % (report.timeline.seconds * 1000) || elapsedMs > report.timeline.seconds * 1000).length : null;
+const timelineSeconds = report.timeline?.seconds;
+const completeLoops = timelineSeconds > 0 ? Math.floor(elapsedMs / (timelineSeconds * 1000)) : 0;
+const remainingSeconds = timelineSeconds > 0 ? (elapsedMs / 1000) % timelineSeconds : 0;
+const expectedUtterances = timelineSeconds > 0
+  ? completeLoops * report.timeline.timeline.length + report.timeline.timeline.filter(u => u.startSec < remainingSeconds).length
+  : null;
 const replyLens = aiTurns.map((a) => a.text.length);
 const speakingPills = report.pills.filter((p) => isSpeaking(p.pill)).length;
 report.summary = {
@@ -233,10 +239,10 @@ report.summary = {
   replyChars: replyLens.length ? { min: Math.min(...replyLens), p50: pct(replyLens, 50), max: Math.max(...replyLens), avg: Math.round(replyLens.reduce((a, b) => a + b, 0) / replyLens.length) } : null,
   resultOverall: report.result?.overall ?? null,
 };
-const fullDuration = elapsedMs >= durationMs - 2000;
-report.verdict = survived && fullDuration && report.summary.answeredRatio >= 0.8 && report.pageErrors.length === 0 && !report.toasts.some((x) => /fatal|BLOCKED_BY/i.test(x.text)) ? "PASS" : "FAIL";
-if (report.verdict === "FAIL" && !failReason) report.failReason = !fullDuration ? "did not reach full duration" : report.summary.answeredRatio < 0.8 ? `answered ratio ${report.summary.answeredRatio.toFixed(2)} < 0.8` : "errors present";
-await finish(report.verdict === "PASS" ? 0 : 1);
+report.performance = assessSoak(report);
+report.verdict = report.performance.status;
+report.failReason = report.performance.checks.filter(x => x.status !== "PASS").map(x => `${x.id}: ${x.status} (${x.requirement})`).join("; ") || null;
+await finish(report.verdict === "PASS" ? 0 : report.verdict === "BLOCKED" ? 2 : 1);
 
 // ---- helpers ------------------------------------------------------------------------------------
 function parseArgs(argv) {

@@ -1,3 +1,4 @@
+import { geminiUsageCounters } from "./usage.js";
 import {
   AudioNormalizer,
   EnergyVAD,
@@ -684,6 +685,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (msg.goAway) {
       this.emit({ type: "error", error: new Error(`Gemini Live goAway (timeLeft ${msg.goAway.timeLeft ?? "?"})`), fatal: false });
       void this.reconnect();
+    }
+    if (msg.usageMetadata) {
+      const counters = geminiUsageCounters(msg.usageMetadata);
+      if (Object.keys(counters).length) this.emit({ type: "usage", provider: "google", model: this.connectedModel ?? this.model, at: now, counters });
     }
     const sc = msg.serverContent;
     if (!sc) return;

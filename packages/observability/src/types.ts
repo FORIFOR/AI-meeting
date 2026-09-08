@@ -39,6 +39,8 @@ export interface SessionReport {
   firstAudio: Summary;
   avatar: { frameIntervalMs: Summary; lipDelayMs: Summary };
   meeting: { connector: string; state: string; botId?: string } | null;
+  /** Bounded, untrusted client observations; not authoritative billing totals. */
+  usage?: { source: "provider_reported"; observations: { provider: string; model: string; at: number; counters: Record<string, number> }[]; dropped: number };
   errors: { count: number; fatal: number; codes: string[] };
 }
 

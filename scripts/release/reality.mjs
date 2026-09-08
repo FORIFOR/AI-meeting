@@ -25,10 +25,10 @@ const requirements = [];
 const need = (id, op, target, minimumSamples, unit) => requirements.push({ id, op, target, minimumSamples, unit });
 const zero = (id, n = 100) => need(id, "eq", 0, n, "incidents");
 
-need("voice.firstAudioP50Ms", "lt", 1200, 100, "ms");
-need("voice.firstAudioP95Ms", "lt", 2000, 100, "ms");
+need("voice.firstAudioP50Ms", "lte", 700, 100, "ms");
+need("voice.firstAudioP95Ms", "lte", 1500, 100, "ms");
 zero("voice.over4Seconds");
-need("voice.bargeInP95Ms", "lt", 400, 20, "ms");
+need("voice.bargeInP95Ms", "lte", 150, 20, "ms");
 need("voice.accidentalInterruptionRate", "lt", .01, 100, "ratio");
 need("voice.intentRecognitionErrorRate", "lt", .02, 100, "ratio");
 need("voice.tenTurnCompletionRate", "gte", 1, 10, "ratio");
@@ -89,7 +89,7 @@ row("candidate", sameBuild ? "PASS" : "BLOCKED", sameBuild ? buildId : "Evidence
 row("scope.core", policy.core === "released" ? "PASS" : "BLOCKED", policy.core);
 row("scope.modes", modes.length ? "PASS" : "BLOCKED", modes.length ? modes.join(", ") : "No mode is approved for public release.");
 row("scope.platforms", platforms.length ? "PASS" : "BLOCKED", platforms.length ? platforms.join(", ") : "No meeting platform is approved for public release.");
-const compare = { eq: (a, b) => a === b, lt: (a, b) => a < b, gte: (a, b) => a >= b };
+const compare = { lte: (a, b) => a <= b, eq: (a, b) => a === b, lt: (a, b) => a < b, gte: (a, b) => a >= b };
 for (const requirement of requirements) {
   const { id, op, target, minimumSamples, unit } = requirement;
   const measurement = evidence?.measurements?.[id];

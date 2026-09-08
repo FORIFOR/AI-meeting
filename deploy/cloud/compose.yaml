@@ -1,0 +1,36 @@
+# Private staging only. Public ingress requires user authentication and tenant isolation.
+name: ai-meeting-cloud
+services:
+  broker:
+    build:
+      context: ../..
+      dockerfile: deploy/cloud/Dockerfile
+      target: broker
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: '8787'
+      RECALL_DATA_DIR: /data
+      RCAI_RELEASE_CHANNEL: beta
+    volumes:
+      - meeting-data:/data
+    restart: unless-stopped
+    init: true
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/cloud/Dockerfile
+      target: web
+    ports:
+      - '127.0.0.1:18080:8080'
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  meeting-data:

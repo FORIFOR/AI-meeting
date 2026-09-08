@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+reference
+docs/reports
+services/token-broker/data
+apps/desktop/src-tauri/target
+tools/tts-daemon/bin
+vendor/supertonic
+vendor/smart-turn

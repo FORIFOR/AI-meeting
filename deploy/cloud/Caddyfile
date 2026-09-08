@@ -1,0 +1,14 @@
+:8080 {
+    handle /agent* {
+        respond "Local speech agent is not deployed" 503
+    }
+    @broker path /api/* /health
+    handle @broker {
+        reverse_proxy broker:8787
+    }
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}

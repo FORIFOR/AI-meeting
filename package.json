@@ -39,7 +39,10 @@
     "reality:attendee:auto": "tsx scripts/reality/attendee-auto.mjs",
     "reality:conversation": "tsx scripts/reality/conversation-eval.mjs",
     "reality:gemini:lifecycle": "tsx scripts/reality/gemini-lifecycle.ts",
-    "release:reality": "node scripts/release/reality.mjs"
+    "release:reality": "node scripts/release/reality.mjs",
+    "performance:assess": "node scripts/performance/assess-soak.mjs",
+    "budget:check": "node scripts/cloud/budget-check.mjs",
+    "cloud:hosted:preflight": "node scripts/cloud/hosted-preflight.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

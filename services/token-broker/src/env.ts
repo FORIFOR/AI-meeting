@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
   PORT?: string;
+  /** Container deployments bind 0.0.0.0; local development defaults to loopback. */
+  HOST?: string;
   /** Must match VITE_RCAI_RELEASE_CHANNEL. Unverified features never open on public. */
   RCAI_RELEASE_CHANNEL?: string;
   OPENAI_API_KEY?: string;
@@ -12,7 +14,7 @@ export interface BrokerEnv {
   OPENAI_EVAL_MODEL?: string;
   GEMINI_API_KEY?: string;
   GEMINI_LIVE_MODEL?: string;
-  /** Attendee API base; overridden only to run the whole path against a local stand-in. */
+  /** Attendee API base; supports hosted and self-hosted deployments. */
   ATTENDEE_API_BASE_URL?: string;
   GEMINI_EVAL_MODEL?: string;
   LIVEKIT_URL?: string;
