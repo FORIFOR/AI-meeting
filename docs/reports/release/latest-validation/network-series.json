@@ -1,0 +1,26 @@
+{
+  "buildId": "5e3740c030ced645d38e74b37dc4b310975aa8651148a8fea6e41e7055fce7e4",
+  "scope": "Real Gemini TCP cut plus 10-second injected unavailability of token transport; not physical device disconnection",
+  "runs": [
+    {
+      "artifact": "network10-1.json",
+      "sha256": "66304343001012a01b489fbf434ae60a58750e87b4c51d767ca53e616e8abe35",
+      "status": "PASS",
+      "measuredAt": "2026-09-08T19:25:25.217Z"
+    },
+    {
+      "artifact": "network10-2.json",
+      "sha256": "1fcefa1f284890b98e005fd5e2d6e14b132386b5395b5195b7acb822aac12010",
+      "status": "PASS",
+      "measuredAt": "2026-09-08T19:25:48.949Z"
+    },
+    {
+      "artifact": "network10-3.json",
+      "sha256": "24b5ac6ec345724f849dab666a32af9119f591f8d49364b0ead3c8eb4f974a37",
+      "status": "PASS",
+      "measuredAt": "2026-09-08T19:26:12.688Z"
+    }
+  ],
+  "recovered": 3,
+  "samples": 3
+}

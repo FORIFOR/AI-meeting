@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-09-08T00:25:30.730Z",
-  "buildId": "b46eaaf8a0dd60859df6a0a7ba48b4250da42e7bea6514d4db2d7ee740a19afa",
-  "status": "BLOCKED",
+  "measuredAt": "2026-09-08T19:54:08.543Z",
+  "buildId": "5e3740c030ced645d38e74b37dc4b310975aa8651148a8fea6e41e7055fce7e4",
+  "status": "FAIL",
   "evidence": "docs/reports/release/evidence.json",
   "scope": {
     "modes": [],
@@ -10,14 +10,9 @@
   },
   "rows": [
     {
-      "id": "evidence",
-      "status": "BLOCKED",
-      "detail": "Current-build evidence file is missing or unreadable."
-    },
-    {
       "id": "candidate",
-      "status": "BLOCKED",
-      "detail": "Evidence must identify this source snapshot and schemaVersion=1."
+      "status": "PASS",
+      "detail": "5e3740c030ced645d38e74b37dc4b310975aa8651148a8fea6e41e7055fce7e4"
     },
     {
       "id": "scope.core",
@@ -36,13 +31,13 @@
     },
     {
       "id": "voice.firstAudioP50Ms",
-      "status": "BLOCKED",
-      "detail": "No current-build measurement."
+      "status": "FAIL",
+      "detail": "1138 ms; 143 observations; required lte 700"
     },
     {
       "id": "voice.firstAudioP95Ms",
-      "status": "BLOCKED",
-      "detail": "No current-build measurement."
+      "status": "FAIL",
+      "detail": "1676 ms; 143 observations; required lte 1500"
     },
     {
       "id": "voice.over4Seconds",
@@ -191,13 +186,13 @@
     },
     {
       "id": "failure.socketDisconnect.recoveryRate",
-      "status": "BLOCKED",
-      "detail": "No current-build measurement."
+      "status": "PASS",
+      "detail": "1 ratio; 3 observations; required gte 1"
     },
     {
       "id": "failure.network10Seconds.recoveryRate",
-      "status": "BLOCKED",
-      "detail": "No current-build measurement."
+      "status": "PASS",
+      "detail": "1 ratio; 3 observations; required gte 1"
     },
     {
       "id": "failure.deviceSwitch.recoveryRate",
@@ -211,8 +206,8 @@
     },
     {
       "id": "failure.leave.recoveryRate",
-      "status": "BLOCKED",
-      "detail": "No current-build measurement."
+      "status": "PASS",
+      "detail": "1 ratio; 3 observations; required gte 1"
     },
     {
       "id": "failure.kick.recoveryRate",

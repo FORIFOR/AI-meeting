@@ -2,6 +2,14 @@
 
 Policy: H0 (see `~/.claude/CLAUDE.md`). Stable release requires `Readiness=PASS` or an explicit user override. This document is the single source of truth for what this build is and what it is not.
 
+## Current verification — 2026-09-08
+
+**Public release remains BLOCKED; release=go has not been reached.** The sections below record the original beta build and are not proof of current-candidate readiness. See `docs/reports/release/next-steps.md` and the current `reality.json` for the latest evidence and remaining gates.
+
+After restoring credentials, real Gemini lifecycle checks passed. Browser smoke testing exposed a retired Gemini evaluation model (404), now replaced with the live-verified `gemini-3.6-flash`, and an OpenAI channel timeout leaking after failed SDP setup, now covered by a regression test and cleaned up. Typecheck, tests, web build and license checks pass. OpenAI voice calls remain blocked by exhausted credits; the configured self-hosted Attendee endpoint must be restored. Current-build human evaluations and platform endurance evidence are still missing. Automated smoke-test PASS does not satisfy the public voice-latency, sample-count, human or platform requirements.
+
+The local desktop rebuild compiled successfully but failed signing because the configured Developer ID Application identity is unavailable on this Mac. The partial .app fails signature verification and no DMG was produced; the historical artifact hashes below must not be applied to this rebuild.
+
 ## Readiness
 - Automated gates: `node scripts/release/check.mjs --artifacts` (version consistency, CHANGELOG/RELEASE, secrets scan, typecheck, tests, build, licenses, artifact + signature checks).
 - Reality gates: `docs/acceptance-gates.md` (Round 3 table). Local: PASS. Cloud/meeting: BLOCKED_BY_* (no credentials).
