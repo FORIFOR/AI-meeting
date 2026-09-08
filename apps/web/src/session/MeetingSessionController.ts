@@ -486,7 +486,12 @@ export class MeetingSessionController {
      * barge-in — a listener's 「えっと」 and a room blip had stopped the character from the page).
      * There the agent's confirmed onset (bargeInConfirmMs) is the only thing that may stop her.
      */
-    const runtime = new ConversationRuntime({ sink: speaker, localVad: this.init.role !== "bot" });
+    // Vertex/Gemini Live does not consistently emit a user-speech event for a remote
+    // participant while it is already speaking. Keep the local VAD on for bot pages
+    // using that provider so the runtime can take the same immediate interruption
+    // path as the operator page. The runtime suppresses duplicate provider VAD events.
+    const localVad = this.init.role !== "bot" || this.decision.conversation === "google";
+    const runtime = new ConversationRuntime({ sink: speaker, localVad });
     this.runtime = runtime;
 
     const def = await this.resolveCharacter(character);
