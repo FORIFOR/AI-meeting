@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: ai-meeting-broker
+    runtime: docker
+    dockerfilePath: ./deploy/cloud/Dockerfile.broker
+    dockerContext: .
+    plan: starter
+    region: singapore
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: RCAI_RELEASE_CHANNEL
+        value: beta
+      - key: MEETING_TOKEN_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ATTENDEE_API_BASE_URL
+        value: https://app.attendee.dev
+      - key: ATTENDEE_API_KEY
+        sync: false
+      - key: ATTENDEE_WEBHOOK_SECRET
+        sync: false
+      - key: RECALL_PUBLIC_URL
+        sync: false
+      - key: RECALL_BOT_PAGE_URL
+        sync: false
+
+  - type: web
+    name: ai-meeting-web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && VITE_RCAI_CLOUD=true VITE_RCAI_RELEASE_CHANNEL=beta VITE_RCAI_BROKER_URL=https://ai-meeting-broker.onrender.com pnpm build
+    staticPublishPath: ./apps/web/dist
+    region: singapore
+    autoDeploy: true

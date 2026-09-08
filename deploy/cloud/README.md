@@ -2,6 +2,8 @@
 
 段階方針は[クラウド段階移行の判断](../../docs/architecture/cloud-staged-migration.md)を参照する。ここで作るCloud Run相当のWeb/APIは、Hosted Attendeeを呼ぶ会議経路と、Attendeeを使わない1対1経路を分離する。GKEセルフホストは初期構成に含めない。
 
+RenderでBlueprintを使う場合はリポジトリ直下の`render.yaml`を選択する。BlueprintはWebとbrokerを分け、brokerだけ有料Starter、WebはStatic Siteにする。`VITE_RCAI_BROKER_URL`はbrokerの実URLへ置換してからWebを再デプロイする。Blueprintに含まれるURLは仮値であり、実際のサービス名を変更した場合はビルド変数を更新する。
+
 Web + token-brokerをLinuxコンテナへ移す構成。会話はGeminiへ直接接続し、ローカル音声エージェントを必要としない。Attendeeは接続先を環境変数で指定する（ホスト型または別途構築したセルフホスト）。このComposeだけではAttendee本体を配置しない。
 
 ## 起動準備
