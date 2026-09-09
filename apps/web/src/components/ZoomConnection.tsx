@@ -11,10 +11,12 @@ export function ZoomReturn({ onDone }: { onDone: () => void }) {
 }
 export function ZoomConnection({ base, meetingUrl, disabled }: { base: string; meetingUrl: string; disabled: boolean }) {
   const [available, setAvailable] = useState(false), [connected, setConnected] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [disconnectPending, setDisconnectPending] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   useEffect(() => {
     const abort = new AbortController();
+    setChecking(true);
     void fetch(`${base.replace(/\/$/, "")}/api/zoom/config`, { signal: abort.signal }).then(r => r.json()).then(async c => {
       setAvailable(!!c.available);
       if (c.available && zoomToken(base)) {
@@ -22,13 +24,13 @@ export function ZoomConnection({ base, meetingUrl, disabled }: { base: string; m
         const status = r.ok ? await r.json() : {};
         setConnected(status.connected === true); setDisconnectPending(status.disconnectPending === true);
       }
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => { if (!abort.signal.aborted) setChecking(false); });
     return () => abort.abort();
   }, [base]);
   if (!available) return null;
   return <div className="field">
-    <span>{disconnectPending ? "Zoomの接続解除を確認できません。再試行してください。" : connected ? "Zoom 連携済み" : "Zoomの会議には、まずアカウントを連携してください。"}</span>
-    <button type="button" className="btn btn--ghost" disabled={disabled || busy} onClick={() => {
+    <span>{checking ? "Zoomの接続を確認しています…" : disconnectPending ? "Zoomの接続解除を確認できません。再試行してください。" : connected ? "Zoom 連携済み" : "Zoomの会議には、まずアカウントを連携してください。"}</span>
+    <button type="button" className="btn btn--ghost" disabled={disabled || busy || checking} onClick={() => {
       setBusy(true); setError("");
       void (connected || disconnectPending ? disconnectZoom(base).then(() => { setConnected(false); setDisconnectPending(false); }).catch(e => { setDisconnectPending(true); throw e; }) : connectZoom(base, meetingUrl)).catch(e => setError(String(e.message))).finally(() => setBusy(false));
     }}>{disconnectPending ? "接続解除を再試行" : connected ? "Zoomの連携を解除" : "Zoomと連携"}</button>
