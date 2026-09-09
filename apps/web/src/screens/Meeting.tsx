@@ -39,7 +39,7 @@ export function Meeting(p: MeetingProps) {
   const usage = useRef(new MeetingUsageTracker());
   const [usageReceipt, setUsageReceipt] = useState<MeetingUsageReceipt | null>(null);
   const [aiUsage, setAiUsage] = useState<Record<string, number> | null>(null);
-  const [observeWithCaptions, setObserveWithCaptions] = useState(true);
+  const [observeWithCaptions, setObserveWithCaptions] = useState(false);
   const [url, setUrl] = useState(() => { try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState(p.settings.characterId);
@@ -312,8 +312,8 @@ export function Meeting(p: MeetingProps) {
         </div>
         <ZoomConnection base={p.settings.brokerUrl} meetingUrl={url} disabled={busy || joined} />
         {p.brokerMeeting?.attendee && persona?.id === MEETING_PERSONA_ID && <div className="field">
-          <label><input type="checkbox" checked={observeWithCaptions} onChange={e => setObserveWithCaptions(e.target.checked)} disabled={joined} /> 字幕で見守り、呼ばれたときだけAIと会話する（省コスト）</label>
-          <p className="hint">会議の字幕が必要です。字幕が使えない場合は、退出してこの設定を外すと音声で聞き取れます。</p>
+          <label><input type="checkbox" checked={observeWithCaptions} onChange={e => setObserveWithCaptions(e.target.checked)} disabled={joined} /> 字幕で見守り、呼ばれたときだけAIと会話する（省コスト・試験提供）</label>
+          <p className="hint">会議の字幕が必要です。会話品質を検証中です。呼びかけが届かない・会話が途切れる場合は、退出してこの設定を外してください。</p>
         </div>}
         <details><summary>話し方・カメラなどの設定</summary>
         <div className="field"><label>表示名（変更したいときだけ）</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>

@@ -310,7 +310,7 @@ export class MeetingSessionController {
   }
 
   private get usesObserver(): boolean {
-    return this.init.observer === "captions" || (this.init.observer !== "live" && this.init.role !== "bot" && this.init.meetingProvider === "attendee" && this.setting === "meeting");
+    return this.init.observer === "captions";
   }
 
   get providerId(): ProviderId {
