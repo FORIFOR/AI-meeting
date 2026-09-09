@@ -13,6 +13,19 @@ describe("address detection with Japanese readings of a romaji name", () => {
     it(`addressed: ${line}`, () => expect(d.detect(line).addressed).toBe(true));
   }
   it("a plain greeting keeps the character observing", () => expect(d.detect("こんにちは").addressed).toBe(false));
+  // Live captions can omit the comma after the name. Polite requests still address Yui.
+  for (const line of [
+    "ゆい 、 こんにちは。",
+    "ゆいこんにちは。私の声が聞こえたら聞こえますと返してください。",
+    "ゆい明日の15時から1時間の予定です。開始時刻と終了時刻を確認してください。",
+    "ユイ この 文章 を 読んで ください。",
+  ]) {
+    it(`recognizes a polite request without vocative punctuation: ${line}`, () => expect(d.detect(line).addressed).toBe(true));
+  }
+  it("does not treat a polite request to someone else as addressing Yui", () => {
+    expect(d.detect("開始時刻を確認してください。").addressed).toBe(false);
+    expect(d.detect("ゆいが確認してくださいって言ってた。").addressed).toBe(false);
+  });
   it("a third-person mention keeps the character observing", () => expect(d.detect("ゆいがそう言ってた").addressed).toBe(false));
   // Run 78: the rescore's 「ユイが昨日そう言ってたよね」 read as "without a request" — an adverb between が and 言ってた.
   it("reports 「…がそう言ってた」 as third person, not merely as a mention", () => expect(d.detect("ゆいが昨日そう言ってたよね").reason).toBe("name mentioned in third person"));

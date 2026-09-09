@@ -148,11 +148,11 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private static readonly GATE_HANGOVER_MS = 500;
   private loudUntil = 0;
   /**
-   * No utterance runs this long. Whatever the meters say, a turn held open past this is a gate that
-   * has stopped tracking the room, and a model that is never told the turn ended never answers — so
-   * it is closed, the model gets its turn boundary, and the next onset opens a new one.
+   * Bound a stuck microphone without cutting ordinary explanations and interview answers short.
+   * Eight seconds cut the final request off a nine-second utterance. The normal silence detector
+   * still closes promptly; this two-minute ceiling applies only when no end was detected.
    */
-  private static readonly MAX_OPEN_MS = 8000;
+  private static readonly MAX_OPEN_MS = 120_000;
   private openedAt = 0;
   /**
    * The first second of a session belongs to the room, not to the character. The VAD's noise floor

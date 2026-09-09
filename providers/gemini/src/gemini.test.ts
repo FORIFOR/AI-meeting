@@ -500,10 +500,12 @@ describe("the gate's fallback", () => {
    * while the room is still loud — and the room going quiet is what lets the next one open.
    */
   it("stops paying for a room that never goes quiet, and reopens when it does", async () => {
+    // Keep the fallback meter loud even if adaptive VAD classifies the steady tone as noise.
     const { p, ws } = await connected();
+    vi.spyOn((p as unknown as { vad: { readonly noiseFloor: number } }).vad, "noiseFloor", "get").mockReturnValue(-60);
     let ts = 0;
     const push = (amp: number, n: number) => { for (let i = 0; i < n; i++) { p.pushAudio(createFrame(amp > 0.01 ? sine(48000, 20, amp) : new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; } };
-    push(0.3, 500); // ten seconds of unbroken sound: forced shut at eight
+    push(0.3, 6500); // 130 seconds of unbroken sound: bounded at two minutes
     const audioSent = () => ws.sent.filter((m) => "realtimeInput" in m && (m as { realtimeInput: { audio?: unknown } }).realtimeInput.audio).length;
     const paidFor = audioSent();
     push(0.3, 200); // still loud: not one more chunk is bought
@@ -516,11 +518,27 @@ describe("the gate's fallback", () => {
     await p.disconnect();
   });
 
-  it("ends a turn that never ends, so the model always gets a boundary to answer at", async () => {
+  it("keeps a long spoken request open past eight seconds and closes after the speaker stops", async () => {
     const { p, ws } = await connected();
     let ts = 0;
-    // Ten seconds of unbroken speech-level sound: the meters never agree that the room stopped.
-    for (let i = 0; i < 500; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.3), 48000, ts)); ts += 20; }
+    for (let i = 0; i < 60; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    for (let i = 0; i < 600; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.03 + 0.27 * (Math.sin(i / 10) + 1) / 2), 48000, ts)); ts += 20; }
+    const ends = () => ws.sent.filter((m) => "realtimeInput" in m && (m as { realtimeInput: { activityEnd?: unknown } }).realtimeInput.activityEnd);
+    expect(p.gateStats.forced).toBe(0);
+    expect(ends()).toHaveLength(0);
+    for (let i = 0; i < 60; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    expect(ends()).toHaveLength(1);
+    expect(p.gateStats.forced).toBe(0);
+    await p.disconnect();
+  });
+
+  it("ends a turn that never ends, so the model always gets a boundary to answer at", async () => {
+    // Keep the fallback meter loud even if adaptive VAD classifies the steady tone as noise.
+    const { p, ws } = await connected();
+    vi.spyOn((p as unknown as { vad: { readonly noiseFloor: number } }).vad, "noiseFloor", "get").mockReturnValue(-60);
+    let ts = 0;
+    // More than two minutes of unbroken sound: the meters never agree that the room stopped.
+    for (let i = 0; i < 6500; i++) { p.pushAudio(createFrame(sine(48000, 20, 0.3), 48000, ts)); ts += 20; }
     const inputs = ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { activityStart?: unknown; activityEnd?: unknown } }[];
     expect(p.gateStats.forced).toBeGreaterThanOrEqual(1);
     expect(inputs.filter((m) => m.realtimeInput.activityEnd).length).toBeGreaterThanOrEqual(1);

@@ -33,7 +33,7 @@ export interface AddressDetectorOptions {
 
 const DEFAULT_AI_VOCATIVES = ["AIさん", "AIちゃん", "アシスタント", "ボット", "bot", "assistant", "the AI", "AI"];
 
-const JP_QUESTION = /(？|\?|ですか|ますか|でしょうか|かな[ぁあ]?[。]?$|どう思(う|います)|どうですか|どうかな|教えて|説明して|お願い(し|でき)|できますか|してくれ(る|ますか)|してもらえ|いかがですか|意見(を|は|ある)|どう(かな|でしょう)|なんだと思)/;
+const JP_QUESTION = /(？|\?|ですか|ますか|でしょうか|かな[ぁあ]?[。]?$|どう思(う|います)|どうですか|どうかな|教えて|説明して|[てで]ください|お願い(し|でき)|できますか|してくれ(る|ますか)|してもらえ|いかがですか|意見(を|は|ある)|どう(かな|でしょう)|なんだと思)/;
 const EN_QUESTION = /(\?|what do you think|your thoughts|could you|can you|would you|please|tell (us|me)|explain|what('s| is) your (take|opinion|view)|do you (think|agree)|any (ideas|thoughts)|how about you|thoughts\b|weigh in)/i;
 // 「と思う」 is narration only when nothing asks: 「〜と思う？」 asks the character what she thinks. Run 96:
 // 「ゆい、これはどう思う？」 reached the recogniser as 「唯イ、これはと思う？」 (「どう」 lost in a hole) and
@@ -85,7 +85,7 @@ export class AddressDetector {
     // `\b` is ASCII-only: after a Japanese name (「ゆい」) it never matches, so 「ねえゆい、…」 — the most
     // natural Japanese vocative — was read as narration. A boundary lookahead works for any script.
     const boundary = "(?=[\\s,、。！!？?:：]|$)";
-    this.vocativeStartRe = new RegExp(`^(?:(?:ねえ|ねぇ|なあ|hey|hi|ok|okay|えっと|あの)[\\s,、]*${alt}(?:さん|ちゃん|くん|先生)?${boundary}|${alt}(?:さん|ちゃん|くん|先生)?[,、。！!？?:：])`, "i");
+    this.vocativeStartRe = new RegExp(`^(?:(?:ねえ|ねぇ|なあ|hey|hi|ok|okay|えっと|あの)[\\s,、]*${alt}(?:さん|ちゃん|くん|先生)?${boundary}|${alt}(?:さん|ちゃん|くん|先生)?[\\s]*[,、。！!？?:：])`, "i");
     this.vocativeEndRe = new RegExp(`[,、\\s]${alt}(?:さん|ちゃん)?[\\s。！!？?]*$`, "i");
     const ai = (opts.aiVocatives ?? DEFAULT_AI_VOCATIVES).map(escapeRe);
     this.aiRe = new RegExp(`(?:^|[\\s,、])(?:${ai.join("|")})(?:さん|ちゃん)?(?:[\\s,、。！!？?:：]|$)`, "i");
