@@ -21,3 +21,5 @@ Remaining work: validate the fix in a hosted meeting; investigate any remaining 
 ## New user-provided Zoom room retry
 
 On 2026-09-09 at 11:14 UTC, the same deployed candidate was retried using the newly supplied Zoom room. Both bot creations succeeded, but both remained `joining` for the five-minute admission window. No audio cues were executed. Both leave requests succeeded and both final states were verified `ended` at 11:19 UTC. The reason for admission failure is not established; this does not constitute an audio regression result. See `zoom-new-room-retry.json`. The private meeting URL and credentials are excluded. Release remains BLOCKED.
+
+The subsequent admitted run completed 24 cues in 10 minutes but retained suppression and playback anomalies. See [the admitted Zoom retest](../zoom-new-room-20260909/README.md). Release remains BLOCKED.
