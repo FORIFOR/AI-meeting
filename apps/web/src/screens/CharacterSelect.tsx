@@ -81,7 +81,7 @@ export function CharacterSelect(p: CharacterSelectProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [list.length]);
 
-  if (!current) return <div className="pick"><p className="empty">キャラクターがありません。</p></div>;
+  if (!current) return <div className="pick"><p className="empty">キャラクターがありません。</p><button type="button" className="btn btn--ghost" onClick={p.onDone}>戻る</button></div>;
 
   const move = (d: number) => setIndex((i) => (i + d + list.length) % list.length);
   const choose = () => {

@@ -140,12 +140,11 @@ export function App() {
 
   const onContinue = useCallback(
     (mode: ConversationMode) => {
-      const list = personasByMode.get(mode) ?? [];
-      const single = list.length === 1 ? list[0] : undefined;
-      if (single && !(single.params?.length)) startSession(single, {});
-      else setScreen({ name: "setup", mode });
+      // Always show the setup screen first, even for a mode with one default persona.
+      // This keeps a visible "戻る" action after a purpose has been selected.
+      setScreen({ name: "setup", mode });
     },
-    [personasByMode, startSession],
+    [],
   );
 
   const inSession = screen.name === "session" || (screen.name === "meeting" && !!botParams);
