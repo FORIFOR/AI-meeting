@@ -248,8 +248,8 @@ export async function createMeetingConnector(id: "recall" | "attendee" | "zoom_n
       // Same contract, different economics: Attendee streams the character's audio back on the socket it
       // sends on, so there is no clip encoding and no WebGL surcharge to pay for the avatar.
       const mod = await import("@rcai/connector-attendee");
-      const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string }>>(mod, "AttendeeConnector", "BLOCKED_BY_CONNECTOR_ATTENDEE");
-      return new C({ brokerUrl: o.brokerUrl });
+      const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string; botPageQuery?: Record<string, string> }>>(mod, "AttendeeConnector", "BLOCKED_BY_CONNECTOR_ATTENDEE");
+      return new C({ brokerUrl: o.brokerUrl, botPageQuery: o.botPageQuery });
     }
     default:
       throw new Error(`BLOCKED_BY_CONNECTOR_${id.toUpperCase()}: not implemented`);

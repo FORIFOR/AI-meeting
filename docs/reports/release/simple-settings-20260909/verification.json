@@ -1,0 +1,11 @@
+{
+  "hostingVersion": "684aba4194f5cc7d",
+  "brokerRevision": "ai-meeting-broker-00011-swv",
+  "indexSha256": "88c03b59bf92367cdf59694049e4348a09526d4f8aacd11470ac07c2da34d4ec",
+  "publicMatchesLocal": true,
+  "targetedTests": 44,
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "balance": "operator-confirmed snapshot, not live",
+  "newLiveMeetingTest": false
+}

@@ -14,6 +14,7 @@ export interface WebSocketLike {
 export interface AttendeeConnectorOptions {
   /** services/token-broker base URL. The API key never reaches this side. */
   brokerUrl: string;
+  botPageQuery?: Record<string, string>;
   wsFactory?: (url: string) => WebSocketLike;
   fetchImpl?: typeof fetch;
   clock?: () => number;
@@ -55,7 +56,7 @@ export class AttendeeConnector implements MeetingConnector {
     const res = await fetchImpl(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/meeting/attendee/bots`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ meetingUrl: req.meetingUrl, botName: req.displayName, botPageQuery: req.options }),
+      body: JSON.stringify({ meetingUrl: req.meetingUrl, botName: req.displayName, botPageQuery: { ...this.opts.botPageQuery, ...req.options } }),
     });
     const body = (await res.json().catch(() => ({}))) as { botId?: string; clientWsUrl?: string; sampleRate?: number; error?: string; detail?: string };
     if (!res.ok || !body.botId || !body.clientWsUrl) throw new Error(`${body.error ?? "attendee_join_failed"}${body.detail ? `: ${body.detail}` : ""}`);

@@ -173,7 +173,7 @@ export function App() {
           onContinue={onContinue}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
-          onMeeting={() => setScreen({ name: "meetings" })}
+          onMeeting={() => setScreen({ name: "meeting" })}
         />
       )}
       {screen.name === "settings" && (
@@ -197,7 +197,7 @@ export function App() {
         />
       )}
       {screen.name === "meeting" && (
-        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} brokerMeeting={brokerMeeting} onBack={() => setScreen(botParams ? { name: "home" } : { name: "meetings" })} />
+        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen(botParams ? { name: "home" } : { name: "meetings" })} />
       )}
       {screen.name === "meetings" && (
         <Meetings
@@ -213,6 +213,7 @@ export function App() {
       )}
       {screen.name === "setup" && (
         <Setup
+          availability={availability}
           agent={agent}
           mode={screen.mode}
           personas={personasByMode.get(screen.mode) ?? []}

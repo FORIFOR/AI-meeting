@@ -36,7 +36,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background var(--app-t-fast) var(--app-ease), color var(--app-t-fast) var(--app-ease), border-color var(--app-t-fast) var(--app-ease);
 }
 .btn:hover { background: var(--app-surface-sunk); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; background: none; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn--primary { background: var(--app-action-primary); border-color: var(--app-action-primary); color: var(--app-text-on-fill); font-weight: var(--app-weight-bold); }
 .btn--primary:hover { background: var(--app-action-primary-hover); border-color: var(--app-action-primary-hover); }
 .btn--ghost { border-color: transparent; color: var(--app-text-secondary); padding-inline: var(--app-space-2); min-height: 40px; }
@@ -355,3 +355,5 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .task-review { border-top: 1px solid #777; margin-top: 16px; padding-top: 12px; }
 .task-review h3 { font-size: 15px; margin: 0 0 8px; }
 .task-review button { color: #111; background: #eee; border: 1px solid #999; border-radius: 6px; padding: 8px; cursor: pointer; }
+
+.credit-balance { padding: 12px 16px; margin: 16px 0; border: 1px solid var(--line, #ddd); border-radius: 8px; font-size: 13px; line-height: 1.7; }

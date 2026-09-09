@@ -393,6 +393,7 @@ export class MeetingSessionController {
         name: displayName,
         proactivity: this.init.proactivity,
         language: persona.language,
+        ...(provider === "attendee" ? { outbound: "page" } : {}),
         vision: this.init.vision ? "model" : this.init.visualCues === false ? "off" : "cues",
         ...(this.voiceId() ? { voice: this.voiceId()! } : {}),
       },

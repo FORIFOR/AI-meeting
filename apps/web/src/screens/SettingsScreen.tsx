@@ -43,7 +43,7 @@ export function SettingsScreen({ settings, dispatch, availability, agentHealth, 
         <p className="group__title">会話</p>
         <div className="rows">
           <div className="row">
-            <span className="row__label">エンジン</span>
+            <span className="row__label">会話AI</span>
             <span className="row__value">
               <select className="select" value={settings.engine} onChange={(e) => dispatch({ type: "engine", engine: e.target.value as EngineSelection })}>
                 {ENGINES.map((e) => (
@@ -108,7 +108,7 @@ export function SettingsScreen({ settings, dispatch, availability, agentHealth, 
               >
                 <option value="">このキャラクターの声</option>
                 {voiceOptions.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label} — {v.note}</option>
+                  <option key={v.id} value={v.id}>{v.note}（{v.label}）</option>
                 ))}
               </select>
             </span>

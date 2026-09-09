@@ -164,6 +164,7 @@ export function createApp(deps: AppDeps): Hono {
         recall: Boolean(env.RECALL_API_KEY),
       },
       meeting: {
+        attendee: Boolean(env.ATTENDEE_API_KEY),
         recall: Boolean(env.RECALL_API_KEY),
         // Operational, not diagnostic: an empty Recall account looks like an outage from the outside.
         creditRefusedAt: lastCreditRefusalAt,

@@ -24,7 +24,7 @@ describe("Attendee audio codec", () => {
 });
 
 describe("AttendeeConnector", () => {
-  const join = async (ws: WebSocketLike, extra: { clock?: () => number } = {}) => {
+  const join = async (ws: WebSocketLike, extra: { clock?: () => number; botPageQuery?: Record<string, string> } = {}) => {
     const calls: { url: string; init?: RequestInit }[] = [];
     const connector = new AttendeeConnector({
       brokerUrl: "http://broker",
@@ -38,6 +38,12 @@ describe("AttendeeConnector", () => {
     const session = await connector.join({ meetingUrl: "https://meet.google.com/abc-defg-hij", displayName: "Yui", privacyMode: "default" });
     return { session, calls };
   };
+
+  it("forwards the selected character, purpose and voice to the hosted bot", async () => {
+    const chosen = { character: "haru", persona: "english_beginner", voice: "Aoede", engine: "google", outbound: "page" };
+    const { calls } = await join(fakeWs(), { botPageQuery: chosen });
+    expect(JSON.parse(String(calls[0]!.init?.body)).botPageQuery).toEqual(chosen);
+  });
 
   it("says what it can do: audio out is a stream, not clips", () => {
     const c = new AttendeeConnector({ brokerUrl: "http://broker" });

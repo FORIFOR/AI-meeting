@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Persona } from "@rcai/persona-core";
+import { VOICE_OPTIONS, type Persona } from "@rcai/persona-core";
+import { purposeLabel } from "../components/choiceLabels.js";
+import { blockedReason } from "../components/characters.js";
+import type { BrokerHealth } from "../api/health.js";
+import { CreditBalance } from "../components/CreditBalance.js";
+import { PRODUCTS } from "./Home.js";
 import { MEETING_PERSONA_ID, defaultProactivityFor, type MeetingStatus, type ParticipationState, type Proactivity } from "@rcai/meeting-core";
 import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
-import { settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
+import { chosenVoice, decide, settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
 import { MeetingSessionController, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
 import { pillFor } from "../session/pill.js";
 
@@ -14,7 +19,8 @@ export interface MeetingProps {
   characters: CharacterEntry[];
   /** Present when this page runs inside the Recall bot (Output Media). */
   botParams?: { token: string; brokerUrl?: string; botId?: string; characterId?: string; personaId?: string; displayName?: string; proactivity?: string } | null;
-  brokerMeeting?: { recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean } | null;
+  broker?: BrokerHealth | null;
+  brokerMeeting?: { attendee?: boolean; recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean } | null;
   onBack: () => void;
 }
 
@@ -28,6 +34,8 @@ export function Meeting(p: MeetingProps) {
   const isBot = Boolean(p.botParams);
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
+  const [characterId, setCharacterId] = useState(p.settings.characterId);
+  const [voices, setVoices] = useState<Record<string, string>>({});
   const [personaId, setPersonaId] = useState("");
   /**
    * Talking to the character one to one is the ordinary case, and there waiting to be called by name
@@ -74,11 +82,15 @@ export function Meeting(p: MeetingProps) {
   const stage = useRef<HTMLDivElement>(null);
   const t0 = useRef(Date.now());
 
-  const character = useMemo(() => p.characters.find((c) => c.id === (isBot ? botConfig?.characterId : p.settings.characterId)) ?? p.characters[0], [p.characters, p.settings.characterId, isBot, botConfig]);
+  const character = useMemo(() => p.characters.find((c) => c.id === (isBot ? botConfig?.characterId : characterId)) ?? p.characters[0], [p.characters, characterId, isBot, botConfig]);
   const persona = useMemo(() => p.personas.find((x) => x.id === (isBot ? botConfig?.personaId : personaId)) ?? p.personas.find((x) => x.id === MEETING_PERSONA_ID) ?? p.personas.find((x) => x.mode === "free_talk") ?? p.personas[0], [p.personas, personaId, isBot, botConfig]);
   const displayName = (isBot ? botConfig?.displayName : name) || character?.name || "Yui";
+  const selectedProvider = decide(p.settings, p.availability ?? undefined).conversation;
+  const voiceKey = `${character?.id}:${selectedProvider}`;
+  const selectedVoice = voices[voiceKey] ?? chosenVoice(p.settings, character?.id, selectedProvider) ?? "";
+  const voiceOptions = VOICE_OPTIONS[selectedProvider];
   const strict = p.settings.privacyMode === "strict_local";
-  const blocked = strict ? "BLOCKED_BY_STRICT_LOCAL" : p.brokerMeeting && !p.brokerMeeting.recall ? "BLOCKED_BY_RECALL_KEY" : p.brokerMeeting && !p.brokerMeeting.recallPublicUrl ? "BLOCKED_BY_RECALL_PUBLIC_URL" : null;
+  const blocked = strict ? "BLOCKED_BY_STRICT_LOCAL" : p.brokerMeeting && !(p.brokerMeeting.recall || p.brokerMeeting.attendee) ? "BLOCKED_BY_RECALL_KEY" : p.brokerMeeting && !p.brokerMeeting.recallPublicUrl ? "BLOCKED_BY_RECALL_PUBLIC_URL" : null;
 
   const note = (text: string) => setTimeline((t) => [...t.slice(-60), { at: Date.now() - t0.current, text }]);
 
@@ -107,7 +119,7 @@ export function Meeting(p: MeetingProps) {
         botBrokerUrl: isBot ? (botOrigins.brokerUrl ?? p.botParams?.brokerUrl) : undefined,
         botAgentUrl: isBot ? botOrigins.agentUrl : undefined,
         botActivation: isBot && activation ? activation : undefined,
-        voiceId: isBot ? botConfig?.voice : undefined,
+        voiceId: isBot ? botConfig?.voice : selectedVoice || undefined,
         outboundPath: (isBot ? botConfig?.outbound : undefined) === "page" ? "page" : "socket",
         framing: isBot ? (botConfig?.framing === "default" ? "default" : "meeting") : "default",
         avatarFps: isBot && Number(botConfig?.fps) > 0 ? Number(botConfig?.fps) : undefined,
@@ -115,7 +127,7 @@ export function Meeting(p: MeetingProps) {
         visualCues: (isBot ? botConfig?.vision : vision) !== "off",
         // Which vendor is carrying this call. The bot page learns it from its own URL; without it the
         // page cannot know that Attendee sends no transcripts and must listen for itself.
-        meetingProvider: (isBot ? botConfig?.provider : undefined) === "attendee" ? "attendee" : undefined,
+        meetingProvider: (isBot ? botConfig?.provider : p.brokerMeeting?.attendee ? "attendee" : undefined) === "attendee" ? "attendee" : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
@@ -244,16 +256,29 @@ export function Meeting(p: MeetingProps) {
         <div>
           <div className="page__eyebrow">同席</div>
           <h1 className="page__title">会議に参加</h1>
-          <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。名前で呼ばれたときだけ答えます（{POLICY_JA[policy]}）。</p>
+          <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。相手・用途・声を選んで、参加してください。</p>
         </div>
-        {blocked && <p className="err">{blocked}{blocked === "BLOCKED_BY_RECALL_PUBLIC_URL" ? " — broker を公開URL(ngrok等)で公開し RECALL_PUBLIC_URL / RECALL_BOT_PAGE_URL を設定してください" : blocked === "BLOCKED_BY_RECALL_KEY" ? " — services/token-broker/.env に RECALL_API_KEY を設定してください" : ""}</p>}
+        {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
-        <div className="field"><label>表示名</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
-        <div className="field"><label>相手</label>
-          <select className="select" value={persona?.id ?? ""} onChange={(e) => setPersonaId(e.target.value)} disabled={joined}>
-            {p.personas.map((x) => <option key={x.id} value={x.id}>{x.name} — {x.mode}</option>)}
+        <CreditBalance enabled={!strict} />
+        <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
+          <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
+            {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker ?? null, strict)}>{c.name}{blockedReason(c, p.broker ?? null, strict) ? "（準備中）" : ""}</option>)}
           </select>
         </div>
+        <div className="field"><label htmlFor="meeting-purpose">2. やりたいこと</label>
+          <select id="meeting-purpose" className="select" value={persona?.id ?? ""} onChange={(e) => setPersonaId(e.target.value)} disabled={joined}>
+            {p.personas.map((x) => <option key={x.id} value={x.id}>{PRODUCTS.find(p => p.mode === x.mode)?.name ?? "会議"} · {purposeLabel(x.name)}</option>)}
+          </select>
+        </div>
+        <div className="field"><label htmlFor="meeting-voice">3. 声を選ぶ</label>
+          <select id="meeting-voice" className="select" value={selectedVoice} onChange={e => setVoices(v => ({ ...v, [voiceKey]: e.target.value }))} disabled={joined}>
+            <option value="">おまかせ（相手に合う声）</option>
+            {voiceOptions.map(v => <option key={v.id} value={v.id}>{v.note}（{v.label}）</option>)}
+          </select>
+        </div>
+        <details><summary>話し方・カメラなどの設定</summary>
+        <div className="field"><label>表示名（変更したいときだけ）</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
         <div className="field"><label>発言のしかた</label>
           <select className="select" value={proactivity ?? defaultProactivityFor({ personaId: persona?.id, mode: persona?.mode })} onChange={(e) => setProactivity(e.target.value as Proactivity)} disabled={joined}>
             <option value="addressed_only">名前で呼ばれたときだけ（会議向け）</option>
@@ -270,12 +295,13 @@ export function Meeting(p: MeetingProps) {
             <option value="off">見ない</option>
           </select>
         </div>
-        <div className="field"><label>接続方式</label>
+        <div hidden={!!p.brokerMeeting?.attendee} className="field"><label>接続方式</label>
           <select className="select" value={mode} onChange={(e) => setMode(e.target.value as typeof mode)} disabled={joined}>
             <option value="output_media">output_media — bot がこのアプリを表示・発話（推奨、映像あり）</option>
             <option value="relay">relay — このブラウザで会話（音声出力はMP3クリップ）</option>
           </select>
         </div>
+        </details>
         <div className="actions">
           <button type="button" className="btn btn--ghost" onClick={p.onBack} disabled={busy}>← 戻る</button>
           {!joined ? (

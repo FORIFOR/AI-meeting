@@ -17,7 +17,7 @@ import type { Settings } from "../state/settings.js";
 
 export interface MeetingsProps {
   settings: Settings;
-  brokerMeeting?: { recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean } | null;
+  brokerMeeting?: { attendee?: boolean; recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean } | null;
   onOpenMeeting: (id: string) => void;
   onUrlFlow: () => void;
   onBack: () => void;
@@ -95,7 +95,7 @@ export function Meetings(p: MeetingsProps) {
   const past = sortMeetings(meetings.filter(isFinished));
   const live = sortMeetings(meetings.filter((m) => !isFinished(m)));
   const connected = status?.connected === true;
-  const missing = !p.brokerMeeting?.recall
+  const missing = !(p.brokerMeeting?.recall || p.brokerMeeting?.attendee)
     ? { text: "会議に参加する準備ができていません（キーが未設定）。", code: "BLOCKED_BY_RECALL_KEY" }
     : !p.brokerMeeting?.recallPublicUrl
       ? { text: "会議に参加する準備ができていません（公開URLが未設定）。", code: "BLOCKED_BY_RECALL_PUBLIC_URL" }

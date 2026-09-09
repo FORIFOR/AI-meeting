@@ -4,7 +4,7 @@ export interface BrokerHealth {
   ok: boolean;
   providers: { openai: boolean; google: boolean; livekit: boolean; heygen: boolean; tavus: boolean };
   /** Meeting connector readiness (Recall key + public URLs) — see docs/integration-contracts.md "Meeting". */
-  meeting?: { recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean };
+  meeting?: { attendee?: boolean; recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean };
 }
 export interface AgentHealth {
   ok: boolean;

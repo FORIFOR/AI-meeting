@@ -1,9 +1,10 @@
+import { purposeLabel, optionLabel } from "../components/choiceLabels.js";
 import { useMemo, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import type { CharacterEntry } from "../integrations/registry.js";
 import { VOICE_OPTIONS, localVoiceOptions } from "@rcai/persona-core";
-import { chosenVoice, decide, type Settings, type SettingsAction } from "../state/settings.js";
+import { chosenVoice, decide, type Availability, type Settings, type SettingsAction } from "../state/settings.js";
 import { PRODUCTS } from "./Home.jsx";
 
 export interface SetupProps {
@@ -11,6 +12,7 @@ export interface SetupProps {
   personas: Persona[];
   characters: CharacterEntry[];
   settings: Settings;
+  availability?: Availability | null;
   dispatch: (a: SettingsAction) => void;
   /** Local voices depend on the machine; the agent reports the ones actually installed. */
   agent?: { tts?: { voices?: string[] } } | null;
@@ -32,7 +34,7 @@ export function Setup(p: SetupProps) {
   }, [persona, params]);
   const character = p.characters.find((c) => c.id === p.settings.characterId) ?? p.characters[0];
   // The voice belongs next to "who am I talking to", not buried in settings — it is chosen at the same moment.
-  const providerId = decide(p.settings).conversation;
+  const providerId = decide(p.settings, p.availability ?? undefined).conversation;
   const voiceOptions = providerId === "local" ? localVoiceOptions(p.agent?.tts?.voices) : VOICE_OPTIONS[providerId];
 
   if (!persona) {
@@ -61,7 +63,7 @@ export function Setup(p: SetupProps) {
               <span className="chips">
                 {p.personas.map((x) => (
                   <button key={x.id} type="button" className={`chip ${x.id === persona.id ? "is-active" : ""}`} onClick={() => setPersonaId(x.id)}>
-                    {x.name}
+                    {purposeLabel(x.name)}
                   </button>
                 ))}
               </span>
@@ -75,7 +77,7 @@ export function Setup(p: SetupProps) {
               {spec.type === "select" ? (
                 <select className="select" value={values[spec.key]} onChange={(e) => setParams({ ...params, [spec.key]: e.target.value })}>
                   {(spec.options ?? []).map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>{optionLabel(o)}</option>
                   ))}
                 </select>
               ) : (
@@ -89,7 +91,7 @@ export function Setup(p: SetupProps) {
           <span className="row__value">{character?.name ?? "—"} <span className="row__chev">›</span></span>
         </button>
         <div className="row">
-          <span className="row__label">声</span>
+          <span className="row__label">3. 声を選ぶ</span>
           <span className="row__value">
             <select
               className="select"
@@ -99,7 +101,7 @@ export function Setup(p: SetupProps) {
             >
               <option value="">{character?.name ?? "この相手"}の声</option>
               {voiceOptions.map((v) => (
-                <option key={v.id} value={v.id}>{v.label} — {v.note}</option>
+                <option key={v.id} value={v.id}>{v.note}（{v.label}）</option>
               ))}
             </select>
           </span>
