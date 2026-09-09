@@ -2,6 +2,25 @@
 import { execFileSync } from "node:child_process";
 
 const vertex = process.env.GEMINI_BACKEND !== "developer";
+// Hosted credentials are never taken from the local/self-hosted Attendee environment.
+const hostedKey = process.env.HOSTED_ATTENDEE_API_KEY?.trim();
+if (process.env.ATTENDEE_API_KEY && !hostedKey) {
+  console.error("BLOCKED: use a dedicated HOSTED_ATTENDEE_API_KEY; ATTENDEE_API_KEY may belong to a local server.");
+  process.exit(2);
+}
+if (hostedKey) {
+  try {
+    const response = await fetch("https://app.attendee.dev/api/v1/bots", {
+      headers: { Authorization: `Token ${hostedKey}`, accept: "application/json" },
+      signal: AbortSignal.timeout(15000), redirect: "error",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    console.log("Hosted Attendee authentication passed (read-only; admission and credit balance remain unverified).");
+  } catch (error) {
+    console.error(`BLOCKED: Hosted Attendee authentication failed (${error.message}). No deployment changes made.`);
+    process.exit(2);
+  }
+}
 const required = ["PROJECT_ID", "MEETING_TOKEN_SECRET", ...(vertex ? [] : ["GEMINI_API_KEY"])];
 for (const name of required) if (!process.env[name]) { console.error(`${name} is required`); process.exit(2); }
 const project = process.env.PROJECT_ID;
@@ -13,17 +32,18 @@ const secretNames = {
   MEETING_TOKEN_SECRET: `${service}-meeting-token-secret`,
   ...(!vertex ? { GEMINI_API_KEY: `${service}-gemini-api-key` } : {}),
 };
-if (process.env.ATTENDEE_API_KEY) secretNames.ATTENDEE_API_KEY = `${service}-attendee-api-key`;
-if (process.env.ATTENDEE_WEBHOOK_SECRET) secretNames.ATTENDEE_WEBHOOK_SECRET = `${service}-attendee-webhook-secret`;
+if (hostedKey) secretNames.ATTENDEE_API_KEY = `${service}-hosted-attendee-api-key`;
+if (process.env.HOSTED_ATTENDEE_WEBHOOK_SECRET) secretNames.ATTENDEE_WEBHOOK_SECRET = `${service}-hosted-attendee-webhook-secret`;
 function run(args, input) { return execFileSync("gcloud", args, { input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "inherit"] }).trim(); }
 function ensureSecret(name, value) {
   try { run(["secrets", "describe", name, "--project", project]); } catch { run(["secrets", "create", name, "--project", project, "--replication-policy=automatic"]); }
-  run(["secrets", "versions", "add", name, "--project", project, "--data-file=-"], `${value}\n`);
+  run(["secrets", "versions", "add", name, "--project", project, "--data-file=-"], value);
 }
 run(["config", "set", "project", project]);
 run(["services", "enable", "run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "secretmanager.googleapis.com", "aiplatform.googleapis.com"]);
 try { run(["artifacts", "repositories", "describe", repo, "--location", region, "--project", project]); } catch { run(["artifacts", "repositories", "create", repo, "--repository-format=docker", "--location", region, "--project", project, "--description=AI Meeting images"]); }
-for (const [key, name] of Object.entries(secretNames)) ensureSecret(name, process.env[key]);
+for (const [key, name] of Object.entries(secretNames)) ensureSecret(name,
+  key === "ATTENDEE_API_KEY" ? hostedKey : key === "ATTENDEE_WEBHOOK_SECRET" ? process.env.HOSTED_ATTENDEE_WEBHOOK_SECRET : process.env[key]);
 run(["builds", "submit", ".", "--project", project, "--config", "deploy/gcp/cloudbuild.broker.yaml", `--substitutions=_IMAGE=${image}`]);
 const envVars = ["HOST=0.0.0.0", "RCAI_RELEASE_CHANNEL=beta", "ATTENDEE_API_BASE_URL=https://app.attendee.dev"];
 if (process.env.BROKER_PUBLIC_URL) envVars.push(`RECALL_PUBLIC_URL=${process.env.BROKER_PUBLIC_URL}`);

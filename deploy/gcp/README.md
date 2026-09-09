@@ -59,8 +59,11 @@ Set `GEMINI_BACKEND=developer` with `GEMINI_API_KEY` only to opt back into the D
 Keep `MAX_INSTANCES=1`: relay ticket replay tracking and meeting state are instance-local.
 The relay tickets expire after two minutes; each reconnect obtains a new ticket.
 Cloud Run WebSocket requests use a 3600-second timeout. Add
-`ATTENDEE_API_KEY`, `ATTENDEE_WEBHOOK_SECRET`, `BROKER_PUBLIC_URL`, and `WEB_PUBLIC_URL` when the
-meeting transport is ready. The script never prints secret values.
+`HOSTED_ATTENDEE_API_KEY`, `HOSTED_ATTENDEE_WEBHOOK_SECRET`, `BROKER_PUBLIC_URL`, and `WEB_PUBLIC_URL` when the
+meeting transport is ready. Use credentials issued by app.attendee.dev, not the local Attendee server.
+The script checks Hosted authentication before changing cloud resources and stores the key in a
+dedicated Hosted secret. Authentication success does not prove sufficient credits or Meet admission.
+The script never prints secret values.
 
 ## Static web hosting
 

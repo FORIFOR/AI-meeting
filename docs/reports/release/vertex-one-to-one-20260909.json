@@ -3,14 +3,15 @@
   "scope": "Vertex AI Live one-to-one Meet scenario with Yui and an automated tester; no user speech",
   "engine": "google",
   "meeting": "Google Meet",
-  "verdict": "GO",
+  "verdict": "NO-GO",
+  "correction": "The test used local Attendee infrastructure. Automated response-presence checks did not verify all semantic requirements. Cloud-only admission and audio quality have not passed.",
   "checks": {
     "greeting": "PASS",
     "name_free_opening": "PASS",
     "news_unknown_handling": "PASS",
     "weather_unknown_handling": "PASS",
     "follow_up_without_name": "PASS",
-    "dates_and_numbers": "PASS",
+    "dates_and_numbers": "UNVERIFIED",
     "unknown_company": "PASS",
     "unshared_materials": "PASS",
     "self_correction": "PASS",
@@ -21,7 +22,8 @@
   },
   "notes": [
     "Local VAD detected the remote tester speech and produced an interrupted event with zero audible character audio after cut-in.",
-    "Audio continuity metrics were DEGRADED by the Attendee test host under load; every scripted reply remained audible and all behavioral checks passed."
+    "Audio continuity metrics were DEGRADED; their cause was not established. Responses were audible, but this does not establish full behavioral or quality acceptance.",
+    "Hosted authentication returned HTTP 401. The Hosted dashboard shows -14.15 credits and blocks bot creation."
   ],
-  "release_decision": "GO"
+  "release_decision": "NO-GO"
 }
