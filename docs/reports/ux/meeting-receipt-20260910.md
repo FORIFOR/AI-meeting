@@ -14,3 +14,5 @@ Validation:
 - No paid AI sessions or meeting Bots were created for this UI change.
 
 Release decision is governed by `docs/reports/release/meeting-receipt-gate-20260910.json`. Public release remains blocked by missing current-candidate measurements and human evaluation. The 30-minute cost experiment from the preceding change does not establish meeting quality; caption observation remains opt-in. Current real Meet/Zoom access and 15-person, three-session-per-person evaluation evidence were requested. No release thresholds or approval policy were weakened to make the gate pass.
+
+Published frontend source `6c34a1d` as Firebase Hosting version `4c8ce99d8e717e42` at 2026-09-09 16:51:42 UTC. Public HTML and the JavaScript containing the receipt matched the production build byte for byte; broker health returned 200. The broker was not redeployed for this frontend change.
