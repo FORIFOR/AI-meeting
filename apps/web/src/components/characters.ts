@@ -16,8 +16,8 @@ export const PLATE: Record<string, string> = { yui: "結", haru: "春", reina: "
 /** UI wording for a BLOCKED_BY_* code; the code itself stays in the tooltip and the reports. */
 export const BLOCKED_JA: Record<string, string> = {
   BLOCKED_BY_STRICT_LOCAL: "完全ローカル中は使えません",
-  BLOCKED_BY_HEYGEN_KEY: "APIキーが未設定です",
-  BLOCKED_BY_TAVUS_KEY: "APIキーが未設定です",
+  BLOCKED_BY_HEYGEN_KEY: "To be continued",
+  BLOCKED_BY_TAVUS_KEY: "To be continued",
   NO_CHARACTER: "キャラクターがありません",
 };
 
