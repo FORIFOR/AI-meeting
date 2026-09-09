@@ -1,4 +1,4 @@
-import type { Availability } from "../state/settings.js";
+import type { Availability, Settings } from "../state/settings.js";
 
 export interface BrokerHealth {
   ok: boolean;
@@ -41,12 +41,17 @@ export function isLoopbackUrl(url: string): boolean {
   }
 }
 
+/** Explicit cloud routing does not use the local agent; auto and local overrides still need discovery. */
+export function shouldProbeLocalAgent(settings: Pick<Settings, "engine" | "privacyMode" | "advanced">): boolean {
+  return settings.engine === "auto" || settings.engine === "local" || settings.privacyMode === "strict_local" || Object.values(settings.advanced).includes("local");
+}
+
 /** Under strict_local the broker (cloud gateway) is never contacted and the agent is probed only on loopback. */
-export async function probe(brokerUrl: string, agentUrl: string, privacyMode: string): Promise<{ broker: BrokerHealth | null; agent: AgentHealth | null; availability: Availability }> {
+export async function probe(brokerUrl: string, agentUrl: string, privacyMode: string, options: { agent?: boolean } = {}): Promise<{ broker: BrokerHealth | null; agent: AgentHealth | null; availability: Availability }> {
   const strict = privacyMode === "strict_local";
   const [broker, agent] = await Promise.all([
     strict ? Promise.resolve(null) : getJson<BrokerHealth>(`${brokerUrl.replace(/\/$/, "")}/health`),
-    strict && !isLoopbackUrl(agentHttpUrl(agentUrl)) ? Promise.resolve(null) : getJson<AgentHealth>(`${agentHttpUrl(agentUrl)}/health`),
+    options.agent === false || (strict && !isLoopbackUrl(agentHttpUrl(agentUrl))) ? Promise.resolve(null) : getJson<AgentHealth>(`${agentHttpUrl(agentUrl)}/health`),
   ]);
   return {
     broker,

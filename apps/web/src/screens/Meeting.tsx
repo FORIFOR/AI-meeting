@@ -204,8 +204,9 @@ export function Meeting(p: MeetingProps) {
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
         if (origins.brokerUrl && origins.agentUrl) {
-          const { probe } = await import("../api/health.js");
-          const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode).catch(() => null);
+          const { probe, shouldProbeLocalAgent } = await import("../api/health.js");
+          const engine = (act.botPageQuery.engine as typeof p.settings.engine | undefined) ?? p.settings.engine;
+          const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode, { agent: shouldProbeLocalAgent({ ...p.settings, engine }) }).catch(() => null);
           if (h) { setBotAvailability(h.availability); note(`engines · local ${h.availability.local} · openai ${h.availability.openai} · google ${h.availability.google}`); }
         }
         setActivation({ sessionId: act.sessionId, botId: act.botId, clientToken: act.clientToken });

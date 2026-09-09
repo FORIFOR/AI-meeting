@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
-import { probe, type AgentHealth, type BrokerHealth } from "./api/health.js";
+import { probe, shouldProbeLocalAgent, type AgentHealth, type BrokerHealth } from "./api/health.js";
 import { withRealistic } from "./components/characters.js";
 import { FALLBACK_PERSONAS } from "./content/fallbackPersonas.js";
 import { loadCharacterEntries, loadPersonas, type CharacterEntry } from "./integrations/registry.js";
@@ -102,11 +102,11 @@ export function App() {
   }, []);
 
   const refreshHealth = useCallback(async () => {
-    const r = await probe(settings.brokerUrl, settings.agentUrl, settings.privacyMode);
+    const r = await probe(settings.brokerUrl, settings.agentUrl, settings.privacyMode, { agent: shouldProbeLocalAgent(settings) });
     setBroker(r.broker);
     setAgent(r.agent);
     setAvailability(r.availability);
-  }, [settings.brokerUrl, settings.agentUrl, settings.privacyMode]);
+  }, [settings.brokerUrl, settings.agentUrl, settings.privacyMode, settings.engine, settings.advanced]);
 
   useEffect(() => {
     void refreshHealth();
