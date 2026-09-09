@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-09-09T13:30:00.242Z",
+  "buildId": "614d403b2c0b2c20d5309d5d553f5f471d1f533b719df3b4f0f40c03125415a4",
+  "status": "BLOCKED",
+  "evidence": "docs/reports/release/zoom-oauth-20260909/evidence.json",
+  "scope": {
+    "modes": [],
+    "platforms": []
+  },
+  "rows": [
+    {
+      "id": "candidate",
+      "status": "PASS",
+      "detail": "614d403b2c0b2c20d5309d5d553f5f471d1f533b719df3b4f0f40c03125415a4"
+    },
+    {
+      "id": "scope.core",
+      "status": "BLOCKED",
+      "detail": "beta"
+    },
+    {
+      "id": "scope.modes",
+      "status": "BLOCKED",
+      "detail": "No mode is approved for public release."
+    },
+    {
+      "id": "scope.platforms",
+      "status": "BLOCKED",
+      "detail": "No meeting platform is approved for public release."
+    },
+    {
+      "id": "voice.firstAudioP50Ms",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.firstAudioP95Ms",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.over4Seconds",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.bargeInP95Ms",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.accidentalInterruptionRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.intentRecognitionErrorRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.tenTurnCompletionRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.brokenAudio",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.lostEndings",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.unexpectedLanguageSwitch",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "voice.repeatedBackchannels",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "conversation.rejectedPremiseReused",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "conversation.fabricatedMemory",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "conversation.repeatedQuestions",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "conversation.repetitiveLoop",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "conversation.ignoredFinish",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.diagnosis",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.dangerousCertainty",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.exclusiveDependence",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.unauthorizedAction",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.fabricatedToolSuccess",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "trust.missedUrgentSafetyResponse",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.permanentSilence",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.reconnectLoop",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.duplicateAudio",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.repeatedReply",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.audioAfterLeave",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.crossSessionLeak",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.crossUserLeak",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.timeout.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.rateLimit.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.socketDisconnect.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.network10Seconds.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.deviceSwitch.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.bluetoothDisconnect.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.leave.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.kick.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.sttUnavailable.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "failure.visionUnavailable.recoveryRate",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.participants",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.minimumSessionsPerPerson",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.natural",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.useful",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.notAnnoying",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.useAgain",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    },
+    {
+      "id": "human.wouldMiss",
+      "status": "BLOCKED",
+      "detail": "No current-build measurement."
+    }
+  ]
+}
