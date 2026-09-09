@@ -293,7 +293,7 @@ export function Meeting(p: MeetingProps) {
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
-        <details><summary>サービス全体の利用履歴・料金を見る</summary><CreditBalance enabled={!strict} /></details>
+        <details><summary>残りのクレジットを確認</summary><CreditBalance enabled={!strict} /></details>
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
             {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker ?? null, strict)}>{c.name}{blockedReason(c, p.broker ?? null, strict) ? "（準備中）" : ""}</option>)}
