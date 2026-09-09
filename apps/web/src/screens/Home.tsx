@@ -56,33 +56,64 @@ export function Home(p: HomeProps) {
   const desktop = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   return (
     <div className="home">
-      <p className="home__greet">{greeting()}</p>
-      <h1 className="home__ask">今日は、何を話しますか？</h1>
-      <CreditBalance enabled={!strict} />
-      <div className="field">
-        <label htmlFor="home-character">1. 話す相手</label>
-        <select id="home-character" className="select" value={character?.id ?? ""} onChange={e => p.dispatch({ type: "character", id: e.target.value })}>
-          {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker, strict)}>{c.name}</option>)}
-        </select>
-        <button type="button" className="btn btn--ghost" onClick={p.onCharacter}>見た目を見て選ぶ</button>
-      </div>
-      <p className="group__title">2. やりたいこと</p>
-      <p className="hint">選んだあとに、声や話し方を変えられます。</p>
-      <div className="acts">
+      <section className="home__hero" aria-labelledby="home-title">
+        <div className="home__intro">
+          <p className="home__greet">{greeting()}</p>
+          <h1 id="home-title" className="home__ask">今日は、何を話しますか？</h1>
+          <p className="home__lede">相手と目的を選ぶだけで、すぐに始められます。</p>
+        </div>
+        <aside className="home__companion" aria-label="選択中の相手">
+          <div className="home__avatar" aria-hidden="true">{character?.name?.slice(0, 1) ?? "?"}</div>
+          <div className="home__companion-copy">
+            <span className="home__overline">話す相手</span>
+            <strong>{character?.name ?? "準備中"}</strong>
+            <span>{blocked ? "接続を確認中" : "いつでも話せます"}</span>
+          </div>
+          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>変更</button>
+        </aside>
+      </section>
+
+      <section className="home__setup" aria-label="会話を準備">
+        <div className="home__section-head">
+          <div>
+            <p className="home__step">STEP 1</p>
+            <h2>話す相手</h2>
+          </div>
+          <label className="sr-only" htmlFor="home-character">話す相手を選択</label>
+          <select id="home-character" className="select home__character-select" value={character?.id ?? ""} onChange={e => p.dispatch({ type: "character", id: e.target.value })}>
+            {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker, strict)}>{c.name}</option>)}
+          </select>
+        </div>
+        <div className="home__section-head home__section-head--purpose">
+          <div>
+            <p className="home__step">STEP 2</p>
+            <h2>目的を選ぶ</h2>
+          </div>
+          <p className="hint">あとから声や話し方も変えられます</p>
+        </div>
+        <div className="acts">
         {items.map((x) => (
           <button key={x.mode} type="button" className="act" disabled={!!blocked} onClick={() => p.onContinue(x.mode)}>
-            {x.name}
+            <span className="act__icon" aria-hidden="true">{x.name.slice(0, 1)}</span>
+            <span className="act__name">{x.name}</span>
             <small className="act__note">{x.desc}</small>
             <span className="act__note">{RELEASE_LABEL[RELEASE_POLICY.modes[x.mode]]}</span>
           </button>
         ))}
         {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
           <button type="button" className="act" disabled={!!blocked || strict} onClick={p.onMeeting}>
-            会議
+            <span className="act__icon" aria-hidden="true">会</span>
+            <span className="act__name">会議</span>
             <span className="act__note">Google Meet · Zoom ベータ · Teams 未対応</span>
           </button>
         )}
       </div>
+      </section>
+
+      <details className="home__credits">
+        <summary><span><b>利用状況</b><small>残りのクレジットと料金を確認</small></span><span className="home__details-chevron" aria-hidden="true">›</span></summary>
+        <CreditBalance enabled={!strict} />
+      </details>
 
       {p.contentNote && <p className="notice">{p.contentNote}</p>}
       {offline && (
