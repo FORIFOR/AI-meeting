@@ -9,7 +9,7 @@
   "hostedCreditsObserved": 5,
   "additionalPurchase": false,
   "localAttendeeRequired": false,
-  "meetingAdmission": "PENDING",
-  "bidirectionalAudioVideo": "NOT_VERIFIED",
+  "meetingAdmission": "PASS",
+  "bidirectionalAudioVideo": "USER_CONFIRMED_AVATAR_AND_VOICE; SYNTHETIC_AUDIO_ROUNDTRIP_OBSERVED",
   "release": "NO_GO"
 }
