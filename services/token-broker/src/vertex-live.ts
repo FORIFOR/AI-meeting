@@ -1,3 +1,4 @@
+import { VertexUsage } from "./vertex-usage.js";
 import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 import { GoogleAuth } from "google-auth-library";
 import { WebSocket } from "ws";
@@ -39,7 +40,19 @@ export class VertexLiveRelay {
     } catch { return null; }
   }
   async connect(client: WebSocket, model: string) {
+    const usage = new VertexUsage();
+    const observationId = randomBytes(12).toString("hex");
+    const startedAt = Date.now();
+    let reportedEnd = false;
+    const report = (phase: "checkpoint" | "closed") => console.log(JSON.stringify({ event: "vertex_live_usage", observationId, phase, model, elapsedMs: Date.now() - startedAt, ...usage.snapshot() }));
+    const checkpoint = setInterval(() => report("checkpoint"), 60000);
+    checkpoint.unref();
+    client.once("close", () => {
+      clearInterval(checkpoint);
+      if (!reportedEnd) { reportedEnd = true; report("closed"); }
+    });
     let upstream: WebSocket | undefined;
+    const forward = (data: string) => { upstream!.send(data); usage.outbound(JSON.parse(data)); };
     const pending: string[] = [];
     let bytes = 0;
     let setup = false;
@@ -58,7 +71,7 @@ export class VertexLiveRelay {
         const data = JSON.stringify(msg);
         if (upstream?.readyState === WebSocket.OPEN) {
           if (upstream.bufferedAmount > 4_000_000) throw new Error("backpressure");
-          upstream.send(data);
+          forward(data);
         } else {
           bytes += Buffer.byteLength(data);
           if (bytes > 1_000_000) throw new Error("buffer limit");
@@ -74,11 +87,11 @@ export class VertexLiveRelay {
       if (client.readyState !== WebSocket.OPEN) return;
       const location = this.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
       upstream = new WebSocket(`wss://${location}-aiplatform.googleapis.com/ws/google.cloud.aiplatform.v1.LlmBidiService/BidiGenerateContent`, { headers: { Authorization: `Bearer ${token}` }, handshakeTimeout: 15_000, maxPayload: 4_000_000 });
-      upstream.on("open", () => { for (const data of pending.splice(0)) upstream!.send(data); });
+      upstream.on("open", () => { for (const data of pending.splice(0)) forward(data); });
       upstream.on("message", (data) => {
         if (client.readyState !== WebSocket.OPEN) return;
         if (client.bufferedAmount > 4_000_000) { client.close(1008, "Slow client"); return; }
-        try { if (JSON.parse(data.toString()).setupComplete) clearTimeout(timer); } catch { /* provider handles decoding */ }
+        try { const message = JSON.parse(data.toString()); usage.inbound(message); if (message.setupComplete) clearTimeout(timer); } catch { /* provider handles decoding */ }
         client.send(data.toString());
       });
       upstream.on("close", (code, reason) => { clearTimeout(timer); client.close(code === 1006 || code === 1005 ? 1011 : code, reason.toString().slice(0, 100)); });

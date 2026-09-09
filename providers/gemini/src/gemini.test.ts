@@ -441,7 +441,7 @@ describe("what a turn is timed on", () => {
 
 describe("what the API is charged for", () => {
   it("sends the room's silence to nobody, and can be told to stream everything", async () => {
-    const quietFrames = 40;
+    const quietFrames = 3000;
     const run = async (extra = {}) => {
       const { p, ws } = await connected(extra);
       let ts = 0;
@@ -451,7 +451,7 @@ describe("what the API is charged for", () => {
       await p.disconnect();
       return audio;
     };
-    expect(await run()).toBe(0); // 800 ms of silence: nothing sent, nothing billed
+    expect(await run()).toBe(0); // 60 seconds of synthetic silence: no input audio sent (not an invoice assertion)
     expect(await run({ gateAudioOnSpeech: false })).toBe(quietFrames); // the old continuous stream, on request
   });
 });
