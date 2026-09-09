@@ -1,0 +1,13 @@
+{
+  "scope": "Two-minute diagnostic for the localhost-agent configuration, not a replacement 30-minute pass",
+  "report": "default-agent-smoke/google-2026-09-09T04-15-14.json",
+  "sha256": "8a7a62fe5d14389e951fb63ab86a72894fa4fd3cbade33cda68e43746a47513f",
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "httpErrors": 0,
+  "survived": true,
+  "overallVerdict": "FAIL",
+  "heard": 13,
+  "expected": 14,
+  "conclusion": "With public default agent URL, console connection errors were absent. Overall short run remains FAIL/insufficient sampling."
+}

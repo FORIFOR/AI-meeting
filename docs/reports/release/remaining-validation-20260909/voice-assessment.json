@@ -1,0 +1,36 @@
+{
+  "scope": "Real cloud provider output before physical playback; 1 synthetic utterance per voice; no human quality score",
+  "pcmChecksPassed": 5,
+  "voicesTested": 5,
+  "syntheticUtterancesPerVoice": 1,
+  "correctEndTimeInObservedResponses": true,
+  "earlyResponseObservations": [
+    {
+      "voice": "Kore",
+      "firstAudioRelativeToWholeInputEndMs": -414
+    },
+    {
+      "voice": "Aoede",
+      "firstAudioRelativeToWholeInputEndMs": -329
+    },
+    {
+      "voice": "Leda",
+      "firstAudioRelativeToWholeInputEndMs": -248
+    },
+    {
+      "voice": "Puck",
+      "firstAudioRelativeToWholeInputEndMs": -405
+    },
+    {
+      "voice": "Zephyr",
+      "firstAudioRelativeToWholeInputEndMs": -353
+    }
+  ],
+  "caveats": [
+    "PCM checked before physical playback; perceptual voice quality not rated.",
+    "All five inputs are the same synthetic utterance; this is not an intent-recognition-rate study.",
+    "First audio began before input finished; do not count negative values as successful latency measurements.",
+    "The polite ending was absent from observed final input captions. The requested 15:00 plus one-hour calculation was answered correctly."
+  ],
+  "humanQualityStatus": "NOT_EVALUATED"
+}

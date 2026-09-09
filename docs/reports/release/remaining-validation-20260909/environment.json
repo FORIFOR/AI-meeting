@@ -1,0 +1,33 @@
+{
+  "measuredAt": "2026-09-09T03:47:37.098594+00:00",
+  "sourceCommit": "6c101105471c5a4f1204c79e92c283c2f9aeced1",
+  "buildId": "f54e8375153e6b4ba9676107b3526131a71a659da5cb0eab655295f95dfe40ea",
+  "publicUrl": "https://ai-meeting.web.app/",
+  "indexSha256": "88c03b59bf92367cdf59694049e4348a09526d4f8aacd11470ac07c2da34d4ec",
+  "matchesLocalDist": true,
+  "brokerHealth": {
+    "ok": true,
+    "providers": {
+      "openai": false,
+      "google": true,
+      "livekit": false,
+      "heygen": false,
+      "tavus": false,
+      "recall": false
+    },
+    "meeting": {
+      "attendee": true,
+      "recall": false,
+      "creditRefusedAt": null,
+      "recallPublicUrl": true,
+      "recallBotPageUrl": true,
+      "region": "us-west-2",
+      "tokenSecret": "env"
+    }
+  },
+  "browser": "Chrome for Testing 151.0.7922.77",
+  "microphone": "synthetic Kyoko WAV, no physical device",
+  "concurrentTests": "small independent Gemini lifecycle and fault-injection probes; no meeting bots",
+  "publicIndexUnchangedAfterSoak": true,
+  "finishedVerificationAt": "2026-09-09T04:16:22.370103+00:00"
+}

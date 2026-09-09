@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-09-09T04:18:09.436086+00:00",
+  "soakRunnerExited": true,
+  "diagnosticRunnerExited": true,
+  "memoryObserverExited": true,
+  "browserCloseAwaitedInBothRunners": true,
+  "faultProbeProvidersDisconnected": true,
+  "newHostedBotsCreated": 0,
+  "scope": "Only test-owned processes and connections; no physical speaker silence claim"
+}

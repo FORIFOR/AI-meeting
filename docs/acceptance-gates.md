@@ -202,3 +202,8 @@ injected into the relay's inbound side reaches the broker.
 What is NOT proven: the bot page actually opening that second subscription. In a headless run the page
 activates (`activations: 1`) but never appears as a relay client, so the address → answer hop is still
 unverified outside a real call. Do not read the code being present as the path working.
+
+
+## 2026-09-09 最新公開版の残タスク検証
+
+公開Web＋Vertex Geminiで30分完走（208標本）、初音p50 1470ms / p95 1818msで目標未達。割り込み停止HUD最大43ms（62標本）、画面例外0。実ソケット切断・10秒通信断・429・タイムアウトの復旧を各3回確認。718自動テスト成功。試験設定由来のローカル補助サーバー接続エラーは元記録に保持し、通常の公開設定で別途切り分け。5声のPCM検査と早期応答の限定観測を記録。実Meet/Zoomの必要回数・実機試験・実参加者15人×3回は未完了。**Release=NO-GO**。証拠: `docs/reports/release/remaining-validation-20260909/README.md`、最新判定: `docs/reports/release/reality.json`。

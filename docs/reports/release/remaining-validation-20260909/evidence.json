@@ -5,7 +5,7 @@
     "failure.socketDisconnect.recoveryRate": {
       "value": 1.0,
       "samples": 3,
-      "artifact": "remaining-validation-20260909/lifecycle-series.json",
+      "artifact": "lifecycle-series.json",
       "sha256": "d17a6debdffe9dff961834bae5d7b0975abe83626453c9df5af70c862dda91d5",
       "measuredAt": "2026-09-09T04:15:15.824073+00:00",
       "reviewer": "Codex, real socket lifecycle with controlled fault injection; connection recovery only"
@@ -13,7 +13,7 @@
     "failure.leave.recoveryRate": {
       "value": 1.0,
       "samples": 3,
-      "artifact": "remaining-validation-20260909/lifecycle-series.json",
+      "artifact": "lifecycle-series.json",
       "sha256": "d17a6debdffe9dff961834bae5d7b0975abe83626453c9df5af70c862dda91d5",
       "measuredAt": "2026-09-09T04:15:15.824298+00:00",
       "reviewer": "Codex, provider disconnect and no subsequent events; not physical speaker measurement"
@@ -21,7 +21,7 @@
     "failure.network10Seconds.recoveryRate": {
       "value": 1.0,
       "samples": 3,
-      "artifact": "remaining-validation-20260909/network10-series.json",
+      "artifact": "network10-series.json",
       "sha256": "5aacee55dc21ef24f4b65b3caef9f5f6ec183781a5419f54a73a4645027224ee",
       "measuredAt": "2026-09-09T04:15:15.825283+00:00",
       "reviewer": "Codex, real socket lifecycle with controlled fault injection; connection recovery only"
@@ -29,7 +29,7 @@
     "failure.rateLimit.recoveryRate": {
       "value": 1.0,
       "samples": 3,
-      "artifact": "remaining-validation-20260909/rateLimit-series.json",
+      "artifact": "rateLimit-series.json",
       "sha256": "7e9fc9e5adc81daa0cc1e4e4272071faf894d4ec55d2e89c69eaa118f14bada5",
       "measuredAt": "2026-09-09T04:15:15.826013+00:00",
       "reviewer": "Codex, real socket lifecycle with controlled fault injection; connection recovery only"
@@ -37,7 +37,7 @@
     "failure.timeout.recoveryRate": {
       "value": 1.0,
       "samples": 3,
-      "artifact": "remaining-validation-20260909/timeout-series.json",
+      "artifact": "timeout-series.json",
       "sha256": "a55e88d658886cd3cb00641bca8f16abef2f5e3b0f1437ff2054663d2743717a",
       "measuredAt": "2026-09-09T04:15:15.826631+00:00",
       "reviewer": "Codex, real socket lifecycle with controlled fault injection; connection recovery only"
@@ -45,7 +45,7 @@
     "voice.firstAudioP50Ms": {
       "value": 1470,
       "samples": 208,
-      "artifact": "remaining-validation-20260909/soak/google-2026-09-09T03-43-45.json",
+      "artifact": "soak/google-2026-09-09T03-43-45.json",
       "sha256": "6d52203940ed2d54815e809cfc6e3ab8d2ee15e1c8dc5af501b3979abeb95d02",
       "measuredAt": "2026-09-09T04:15:15.828195+00:00",
       "reviewer": "Codex, public web, real Vertex Gemini, synthetic microphone, browser HUD; no physical audio measurement"
@@ -53,7 +53,7 @@
     "voice.firstAudioP95Ms": {
       "value": 1818,
       "samples": 208,
-      "artifact": "remaining-validation-20260909/soak/google-2026-09-09T03-43-45.json",
+      "artifact": "soak/google-2026-09-09T03-43-45.json",
       "sha256": "6d52203940ed2d54815e809cfc6e3ab8d2ee15e1c8dc5af501b3979abeb95d02",
       "measuredAt": "2026-09-09T04:15:15.828297+00:00",
       "reviewer": "Codex, public web, real Vertex Gemini, synthetic microphone, browser HUD; no physical audio measurement"

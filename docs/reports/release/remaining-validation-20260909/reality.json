@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-09-09T04:16:22.454Z",
+  "measuredAt": "2026-09-09T04:15:15.935Z",
   "buildId": "f54e8375153e6b4ba9676107b3526131a71a659da5cb0eab655295f95dfe40ea",
   "status": "FAIL",
-  "evidence": "docs/reports/release/evidence.json",
+  "evidence": "docs/reports/release/remaining-validation-20260909/evidence.json",
   "scope": {
     "modes": [],
     "platforms": []
