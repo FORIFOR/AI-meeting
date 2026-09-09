@@ -123,3 +123,10 @@ it("derives the Zoom join identity from authorization and ignores a caller-selec
   expect(res.status).toBe(200);
   expect(bodies[0]?.zoom_settings).toEqual({ sdk: "web", onbehalf_token: { zoom_oauth_connection_user_id: "alice" } });
 });
+
+it("a fresh authorization cannot be used or disconnected by a superseded application session", async () => {
+  const f = fixture(), old = await f.login("alice"), current = await f.login("alice");
+  await expect(f.zoom.authorize(old)).rejects.toThrow("ZOOM_LOGIN_REQUIRED");
+  await expect(f.zoom.disconnect(old)).rejects.toThrow("ZOOM_LOGIN_REQUIRED");
+  expect(await f.zoom.authorize(current)).toBe("alice");
+});

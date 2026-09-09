@@ -65,29 +65,29 @@ export class ZoomConnections {
     const account = digest(String(flow.zoomUserId)), token = random();
     const previous = await this.store.get(`user_${account}`);
     await this.store.put(`user_${account}`, { connectionId: flow.connectionId, zoomUserId: flow.zoomUserId });
-    await this.store.put(`session_${digest(token)}`, { account, expires: this.now() + 12 * 3600000, expiresAt: new Date(this.now() + 12 * 3600000) });
+    await this.store.put(`session_${digest(token)}`, { account, connectionId: flow.connectionId, expires: this.now() + 12 * 3600000, expiresAt: new Date(this.now() + 12 * 3600000) });
     if (previous?.connectionId && previous.connectionId !== flow.connectionId) {
       // Best effort cleanup of this same user's superseded connection. Never another account's.
       await this.vendor(`/${encodeURIComponent(String(previous.connectionId))}`, "DELETE").catch(() => {});
     }
     return token;
   }
-  private async account(token: string): Promise<string> {
+  private async identity(token: string): Promise<{ account: string; connectionId: string }> {
     if (!valid(token)) throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
     const session = await this.store.get(`session_${digest(token)}`);
-    if (!session || Number(session.expires) <= this.now() || typeof session.account !== "string") throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
-    return session.account;
+    if (!session || Number(session.expires) <= this.now() || typeof session.account !== "string" || typeof session.connectionId !== "string") throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
+    return { account: session.account, connectionId: session.connectionId };
   }
   async status(token: string): Promise<{ connected: boolean; disconnectPending: boolean }> {
-    const account = await this.account(token), user = await this.store.get(`user_${account}`);
-    if (user?.revocationPending) return { connected: false, disconnectPending: true };
-    if (!user?.connectionId) return { connected: false, disconnectPending: false };
+    const { account, connectionId } = await this.identity(token), user = await this.store.get(`user_${account}`);
+    if (user?.revocationPending === connectionId) return { connected: false, disconnectPending: true };
+    if (user?.connectionId !== connectionId) return { connected: false, disconnectPending: false };
     try { await this.authorize(token); return { connected: true, disconnectPending: false }; }
     catch (e) { if (e instanceof ZoomAuthError && e.status === 401) return { connected: false, disconnectPending: false }; throw e; }
   }
   async authorize(token: string): Promise<string> {
-    const account = await this.account(token), user = await this.store.get(`user_${account}`);
-    if (!user?.connectionId || typeof user.zoomUserId !== "string") throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
+    const { account, connectionId } = await this.identity(token), user = await this.store.get(`user_${account}`);
+    if (user?.connectionId !== connectionId || typeof user.zoomUserId !== "string") throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
     const connection = await this.vendor(`/${encodeURIComponent(String(user.connectionId))}`);
     if (connection.state !== "connected" || connection.user_id !== user.zoomUserId) throw new ZoomAuthError("ZOOM_CONNECTION_REVOKED");
     // A concurrent disconnect must also close the new-join path.
@@ -95,10 +95,11 @@ export class ZoomConnections {
     return user.zoomUserId;
   }
   async disconnect(token: string): Promise<void> {
-    const account = await this.account(token);
-    const revoked = await this.store.change(`user_${account}`, previous => ({
-      connectionId: null, revocationPending: previous?.connectionId ?? previous?.revocationPending ?? null,
-    }));
+    const { account, connectionId } = await this.identity(token);
+    const revoked = await this.store.change(`user_${account}`, previous => {
+      if (previous?.connectionId !== connectionId && previous?.revocationPending !== connectionId) throw new ZoomAuthError("ZOOM_LOGIN_REQUIRED");
+      return { connectionId: null, revocationPending: connectionId };
+    });
     if (revoked.revocationPending) {
       try { await this.vendor(`/${encodeURIComponent(String(revoked.revocationPending))}`, "DELETE"); }
       catch (e) { if (!(e instanceof ZoomAuthError) || e.code !== "ZOOM_CONNECTION_REVOKED") throw e; }
