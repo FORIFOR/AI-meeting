@@ -34,3 +34,5 @@ Release = NO_GO。Botによる自動試験は15人×3セッションの実利用
 専用Meetでの30分試験は終了。1800210ms実行、77キュー中73件で返答イベント、65件で観測窓内の会議音声を検出。音声到達の遅れ・無音窓・末尾の返答抑制があるため機能判定はFAIL。両Botのendedを確認済み。`meet-owned-30min.json`参照。
 
 公開環境は音声修正23d6f5fを配信中。状態確認修正a147813はGitHub main反映済み・ローカル検証済みで、公開反映は次の作業。Release=NO_GO。Zoom・規定回数のMeet・15人×3セッションの評価は未完了。
+
+後続状況: 状態確認修正と再生診断計測を公開反映済み。追加10分実Meetの結果は[playback-diagnostic-20260909](../playback-diagnostic-20260909/README.md)参照。Release=NO_GOを継続。

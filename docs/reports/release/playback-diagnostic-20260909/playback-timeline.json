@@ -1,0 +1,1094 @@
+{
+  "scope": "Per-interval audio clock lag is not end-to-end latency",
+  "samples": [
+    {
+      "at": 1788936961149,
+      "fps": 6,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2195,
+        "audioClockLagMs": 65
+      }
+    },
+    {
+      "at": 1788936966198,
+      "fps": 6,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 1021,
+        "audioClockLagMs": 30
+      }
+    },
+    {
+      "at": 1788936970953,
+      "fps": 8,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 23
+      }
+    },
+    {
+      "at": 1788936976207,
+      "fps": 8,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 23
+      }
+    },
+    {
+      "at": 1788936981087,
+      "fps": 8,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 18
+      }
+    },
+    {
+      "at": 1788936986081,
+      "fps": 8,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 69
+      }
+    },
+    {
+      "at": 1788936991287,
+      "fps": 8,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 21
+      }
+    },
+    {
+      "at": 1788936996196,
+      "fps": 6,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 22
+      }
+    },
+    {
+      "at": 1788937001235,
+      "fps": 7,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 14
+      }
+    },
+    {
+      "at": 1788937005896,
+      "fps": 25,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2016,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937010876,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 0
+      }
+    },
+    {
+      "at": 1788937016040,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937020931,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 315,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937026048,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937030893,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937036042,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937040883,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937045911,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937050883,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2536,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937056048,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -8
+      }
+    },
+    {
+      "at": 1788937060868,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937066088,
+      "fps": 25,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937070922,
+      "fps": 24,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 565,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937075907,
+      "fps": 23,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 10
+      }
+    },
+    {
+      "at": 1788937081046,
+      "fps": 25,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937085906,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937091060,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 4
+      }
+    },
+    {
+      "at": 1788937095898,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937101038,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937105909,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937111077,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937115929,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 262,
+        "audioClockLagMs": 0
+      }
+    },
+    {
+      "at": 1788937121052,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 4
+      }
+    },
+    {
+      "at": 1788937125903,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937131039,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -10
+      }
+    },
+    {
+      "at": 1788937135913,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2371,
+        "audioClockLagMs": 7
+      }
+    },
+    {
+      "at": 1788937140887,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937146078,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937150883,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -7
+      }
+    },
+    {
+      "at": 1788937160888,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937160888,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937170896,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -10
+      }
+    },
+    {
+      "at": 1788937176070,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 13
+      }
+    },
+    {
+      "at": 1788937180973,
+      "fps": 10,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 239
+      }
+    },
+    {
+      "at": 1788937186085,
+      "fps": 29,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937190898,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937195918,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 36
+      }
+    },
+    {
+      "at": 1788937201068,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 0
+      }
+    },
+    {
+      "at": 1788937205891,
+      "fps": 23,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937211079,
+      "fps": 26,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -8
+      }
+    },
+    {
+      "at": 1788937215873,
+      "fps": 28,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937221047,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937225875,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937231061,
+      "fps": 27,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937235962,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937240907,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 1661,
+        "audioClockLagMs": 8
+      }
+    },
+    {
+      "at": 1788937246148,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937250903,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937256093,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937260907,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 9
+      }
+    },
+    {
+      "at": 1788937266073,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -9
+      }
+    },
+    {
+      "at": 1788937270933,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937276076,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937280943,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 4
+      }
+    },
+    {
+      "at": 1788937285919,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2355,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937291117,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937295946,
+      "fps": 15,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937301033,
+      "fps": 15,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937306010,
+      "fps": 15,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -2
+      }
+    },
+    {
+      "at": 1788937310931,
+      "fps": 13,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 11
+      }
+    },
+    {
+      "at": 1788937316039,
+      "fps": 15,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -12
+      }
+    },
+    {
+      "at": 1788937320979,
+      "fps": 14,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 26
+      }
+    },
+    {
+      "at": 1788937326072,
+      "fps": 10,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 22
+      }
+    },
+    {
+      "at": 1788937330944,
+      "fps": 13,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 6
+      }
+    },
+    {
+      "at": 1788937336120,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -8
+      }
+    },
+    {
+      "at": 1788937340938,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 6
+      }
+    },
+    {
+      "at": 1788937346074,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -9
+      }
+    },
+    {
+      "at": 1788937350885,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937356005,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 720,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937361055,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937365903,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 7
+      }
+    },
+    {
+      "at": 1788937370934,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 485,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937376111,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 4
+      }
+    },
+    {
+      "at": 1788937380900,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937386056,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -11
+      }
+    },
+    {
+      "at": 1788937390914,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 5
+      }
+    },
+    {
+      "at": 1788937395877,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -7
+      }
+    },
+    {
+      "at": 1788937400940,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2152,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937406105,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937410909,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 2
+      }
+    },
+    {
+      "at": 1788937416189,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937420933,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 627,
+        "audioClockLagMs": -9
+      }
+    },
+    {
+      "at": 1788937425951,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 11
+      }
+    },
+    {
+      "at": 1788937431061,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 0
+      }
+    },
+    {
+      "at": 1788937435894,
+      "fps": 21,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937441128,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -7
+      }
+    },
+    {
+      "at": 1788937445913,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937451048,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -7
+      }
+    },
+    {
+      "at": 1788937456026,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937461119,
+      "fps": 15,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 7
+      }
+    },
+    {
+      "at": 1788937465933,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 0
+      }
+    },
+    {
+      "at": 1788937470982,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -3
+      }
+    },
+    {
+      "at": 1788937476172,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 10
+      }
+    },
+    {
+      "at": 1788937480901,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937485976,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 2587,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937491128,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937495899,
+      "fps": 20,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 1
+      }
+    },
+    {
+      "at": 1788937501088,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -4
+      }
+    },
+    {
+      "at": 1788937510920,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -13
+      }
+    },
+    {
+      "at": 1788937515925,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 1920,
+        "audioClockLagMs": 12
+      }
+    },
+    {
+      "at": 1788937521031,
+      "fps": 16,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -10
+      }
+    },
+    {
+      "at": 1788937526000,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 5
+      }
+    },
+    {
+      "at": 1788937531052,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 31
+      }
+    },
+    {
+      "at": 1788937535993,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -1
+      }
+    },
+    {
+      "at": 1788937541059,
+      "fps": 19,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 3
+      }
+    },
+    {
+      "at": 1788937546045,
+      "fps": 16,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -6
+      }
+    },
+    {
+      "at": 1788937551055,
+      "fps": 13,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 14
+      }
+    },
+    {
+      "at": 1788937555918,
+      "fps": 17,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": -5
+      }
+    },
+    {
+      "at": 1788937561131,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 9
+      }
+    },
+    {
+      "at": 1788937561131,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 9
+      }
+    },
+    {
+      "at": 1788937561131,
+      "fps": 18,
+      "playback": {
+        "state": "running",
+        "queuedAudioMs": 0,
+        "audioClockLagMs": 9
+      }
+    }
+  ]
+}

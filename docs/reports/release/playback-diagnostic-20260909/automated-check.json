@@ -1,0 +1,10 @@
+{
+  "commit": "05e2d52",
+  "tests": 728,
+  "testFiles": 72,
+  "typecheck": "PASS",
+  "build": "PASS",
+  "publicIndexMatchesBuild": true,
+  "deployment": "ee26efa86114e7af",
+  "scope": "Playback telemetry only; no claim that latency or audio delivery is fixed"
+}
