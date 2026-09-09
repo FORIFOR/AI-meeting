@@ -17,3 +17,7 @@ Validation:
 The exact cause of the two previous Zoom suppression events is **not proven** by this regression. A live retry created Yui and Tester but did not reach admission in five minutes. The harness requested leave and verified both bots `ended`. No updated live audio measurements were obtained. Do not relabel the previous candidate's results as measurements of this one.
 
 Remaining work: validate the fix in a hosted meeting; investigate any remaining suppression; implement per-user Zoom OAuth and revocation/isolation checks; complete production review and privacy/retention disclosures; run the required long-session, failure and physical-device trials; collect actual 15-person × 3-session evaluations. The new candidate's release evidence intentionally contains no invented measurements. `reality.json` records missing evidence, not 49 newly found product defects.
+
+## New user-provided Zoom room retry
+
+On 2026-09-09 at 11:14 UTC, the same deployed candidate was retried using the newly supplied Zoom room. Both bot creations succeeded, but both remained `joining` for the five-minute admission window. No audio cues were executed. Both leave requests succeeded and both final states were verified `ended` at 11:19 UTC. The reason for admission failure is not established; this does not constitute an audio regression result. See `zoom-new-room-retry.json`. The private meeting URL and credentials are excluded. Release remains BLOCKED.
