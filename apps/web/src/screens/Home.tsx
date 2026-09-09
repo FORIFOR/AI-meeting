@@ -69,7 +69,7 @@ export function Home(p: HomeProps) {
             <strong>{character?.name ?? "準備中"}</strong>
             <span>{character ? RENDERER_JA[character.renderer] : "準備中"} · {blocked ? "接続を確認中" : "いつでも話せます"}</span>
           </div>
-          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>プレビューして選ぶ</button>
+          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>詳細を見る</button>
         </aside>
       </section>
 

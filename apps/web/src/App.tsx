@@ -156,8 +156,8 @@ export function App() {
       {!inSession && (
         <header className="topbar">
           <a className="brand" href="#" onClick={(e) => { e.preventDefault(); setScreen({ name: "home" }); }}>
-            <span className="brand__mark">稽古場</span>
-            <span className="brand__sub">Stage</span>
+            <span className="brand__mark">AIミーティング</span>
+            <span className="brand__sub">Realtime Character AI</span>
           </a>
 
         </header>
