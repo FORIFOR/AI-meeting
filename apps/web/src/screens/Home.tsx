@@ -76,7 +76,7 @@ export function Home(p: HomeProps) {
       {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
         <section className="home__meeting" aria-labelledby="home-meeting-title">
           <div className="home__meeting-copy">
-            <p className="home__step">MAIN</p>
+            <p className="home__step">メイン</p>
             <h2 id="home-meeting-title">会議に参加</h2>
             <p>Google MeetやZoomのURLを貼り付けて、AIを会議に呼びます。</p>
           </div>
