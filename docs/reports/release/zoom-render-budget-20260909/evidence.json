@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "buildId": "0d86eca586c0e851049cbfc36e50993637538184f08596a6638331c753b05355",
+  "measurements": {},
+  "note": "Candidate 8e04001 passed local regressions. Its live retry failed before admission. Prior candidate measurements are not relabelled."
+}

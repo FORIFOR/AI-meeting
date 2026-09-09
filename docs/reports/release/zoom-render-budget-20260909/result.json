@@ -1,0 +1,1339 @@
+{
+  "startedAt": "2026-09-09T11:39:14.061Z",
+  "admittedAt": "2026-09-09T11:40:13.721Z",
+  "endedAt": "2026-09-09T11:50:25.931Z",
+  "elapsedMs": 600933,
+  "execution": "COMPLETE",
+  "error": null,
+  "silence": {
+    "durationMs": 20047,
+    "newTurns": 0
+  },
+  "cleanup": [
+    {
+      "botId": "bot_lEAKTE1rqKcYub3C",
+      "leaveRequested": true,
+      "finalState": "ended"
+    },
+    {
+      "botId": "bot_PKyzVMdNv80ijAcU",
+      "leaveRequested": true,
+      "finalState": "ended"
+    }
+  ],
+  "sourceCommit": "0796faf",
+  "hostingVersion": "e9ef3978fd2b9861",
+  "cloudRevision": "ai-meeting-broker-00012-xc9",
+  "scope": "Real hosted Zoom, one 10-minute synthetic tester run; not human usability evaluation",
+  "release": "BLOCKED",
+  "functionalResult": "FAIL",
+  "cueCount": 25,
+  "audioDetectedWindows": 23,
+  "zeroAudioCueNumbers": [
+    1,
+    22
+  ],
+  "suppressionEvents": [
+    {
+      "type": "cut",
+      "at": 1788954031637,
+      "reason": "unsanctioned"
+    },
+    {
+      "type": "cut",
+      "at": 1788954034073,
+      "reason": "unsanctioned"
+    },
+    {
+      "type": "cut",
+      "at": 1788954511353,
+      "reason": "unsanctioned"
+    },
+    {
+      "type": "cut",
+      "at": 1788954511557,
+      "reason": "unsanctioned"
+    },
+    {
+      "type": "cut",
+      "at": 1788954512992,
+      "reason": "unsanctioned"
+    }
+  ],
+  "humanAvatarAndAudioConfirmation": "PENDING",
+  "playbackDiagnostics": {
+    "sampleCount": 122,
+    "pageAnimationFrameFpsMin": 55,
+    "pageAnimationFrameFpsMax": 60,
+    "maxFiveSecondAudioClockDriftMs": 212,
+    "note": "Wall-clock minus audio-context advancement per heartbeat; not end-to-end latency. Room audio energy alone does not establish speaker identity or semantic correctness."
+  },
+  "rows": [
+    {
+      "cue": 1,
+      "scenario": "greet",
+      "start": 1788954023725,
+      "end": 1788954030063,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 0,
+      "events": [
+        {
+          "type": "greeting",
+          "at": 1788954028665
+        },
+        {
+          "type": "turn",
+          "at": 1788954029618
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954030422
+        },
+        {
+          "type": "lookup",
+          "at": 1788954030562
+        },
+        {
+          "type": "cut",
+          "at": 1788954031637,
+          "reason": "unsanctioned"
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954033306,
+          "data": {
+            "utterance": 3,
+            "characters": 37,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "LISTENING",
+            "sanctioned": false
+          }
+        },
+        {
+          "type": "cut",
+          "at": 1788954034073,
+          "reason": "unsanctioned"
+        }
+      ],
+      "heartbeat": {
+        "fps": 59,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 12
+        }
+      }
+    },
+    {
+      "cue": 2,
+      "scenario": "numbers",
+      "start": 1788954045476,
+      "end": 1788954053694,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 550,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954055903,
+          "data": {
+            "utterance": 6,
+            "characters": 62,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954055904
+        },
+        {
+          "type": "speaking",
+          "at": 1788954055908
+        },
+        {
+          "type": "spoke",
+          "at": 1788954062934
+        }
+      ],
+      "heartbeat": {
+        "fps": 59,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -5
+        }
+      }
+    },
+    {
+      "cue": 3,
+      "scenario": "followup",
+      "start": 1788954069017,
+      "end": 1788954072620,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 223,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788954074851
+        },
+        {
+          "type": "turn",
+          "at": 1788954074852
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954074853,
+          "data": {
+            "utterance": 8,
+            "characters": 26,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788954077366
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 0
+        }
+      }
+    },
+    {
+      "cue": 4,
+      "scenario": "long",
+      "start": 1788954087893,
+      "end": 1788954101489,
+      "intentionalInterruptAt": 1788954097742,
+      "audibleRoomChunksAfterCue": 233,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954096306
+        },
+        {
+          "type": "speaking",
+          "at": 1788954096307
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954096308,
+          "data": {
+            "utterance": 10,
+            "characters": 46,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954099459
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954103879,
+          "data": {
+            "utterance": 12,
+            "characters": 30,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954103880
+        },
+        {
+          "type": "turn",
+          "at": 1788954103882
+        },
+        {
+          "type": "spoke",
+          "at": 1788954107792
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 3
+        }
+      }
+    },
+    {
+      "cue": 5,
+      "scenario": "resume",
+      "start": 1788954116789,
+      "end": 1788954122651,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 98,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954124741,
+          "data": {
+            "utterance": 14,
+            "characters": 45,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954124742
+        },
+        {
+          "type": "turn",
+          "at": 1788954124743
+        },
+        {
+          "type": "spoke",
+          "at": 1788954126132
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 3
+        }
+      }
+    },
+    {
+      "cue": 6,
+      "scenario": "greet",
+      "start": 1788954137953,
+      "end": 1788954144252,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 163,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954146497
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954146498,
+          "data": {
+            "utterance": 16,
+            "characters": 52,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954146499
+        },
+        {
+          "type": "spoke",
+          "at": 1788954149483
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 4
+        }
+      }
+    },
+    {
+      "cue": 7,
+      "scenario": "numbers",
+      "start": 1788954159524,
+      "end": 1788954167651,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 470,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954170106
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954170109,
+          "data": {
+            "utterance": 18,
+            "characters": 60,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954170111
+        },
+        {
+          "type": "spoke",
+          "at": 1788954176456
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -10
+        }
+      }
+    },
+    {
+      "cue": 8,
+      "scenario": "followup",
+      "start": 1788954183041,
+      "end": 1788954186606,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 115,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954188867,
+          "data": {
+            "utterance": 20,
+            "characters": 26,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954188868
+        },
+        {
+          "type": "speaking",
+          "at": 1788954188869
+        },
+        {
+          "type": "spoke",
+          "at": 1788954190553
+        }
+      ],
+      "heartbeat": {
+        "fps": 59,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 21
+        }
+      }
+    },
+    {
+      "cue": 9,
+      "scenario": "long",
+      "start": 1788954201916,
+      "end": 1788954215459,
+      "intentionalInterruptAt": 1788954211702,
+      "audibleRoomChunksAfterCue": 239,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788954210466
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954210467,
+          "data": {
+            "utterance": 22,
+            "characters": 42,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954210470
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954213304
+        },
+        {
+          "type": "turn",
+          "at": 1788954218016
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954218017,
+          "data": {
+            "utterance": 24,
+            "characters": 30,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954218017
+        },
+        {
+          "type": "spoke",
+          "at": 1788954221646
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -6
+        }
+      }
+    },
+    {
+      "cue": 10,
+      "scenario": "resume",
+      "start": 1788954230753,
+      "end": 1788954236646,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 94,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954238972,
+          "data": {
+            "utterance": 26,
+            "characters": 53,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954238973
+        },
+        {
+          "type": "speaking",
+          "at": 1788954238974
+        },
+        {
+          "type": "spoke",
+          "at": 1788954240557
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 5
+        }
+      }
+    },
+    {
+      "cue": 11,
+      "scenario": "greet",
+      "start": 1788954252018,
+      "end": 1788954258350,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 163,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954260492,
+          "data": {
+            "utterance": 28,
+            "characters": 52,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954260493
+        },
+        {
+          "type": "turn",
+          "at": 1788954260495
+        },
+        {
+          "type": "spoke",
+          "at": 1788954263322
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -7
+        }
+      }
+    },
+    {
+      "cue": 12,
+      "scenario": "numbers",
+      "start": 1788954273650,
+      "end": 1788954281970,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 483,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954284581,
+          "data": {
+            "utterance": 30,
+            "characters": 60,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954284584
+        },
+        {
+          "type": "turn",
+          "at": 1788954284584
+        },
+        {
+          "type": "spoke",
+          "at": 1788954290817
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -2
+        }
+      }
+    },
+    {
+      "cue": 13,
+      "scenario": "followup",
+      "start": 1788954297333,
+      "end": 1788954300913,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 117,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954303234,
+          "data": {
+            "utterance": 32,
+            "characters": 26,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954303234
+        },
+        {
+          "type": "speaking",
+          "at": 1788954303235
+        },
+        {
+          "type": "spoke",
+          "at": 1788954304911
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -4
+        }
+      }
+    },
+    {
+      "cue": 14,
+      "scenario": "long",
+      "start": 1788954316211,
+      "end": 1788954329426,
+      "intentionalInterruptAt": 1788954325629,
+      "audibleRoomChunksAfterCue": 234,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954324576,
+          "data": {
+            "utterance": 34,
+            "characters": 46,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954324577
+        },
+        {
+          "type": "turn",
+          "at": 1788954324578
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954327064
+        },
+        {
+          "type": "turn",
+          "at": 1788954331660
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954331661,
+          "data": {
+            "utterance": 36,
+            "characters": 30,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954331662
+        },
+        {
+          "type": "spoke",
+          "at": 1788954335371
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -6
+        }
+      }
+    },
+    {
+      "cue": 15,
+      "scenario": "resume",
+      "start": 1788954344804,
+      "end": 1788954350738,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 96,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954352806
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954352807,
+          "data": {
+            "utterance": 38,
+            "characters": 49,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954352808
+        },
+        {
+          "type": "spoke",
+          "at": 1788954354391
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -6
+        }
+      }
+    },
+    {
+      "cue": 16,
+      "scenario": "greet",
+      "start": 1788954366019,
+      "end": 1788954372320,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 164,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954374635
+        },
+        {
+          "type": "speaking",
+          "at": 1788954374636
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954374636,
+          "data": {
+            "utterance": 40,
+            "characters": 48,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788954377505
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -5
+        }
+      }
+    },
+    {
+      "cue": 17,
+      "scenario": "numbers",
+      "start": 1788954387712,
+      "end": 1788954395830,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 479,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954398363,
+          "data": {
+            "utterance": 42,
+            "characters": 60,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954398364
+        },
+        {
+          "type": "speaking",
+          "at": 1788954398365
+        },
+        {
+          "type": "spoke",
+          "at": 1788954404653
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -5
+        }
+      }
+    },
+    {
+      "cue": 18,
+      "scenario": "followup",
+      "start": 1788954411128,
+      "end": 1788954414677,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 118,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788954416883
+        },
+        {
+          "type": "speaking",
+          "at": 1788954416884
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954416885,
+          "data": {
+            "utterance": 44,
+            "characters": 26,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788954418471
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -9
+        }
+      }
+    },
+    {
+      "cue": 19,
+      "scenario": "long",
+      "start": 1788954429981,
+      "end": 1788954443706,
+      "intentionalInterruptAt": 1788954439929,
+      "audibleRoomChunksAfterCue": 229,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954438653,
+          "data": {
+            "utterance": 46,
+            "characters": 42,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954438655
+        },
+        {
+          "type": "turn",
+          "at": 1788954438656
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954441555
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954445905,
+          "data": {
+            "utterance": 48,
+            "characters": 30,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954445909
+        },
+        {
+          "type": "turn",
+          "at": 1788954445909
+        },
+        {
+          "type": "spoke",
+          "at": 1788954449535
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -1
+        }
+      }
+    },
+    {
+      "cue": 20,
+      "scenario": "resume",
+      "start": 1788954459074,
+      "end": 1788954464995,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 98,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788954467513
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954467514,
+          "data": {
+            "utterance": 50,
+            "characters": 47,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954467515
+        },
+        {
+          "type": "spoke",
+          "at": 1788954468865
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -8
+        }
+      }
+    },
+    {
+      "cue": 21,
+      "scenario": "greet",
+      "start": 1788954480312,
+      "end": 1788954486612,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 164,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954488793,
+          "data": {
+            "utterance": 52,
+            "characters": 48,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954488794
+        },
+        {
+          "type": "turn",
+          "at": 1788954488795
+        },
+        {
+          "type": "spoke",
+          "at": 1788954491824
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 2,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 1
+        }
+      }
+    },
+    {
+      "cue": 22,
+      "scenario": "numbers",
+      "start": 1788954501995,
+      "end": 1788954510094,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 0,
+      "events": [
+        {
+          "type": "lookup",
+          "at": 1788954510428
+        },
+        {
+          "type": "cut",
+          "at": 1788954511353,
+          "reason": "unsanctioned"
+        },
+        {
+          "type": "cut",
+          "at": 1788954511557,
+          "reason": "unsanctioned"
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954512355,
+          "data": {
+            "utterance": 56,
+            "characters": 29,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "LISTENING",
+            "sanctioned": false
+          }
+        },
+        {
+          "type": "cut",
+          "at": 1788954512992,
+          "reason": "unsanctioned"
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 5,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -13
+        }
+      }
+    },
+    {
+      "cue": 23,
+      "scenario": "followup",
+      "start": 1788954525404,
+      "end": 1788954528948,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 119,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954531404,
+          "data": {
+            "utterance": 60,
+            "characters": 26,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788954531405
+        },
+        {
+          "type": "turn",
+          "at": 1788954531405
+        },
+        {
+          "type": "spoke",
+          "at": 1788954533035
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 5,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": 3
+        }
+      }
+    },
+    {
+      "cue": 24,
+      "scenario": "long",
+      "start": 1788954544275,
+      "end": 1788954557990,
+      "intentionalInterruptAt": 1788954554228,
+      "audibleRoomChunksAfterCue": 237,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788954552873
+        },
+        {
+          "type": "turn",
+          "at": 1788954552875
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954552877,
+          "data": {
+            "utterance": 62,
+            "characters": 50,
+            "addressed": true,
+            "reason": "name + question/request",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "interrupted",
+          "at": 1788954555857
+        },
+        {
+          "type": "address_decision",
+          "at": 1788954560203,
+          "data": {
+            "utterance": 64,
+            "characters": 30,
+            "addressed": false,
+            "reason": "not addressed",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954560203
+        },
+        {
+          "type": "speaking",
+          "at": 1788954560204
+        },
+        {
+          "type": "spoke",
+          "at": 1788954564071
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 5,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -6
+        }
+      }
+    },
+    {
+      "cue": 25,
+      "scenario": "resume",
+      "start": 1788954573385,
+      "end": 1788954579287,
+      "intentionalInterruptAt": null,
+      "audibleRoomChunksAfterCue": 99,
+      "events": [
+        {
+          "type": "address_decision",
+          "at": 1788954581704,
+          "data": {
+            "utterance": 66,
+            "characters": 49,
+            "addressed": true,
+            "reason": "vocative",
+            "state": "ADDRESSED",
+            "sanctioned": true
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788954581705
+        },
+        {
+          "type": "speaking",
+          "at": 1788954581706
+        },
+        {
+          "type": "spoke",
+          "at": 1788954583102
+        }
+      ],
+      "heartbeat": {
+        "fps": 60,
+        "status": "in_call",
+        "state": "OBSERVING",
+        "cuts": 5,
+        "playback": {
+          "state": "running",
+          "queuedAudioMs": 0,
+          "audioClockLagMs": -3
+        }
+      }
+    }
+  ]
+}

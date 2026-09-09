@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "8e04001",
+  "tests": 734,
+  "files": 72,
+  "typecheck": "PASS",
+  "build": "PASS",
+  "quietOnsetRegressionBefore": "FAIL",
+  "quietOnsetRegressionAfter": "PASS",
+  "hostingVersion": "4d7525ae1b8147be",
+  "release": "BLOCKED"
+}
