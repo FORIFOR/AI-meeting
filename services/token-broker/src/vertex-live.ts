@@ -40,7 +40,7 @@ export class VertexLiveRelay {
     } catch { return null; }
   }
   async connect(client: WebSocket, model: string) {
-    const usage = new VertexUsage();
+    const usage = new VertexUsage(model);
     const observationId = randomBytes(12).toString("hex");
     const startedAt = Date.now();
     let reportedEnd = false;

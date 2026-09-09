@@ -1,0 +1,21 @@
+import { it, expect } from "vitest";
+import { createApp } from "../app.js";
+import { MeetingSessionRegistry } from "../meeting-session.js";
+import { RelayHub } from "../meeting-relay.js";
+it("binds captions to a live bot, retries unavailable clients, and deduplicates delivery", async () => {
+  const sessions = new MeetingSessionRegistry("a-long-observer-test-secret");
+  const relay = new RelayHub("ws://test");
+  const app = createApp({ env: {}, sessions, relay });
+  const s = sessions.create({ meetingUrl: "https://meet.google.com/test", botName: "Yui", mode: "relay" });
+  sessions.bindBot(s.id, "bot_test");
+  const token = sessions.issue(s.id, "observer");
+  const payload = { bot_id: "bot_test", trigger: "transcript.update", idempotency_key: "delivery1", data: { speaker_uuid: "speaker1", speaker_name: "田中", transcription: { transcript: "ゆい、確認してください" } } };
+  const post = (t = token, body = payload) => app.request(`/api/attendee/observer/${t}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  expect((await post()).status).toBe(503);
+  const seen: string[] = []; relay.addClient("bot_test", { send: d => seen.push(d), close: () => {} });
+  expect((await post()).status).toBe(200); expect((await post()).status).toBe(200); expect(seen).toHaveLength(1);
+  expect(JSON.parse(seen[0]!).message.data.participantId).toBe("speaker1");
+  expect((await post(sessions.issue(s.id, "client"))).status).toBe(401);
+  expect((await post(token, { ...payload, bot_id: "someone_else" })).status).toBe(401);
+  sessions.revoke(s.id); expect((await post()).status).toBe(401);
+});

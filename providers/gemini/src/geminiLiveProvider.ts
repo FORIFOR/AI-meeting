@@ -1,4 +1,4 @@
-import { geminiUsageCounters } from "./usage.js";
+import { geminiUsageCounters, LiveUsageAccumulator } from "./usage.js";
 import {
   AudioNormalizer,
   EnergyVAD,
@@ -95,9 +95,14 @@ export interface GeminiLiveProviderOptions {
   reconnectBackoffMs?: number;
   /** Test and migration escape hatch; production Gemini 3.1 uses realtimeInput text. */
   forceRealtimeText?: boolean;
+  /** Explicit experiment override; defaults bound retained raw audio without disabling memory. */
+  contextWindow?: { triggerTokens: number; targetTokens: number };
+  /** Baseline comparison only: omit explicit context limits and activity coverage. */
+  legacyCostPolicy?: boolean;
 }
 
 const OPEN = 1;
+const pcmSeconds = (data: string, rate: number) => (data.length * .75 - (data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0)) / (2 * rate);
 
 /**
  * Gemini Live Adapter (spec §5): WSS BidiGenerateContent behind the common RealtimeAIProvider.
@@ -108,6 +113,16 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private listeners = new Set<ConversationEventListener>();
   /** Generation epoch: one generation per model turn; closed on turnComplete / interrupted. */
   private genCounter = new GenerationCounter();
+  private costUsage = new LiveUsageAccumulator();
+  private inputAudioSeconds = 0;
+  private outputAudioSeconds = 0;
+  private imageCount = 0;
+  private closedConnectionMs = 0;
+  private connectionStarts = new Map<WebSocketLike, number>();
+  usageSnapshot(): Record<string, number> {
+    const liveMs = this.closedConnectionMs + [...this.connectionStarts.values()].reduce((sum, from) => sum + Math.max(0, this.clock() - from), 0);
+    return { ...this.costUsage.snapshot(), inputAudioSeconds: this.inputAudioSeconds, outputAudioSeconds: this.outputAudioSeconds, imageCount: this.imageCount, liveActiveSeconds: liveMs / 1000 };
+  }
   private genOpen = false;
   /** Observability */
   staleDrops = 0;
@@ -381,6 +396,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       this.cancelSetup = cancel;
       ws.onopen = () => {
         if (!ownsSocket()) { cancel(); return; }
+        this.connectionStarts.set(ws, this.clock());
         ws.send(JSON.stringify({ setup: this.buildSetup(model, config) }));
       };
       ws.onmessage = (ev) => {
@@ -399,6 +415,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         if (this.setupDone) this.emit({ type: "error", error: new Error("Gemini Live websocket error") });
       };
       ws.onclose = (ev) => {
+        const from = this.connectionStarts.get(ws);
+        if (from !== undefined) { this.closedConnectionMs += Math.max(0, this.clock() - from); this.connectionStarts.delete(ws); }
         done(new Error(`Gemini Live socket closed before setup [${where}] (${ev?.code ?? ""} ${ev?.reason ?? ""})`.trim()));
         if (!ownsSocket()) return;
         this.ws = null;
@@ -440,9 +458,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         ...(nativeAudio && (this.opts.enableAffectiveDialog ?? true) ? { enableAffectiveDialog: true } : {}),
       },
       systemInstruction: { parts: [{ text: instructions }] },
-      inputAudioTranscription: {},
+      ...(config.providerOptions?.externalTranscription === true ? {} : { inputAudioTranscription: {} }),
       outputAudioTranscription: {},
       realtimeInputConfig: {
+        ...(this.opts.legacyCostPolicy ? {} : { turnCoverage: "TURN_INCLUDES_ONLY_ACTIVITY" as const }),
         automaticActivityDetection:
           this.opts.automaticActivityDetection ??
           (this.gating ? { disabled: true } : { disabled: false, silenceDurationMs: 500, prefixPaddingMs: 100 }),
@@ -469,7 +488,13 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (tools.length) setup.tools = tools;
     // Request handles from the first connection, not only after receiving one.
     setup.sessionResumption = this.resumptionHandle ? { handle: this.resumptionHandle } : {};
-    setup.contextWindowCompression = { slidingWindow: {} };
+    const window = this.opts.contextWindow ?? { triggerTokens: 10000, targetTokens: 3000 };
+    if (!Number.isSafeInteger(window.triggerTokens) || !Number.isSafeInteger(window.targetTokens) || window.triggerTokens < 5000 || window.triggerTokens > 128000 || window.targetTokens < 0 || window.targetTokens >= window.triggerTokens) {
+      throw new Error("Invalid Gemini context window limits");
+    }
+    setup.contextWindowCompression = this.opts.legacyCostPolicy ? { slidingWindow: {} } : {
+      triggerTokens: String(window.triggerTokens), slidingWindow: { targetTokens: String(window.targetTokens) },
+    };
     return setup;
   }
 
@@ -721,10 +746,18 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       void this.reconnect();
     }
     if (msg.usageMetadata) {
+      this.costUsage.observe(msg.usageMetadata);
       const counters = geminiUsageCounters(msg.usageMetadata);
       if (Object.keys(counters).length) this.emit({ type: "usage", provider: "google", model: this.connectedModel ?? this.model, at: now, counters });
     }
     const sc = msg.serverContent;
+    for (const part of sc?.modelTurn?.parts ?? []) {
+      if (part.inlineData?.mimeType?.startsWith("audio/pcm")) this.outputAudioSeconds += pcmSeconds(part.inlineData.data, parsePcmRate(part.inlineData.mimeType));
+    }
+    if (sc?.turnComplete || sc?.interrupted) {
+      const model = this.connectedModel ?? this.model;
+      if (this.costUsage.complete(model)) this.emit({ type: "usage", provider: "google", model, at: now, counters: this.usageSnapshot() });
+    }
     if (!sc) return;
 
     if (sc.interrupted) {
@@ -928,6 +961,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private send(msg: GeminiClientMessage): void {
     if (this.closing || !this.ws || this.ws.readyState !== OPEN || !this.setupDone) return;
     this.ws.send(JSON.stringify(msg));
+    if ("realtimeInput" in msg) {
+      if (msg.realtimeInput.audio) this.inputAudioSeconds += pcmSeconds(msg.realtimeInput.audio.data, parsePcmRate(msg.realtimeInput.audio.mimeType));
+      if (msg.realtimeInput.video) this.imageCount++;
+    }
   }
 
   private async decode(data: unknown): Promise<GeminiServerMessage | null> {

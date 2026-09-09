@@ -89,7 +89,7 @@ export interface GeminiSetup {
    * looks today's answer up instead of saying it cannot know. Everything else is our own functions.
    */
   tools?: ({ functionDeclarations: { name: string; description: string; parameters?: Record<string, unknown> }[] } | { googleSearch: Record<string, never> })[];
-  realtimeInputConfig?: { automaticActivityDetection?: AutomaticActivityDetection };
+  realtimeInputConfig?: { automaticActivityDetection?: AutomaticActivityDetection; turnCoverage?: "TURN_INCLUDES_ONLY_ACTIVITY" | "TURN_INCLUDES_ALL_INPUT" };
   inputAudioTranscription?: Record<string, never>;
   outputAudioTranscription?: Record<string, never>;
   proactivity?: { proactiveAudio?: boolean };

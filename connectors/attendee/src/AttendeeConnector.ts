@@ -40,7 +40,7 @@ export class AttendeeConnector implements MeetingConnector {
       platforms: ["google_meet", "zoom", "teams"],
       audioOut: "pcm_stream",
       separateParticipantAudio: true,
-      realtimeTranscript: false,
+      realtimeTranscript: true,
       videoOut: true,
     };
   }
@@ -148,6 +148,17 @@ class AttendeeSession implements MeetingSession {
      * A webcam frame, not audio: the character reads nods and expressions from this. Emitted with the
      * participant it belongs to, because a reaction only means something when you know whose it is.
      */
+    if (msg?.trigger === "ai.usage") {
+      const counters: Record<string, number> = {};
+      for (const [key, value] of Object.entries(msg.data ?? {})) if (["estimatedMicroUsd", "pricedTurns", "unpricedTurns", "contextPeakTokens", "inputAudioSeconds", "outputAudioSeconds", "imageCount", "liveActiveSeconds"].includes(key) && typeof value === "number" && Number.isFinite(value) && value >= 0) counters[key] = value;
+      if (counters.estimatedMicroUsd !== undefined) this.emit({ type: "usage", counters });
+      return;
+    }
+    if (msg?.trigger === "transcript.update") {
+      const d = msg.data as unknown as { text?: unknown; speakerName?: string | null; participantId?: string };
+      if (typeof d?.text === "string") this.emit({ type: "transcript", text: d.text, final: true, speakerName: d.speakerName, participantId: d.participantId, at: this.now() });
+      return;
+    }
     if (msg?.trigger === INBOUND_VIDEO) {
       const d = msg.data as { participant_uuid?: string; frame?: string } | undefined;
       if (d?.frame && d.participant_uuid) {

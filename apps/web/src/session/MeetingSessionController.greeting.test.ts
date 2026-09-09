@@ -64,8 +64,9 @@ vi.mock("@rcai/avatar-core", async (importOriginal) => {
 
 import { MeetingSessionController } from "./MeetingSessionController.js";
 
-function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local") {
+function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local", observer?: "captions") {
   return new MeetingSessionController({
+    observer,
     settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine, autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
     availability: { openai: false, google: engine === "google", local: true },
     persona: { id: "p", name: "P", mode: "free_talk", systemPrompt: "x", language: "ja-JP", speakingStyle: { speed: "normal", energy: 0.5, politeness: "casual", sentenceLength: "short" }, turnPolicy: { maxSentences: 2, allowSilenceMs: 2000, backchannel: true, interruptible: true, correctionPolicy: "none" }, motionProfile: "m" },
@@ -89,6 +90,21 @@ const loud = () => ({ data: Float32Array.from({ length: 480 }, (_, i) => (i % 2 
 describe("greeting on arrival", () => {
   beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
+
+  it("the caption observer wakes Live only on an address and supplies an older task quote", async () => {
+    const c = botPage("bot", "addressed_only", "google", "captions");
+    await c.start();
+    c.onMeetingTranscript("担当は田中さん。金曜日までに資料を作成することに決定しました。", true, "議長", "chair");
+    for (let i = 0; i < 20; i++) c.onMeetingTranscript(`雑談${i}`, true, "議長", "chair");
+    expect(connect).not.toHaveBeenCalled(); expect(sendText).not.toHaveBeenCalled();
+    c.onMeetingTranscript("Yui、資料の担当と期限を教えて。", true, "議長", "chair");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(connect).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(connect.mock.calls[0])).toContain('"externalTranscription":true');
+    expect(sendText).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(sendText.mock.calls[0])).toContain("金曜日");
+    await c.leave();
+  });
 
   it("addressed_only bot page: the first room audio earns one greeting, a beat later", async () => {
     const c = botPage();

@@ -11,7 +11,7 @@ import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
  *   client   — operator UI / bot page websocket + operator-only routes (refresh / revoke).
  * Every verification also checks the server-side registry: revoked / ended sessions and botId binding.
  */
-export type MeetingTokenRole = "bot_page" | "relay" | "client";
+export type MeetingTokenRole = "bot_page" | "relay" | "client" | "observer";
 
 export interface MeetingTokenPayload {
   sid: string;
@@ -80,6 +80,7 @@ export const TOKEN_TTL_MS: Record<MeetingTokenRole, number> = {
   bot_page: 15 * 60_000,
   relay: 6 * 60 * 60_000,
   client: 60 * 60_000,
+  observer: 6 * 60 * 60_000,
 };
 
 function b64url(buf: Buffer | string): string {

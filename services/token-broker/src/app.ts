@@ -341,7 +341,15 @@ export function createApp(deps: AppDeps): Hono {
     return c.json(r.body, r.status as 200);
   });
   app.post("/api/meeting/session/:id/report", async (c) => {
-    const r = reportFromBotPage(sessions, c.req.param("id"), c.req.header("authorization"), await json<{ type?: string; data?: Record<string, unknown> }>(c));
+    const body = await json<{ type?: string; data?: Record<string, unknown> }>(c);
+    const r = reportFromBotPage(sessions, c.req.param("id"), c.req.header("authorization"), body);
+    if (r.status === 200 && body.type === "ai_usage") {
+      const botId = sessions.get(c.req.param("id"))?.botId;
+      const data: Record<string, number> = {};
+      for (const [key, value] of Object.entries(body.data ?? {})) if (["estimatedMicroUsd", "pricedTurns", "unpricedTurns", "contextPeakTokens", "inputAudioSeconds", "outputAudioSeconds", "imageCount", "liveActiveSeconds"].includes(key) && typeof value === "number" && Number.isFinite(value) && value >= 0) data[key] = value;
+      if (botId) relay.broadcast(botId, { trigger: "ai.usage", data });
+      console.log(JSON.stringify({ event: "meeting_ai_usage", sessionId: c.req.param("id"), ...data }));
+    }
     return c.json(r.body, r.status as 200);
   });
   /**
@@ -459,6 +467,27 @@ export function createApp(deps: AppDeps): Hono {
    * drag a live meeting backwards. Without a configured secret the signature cannot be checked, so the
    * delivery is recorded as unverified rather than silently trusted.
    */
+  const observerDeliveries = new Map<string, Set<string>>();
+  app.post("/api/attendee/observer/:token", async c => {
+    const payload = await json<Record<string, unknown>>(c);
+    if (typeof payload.bot_id !== "string") return c.json({ error: "bot_required" }, 400);
+    const auth = sessions.verify(c.req.param("token"), { role: "observer", botId: payload.bot_id });
+    if (!auth.ok) return c.json({ error: "invalid_observer" }, 401);
+    const { observerCaption } = await import("./routes/observer.js");
+    const caption = observerCaption(payload);
+    if (!caption) return c.json({ error: "invalid_caption" }, 400);
+    if (typeof payload.idempotency_key !== "string") return c.json({ error: "delivery_id_required" }, 400);
+    for (const sid of observerDeliveries.keys()) { const s = sessions.get(sid); if (!s || s.ended || s.revoked) observerDeliveries.delete(sid); }
+    const seen = observerDeliveries.get(auth.session.id) ?? new Set<string>();
+    if (seen.has(payload.idempotency_key)) return c.json({ ok: true, duplicate: true });
+    const sent = relay.broadcast(payload.bot_id, caption);
+    // Retry until the page is connected instead of silently losing the wake word.
+    if (!sent) return c.json({ error: "observer_not_connected" }, 503);
+    seen.add(payload.idempotency_key);
+    if (seen.size > 2000) seen.delete(seen.values().next().value!);
+    observerDeliveries.set(auth.session.id, seen);
+    return c.json({ ok: true });
+  });
   app.post("/api/attendee/webhooks", async (c) => {
     const { handleAttendeeWebhook, sendAttendeeJoinNotice, verifyAttendeeSignature } = await import("./routes/attendeeWebhooks.js");
     const payload = await json<Record<string, unknown>>(c);

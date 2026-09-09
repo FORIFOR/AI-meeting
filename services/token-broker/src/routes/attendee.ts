@@ -43,7 +43,7 @@ export interface AttendeeJoinBody {
   /** `format: "mp3"` keeps the audio and drops the bot's own screen capture — the one thing a self-hosted, emulated bot host cannot afford twice. */
   recording?: { view?: "speaker_view" | "gallery_view" | "speaker_view_no_sidebar"; resolution?: "1080p" | "720p"; format?: "mp4" | "mp3" };
   /**
-   * Who writes the vendor transcript. `deepgram` (default) needs a Deepgram credential on the Attendee
+   * Who writes the vendor transcript. `deepgram` (explicit opt-in) needs a Deepgram credential on the Attendee
    * project — a self-hosted stack without one records silently nothing (Gate #8 runs 44–47: 0/0
    * utterances). `closed_captions` has the bot switch on the platform's own captions and read them:
    * no key, and for a listener judging whether the room could hear the character, the platform's
@@ -107,6 +107,8 @@ export async function createAttendeeBot(
    */
   const sampleRate = body.sampleRate ?? 16000;
   const session = deps.sessions.create({ meetingUrl: body.meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
+  const observing = body.botPageQuery?.observer === "captions";
+  const observerToken = observing ? deps.sessions.issue(session.id, "observer", { brokerPublicUrl: publicUrl }) : null;
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
 
@@ -161,7 +163,10 @@ export async function createAttendeeBot(
      * State comes from here and nowhere else. Without it an Attendee bot that fails to join is invisible:
      * no lifecycle, no error, no way to tell "waiting to be admitted" from "was refused".
      */
-    webhooks: [{ url: `${publicUrl.replace(/\/$/, "")}/api/attendee/webhooks`, triggers: ["bot.state_change"] }],
+    webhooks: [
+      { url: `${publicUrl.replace(/\/$/, "")}/api/attendee/webhooks`, triggers: ["bot.state_change"] },
+      ...(observerToken ? [{ url: `${publicUrl.replace(/\/$/, "")}/api/attendee/observer/${encodeURIComponent(observerToken)}`, triggers: ["transcript.update"] }] : []),
+    ],
     automatic_leave_settings: {
       silence_timeout_seconds: body.automaticLeave?.silenceTimeoutSeconds ?? ATTENDEE_SILENCE_TIMEOUT_SECONDS,
       ...(body.automaticLeave?.silenceActivateAfterSeconds !== undefined ? { silence_activate_after_seconds: body.automaticLeave.silenceActivateAfterSeconds } : {}),
@@ -181,7 +186,7 @@ export async function createAttendeeBot(
    */
   const languageTag = body.botPageQuery?.language ?? "";
   const language = languageTag.split("-")[0]?.toLowerCase() ?? "";
-  if (body.transcription === "closed_captions") {
+  if (observing || body.transcription !== "deepgram") {
     // Meet wants the full tag (ja-JP); Teams/Zoom take their own forms and are left to the vendor default.
     payload.transcription_settings = { meeting_closed_captions: { ...(/^[a-z]{2}-[A-Z]{2}$/.test(languageTag) ? { google_meet_language: languageTag } : {}), merge_consecutive_captions: true } };
   } else if (language) payload.transcription_settings = { deepgram: { language } };

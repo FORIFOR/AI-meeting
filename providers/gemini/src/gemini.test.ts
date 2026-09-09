@@ -109,6 +109,8 @@ describe("GeminiLiveProvider", () => {
     // Audio is gated on our own VAD (see pushAudio), so the server's detector is off and the turn
     // boundaries are ours: activityStart / activityEnd.
     expect(setup.realtimeInputConfig?.automaticActivityDetection?.disabled).toBe(true);
+    expect(setup.realtimeInputConfig?.turnCoverage).toBe("TURN_INCLUDES_ONLY_ACTIVITY");
+    expect(setup.contextWindowCompression).toEqual({ triggerTokens: "10000", slidingWindow: { targetTokens: "3000" } });
     const sys = setup.systemInstruction?.parts[0]?.text ?? "";
     expect(sys).toContain("あなたは面接官です。");
     expect(sys).toContain("【会話ルール】");
@@ -448,6 +450,7 @@ describe("what the API is charged for", () => {
       for (let i = 0; i < quietFrames; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
       const inputs = () => ws.sent.filter((m) => "realtimeInput" in m) as { realtimeInput: { audio?: unknown } }[];
       const audio = inputs().filter((m) => m.realtimeInput.audio).length;
+      expect(p.usageSnapshot().inputAudioSeconds).toBeCloseTo(audio * .02, 4);
       await p.disconnect();
       return audio;
     };

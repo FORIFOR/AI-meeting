@@ -6,11 +6,13 @@ import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { JOINED_REASON, LIVE_LOOKUP_TOOL, ParticipationPolicy, SELF_TURN_REASON, parseLookupArguments, renderLookup, settingFor, type LiveLookupResult, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
+import { OnDemandConversation } from "./OnDemandConversation.js";
+import { MeetingMemory } from "./MeetingMemory.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
 /** Gemini Live takes at most 1 fps, and every frame costs tokens whether or not it changes anything. */
-const VISION_MIN_INTERVAL_MS = 1000;
+const VISION_MIN_INTERVAL_MS = 5000;
 
 /** How long the pipeline waits for the AudioContext before mounting the avatar anyway. */
 const AUDIO_START_GRACE_MS = 2500;
@@ -25,6 +27,7 @@ export interface MeetingTranscriptLine {
 }
 
 export interface MeetingHandlers {
+  onUsage?(counters: Record<string, number>): void;
   onStatus(status: MeetingStatus, detail?: string): void;
   onTranscript(line: MeetingTranscriptLine): void;
   onPolicy(t: PolicyTransition): void;
@@ -38,6 +41,7 @@ export interface MeetingHandlers {
 }
 
 export interface MeetingInit {
+  observer?: "captions" | "live";
   settings: Settings;
   availability: Availability;
   persona: Persona;
@@ -178,7 +182,7 @@ export class MeetingSessionController {
   private answers = 0;
   private cuts = 0;
   /** The conversation provider, kept for its own diagnostics (the Gemini gate's counters). */
-  private provider: { gateStats?: Record<string, number> } | null = null;
+  private provider: { gateStats?: Record<string, number>; usageSnapshot?(): Record<string, number> } | null = null;
   /** Whether this session declared the live lookup, which is also what the instructions were told. */
   private canLookUp = false;
   /** Rebuilds the session instructions for a given wall clock; used to keep the date true. */
@@ -203,8 +207,12 @@ export class MeetingSessionController {
   private providerTranscriptTurn = false;
   /** The arrival greeting has been scheduled (once per page, never per reconnect). */
   private greeted = false;
-  /** The AI provider is connected: text turns can be sent (set once `runtime.start` resolves). */
+  /** The pipeline accepts text turns; an on-demand provider may still be observing without a socket. */
   private runtimeReady = false;
+  private readonly meetingMemory = new MeetingMemory();
+  private usageTotals: Record<string, number> = {};
+  private usageBase: Record<string, number> = {};
+  private usageReportedAt = 0;
   /** How the AI provider was made, kept so it can be made again when its session closes under us. */
   private providerOpts: Parameters<typeof createConversationProvider>[1] | null = null;
   /** A reconnect to the AI is in progress (its own `session_closed` must not start another). */
@@ -301,6 +309,10 @@ export class MeetingSessionController {
     return settingFor({ personaId: this.init.persona.id, mode: this.init.persona.mode });
   }
 
+  private get usesObserver(): boolean {
+    return this.init.observer === "captions" || (this.init.observer !== "live" && this.init.role !== "bot" && this.init.meetingProvider === "attendee" && this.setting === "meeting");
+  }
+
   get providerId(): ProviderId {
     return this.decision.conversation;
   }
@@ -376,6 +388,8 @@ export class MeetingSessionController {
       };
       console.log("[rcai:bot] " + JSON.stringify(beat));
       this.report("heartbeat", beat);
+      const usage = this.provider?.usageSnapshot?.();
+      if (usage) this.publishUsage(usage);
     }, 5000);
     handlers.onStatus(this.session?.status() ?? "in_call");
   }
@@ -401,6 +415,7 @@ export class MeetingSessionController {
         name: displayName,
         proactivity: this.init.proactivity,
         language: persona.language,
+        ...(provider === "attendee" && this.usesObserver ? { observer: "captions" } : {}),
         ...(provider === "attendee" ? { outbound: "page" } : {}),
         vision: this.init.vision ? "model" : this.init.visualCues === false ? "off" : "cues",
         ...(this.voiceId() ? { voice: this.voiceId()! } : {}),
@@ -544,8 +559,9 @@ export class MeetingSessionController {
     }
 
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
-    const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
-    this.provider = provider as unknown as { gateStats?: Record<string, number> };
+    const baseProvider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+    const provider = this.usesObserver ? new OnDemandConversation(baseProvider) : baseProvider;
+    this.provider = provider as typeof this.provider;
     this.canLookUp = false;
     // What the character may say about today depends on whether this provider can look it up.
     const canSearch = provider.capabilities().extras?.search === true || this.canLookUp;
@@ -583,6 +599,9 @@ export class MeetingSessionController {
   private onMeetingEvent(e: MeetingEvent): void {
     const now = Date.now();
     switch (e.type) {
+      case "usage":
+        this.init.handlers.onUsage?.(e.counters);
+        break;
       case "status":
         this.onMeetingStatus(e.status, e.detail, now);
         break;
@@ -667,19 +686,11 @@ export class MeetingSessionController {
     else this.setMuted(muted);
   }
 
-  /**
-   * Does anything except the AI transcribe this meeting?
-   *
-   * Recall's bot has its own transcript socket, so the policy can hear the character's name without the
-   * AI hearing anything. Attendee has no such stream — the only recogniser in the path is the AI's own.
-   * Gating audio on "have we been addressed" there is a deadlock: no audio, so no transcript, so never
-   * addressed, so no audio. It cost a live meeting to find, and the character sat there thinking.
-   */
+  /** Gate audio only when an independent transcript path was configured for this meeting. */
   private get hasExternalTranscripts(): boolean {
-    // Not "was a feed passed in": a bot page always gets one, and on Attendee it never yields anything
-    // because Attendee has no transcript stream. Keying on the callback made the deadlock survive the
-    // fix for it.
-    return this.init.meetingProvider !== "attendee" && !!this.init.botTranscriptFeed;
+    // Legacy Attendee bot pages also pass a Recall callback, which never yields Attendee captions.
+    // Only the explicit observer setting identifies the new authenticated caption relay.
+    return this.usesObserver || (this.init.meetingProvider !== "attendee" && !!this.init.botTranscriptFeed);
   }
 
   /**
@@ -791,6 +802,7 @@ export class MeetingSessionController {
     // from the transition, and with the push after, the line dropped as "the address" was the one
     // before it — the answer to 「ゆい、今どう思う？」 never saw the remark it was about.
     if (final) {
+      this.meetingMemory.observe(line.speaker, text);
       this.recent.push({ speaker: line.speaker, text, utterance, participantId, line });
       while (this.recent.length > 12) this.recent.shift();
     }
@@ -873,23 +885,14 @@ export class MeetingSessionController {
     void this.runtime?.interrupt();
   }
 
-  /**
-   * Should the model see this frame?
-   *
-   * A face model reads a nod; a vision model reads the room, an expression the landmarks miss, what
-   * someone is holding up to the camera. It is worth having and not worth spending on every frame:
-   * Gemini takes at most 1 fps, every frame costs tokens, and a frame of a person who is not talking
-   * to the character answers a question nobody asked. So: only the participant it is in a
-   * conversation with, at most once a second, and while the character is speaking only when the face
-   * actually changed — a reaction to what it is saying is the one thing worth interrupting for.
-   */
+  /** Send an opted-in image on a gesture from the engaged participant, at most once per five seconds. */
   private maybeShowModel(participantId: string, jpegBase64: string, at: number, cue: VisualCue): void {
     const rt = this.runtime;
     if (!rt || !this.init.vision) return;
     if (this.policy.engagedWith?.participantId !== participantId) return;
     if (at - this.lastVisionAt < VISION_MIN_INTERVAL_MS) return;
-    const speaking = this.policy.state === "RESPONDING";
-    if (speaking && !(cue.nodded || cue.shookHead || cue.tilted || cue.smile > 0.6)) return;
+    // Event-driven snapshots only, never a steady stream while the participant speaks.
+    if (!(cue.nodded || cue.shookHead || cue.tilted)) return;
     this.lastVisionAt = at;
     this.shownToModel++;
     rt.pushImage({ data: jpegBase64, mimeType: "image/jpeg" });
@@ -986,7 +989,9 @@ export class MeetingSessionController {
     const last = this.recent[this.recent.length - 1];
     // The model knows the character by one name; the transcript spells it as heard (「ゆイ」, 「結衣」).
     const canon = (t: string) => canonicalizeName(t, this.init.displayName, this.names);
-    const context = (last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent).map((r) => `${r.speaker}: ${canon(r.text)}`);
+    const history = last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent;
+    const context = (this.usesObserver ? history.slice(-6) : history).map((r) => `${r.speaker}: ${this.usesObserver ? canon(r.text).slice(0, 400) : canon(r.text)}`);
+    if (this.usesObserver) context.unshift(this.meetingMemory.context());
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
@@ -1039,12 +1044,28 @@ export class MeetingSessionController {
     if (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING") this.policy.onAssistantDone(Date.now());
   }
 
+  private publishUsage(counters: Record<string, number>, force = false): void {
+    if (counters.estimatedMicroUsd === undefined) return;
+    const totals = { ...counters };
+    for (const key of ["estimatedMicroUsd", "pricedTurns", "unpricedTurns", "inputAudioSeconds", "outputAudioSeconds", "imageCount", "liveActiveSeconds"]) totals[key] = (this.usageBase[key] ?? 0) + (counters[key] ?? 0);
+    totals.contextPeakTokens = Math.max(this.usageTotals.contextPeakTokens ?? 0, counters.contextPeakTokens ?? 0);
+    this.usageTotals = totals;
+    this.init.handlers.onUsage?.(totals);
+    if (force || Date.now() - this.usageReportedAt >= 60000) {
+      this.usageReportedAt = Date.now();
+      this.report("ai_usage", totals);
+    }
+  }
+
   private onConversationEvent(e: ConversationEvent): void {
     const now = Date.now();
     this.avatarRuntime?.handleEvent(e);
     this.behavior?.handleEvent(e);
     this.init.handlers.onEvent?.(e);
     switch (e.type) {
+      case "usage":
+        this.publishUsage(e.counters, true);
+        break;
       case "tool_call":
         void this.runTool(e.call);
         break;
@@ -1226,8 +1247,11 @@ export class MeetingSessionController {
       await new Promise((r) => setTimeout(r, wait));
       if (this.disposed || !this.runtime || !this.providerOpts) break;
       try {
-        const provider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+        this.usageBase = { ...this.usageTotals };
+        const baseProvider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+        const provider = this.usesObserver ? new OnDemandConversation(baseProvider) : baseProvider;
         await this.runtime.switchProvider(provider);
+        this.provider = provider as typeof this.provider;
         // A WebRTC provider (OpenAI) takes the page's mic as a track, which the new peer must be given again.
         const stream = this.mic?.mediaStream;
         if (stream) this.runtime.attachMicStream(stream);
@@ -1276,6 +1300,8 @@ export class MeetingSessionController {
     this.stopFeed?.();
     this.behavior?.stop();
     await this.runtime?.stop().catch(() => {});
+    const usage = this.provider?.usageSnapshot?.();
+    if (usage) this.publishUsage(usage, true);
     await this.mic?.stop().catch(() => {});
     if (this.clockTimer) clearInterval(this.clockTimer);
     this.clockTimer = null;

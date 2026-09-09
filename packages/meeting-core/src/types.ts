@@ -56,6 +56,7 @@ export interface MeetingParticipant {
 }
 
 export type MeetingEvent =
+  | { type: "usage"; counters: Record<string, number> }
   | { type: "status"; status: MeetingStatus; detail?: string; at: number }
   | { type: "joined"; at: number }
   | { type: "left"; reason?: string; at: number }

@@ -1,5 +1,6 @@
 import { MeetingUsageTracker, type MeetingUsageReceipt } from "../billing/meetingUsage.js";
 import { MeetingUsageSummary } from "../components/MeetingUsageSummary.js";
+import { LiveCostSummary } from "../components/LiveCostSummary.js";
 import { ZoomConnection } from "../components/ZoomConnection.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VOICE_OPTIONS, type Persona } from "@rcai/persona-core";
@@ -37,6 +38,8 @@ export function Meeting(p: MeetingProps) {
   const isBot = Boolean(p.botParams);
   const usage = useRef(new MeetingUsageTracker());
   const [usageReceipt, setUsageReceipt] = useState<MeetingUsageReceipt | null>(null);
+  const [aiUsage, setAiUsage] = useState<Record<string, number> | null>(null);
+  const [observeWithCaptions, setObserveWithCaptions] = useState(true);
   const [url, setUrl] = useState(() => { try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState(p.settings.characterId);
@@ -65,7 +68,7 @@ export function Meeting(p: MeetingProps) {
   /** Guards the single-use activation against StrictMode's double effect invocation. */
   const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
-  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string; vision?: string; outbound?: string; framing?: string; fps?: string } | null>(null);
+  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string; vision?: string; outbound?: string; framing?: string; fps?: string; observer?: string } | null>(null);
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
@@ -105,6 +108,7 @@ export function Meeting(p: MeetingProps) {
     setError(null);
     const attemptUsage = new MeetingUsageTracker();
     usage.current = attemptUsage;
+    setAiUsage(null);
     setUsageReceipt(null);
     try {
       /**
@@ -140,6 +144,7 @@ export function Meeting(p: MeetingProps) {
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
         // than through getUserMedia, and the page's own speaker is what Attendee streams back.
+        observer: isBot ? (botConfig?.observer === "captions" ? "captions" : undefined) : persona?.id === MEETING_PERSONA_ID && observeWithCaptions && p.brokerMeeting?.attendee ? "captions" : "live",
         attendeeAttach: botConfig?.provider === "attendee" && relayWsUrl.current ? { botId: activation?.botId ?? "", clientWsUrl: relayWsUrl.current } : undefined,
         botTranscriptFeed: role === "bot" ? (cb) => {
           // Two sources for the same transcripts: the bot's own socket, and the broker relay Recall also
@@ -155,6 +160,10 @@ export function Meeting(p: MeetingProps) {
           return () => { for (const s of stops) s(); };
         } : undefined,
         handlers: {
+          onUsage: counters => {
+            if (usage.current !== attemptUsage) return;
+            setAiUsage(previous => Object.fromEntries(Object.entries(counters).map(([key, value]) => [key, Math.max(previous?.[key] ?? 0, value)])));
+          },
           onStatus: (s, d) => {
             if (usage.current !== attemptUsage) return;
             setStatus(s); note(`${STATUS_JA[s]}${d ? ` · ${d}` : ""}`);
@@ -215,7 +224,7 @@ export function Meeting(p: MeetingProps) {
       try {
         const m = await import("@rcai/connector-recall");
         const act = await m.activateBotPage(p.botParams?.brokerUrl ?? p.settings.brokerUrl, token);
-        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice, vision: act.botPageQuery.vision, outbound: act.botPageQuery.outbound, framing: act.botPageQuery.framing, fps: act.botPageQuery.fps });
+        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice, vision: act.botPageQuery.vision, outbound: act.botPageQuery.outbound, framing: act.botPageQuery.framing, fps: act.botPageQuery.fps, observer: act.botPageQuery.observer });
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
@@ -283,6 +292,7 @@ export function Meeting(p: MeetingProps) {
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
         {usageReceipt && <MeetingUsageSummary receipt={usageReceipt} />}
+        {aiUsage && <LiveCostSummary counters={aiUsage} />}
         <CreditBalance enabled={!strict} />
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
@@ -301,6 +311,10 @@ export function Meeting(p: MeetingProps) {
           </select>
         </div>
         <ZoomConnection base={p.settings.brokerUrl} meetingUrl={url} disabled={busy || joined} />
+        {p.brokerMeeting?.attendee && persona?.id === MEETING_PERSONA_ID && <div className="field">
+          <label><input type="checkbox" checked={observeWithCaptions} onChange={e => setObserveWithCaptions(e.target.checked)} disabled={joined} /> 字幕で見守り、呼ばれたときだけAIと会話する（省コスト）</label>
+          <p className="hint">会議の字幕が必要です。字幕が使えない場合は、退出してこの設定を外すと音声で聞き取れます。</p>
+        </div>}
         <details><summary>話し方・カメラなどの設定</summary>
         <div className="field"><label>表示名（変更したいときだけ）</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
         <div className="field"><label>発言のしかた</label>
