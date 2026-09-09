@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-09T02:34:30.796Z",
+  "project": "gen-lang-client-0307428960",
+  "brokerRevision": "ai-meeting-broker-00010-4j7",
+  "secretName": "ai-meeting-broker-hosted-attendee-api-key",
+  "hostedAuthStatus": 200,
+  "botCreateStatus": 200,
+  "botId": "bot_2vNiT5kHSba0qAk0",
+  "hostedCreditsObserved": 5,
+  "additionalPurchase": false,
+  "localAttendeeRequired": false,
+  "meetingAdmission": "PENDING",
+  "bidirectionalAudioVideo": "NOT_VERIFIED",
+  "release": "NO_GO"
+}
