@@ -1,0 +1,11 @@
+{
+  "at": "2026-09-09T03:17:49.399792+00:00",
+  "yuiBotId": "bot_6MRCqoGn5udeL51i",
+  "testerBotId": "bot_BtpjNSqhjwvKYcHo",
+  "state": "PENDING_ADMISSION",
+  "testDriver": "/tmp/ai-meeting-hosted-tester.mjs",
+  "admissionTimeoutSeconds": 600,
+  "testerLeavesOnCompletionOrTimeout": true,
+  "yuiMaxUptimeSeconds": 1200,
+  "result": "NOT_YET_VERIFIED_IN_MEET"
+}
