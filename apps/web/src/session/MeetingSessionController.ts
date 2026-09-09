@@ -354,8 +354,15 @@ export class MeetingSessionController {
         language: this.init.persona.language,
       });
     }, CLOCK_REFRESH_MS);
+    let previousAudioClockMs = this.speaker ? this.speaker.context.currentTime * 1000 : null;
+    let previousAudioClockWallMs = performance.now();
     this.heartbeat = setInterval(() => {
       const t = performance.now();
+      const audioClockMs = this.speaker ? this.speaker.context.currentTime * 1000 : null;
+      const audioClockLagMs = audioClockMs !== null && previousAudioClockMs !== null
+        ? Math.round((t - previousAudioClockWallMs) - (audioClockMs - previousAudioClockMs)) : null;
+      previousAudioClockMs = audioClockMs;
+      previousAudioClockWallMs = t;
       const fps = this.lastBeatAt ? Math.round((this.drawn * 1000) / Math.max(1, t - this.lastBeatAt)) : null;
       this.drawn = 0;
       this.lastBeatAt = t;
@@ -365,6 +372,7 @@ export class MeetingSessionController {
         state: this.policy.state, engagement: this.policy.engagementState, status: this.meetingStatus,
         answers: this.answers, cuts: this.cuts, gate: this.provider?.gateStats, lookups: this.lookups,
         fps, avatar: this.avatarFailure ?? (this.avatar ? "ok" : "none"),
+        playback: this.speaker ? { state: this.speaker.context.state, queuedAudioMs: this.speaker.queuedAudioMs, audioClockLagMs } : null,
       };
       console.log("[rcai:bot] " + JSON.stringify(beat));
       this.report("heartbeat", beat);

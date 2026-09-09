@@ -105,6 +105,11 @@ export class SpeakerOutput implements AudioSink {
     return this.closed;
   }
 
+  /** Scheduled PCM still ahead of the audio clock; excludes downstream meeting capture. */
+  get queuedAudioMs(): number {
+    return Math.max(0, Math.round((this.nextStart - this.context.currentTime) * 1000));
+  }
+
   async resume(): Promise<void> {
     if (this.context.state !== "running") await this.context.resume();
   }
