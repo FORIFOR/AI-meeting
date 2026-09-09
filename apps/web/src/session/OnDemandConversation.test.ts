@@ -30,6 +30,13 @@ it("keeps explicit task and decision evidence past recent conversation without i
   expect(memory.context()).toContain("金曜日"); expect(memory.context()).toContain("田中");
   expect(memory.context()).toContain("雑談29"); expect(memory.context()).not.toContain("雑談0");
 });
+it("retrieves an old task after more than four other tasks without growing the prompt with all history", () => {
+  const memory = new MeetingMemory(); memory.observe("佐藤", "予算書の担当は田中さん。金曜日までに準備します。");
+  for (let i = 0; i < 30; i++) memory.observe("山田", `タスク${i}は月曜日までに確認します。`);
+  const context = memory.context("予算書の担当と期限は？");
+  expect(context).toContain("予算書の担当は田中さん"); expect(context).toContain("金曜日");
+  expect(context).toContain("全件ではありません"); expect(context.length).toBeLessThan(1500);
+});
 it("cancels a pending wake-up on exit without sending its question", async () => {
   let rejectConnect: ((reason: Error) => void) | undefined;
   const inner = { id: "google", onEvent: () => {}, connect: () => new Promise<void>((_, reject) => { rejectConnect = reject; }), disconnect: async () => { rejectConnect?.(new Error("cancelled")); }, sendText: vi.fn() };

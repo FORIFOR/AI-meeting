@@ -991,7 +991,7 @@ export class MeetingSessionController {
     const canon = (t: string) => canonicalizeName(t, this.init.displayName, this.names);
     const history = last && by.text && last.text === by.text ? this.recent.slice(0, -1) : this.recent;
     const context = (this.usesObserver ? history.slice(-6) : history).map((r) => `${r.speaker}: ${this.usesObserver ? canon(r.text).slice(0, 400) : canon(r.text)}`);
-    if (this.usesObserver) context.unshift(this.meetingMemory.context());
+    if (this.usesObserver) context.unshift(this.meetingMemory.context(by.text));
     const seen = this.visualContext();
     const prompt = by.detection.reason === JOINED_REASON
       ? meetingGreetingPrompt(this.init.displayName)
