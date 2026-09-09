@@ -5,5 +5,6 @@ it("distinguishes an incomplete estimate from a zero price", () => {
   const unknown = renderToStaticMarkup(<LiveCostSummary counters={{ pricedTurns: 0, unpricedTurns: 1, estimatedMicroUsd: 0 }} />);
   expect(unknown).toContain("集計中"); expect(unknown).not.toContain("$0.0000");
   const priced = renderToStaticMarkup(<LiveCostSummary counters={{ pricedTurns: 2, unpricedTurns: 1, estimatedMicroUsd: 12345 }} />);
-  expect(priced).toContain("$0.0123"); expect(priced).toContain("未計算"); expect(priced).toContain("料金は別");
+  expect(priced).toContain("確認できた応答"); expect(priced).toContain("未集計"); expect(priced).toContain("料金の具体額は表示していません");
+  expect(priced).not.toContain("$");
 });

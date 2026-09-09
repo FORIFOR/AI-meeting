@@ -110,10 +110,9 @@ export function Home(p: HomeProps) {
       </div>
       </section>
 
-      <details className="home__credits">
-        <summary><span><b>利用状況</b><small>残りのクレジットと料金を確認</small></span><span className="home__details-chevron" aria-hidden="true">›</span></summary>
+      <section className="home__credits" aria-label="残りのクレジット">
         <CreditBalance enabled={!strict} />
-      </details>
+      </section>
 
       {p.contentNote && <p className="notice">{p.contentNote}</p>}
       {offline && (
