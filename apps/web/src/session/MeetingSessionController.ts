@@ -1269,7 +1269,7 @@ export class MeetingSessionController {
   }
 
   async leave(): Promise<void> {
-    if (this.disposed) return;
+    if (this.disposed) { await this.session?.leave(); return; }
     this.disposed = true;
     if (this.policyTimer) clearInterval(this.policyTimer);
     this.clearAnswerWatchdog();
@@ -1288,7 +1288,7 @@ export class MeetingSessionController {
     this.cues.clear();
     await this.avatarRuntime?.dispose().catch(() => {});
     await this.speaker?.close().catch(() => {});
-    await this.session?.leave().catch(() => {});
+    await this.session?.leave();
   }
 
   private async resolveCharacter(entry: CharacterEntry): Promise<CharacterDefinition> {

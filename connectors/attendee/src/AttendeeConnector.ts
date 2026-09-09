@@ -72,7 +72,7 @@ export class AttendeeConnector implements MeetingConnector {
       };
       throw new Error(zoomErrors[body.error ?? ""] ?? `${body.error ?? "attendee_join_failed"}${body.detail ? `: ${body.detail}` : ""}`);
     }
-    return new AttendeeSession(body.botId, detectPlatform(req.meetingUrl), body.clientWsUrl, body.sampleRate ?? 24000, this.opts);
+    return new AttendeeSession(body.botId, detectPlatform(req.meetingUrl), body.clientWsUrl, body.sampleRate ?? 24000, this.opts, true);
   }
 }
 
@@ -88,6 +88,8 @@ class AttendeeSession implements MeetingSession {
   private listeners = new Set<MeetingEventListener>();
   private state: MeetingStatus = "joining";
   private closed = false;
+  private leaveRequest: Promise<void> | null = null;
+  private remoteLeft = false;
   /** The character speaks at the internal rate; Attendee takes whatever we told it we would send. */
   private readonly resampler = createResampler(INTERNAL_SAMPLE_RATE, 24000);
   /** Participants whose own stream is currently above the floor, each with the timer that ends their turn. */
@@ -101,6 +103,7 @@ class AttendeeSession implements MeetingSession {
     private readonly clientWsUrl: string,
     private readonly sampleRate: number,
     private readonly opts: AttendeeConnectorOptions,
+    private readonly ownsBot = false,
   ) {
     this.resampler = createResampler(INTERNAL_SAMPLE_RATE, sampleRate);
     this.open();
@@ -226,6 +229,14 @@ class AttendeeSession implements MeetingSession {
   async endOutboundUtterance(): Promise<void> {}
 
   async leave(): Promise<void> {
+    if (this.ownsBot && !this.remoteLeft) {
+      if (!this.leaveRequest) this.leaveRequest = (async () => {
+        const response = await (this.opts.fetchImpl ?? fetch)(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/meeting/attendee/bots/${encodeURIComponent(this.id)}/leave`, { method: "POST", signal: AbortSignal.timeout(15000) });
+        if (!response.ok) throw new Error("Botの退出を確認できませんでした。もう一度退出してください。");
+        this.remoteLeft = true;
+      })().finally(() => { this.leaveRequest = null; });
+      await this.leaveRequest;
+    }
     if (this.closed) return;
     this.closed = true;
     for (const t of this.talking.values()) clearTimeout(t);

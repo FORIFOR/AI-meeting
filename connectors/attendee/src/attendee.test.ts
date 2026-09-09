@@ -141,3 +141,16 @@ describe("AttendeeConnector", () => {
     await expect(connector.join({ meetingUrl: "https://meet.google.com/abc-defg-hij", displayName: "Yui", privacyMode: "default" })).rejects.toThrow(/BLOCKED_BY_ATTENDEE_KEY/);
   });
 });
+
+it("only the creator leaves the paid bot, retries failures, and deduplicates leave", async()=>{
+ let leaves=0, fail=true;
+ const connector=new AttendeeConnector({brokerUrl:'http://broker',wsFactory:()=>fakeWs(),fetchImpl:vi.fn(async(url)=>{
+  if(String(url).endsWith('/leave')){leaves++;return new Response('',{status:fail?502:200});}
+  return new Response(JSON.stringify({botId:'bot_test',clientWsUrl:'ws://broker/client'}));
+ }) as typeof fetch});
+ const session=await connector.join({meetingUrl:'https://meet.google.com/abc-defg-hij',displayName:'Yui',privacyMode:'default'});
+ await expect(session.leave()).rejects.toThrow('退出');expect(leaves).toBe(1);
+ fail=false;await Promise.all([session.leave(),session.leave()]);expect(leaves).toBe(2);
+ await session.leave();expect(leaves).toBe(2);
+ await connector.attach({botId:'bot_test',clientWsUrl:'ws://broker/client'}).leave();expect(leaves).toBe(2);
+});

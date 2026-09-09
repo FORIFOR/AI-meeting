@@ -239,7 +239,7 @@ export function Meeting(p: MeetingProps) {
   // Bot page step 2: start once activated and content is loaded (the bot grants mic access without a gesture).
   useEffect(() => {
     if (isBot && activation && !ctrl.current && character && persona && p.characters.length && p.personas.length) void start("bot");
-    return () => { void ctrl.current?.leave(); ctrl.current = null; };
+    return () => { void ctrl.current?.leave().catch(() => {}); ctrl.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBot, activation, character?.id, persona?.id, p.characters.length, p.personas.length]);
 
@@ -247,10 +247,13 @@ export function Meeting(p: MeetingProps) {
     setBusy(true);
     const receipt = usage.current.finish(Date.now());
     if (receipt) setUsageReceipt(receipt);
-    await ctrl.current?.leave();
-    ctrl.current = null;
-    setBusy(false);
-    setStatus("left");
+    try {
+      await ctrl.current?.leave();
+      ctrl.current = null;
+      setStatus("left");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "退出を確認できませんでした。もう一度退出してください。");
+    } finally { setBusy(false); }
   };
 
   const pill = pillFor(avatarState, false);
