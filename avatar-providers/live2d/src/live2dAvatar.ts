@@ -14,6 +14,12 @@ export function inkFor(background: string): string {
   return luma > 0.6 ? "rgba(0, 0, 0, 0.62)" : "#ffffff";
 }
 
+/** Bound the actual framebuffer, while preserving CSS size and model framing. */
+export function renderResolution(width: number, height: number, pixelRatio: number, meeting: boolean): number {
+  const ratio = Number.isFinite(pixelRatio) && pixelRatio > 0 ? Math.min(2, pixelRatio) : 1;
+  return meeting ? Math.min(ratio, 1, 640 / Math.max(1, width, height)) : ratio;
+}
+
 export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
   container: HTMLElement;
   /** Explicit Cubism Core URL. Default: vendored file if present, else the official CDN. */
@@ -32,7 +38,7 @@ export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
   /**
    * Cap on the render ticker. A camera tile is captured at 15–30 fps by the meeting vendor, so frames
    * above that are drawn for nothing — and in a software-GL browser each one is expensive. Default: the
-   * browser's refresh rate.
+   * browser's refresh rate (15 fps for meeting framing).
    */
   maxFps?: number;
   /**
@@ -99,7 +105,7 @@ interface Live2DModelLike {
  */
 export class Live2DAvatarProvider extends MotionStackAvatarBase {
   readonly id = "live2d";
-  private app: { stage: { addChild(c: unknown): void }; view: HTMLCanvasElement; renderer: { resize(w: number, h: number): void; width: number; height: number }; destroy(removeView?: boolean, opts?: unknown): void; screen: { width: number; height: number } } | null = null;
+  private app: { stage: { addChild(c: unknown): void }; view: HTMLCanvasElement; renderer: { resize(w: number, h: number): void; width: number; height: number; resolution: number }; destroy(removeView?: boolean, opts?: unknown): void; screen: { width: number; height: number } } | null = null;
   private model: Live2DModelLike | null = null;
   private ids: Record<ParamName, string> = resolveParamIds();
   private table: ParamTable = new Map();
@@ -140,11 +146,11 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
       backgroundAlpha: 0,
       antialias: !meeting,
       autoDensity: true,
-      resolution: Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1),
+      resolution: renderResolution(container.clientWidth || 480, container.clientHeight || 640, typeof devicePixelRatio === "number" ? devicePixelRatio : 1, meeting),
       width: Math.max(1, container.clientWidth || 480),
       height: Math.max(1, container.clientHeight || 640),
     });
-    if (this.opts.maxFps) app.ticker.maxFPS = this.opts.maxFps;
+    if (this.opts.maxFps || meeting) app.ticker.maxFPS = this.opts.maxFps || 15;
     app.view.style.width = "100%";
     app.view.style.height = "100%";
     app.view.style.display = "block";
@@ -238,6 +244,7 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
     const container = this.opts.container;
     const w = Math.max(1, container.clientWidth || 480);
     const h = Math.max(1, container.clientHeight || 640);
+    this.app.renderer.resolution = renderResolution(w, h, typeof devicePixelRatio === "number" ? devicePixelRatio : 1, this.opts.framing === "meeting");
     this.app.renderer.resize(w, h);
     const im = this.model.internalModel;
     const view = this.opts.framing === "meeting" ? { ...(character.view ?? {}), ...(character.view?.meeting ?? {}) } : (character.view ?? {});

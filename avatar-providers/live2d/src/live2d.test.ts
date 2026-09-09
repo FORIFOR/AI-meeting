@@ -56,3 +56,18 @@ describe("inkFor", () => {
     expect(inkFor("linear-gradient(#000, #fff)")).toBe("#ffffff");
   });
 });
+
+
+describe("meeting render budget", () => {
+  it("bounds a large retina camera framebuffer without changing its aspect ratio", async () => {
+    const { renderResolution } = await import("./live2dAvatar.js");
+    for (const [w, h] of [[1920, 1080], [1080, 1920], [2560, 1440]]) {
+      const resolution = renderResolution(w!, h!, 2, true);
+      expect(Math.max(w!, h!) * resolution).toBeCloseTo(640);
+      expect((w! * resolution) / (h! * resolution)).toBeCloseTo(w! / h!);
+      expect(w! * h! * resolution ** 2).toBeLessThanOrEqual(640 ** 2);
+    }
+    expect(renderResolution(320, 240, 2, true)).toBe(1);
+    expect(renderResolution(1920, 1080, 2, false)).toBe(2);
+  });
+});

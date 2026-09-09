@@ -795,7 +795,12 @@ export class MeetingSessionController {
       while (this.recent.length > 12) this.recent.shift();
     }
     this.feeding = utterance;
-    this.policy.onTranscript({ text, final, speakerName, participantId }, now);
+    const detection = this.policy.onTranscript({ text, final, speakerName, participantId }, now);
+    if (final && this.init.role === "bot") this.report("address_decision", {
+      utterance, characters: text.length, addressed: detection?.addressed ?? false,
+      reason: detection?.reason ?? "ignored self transcript", state: this.policy.state,
+      sanctioned: this.sanctioned,
+    });
     this.feeding = undefined;
     // Entering ADDRESSED is handled by the transition listener, whatever caused it.
   }
@@ -833,6 +838,10 @@ export class MeetingSessionController {
       return;
     }
     const d = this.policy.detect(text);
+    if (this.init.role === "bot") this.report("address_revision", {
+      utterance, characters: text.length, addressed: d.addressed, reason: d.reason,
+      state: this.policy.state, sanctioned: this.sanctioned,
+    });
     const turn = this.turnOf;
     /**
      * The other direction. Run 79: 「唯イ寮の予定を教えて。」 earned nothing — the name was not in it —
