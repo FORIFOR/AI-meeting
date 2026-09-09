@@ -183,6 +183,14 @@ export function createApp(deps: AppDeps): Hono {
     }
   };
 
+  // Fixed public news/weather sources only; no arbitrary URL fetching or credentials.
+  app.post("/api/lookup", async (c) => {
+    const req = parseLookupArguments((await json<Record<string, unknown>>(c)) ?? {});
+    if (!req) return c.json({ error: "kind must be news or weather" }, 400);
+    const result = await lookupLiveInfo(req, fetchImpl);
+    return c.json(result.body, 200);
+  });
+
   app.post("/api/token/openai", async (c) => {
     const r = await createOpenAIClientSecret(env, await json<OpenAITokenRequest>(c), fetchImpl);
     return c.json(r.body, r.status as 200);
@@ -225,7 +233,7 @@ export function createApp(deps: AppDeps): Hono {
       const badG = badInput();
       if (badG.length) return c.json({ error: "invalid_input", detail: `missing: ${badG.join(", ")}` }, 400);
       try {
-        return c.json(await mod.evaluateWithGemini({ ...(env.GEMINI_BACKEND === "vertex" ? await vertex.evaluationAuth() : { apiKey: env.GEMINI_API_KEY }), model: env.GEMINI_EVAL_MODEL ?? "gemini-2.5-flash", fetch: fetchImpl }, body.input));
+        return c.json(await mod.evaluateWithGemini({ ...(env.GEMINI_BACKEND === "vertex" ? await vertex.evaluationAuth() : { apiKey: env.GEMINI_API_KEY }), model: env.GEMINI_EVAL_MODEL ?? (env.GEMINI_BACKEND === "vertex" ? "gemini-2.5-flash" : "gemini-3.6-flash"), fetch: fetchImpl }, body.input));
       } catch (e) {
         const f = evaluationFailure(e, "GEMINI");
         return c.json(f.body, f.status);

@@ -168,26 +168,38 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
       if (this.connected && !this.reconnecting && !this.closing) this.emit({ type: "session_closed", reason: "data channel closed" });
       this.connected = false;
     };
+    let openingTimer: ReturnType<typeof setTimeout>;
     const opened = new Promise<void>((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error("openai realtime: data channel open timeout")), this.opts.connectTimeoutMs ?? 15000);
+      openingTimer = setTimeout(() => reject(new Error("openai realtime: data channel open timeout")), this.opts.connectTimeoutMs ?? 15000);
       dc.onopen = () => {
-        clearTimeout(t);
+        clearTimeout(openingTimer);
         resolve();
       };
     });
+    // SDP can fail (or take longer than the channel timeout) before we await this promise.
+    // Observe rejection immediately; awaiting the original promise below still propagates it.
+    void opened.catch(() => {});
 
     // 4. SDP exchange with the ephemeral secret.
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    const callsUrl = `${token.baseUrl.replace(/\/$/, "")}/calls?model=${encodeURIComponent(token.model)}`;
-    const sdpRes = await this.fetchImpl(callsUrl, {
-      method: "POST",
-      body: offer.sdp ?? "",
-      headers: { Authorization: `Bearer ${token.clientSecret}`, "Content-Type": "application/sdp" },
-    });
-    if (!sdpRes.ok) throw new Error(`openai realtime calls ${sdpRes.status}: ${(await sdpRes.text().catch(() => "")).slice(0, 200)}`);
-    await pc.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
-    await opened;
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const callsUrl = `${token.baseUrl.replace(/\/$/, "")}/calls?model=${encodeURIComponent(token.model)}`;
+      const sdpRes = await this.fetchImpl(callsUrl, {
+        method: "POST",
+        body: offer.sdp ?? "",
+        headers: { Authorization: `Bearer ${token.clientSecret}`, "Content-Type": "application/sdp" },
+      });
+      if (!sdpRes.ok) throw new Error(`openai realtime calls ${sdpRes.status}: ${(await sdpRes.text().catch(() => "")).slice(0, 200)}`);
+      await pc.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
+      await opened;
+    } catch (error) {
+      this.teardownConnection();
+      throw error;
+    } finally {
+      clearTimeout(openingTimer!);
+      dc.onopen = null;
+    }
     this.connected = true;
 
     // 5. Session settings (transcription, VAD, instructions, voice).

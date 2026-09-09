@@ -11,9 +11,9 @@
  * Usage: services/agent/node_modules/.bin/tsx scripts/reality/one-to-one-offline.ts
  */
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { GeminiLiveProvider } from "../../providers/gemini/src/geminiLiveProvider.js";
 import { createFrame } from "../../packages/audio-core/src/types.js";
 import { LIVE_LOOKUP_TOOL, meetingInstructions, parseLookupArguments, renderLookup } from "../../packages/meeting-core/src/index.js";
@@ -38,6 +38,14 @@ function render(voice: string, text: string, name: string): Float32Array {
 
 const A = process.env.VOICE_A ?? "Kyoko", B = process.env.VOICE_B ?? "Otoya";
 const cues = oneToOneCues(A, B) as { id: string; kind: string; text?: string; voice?: string; want?: string; expect: string; cutIn?: { voice: string; text: string }; lines?: [string, string][] }[];
+// Synthesis and conversion are setup work, not interruption latency. Render before opening the
+// live session so they also cannot stall incoming audio or invalidate the playback clock.
+const rendered = new Map<string, Float32Array>();
+for (const cue of cues) {
+  if (cue.text && cue.voice) rendered.set(cue.id, render(cue.voice, cue.text, cue.id));
+  if (cue.cutIn) rendered.set(`${cue.id}-cut`, render(cue.cutIn.voice, cue.cutIn.text, `${cue.id}-cut`));
+}
+const measurements: Record<string, unknown>[] = [];
 
 const provider = new GeminiLiveProvider({ brokerUrl: process.env.BROKER ?? "http://localhost:8787" } as never);
 let said = "", audioEvents = 0, firstAudioAt = 0, interruptedAt = 0, audioAtInterrupt = 0, spokeSeconds = 0;
@@ -84,18 +92,23 @@ for (const cue of cues) {
   said = ""; firstAudioAt = 0; interruptedAt = 0; spokeSeconds = 0;
   const before = audioEvents;
   await tone(700);
-  if (cue.kind === "say") await play(render(cue.voice!, cue.text!, cue.id));
+  if (cue.kind === "say") await play(rendered.get(cue.id)!);
   else if (cue.kind === "interrupt") {
-    await play(render(cue.voice!, cue.text!, cue.id));
+    await play(rendered.get(cue.id)!);
     const deadline = Date.now() + 12000;
     while (!firstAudioAt && Date.now() < deadline) { push(noise()); await sleep(20); }
     await tone(800);
+    // Require a response to interrupt; clear any older interruption before starting this trial.
+    const responseObserved = firstAudioAt !== 0;
+    interruptedAt = 0;
     const bargeAt = Date.now();
-    await play(render(cue.cutIn!.voice, cue.cutIn!.text, `${cue.id}-cut`), 2.5);
+    await play(rendered.get(`${cue.id}-cut`)!, 2.5);
     const during = interruptedAt ? audioEvents - audioAtInterrupt : Infinity;
     const stoppedIn = interruptedAt ? interruptedAt - bargeAt : null;
     await tone(4000);
-    rows.push(`| ${cue.id} | ${cue.expect} | ${stoppedIn !== null && stoppedIn < 1200 && during <= 2 ? "PASS" : "FAIL"} | ${stoppedIn === null ? "停止せず" : `${stoppedIn}msで停止`}・割り込み中の音声${during === Infinity ? "—" : during}フレーム |`);
+    const verdict = responseObserved && stoppedIn !== null && stoppedIn >= 0 && stoppedIn < 400 && during === 0 ? "PASS" : "FAIL";
+    measurements.push({ cue: cue.id, verdict, responseObserved, stopMs: stoppedIn, audioFramesAfterInterruptDuringInput: Number.isFinite(during) ? during : null });
+    rows.push(`| ${cue.id} | ${cue.expect} | ${verdict} | ${stoppedIn === null ? "停止せず" : `${stoppedIn}msで停止`}・割り込み中の音声${during === Infinity ? "—" : during}フレーム（プロバイダ出力、スピーカー実測ではない） |`);
     continue;
   }
   const endedAt = Date.now();
@@ -103,7 +116,8 @@ for (const cue of cues) {
   const spoke = audioEvents > before;
   const latency = firstAudioAt ? firstAudioAt - endedAt : null;
   // The greeting belongs to the page's admission, which does not exist here.
-  const verdict = cue.id === "greet" ? "N/A（実会議のみ）" : cue.kind === "listen" || cue.want === "silence" ? (spoke ? "FAIL" : "PASS") : spoke ? "PASS" : "FAIL";
+  const verdict = cue.id === "greet" ? "N/A（実会議のみ）" : cue.kind === "listen" || cue.want === "silence" ? (spoke ? "FAIL" : "PASS") : spoke ? "REVIEW（応答あり・内容未判定）" : "FAIL";
+  measurements.push({ cue: cue.id, verdict, responseObserved: spoke, firstAudioMs: latency, spokenSeconds: spokeSeconds, transcript: said });
   rows.push(`| ${cue.id} | ${cue.expect} | ${verdict} | ${latency !== null ? `${latency}ms · ${spokeSeconds.toFixed(1)}s · ` : ""}${said ? `「${said.slice(0, 70)}」` : "発話なし"} |`);
   console.log(`  [${cue.id}] ${latency ?? "—"}ms  ${said.slice(0, 80)}`);
 }
@@ -112,4 +126,8 @@ const gate = (provider as never as { gateStats: Record<string, number> }).gateSt
 console.log(`\n| cue | 期待 | 判定 | 実測 |\n|---|---|---|---|\n${rows.join("\n")}`);
 console.log(`\nlookups: ${lookups.join(", ") || "none"} · gate ${gate.opens}開/${gate.closes}閉/${gate.forced}強制/${gate.bargeIns}割り込み · API へ ${Math.round((100 * gate.sent) / (gate.sent + gate.held))}%`);
 await provider.disconnect();
-process.exit(0);
+const out = resolve(process.env.OUT ?? "docs/reports/release/one-to-one.json");
+mkdirSync(dirname(out), { recursive: true });
+const status = measurements.some((m) => m.verdict === "FAIL") ? "FAIL" : "REVIEW";
+writeFileSync(out, JSON.stringify({ schemaVersion: 1, measuredAt: new Date().toISOString(), status, scope: "Synthetic speech through the real provider; content requires review; no physical speaker, human-rating or meeting-platform claim. Interruption timing begins at the first submitted cut-in frame, including any leading silence, excluding synthesis.", measurements, lookups, gate }, null, 2) + "\n");
+process.exit(status === "FAIL" ? 1 : 2);

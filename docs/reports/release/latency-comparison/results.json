@@ -1,0 +1,159 @@
+{
+  "at": "2026-09-08T21:39:49.780Z",
+  "kind": "synthetic-audio-provider-diagnostic",
+  "rows": [
+    {
+      "affective": true,
+      "turn": 0,
+      "reply": " would you like to talk about? Anything specific in mind?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2813.6809169999997,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": true,
+      "turn": 1,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 645.6644159999996,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": true,
+      "turn": 2,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "reply": " today?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 1432.9979170000006,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": false,
+      "turn": 0,
+      "reply": " topic would you like to chat about?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2389.4035000000003,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": false,
+      "turn": 1,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "reply": " last weekend?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2148.329000000005,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": false,
+      "turn": 2,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 1484.4381250000006,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      },
+      "reply": " do you like?"
+    },
+    {
+      "affective": false,
+      "turn": 0,
+      "reply": "Sounds good! What did you do today?",
+      "metrics": {
+        "source": "speech",
+        "firstAudioSentMs": 1118.087916000004,
+        "totalMs": 1790.6398330000084,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      },
+      "heard": "最初 の 質問 を お 願い し ます 。"
+    },
+    {
+      "affective": false,
+      "turn": 1,
+      "reply": "Okay, got it. What are you planning to do this weekend?",
+      "metrics": {
+        "source": "speech",
+        "firstAudioSentMs": 1872.3693330000096,
+        "totalMs": 2702.9260420000064,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      },
+      "heard": "最初 の 質問 を お 願い し ます 。"
+    },
+    {
+      "affective": false,
+      "turn": 2,
+      "reply": " kind of topics are you interested in?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2670.521667000008,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": true,
+      "turn": 0,
+      "reply": " kind of topics do you want to talk about?",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2610.753958000001,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      }
+    },
+    {
+      "affective": true,
+      "turn": 1,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2551.4099579999893,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      },
+      "reply": " So, what did you get up to today?"
+    },
+    {
+      "affective": true,
+      "turn": 2,
+      "heard": "最初 の 質問 を お 願い し ます 。",
+      "metrics": {
+        "source": "speech",
+        "totalMs": 2554.663249999998,
+        "engines": {
+          "llm": "gemini-3.1-flash-live-preview"
+        }
+      },
+      "reply": " start with something easy. What's your favorite hobby?"
+    }
+  ]
+}

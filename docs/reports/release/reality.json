@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-09-08T00:25:30.730Z",
-  "buildId": "b46eaaf8a0dd60859df6a0a7ba48b4250da42e7bea6514d4db2d7ee740a19afa",
+  "measuredAt": "2026-09-08T21:41:24.620Z",
+  "buildId": "18bcaadc814dad9d2d7c720a70c71e5a74331c47fe277ffb1799c65481a56258",
   "status": "BLOCKED",
   "evidence": "docs/reports/release/evidence.json",
   "scope": {
@@ -9,11 +9,6 @@
     "platforms": []
   },
   "rows": [
-    {
-      "id": "evidence",
-      "status": "BLOCKED",
-      "detail": "Current-build evidence file is missing or unreadable."
-    },
     {
       "id": "candidate",
       "status": "BLOCKED",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeWeather, geocodeName, headlinesFromRss, lookupLiveInfo } from "./lookup.js";
+import { articlesFromRss, describeWeather, geocodeName, headlinesFromRss, lookupLiveInfo } from "./lookup.js";
 
 /**
  * 「今日のニュースを教えて」 had one answer — that she cannot know — and it was the wrong one twice in
@@ -55,3 +55,11 @@ describe("what is true right now", () => {
     expect(seen[1]).not.toContain("/search");
   });
 });
+
+ describe("news citations", () => {
+  it("keeps publication time and publisher links while rejecting incomplete and unsafe items", () => {
+    const item = (link: string, date = "Tue, 08 Sep 2026 12:00:00 GMT") => `<item><title><![CDATA[AI &amp; IT]]></title><link>${link}</link><source url="https://publisher.example">Publisher</source><pubDate>${date}</pubDate></item>`;
+    const xml = item("https://news.example/1") + item("javascript:alert(1)") + item("https://news.example/2", "invalid") + item("https://news.example/1");
+    expect(articlesFromRss(xml)).toEqual([{title:"AI & IT", url:"https://news.example/1", source:"Publisher", publishedAt:"2026-09-08T12:00:00.000Z"}]);
+  });
+ });

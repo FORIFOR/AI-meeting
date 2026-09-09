@@ -22,3 +22,10 @@ describe("the live lookup the character may call", () => {
     expect(LIVE_LOOKUP_TOOL.parameters.properties.kind.enum).toEqual(["news", "weather"]);
   });
 });
+it('does not turn retrieval time into article publication time',()=>{
+ const at='2026-09-08T17:00:00Z';
+ const old={title:'old',url:'https://example.com/old',source:'source',publishedAt:'2026-09-08T10:00:00Z'};
+ const fresh={...old,title:'fresh',url:'https://example.com/new',publishedAt:'2026-09-08T16:00:00Z'};
+ expect(renderLookup({facts:['old','fresh'],at,articles:[old,fresh]})).toMatchObject({facts:['fresh'],articles:[fresh]});
+ expect(renderLookup({facts:['old'],at,articles:[old]})).toMatchObject({error:expect.stringContaining('No articles published today')});
+});

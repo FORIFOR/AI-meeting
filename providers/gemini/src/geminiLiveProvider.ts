@@ -89,7 +89,7 @@ export interface GeminiLiveProviderOptions {
   googleSearch?: boolean;
   /** Quiet required before the turn closes (ms). Default 250; the VAD's hangover is the first guard. */
   gateHangoverMs?: number;
-  /** Max automatic reconnect attempts after goAway / abnormal close (default 3). */
+  /** Max automatic reconnect attempts after goAway / abnormal close (default 4). */
   maxReconnects?: number;
   /** Backoff base in ms (1000 → 1 s, 2 s, 4 s). */
   reconnectBackoffMs?: number;
@@ -140,7 +140,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private static readonly GATE_ABSOLUTE_FLOOR_DB = -55;
   /**
    * How long the level must stay under the bar before the turn is closed. It is a second guard, not the
-   * first: the VAD's own hangover (500 ms) is what decides the person has stopped, and every millisecond
+   * first: the VAD's own hangover (250 ms) is what decides the person has stopped, and every millisecond
    * here is added to the wait before the model may answer. Overridable for measurement.
    */
   private static readonly GATE_HANGOVER_MS = 250;
@@ -212,7 +212,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
 
   constructor(private readonly opts: GeminiLiveProviderOptions) {
     this.clock = opts.clock ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
-    this.vad = opts.localVad === false ? null : new EnergyVAD();
+    // Keep brief intra-sentence pauses together without adding the generic VAD's full 500 ms
+    // to every realtime reply. The independent level gate still has to agree before activityEnd.
+    this.vad = opts.localVad === false ? null : new EnergyVAD({ hangoverMs: 250 });
     this.searchWanted = opts.googleSearch !== false;
   }
 
@@ -459,7 +461,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
      * session is worse than a question left unanswered, so it is asked for where it is known to work
      * and `googleSearch: true` forces it anywhere else.
      */
-    if (this.searchWanted && (nativeAudio || this.opts.googleSearch === true)) tools.push({ googleSearch: {} });
+    if (this.searchWanted && (!config.tools?.length || this.opts.googleSearch === true) && (nativeAudio || this.opts.googleSearch === true)) tools.push({ googleSearch: {} });
     if (tools.length) setup.tools = tools;
     // Request handles from the first connection, not only after receiving one.
     setup.sessionResumption = this.resumptionHandle ? { handle: this.resumptionHandle } : {};
@@ -536,8 +538,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (this.rearm && !loud) this.rearm = false;
     // While the character is speaking (and for a beat after), only a voice over her own gets through.
     const selfSpeaking = this.turn.hasAudio && this.clock() - (this.turn.firstAudioAt + this.turn.audioMs) < GeminiLiveProvider.SELF_TAIL_MS;
-    if (selfSpeaking && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
-      if (this.speechOpen) this.closeTurn(now);
+    if (selfSpeaking && !this.speechOpen && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
       this.bargeInSince = 0;
       this.gateStats.held++;
       this.preroll.length = 0;
@@ -692,6 +693,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       this.resumptionHandle = msg.sessionResumptionUpdate.newHandle;
     }
     if (msg.toolCall?.functionCalls) {
+      // A reply can begin with a function call before any modelTurn/audio arrives. Without a
+      // new generation, the runtime discards that call as part of the interrupted reply.
+      // Keep late calls inside the cancelled tail stamped with their old generation.
+      if (!this.droppingUntilTurn) this.openGeneration();
       for (const fc of msg.toolCall.functionCalls) {
         this.emit({ type: "tool_call", call: { id: fc.id ?? fc.name, name: fc.name, arguments: fc.args ?? {} }, gen: this.genCounter.stamp() });
       }
@@ -755,7 +760,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
             ...(this.turn.hasAudio ? { firstAudioSentMs: this.turn.firstAudioAt - from } : {}),
             // speech end → the model finished sending. The reply's own length lives in here; not latency.
             totalMs: now - from,
-            engines: { llm: this.model },
+            engines: { llm: this.connectedModel || this.model },
           },
         });
       }
@@ -850,7 +855,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.clearEndedTimer();
     if (this.turn.hasAudio) this.onInterrupted(this.clock());
     this.emit({ type: "error", error: new Error(`Gemini Live: ${reason}; reconnecting`), fatal: false });
-    const max = this.opts.maxReconnects ?? 3;
+    // 1 + 2 + 4 seconds exhausts three attempts before a 10-second outage ends.
+    // The fourth attempt at 15 seconds permits recovery while retaining a finite retry budget.
+    const max = this.opts.maxReconnects ?? 4;
     const base = this.opts.reconnectBackoffMs ?? 1000;
     try {
       while (this.reconnectAttempts < max && !this.closing && epoch === this.sessionEpoch) {

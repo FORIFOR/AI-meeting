@@ -1,3 +1,5 @@
+import { TaskList } from "../components/TaskList.js";
+import { LookupSources } from "../components/LookupSources.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Persona } from "@rcai/persona-core";
 import { Subtitle, TranscriptLog } from "../components/Subtitle.jsx";
@@ -90,6 +92,8 @@ export function Session(p: SessionProps) {
 
         <Subtitle items={s.captions} on={p.settings.captionsOn} />
         <TranscriptLog items={s.captions} />
+        {s.lookup && <LookupSources result={s.lookup} />}
+        {(s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
         <SelfCamera enabled={p.settings.cameraOn} />
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
 
