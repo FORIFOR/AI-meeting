@@ -73,6 +73,19 @@ export function Home(p: HomeProps) {
         </aside>
       </section>
 
+      {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
+        <section className="home__meeting" aria-labelledby="home-meeting-title">
+          <div className="home__meeting-copy">
+            <p className="home__step">MAIN</p>
+            <h2 id="home-meeting-title">会議に参加</h2>
+            <p>Google MeetやZoomのURLを貼り付けて、AIを会議に呼びます。</p>
+          </div>
+          <button type="button" className="btn btn--primary btn--lg" onClick={p.onMeeting} disabled={!!blocked || strict}>
+            会議URLを入力する
+          </button>
+        </section>
+      )}
+
       <section className="home__setup" aria-label="会話を準備">
         <div className="home__section-head">
           <div>
@@ -100,13 +113,6 @@ export function Home(p: HomeProps) {
             <span className="act__note">{RELEASE_LABEL[RELEASE_POLICY.modes[x.mode]]}</span>
           </button>
         ))}
-        {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
-          <button type="button" className="act" disabled={!!blocked || strict} onClick={p.onMeeting}>
-            <span className="act__icon" aria-hidden="true">会</span>
-            <span className="act__name">会議</span>
-            <span className="act__note">Google Meet · Zoom ベータ · Teams 未対応</span>
-          </button>
-        )}
       </div>
       </section>
 
