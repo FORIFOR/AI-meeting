@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-09-09T14:34:20.368596+00:00",
+  "periodStart": "2026-09-01",
+  "periodEnd": "2026-09-07",
+  "currency": "JPY",
+  "gross": 5276,
+  "savings": 48,
+  "net": 5228,
+  "services": [
+    {
+      "name": "Vertex AI",
+      "gross": 5215,
+      "savings": 0,
+      "net": 5215
+    },
+    {
+      "name": "Cloud Run",
+      "gross": 55,
+      "savings": 48,
+      "net": 7
+    },
+    {
+      "name": "Cloud Storage",
+      "gross": 6,
+      "savings": 0,
+      "net": 6
+    },
+    {
+      "name": "Artifact Registry",
+      "gross": 0,
+      "savings": 0,
+      "net": 0
+    }
+  ]
+}

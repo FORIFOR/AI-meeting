@@ -1,3 +1,4 @@
+import { CloudCostSummary } from "./CloudCostSummary.js";
 import { useEffect, useState } from "react";
 import { estimateMeetingCredits, nonNegativeInput, readLedger, summarizeCredits, type CreditLedger } from "../billing/costs.js";
 
@@ -40,7 +41,8 @@ export function CreditBalance({ enabled = true }: { enabled?: boolean }) {
         <div><span>確認時の残り</span><strong>{(ledger.balanceCenticredits / 100).toFixed(2)} <small>クレジット</small></strong><span>Bot 1体で約{Math.max(0, Math.floor(ledger.balanceCenticredits * .6))}分の目安</span></div>
       </div>
       <p className="hint">{ledger.scope}。{new Date(ledger.checkedAt).toLocaleString("ja-JP")} 確認。自動更新ではありません。</p>
-      <p className="credit-note">無料枠を含む消費量の金額換算です。実際の支払額とは異なり、AI音声・サーバー料金はまだ含まれていません。</p>
+      <p className="credit-note">無料枠を含む消費量の金額換算です。実際の支払額とは異なり、AI音声・サーバー料金はこの金額に含まれていません。</p>
+      <CloudCostSummary />
       <details className="credit-details">
         <summary>内訳・次回の費用を確認</summary>
         <div className="credit-controls">
@@ -49,7 +51,7 @@ export function CreditBalance({ enabled = true }: { enabled?: boolean }) {
         </div>
         <table className="credit-table"><caption>確認済みの消費内訳</caption><thead><tr><th scope="col">用途</th><th scope="col">消費</th><th scope="col">金額換算</th></tr></thead><tbody>
           {totals.groups.map(g => <tr key={g.label}><th scope="row">{g.label === "Tester" ? "自動テストの相手" : g.label}</th><td>{g.credits.toFixed(2)} cr</td><td>{dollars(g.credits * price)}</td></tr>)}
-          <tr><th scope="row">AI音声・サーバー</th><td colSpan={2}>請求額の確認待ち</td></tr>
+          <tr><th scope="row">AI音声・サーバー</th><td colSpan={2}>別枠のGoogle Cloud利用額を参照（集計期間が異なります）</td></tr>
         </tbody></table>
         <div className="credit-controls">
           <label>追加するAI・サーバー費用（USD）<input aria-label="追加費用（USD）" type="number" min="0" step="0.01" placeholder="未確認" value={extra} onChange={e => setExtra(e.target.value)} /></label>
