@@ -1,0 +1,444 @@
+{
+  "startedAt": "2026-09-09T03:14:59.338Z",
+  "testerBotId": "bot_BtpjNSqhjwvKYcHo",
+  "yuiBotId": "bot_6MRCqoGn5udeL51i",
+  "scope": "real Hosted Meet with synthetic tester; not human study",
+  "rows": [
+    {
+      "id": "greet",
+      "start": 1788923928131,
+      "end": 1788923934626,
+      "cutAt": null,
+      "events": [
+        {
+          "type": "interrupted",
+          "at": 1788923929514,
+          "data": {
+            "frames": 22,
+            "text": "入室しました、Yuiです。何かあれば「Yui」と声をかけてくださいね。"
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788923936771,
+          "data": {
+            "reason": "answered on its own",
+            "text": "い。 こんにちは 、 私 の 声 が 聞こえ たら 、 聞こえ ます と 返し て ください 。"
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788923936772,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788923938051,
+          "data": {
+            "frames": 26,
+            "seconds": 1.07,
+            "text": "聞こえます。"
+          }
+        }
+      ],
+      "heartbeat": {
+        "heard": 3436,
+        "heardMs": 31568,
+        "zeroFrames": 2602,
+        "gaps": 1,
+        "forwarded": 3436,
+        "transcripts": 1,
+        "spoke": 26,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 2,
+        "cuts": 0,
+        "gate": {
+          "sent": 281,
+          "held": 1400,
+          "opens": 1,
+          "closes": 1,
+          "forced": 0,
+          "openMs": 6099,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 0,
+          "answered": 0
+        },
+        "fps": 14,
+        "avatar": "ok"
+      },
+      "audibleRoomChunksAfterCue": 38
+    },
+    {
+      "id": "numbers",
+      "start": 1788923952680,
+      "end": 1788923960826,
+      "cutAt": null,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788923963459,
+          "data": {
+            "reason": "answered on its own",
+            "text": "ゆい 、 明日 の 15 時 から 1 時間 の 予定 です 。 開始 時刻 と 終了 時刻 を 確認 し て ください 。"
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788923963463,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788923965896,
+          "data": {
+            "frames": 37,
+            "seconds": 2.59,
+            "text": "明日午後3時から午後4時までですね。"
+          }
+        }
+      ],
+      "heartbeat": {
+        "heard": 5939,
+        "heardMs": 54565,
+        "zeroFrames": 4167,
+        "gaps": 1,
+        "forwarded": 5939,
+        "transcripts": 2,
+        "spoke": 37,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 3,
+        "cuts": 0,
+        "gate": {
+          "sent": 648,
+          "held": 2321,
+          "opens": 2,
+          "closes": 2,
+          "forced": 0,
+          "openMs": 14093,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 0,
+          "answered": 0
+        },
+        "fps": 13,
+        "avatar": "ok"
+      },
+      "audibleRoomChunksAfterCue": 242
+    },
+    {
+      "id": "followup",
+      "start": 1788923978899,
+      "end": 1788923982468,
+      "cutAt": null,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788923984989,
+          "data": {
+            "reason": "name + question/request",
+            "text": "ゆい その 予定 は 何時 に 終わり ます か ?"
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788923984990,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788923986672,
+          "data": {
+            "frames": 44,
+            "seconds": 1.59,
+            "text": "午後4時に終わりますよ。"
+          }
+        }
+      ],
+      "heartbeat": {
+        "heard": 7933,
+        "heardMs": 72884,
+        "zeroFrames": 5633,
+        "gaps": 1,
+        "forwarded": 7933,
+        "transcripts": 3,
+        "spoke": 44,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 4,
+        "cuts": 0,
+        "gate": {
+          "sent": 799,
+          "held": 3172,
+          "opens": 3,
+          "closes": 3,
+          "forced": 0,
+          "openMs": 17499,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 0,
+          "answered": 0
+        },
+        "fps": 14,
+        "avatar": "ok"
+      },
+      "audibleRoomChunksAfterCue": 130
+    },
+    {
+      "id": "long",
+      "start": 1788924000521,
+      "end": 1788924015177,
+      "cutAt": 1788924011423,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788924009924,
+          "data": {
+            "reason": "name + question/request",
+            "text": "ゆい 、 英 会話 の 練習 方法 を 3 つ 、 少し 詳しく 説明 し て ください 。"
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788924009949,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "interrupted",
+          "at": 1788924013100,
+          "data": {
+            "frames": 99,
+            "text": "は、聞こえた英語をすぐに真似する方法で、リスニングと発音が鍛えられます。次に、独り言で練習するのもいいですよ。最後に、オンラインで英会話をしてみ"
+          }
+        },
+        {
+          "type": "speaking",
+          "at": 1788924017928,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788924017929,
+          "data": {
+            "reason": "engaged follow-up",
+            "text": "ちょっと 待っ て 、 短い 答え に し て ください 。"
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788924021771,
+          "data": {
+            "frames": 116,
+            "seconds": 3.83,
+            "text": "シャドーイング、独り言、オンライン会話などがあるよ。"
+          }
+        }
+      ],
+      "heartbeat": {
+        "heard": 11423,
+        "heardMs": 104949,
+        "zeroFrames": 7744,
+        "gaps": 1,
+        "forwarded": 11423,
+        "transcripts": 5,
+        "spoke": 116,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 6,
+        "cuts": 0,
+        "gate": {
+          "sent": 1226,
+          "held": 4738,
+          "opens": 5,
+          "closes": 5,
+          "forced": 0,
+          "openMs": 26940,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 0,
+          "answered": 0
+        },
+        "fps": 13,
+        "avatar": "ok"
+      },
+      "audibleRoomChunksAfterCue": 293
+    },
+    {
+      "id": "resume",
+      "start": 1788924033235,
+      "end": 1788924039141,
+      "cutAt": null,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788924041552,
+          "data": {
+            "state": "RESPONDING"
+          }
+        },
+        {
+          "type": "turn",
+          "at": 1788924041553,
+          "data": {
+            "reason": "name + question/request",
+            "text": "ゆい もう 一度 会話 を 続け ます 。 英語 で おはよう は 何 と 言い ます か ?"
+          }
+        },
+        {
+          "type": "spoke",
+          "at": 1788924043265,
+          "data": {
+            "frames": 122,
+            "seconds": 1.47,
+            "text": "\"Good morning\"だよ。"
+          }
+        }
+      ],
+      "heartbeat": {
+        "heard": 13890,
+        "heardMs": 127614,
+        "zeroFrames": 9412,
+        "gaps": 2,
+        "forwarded": 13890,
+        "transcripts": 6,
+        "spoke": 122,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 7,
+        "cuts": 0,
+        "gate": {
+          "sent": 1486,
+          "held": 5692,
+          "opens": 6,
+          "closes": 6,
+          "forced": 0,
+          "openMs": 32717,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 0,
+          "answered": 0
+        },
+        "fps": 14,
+        "avatar": "ok"
+      },
+      "audibleRoomChunksAfterCue": 105
+    }
+  ],
+  "admittedAt": "2026-09-09T03:18:40.128Z",
+  "silence": {
+    "start": 1788924057193,
+    "newTurns": 0
+  },
+  "execution": "COMPLETE",
+  "testerLeaveRequested": true,
+  "endedAt": "2026-09-09T03:21:17.513Z",
+  "roomAudioChunkCount": 15625,
+  "bots": [
+    {
+      "name": "Yui",
+      "botId": "bot_6MRCqoGn5udeL51i",
+      "state": "ended",
+      "events": [
+        {
+          "type": "join_requested",
+          "at": "2026-09-09T03:14:57.602597Z"
+        },
+        {
+          "type": "joined_meeting",
+          "at": "2026-09-09T03:18:33.103336Z"
+        },
+        {
+          "type": "recording_permission_granted",
+          "at": "2026-09-09T03:18:33.316168Z"
+        },
+        {
+          "type": "leave_requested",
+          "at": "2026-09-09T03:21:28.444947Z"
+        },
+        {
+          "type": "left_meeting",
+          "at": "2026-09-09T03:21:29.914148Z"
+        },
+        {
+          "type": "post_processing_completed",
+          "at": "2026-09-09T03:21:36.137128Z"
+        }
+      ]
+    },
+    {
+      "name": "Tester",
+      "botId": "bot_BtpjNSqhjwvKYcHo",
+      "state": "ended",
+      "events": [
+        {
+          "type": "join_requested",
+          "at": "2026-09-09T03:14:58.366770Z"
+        },
+        {
+          "type": "joined_meeting",
+          "at": "2026-09-09T03:18:39.008870Z"
+        },
+        {
+          "type": "recording_permission_granted",
+          "at": "2026-09-09T03:18:39.287439Z"
+        },
+        {
+          "type": "leave_requested",
+          "at": "2026-09-09T03:21:17.396484Z"
+        },
+        {
+          "type": "left_meeting",
+          "at": "2026-09-09T03:21:18.878638Z"
+        },
+        {
+          "type": "post_processing_completed",
+          "at": "2026-09-09T03:21:30.182438Z"
+        }
+      ]
+    }
+  ],
+  "release": "NO_GO",
+  "scopeVerdict": "Time retention, follow-up, recovery and silence passed this synthetic Meet run; physical latency and broad release validation incomplete."
+}
