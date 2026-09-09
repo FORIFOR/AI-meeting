@@ -1,4 +1,5 @@
 import { LiveUsageAccumulator } from "../../../providers/gemini/src/usage.js";
+import { parsePcmRate } from "../../../providers/gemini/src/protocol.js";
 /** Transport totals plus a public-rate estimate for completed, fully described responses. */
 export class VertexUsage {
   private readonly costs = new LiveUsageAccumulator();
@@ -27,8 +28,11 @@ export class VertexUsage {
   inbound(message: unknown) {
     const sc = (message as { serverContent?: { modelTurn?: { parts?: { inlineData?: { mimeType?: string; data?: string } }[] }; turnComplete?: boolean; interrupted?: boolean } } | null)?.serverContent;
     for (const part of sc?.modelTurn?.parts ?? []) {
-      const rate = /^audio\/pcm;rate=(\d+)$/.exec(part.inlineData?.mimeType ?? "");
-      if (rate && part.inlineData?.data && Number(rate[1]) >= 8000 && Number(rate[1]) <= 96000) this.outputSeconds += Buffer.byteLength(part.inlineData.data, "base64") / (2 * Number(rate[1]));
+      const mime = part.inlineData?.mimeType ?? "";
+      // Vertex output is mono PCM24k unless a rate is specified. Match the player:
+      // bare audio/pcm and additional MIME parameters are valid output too.
+      const rate = parsePcmRate(mime);
+      if (/^audio\/pcm(?:;|$)/.test(mime) && part.inlineData?.data && rate >= 8000 && rate <= 96000) this.outputSeconds += Buffer.byteLength(part.inlineData.data, "base64") / (2 * rate);
     }
     const m = (message as { usageMetadata?: Record<string, unknown> } | null)?.usageMetadata;
     if (m && typeof m === "object") this.costs.observe(m);

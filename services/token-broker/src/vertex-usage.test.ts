@@ -16,3 +16,10 @@ it("does not invent durations for unknown audio encodings",()=>{
  const u=new VertexUsage();u.outbound({realtimeInput:{audio:{data:'AAAA',mimeType:'audio/mp3'}}});
  expect(u.snapshot().sentAudioSeconds).toBe(0);expect(u.snapshot().unrecognizedAudioChunks).toBe(1);
 });
+it("measures supported Vertex PCM output with default rate and MIME parameters",()=>{
+ const u=new VertexUsage();
+ for(const mimeType of ['audio/pcm','audio/pcm;rate=24000;channels=1']) u.inbound({serverContent:{modelTurn:{parts:[{inlineData:{mimeType,data:Buffer.alloc(48000).toString('base64')}}]}}});
+ expect(u.snapshot().receivedAudioSeconds).toBe(2);
+ u.inbound({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/mp3',data:'AAAA'}}]}}});
+ expect(u.snapshot().receivedAudioSeconds).toBe(2);
+});
