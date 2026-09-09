@@ -1,0 +1,13 @@
+{
+  "voiceProviderAndLocalSoakBuildId": "e0d01c41d80f5aa99c978b443ebffedbec7d66c09e3aa26b0befdc770787600c",
+  "deployedCandidateBuildId": "2af03a8a5cb72e41f16a866b525d758ef07ba5a275aab1e799eec793fc9db223",
+  "difference": "During the local direct-conversation soak, an additional whitespace-before-vocative-punctuation fix was made in AddressDetector. Gemini provider and direct-conversation audio path are unchanged. The running browser retains its originally loaded build.",
+  "deploymentVersion": "adb4c7bf4872053e",
+  "previousDeploymentVersion": "684aba4194f5cc7d",
+  "currentCommit": "23d6f5f",
+  "unchangedAudioSourceSha256": {
+    "providers/gemini/src/geminiLiveProvider.ts": "cd4594265445a2fc11390cb9998d334d4068978bd0298d2b17ceb69d7678f85f",
+    "apps/web/src/session/SessionController.ts": "7b8a9b69d90873546986ea8e890787fc3bbdc35bd751014a6fcd0282fff74c32"
+  },
+  "note": "No current-build human or platform gates may be inferred from component tests or the earlier browser snapshot."
+}

@@ -1,0 +1,48 @@
+{
+  "scope": "Real Hosted Meet, synthetic tester, 30-minute target; not human evaluation",
+  "startedAt": "2026-09-09T05:40:54.083Z",
+  "admittedAt": null,
+  "endedAt": "2026-09-09T05:46:01.757Z",
+  "execution": "FAIL",
+  "error": "Admission not completed within 5 minutes",
+  "botIds": [
+    {
+      "role": "character",
+      "botId": "bot_2g4kbfqpPLgWlRBf"
+    },
+    {
+      "role": "listener",
+      "botId": "bot_oY9uLzm9lPpf1tYF"
+    }
+  ],
+  "states": [
+    {
+      "at": 1788932455803,
+      "states": [
+        {
+          "role": "character",
+          "state": "joining"
+        },
+        {
+          "role": "listener",
+          "state": "joining"
+        }
+      ]
+    }
+  ],
+  "cleanup": [
+    {
+      "botId": "bot_oY9uLzm9lPpf1tYF",
+      "leaveRequested": true,
+      "finalState": "ended"
+    },
+    {
+      "botId": "bot_2g4kbfqpPLgWlRBf",
+      "leaveRequested": true,
+      "finalState": "ended"
+    }
+  ],
+  "apiErrors": null,
+  "testedSourceCommit": "23d6f5f",
+  "completed30MinuteRuns": 0
+}

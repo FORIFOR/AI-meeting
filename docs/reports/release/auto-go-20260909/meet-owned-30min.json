@@ -1,0 +1,4283 @@
+{
+  "scope": "Real Hosted Meet, synthetic tester, 30-minute target; not human evaluation",
+  "startedAt": "2026-09-09T05:54:52.854Z",
+  "admittedAt": "2026-09-09T05:56:49.996Z",
+  "endedAt": "2026-09-09T06:27:01.582Z",
+  "execution": "COMPLETE",
+  "error": null,
+  "elapsedMs": 1800210,
+  "silence": {
+    "durationMs": 22358,
+    "newTurns": 0
+  },
+  "cleanup": [
+    {
+      "botId": "bot_fTYvNsWYSfp3Jh1h",
+      "leaveRequested": true,
+      "finalState": "ended"
+    },
+    {
+      "botId": "bot_YUY2FOXsyiUrfxda",
+      "leaveRequested": true,
+      "finalState": "ended"
+    }
+  ],
+  "apiErrors": null,
+  "testedSourceCommit": "23d6f5f",
+  "cues": 77,
+  "cuesWithReplyEvent": 73,
+  "cuesWithRoomEnergyInWindow": 65,
+  "functionalVerdict": "FAIL",
+  "limitations": [
+    "Timer completion is not functional success",
+    "Reply events do not prove timely audible output",
+    "Synthetic tester is not human evaluation"
+  ],
+  "rows": [
+    {
+      "id": "greet",
+      "start": 1788933419998,
+      "end": 1788933426369,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933428737
+        },
+        {
+          "type": "turn",
+          "at": 1788933428740
+        },
+        {
+          "type": "spoke",
+          "at": 1788933429882
+        }
+      ],
+      "audibleRoomChunksAfterCue": 48,
+      "heartbeat": {
+        "heard": 3918,
+        "heardMs": 35997,
+        "zeroFrames": 3113,
+        "gaps": 6,
+        "forwarded": 3918,
+        "transcripts": 1,
+        "spoke": 31,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 2,
+        "cuts": 0,
+        "gate": {
+          "sent": 278,
+          "held": 1688,
+          "opens": 1,
+          "closes": 1,
+          "forced": 0,
+          "openMs": 6237,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788933441762,
+      "end": 1788933449897,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933452245
+        },
+        {
+          "type": "speaking",
+          "at": 1788933452246
+        },
+        {
+          "type": "spoke",
+          "at": 1788933455345
+        }
+      ],
+      "audibleRoomChunksAfterCue": 254,
+      "heartbeat": {
+        "heard": 6406,
+        "heardMs": 58855,
+        "zeroFrames": 4672,
+        "gaps": 10,
+        "forwarded": 6406,
+        "transcripts": 2,
+        "spoke": 44,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 3,
+        "cuts": 0,
+        "gate": {
+          "sent": 637,
+          "held": 2644,
+          "opens": 2,
+          "closes": 2,
+          "forced": 0,
+          "openMs": 14242,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788933465208,
+      "end": 1788933468758,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933471159
+        },
+        {
+          "type": "turn",
+          "at": 1788933471160
+        },
+        {
+          "type": "spoke",
+          "at": 1788933473266
+        }
+      ],
+      "audibleRoomChunksAfterCue": 160,
+      "heartbeat": {
+        "heard": 8388,
+        "heardMs": 77065,
+        "zeroFrames": 6257,
+        "gaps": 13,
+        "forwarded": 8388,
+        "transcripts": 3,
+        "spoke": 54,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 4,
+        "cuts": 0,
+        "gate": {
+          "sent": 785,
+          "held": 3529,
+          "opens": 3,
+          "closes": 3,
+          "forced": 0,
+          "openMs": 17590,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788933484035,
+      "end": 1788933497560,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933492556
+        },
+        {
+          "type": "speaking",
+          "at": 1788933492557
+        },
+        {
+          "type": "interrupted",
+          "at": 1788933494973
+        },
+        {
+          "type": "turn",
+          "at": 1788933499944
+        },
+        {
+          "type": "speaking",
+          "at": 1788933499945
+        },
+        {
+          "type": "spoke",
+          "at": 1788933503975
+        }
+      ],
+      "audibleRoomChunksAfterCue": 296,
+      "heartbeat": {
+        "heard": 11371,
+        "heardMs": 104471,
+        "zeroFrames": 7857,
+        "gaps": 17,
+        "forwarded": 11371,
+        "transcripts": 5,
+        "spoke": 107,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 6,
+        "cuts": 0,
+        "gate": {
+          "sent": 1222,
+          "held": 4814,
+          "opens": 5,
+          "closes": 5,
+          "forced": 0,
+          "openMs": 27266,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788933512833,
+      "end": 1788933518716,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933520797
+        },
+        {
+          "type": "speaking",
+          "at": 1788933520797
+        },
+        {
+          "type": "spoke",
+          "at": 1788933522851
+        }
+      ],
+      "audibleRoomChunksAfterCue": 120,
+      "heartbeat": {
+        "heard": 13362,
+        "heardMs": 122763,
+        "zeroFrames": 9044,
+        "gaps": 19,
+        "forwarded": 13362,
+        "transcripts": 6,
+        "spoke": 115,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 7,
+        "cuts": 0,
+        "gate": {
+          "sent": 1482,
+          "held": 5565,
+          "opens": 6,
+          "closes": 6,
+          "forced": 0,
+          "openMs": 32842,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788933534037,
+      "end": 1788933540328,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933542383
+        },
+        {
+          "type": "turn",
+          "at": 1788933542384
+        },
+        {
+          "type": "spoke",
+          "at": 1788933543713
+        }
+      ],
+      "audibleRoomChunksAfterCue": 41,
+      "heartbeat": {
+        "heard": 15350,
+        "heardMs": 141028,
+        "zeroFrames": 10212,
+        "gaps": 21,
+        "forwarded": 15350,
+        "transcripts": 7,
+        "spoke": 120,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 8,
+        "cuts": 0,
+        "gate": {
+          "sent": 1759,
+          "held": 6262,
+          "opens": 7,
+          "closes": 7,
+          "forced": 0,
+          "openMs": 38930,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788933555610,
+      "end": 1788933563821,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933566084
+        },
+        {
+          "type": "speaking",
+          "at": 1788933566088
+        },
+        {
+          "type": "spoke",
+          "at": 1788933569412
+        }
+      ],
+      "audibleRoomChunksAfterCue": 262,
+      "heartbeat": {
+        "heard": 17842,
+        "heardMs": 163923,
+        "zeroFrames": 11729,
+        "gaps": 22,
+        "forwarded": 17842,
+        "transcripts": 8,
+        "spoke": 133,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 9,
+        "cuts": 0,
+        "gate": {
+          "sent": 2115,
+          "held": 7216,
+          "opens": 8,
+          "closes": 8,
+          "forced": 0,
+          "openMs": 46977,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788933579127,
+      "end": 1788933582672,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933584942
+        },
+        {
+          "type": "speaking",
+          "at": 1788933584943
+        },
+        {
+          "type": "spoke",
+          "at": 1788933587171
+        }
+      ],
+      "audibleRoomChunksAfterCue": 154,
+      "heartbeat": {
+        "heard": 19843,
+        "heardMs": 182308,
+        "zeroFrames": 13193,
+        "gaps": 23,
+        "forwarded": 19843,
+        "transcripts": 9,
+        "spoke": 143,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 10,
+        "cuts": 0,
+        "gate": {
+          "sent": 2270,
+          "held": 8104,
+          "opens": 9,
+          "closes": 9,
+          "forced": 0,
+          "openMs": 50469,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788933598000,
+      "end": 1788933611465,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933606265
+        },
+        {
+          "type": "turn",
+          "at": 1788933606266
+        },
+        {
+          "type": "interrupted",
+          "at": 1788933609144
+        },
+        {
+          "type": "turn",
+          "at": 1788933613696
+        },
+        {
+          "type": "speaking",
+          "at": 1788933613698
+        },
+        {
+          "type": "spoke",
+          "at": 1788933617746
+        }
+      ],
+      "audibleRoomChunksAfterCue": 281,
+      "heartbeat": {
+        "heard": 22321,
+        "heardMs": 205074,
+        "zeroFrames": 14287,
+        "gaps": 35,
+        "forwarded": 22321,
+        "transcripts": 11,
+        "spoke": 179,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 12,
+        "cuts": 0,
+        "gate": {
+          "sent": 2697,
+          "held": 9181,
+          "opens": 11,
+          "closes": 11,
+          "forced": 0,
+          "openMs": 59935,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 4,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788933626736,
+      "end": 1788933632683,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933636572
+        },
+        {
+          "type": "speaking",
+          "at": 1788933636577
+        },
+        {
+          "type": "spoke",
+          "at": 1788933638559
+        }
+      ],
+      "audibleRoomChunksAfterCue": 143,
+      "heartbeat": {
+        "heard": 24826,
+        "heardMs": 228089,
+        "zeroFrames": 16081,
+        "gaps": 97,
+        "forwarded": 24826,
+        "transcripts": 12,
+        "spoke": 186,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 13,
+        "cuts": 0,
+        "gate": {
+          "sent": 2946,
+          "held": 10170,
+          "opens": 12,
+          "closes": 12,
+          "forced": 0,
+          "openMs": 66079,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788933648043,
+      "end": 1788933654434,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933657664
+        },
+        {
+          "type": "speaking",
+          "at": 1788933657684
+        },
+        {
+          "type": "spoke",
+          "at": 1788933659293
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 26816,
+        "heardMs": 246372,
+        "zeroFrames": 17259,
+        "gaps": 150,
+        "forwarded": 26816,
+        "transcripts": 13,
+        "spoke": 191,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 14,
+        "cuts": 0,
+        "gate": {
+          "sent": 3237,
+          "held": 10859,
+          "opens": 13,
+          "closes": 13,
+          "forced": 0,
+          "openMs": 72662,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788933669711,
+      "end": 1788933677828,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933681649
+        },
+        {
+          "type": "speaking",
+          "at": 1788933681677
+        },
+        {
+          "type": "spoke",
+          "at": 1788933684892
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 29314,
+        "heardMs": 269322,
+        "zeroFrames": 18829,
+        "gaps": 215,
+        "forwarded": 29314,
+        "transcripts": 14,
+        "spoke": 204,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 15,
+        "cuts": 0,
+        "gate": {
+          "sent": 3631,
+          "held": 11797,
+          "opens": 14,
+          "closes": 14,
+          "forced": 0,
+          "openMs": 81263,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788933693170,
+      "end": 1788933696773,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933700789
+        },
+        {
+          "type": "speaking",
+          "at": 1788933700790
+        },
+        {
+          "type": "spoke",
+          "at": 1788933703266
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 30790,
+        "heardMs": 282883,
+        "zeroFrames": 19775,
+        "gaps": 253,
+        "forwarded": 30790,
+        "transcripts": 15,
+        "spoke": 213,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 16,
+        "cuts": 0,
+        "gate": {
+          "sent": 3771,
+          "held": 12483,
+          "opens": 15,
+          "closes": 15,
+          "forced": 0,
+          "openMs": 85143,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788933712044,
+      "end": 1788933726668,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933721459
+        },
+        {
+          "type": "turn",
+          "at": 1788933721462
+        },
+        {
+          "type": "interrupted",
+          "at": 1788933724743
+        },
+        {
+          "type": "turn",
+          "at": 1788933729783
+        },
+        {
+          "type": "speaking",
+          "at": 1788933729791
+        },
+        {
+          "type": "spoke",
+          "at": 1788933734481
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 33796,
+        "heardMs": 310501,
+        "zeroFrames": 21406,
+        "gaps": 328,
+        "forwarded": 33796,
+        "transcripts": 17,
+        "spoke": 250,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 18,
+        "cuts": 0,
+        "gate": {
+          "sent": 4203,
+          "held": 13840,
+          "opens": 17,
+          "closes": 17,
+          "forced": 0,
+          "openMs": 95126,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788933741935,
+      "end": 1788933747852,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933751553
+        },
+        {
+          "type": "speaking",
+          "at": 1788933751554
+        },
+        {
+          "type": "spoke",
+          "at": 1788933753693
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 36276,
+        "heardMs": 333286,
+        "zeroFrames": 23077,
+        "gaps": 392,
+        "forwarded": 36276,
+        "transcripts": 18,
+        "spoke": 257,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 19,
+        "cuts": 0,
+        "gate": {
+          "sent": 4484,
+          "held": 14803,
+          "opens": 18,
+          "closes": 18,
+          "forced": 0,
+          "openMs": 101562,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788933763152,
+      "end": 1788933769472,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933772667
+        },
+        {
+          "type": "speaking",
+          "at": 1788933772668
+        },
+        {
+          "type": "spoke",
+          "at": 1788933773792
+        }
+      ],
+      "audibleRoomChunksAfterCue": 201,
+      "heartbeat": {
+        "heard": 38288,
+        "heardMs": 351771,
+        "zeroFrames": 24282,
+        "gaps": 442,
+        "forwarded": 38288,
+        "transcripts": 19,
+        "spoke": 262,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 20,
+        "cuts": 0,
+        "gate": {
+          "sent": 4755,
+          "held": 15525,
+          "opens": 19,
+          "closes": 19,
+          "forced": 0,
+          "openMs": 107663,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788933784834,
+      "end": 1788933792966,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933796543
+        },
+        {
+          "type": "turn",
+          "at": 1788933796545
+        },
+        {
+          "type": "spoke",
+          "at": 1788933799680
+        }
+      ],
+      "audibleRoomChunksAfterCue": 310,
+      "heartbeat": {
+        "heard": 40794,
+        "heardMs": 374795,
+        "zeroFrames": 25853,
+        "gaps": 508,
+        "forwarded": 40794,
+        "transcripts": 20,
+        "spoke": 275,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 21,
+        "cuts": 0,
+        "gate": {
+          "sent": 5125,
+          "held": 16489,
+          "opens": 20,
+          "closes": 20,
+          "forced": 0,
+          "openMs": 115738,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788933808240,
+      "end": 1788933811786,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933814788
+        },
+        {
+          "type": "speaking",
+          "at": 1788933814790
+        },
+        {
+          "type": "spoke",
+          "at": 1788933817541
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 42284,
+        "heardMs": 388484,
+        "zeroFrames": 26804,
+        "gaps": 546,
+        "forwarded": 42284,
+        "transcripts": 21,
+        "spoke": 284,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 22,
+        "cuts": 0,
+        "gate": {
+          "sent": 5277,
+          "held": 17146,
+          "opens": 21,
+          "closes": 21,
+          "forced": 0,
+          "openMs": 119129,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788933827118,
+      "end": 1788933841875,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933836984
+        },
+        {
+          "type": "turn",
+          "at": 1788933836989
+        },
+        {
+          "type": "interrupted",
+          "at": 1788933840056
+        },
+        {
+          "type": "turn",
+          "at": 1788933844977
+        },
+        {
+          "type": "speaking",
+          "at": 1788933844980
+        },
+        {
+          "type": "spoke",
+          "at": 1788933849478
+        }
+      ],
+      "audibleRoomChunksAfterCue": 48,
+      "heartbeat": {
+        "heard": 45755,
+        "heardMs": 420374,
+        "zeroFrames": 28887,
+        "gaps": 636,
+        "forwarded": 45755,
+        "transcripts": 23,
+        "spoke": 322,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 24,
+        "cuts": 0,
+        "gate": {
+          "sent": 5690,
+          "held": 18736,
+          "opens": 23,
+          "closes": 23,
+          "forced": 0,
+          "openMs": 128085,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788933857259,
+      "end": 1788933863176,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933865800
+        },
+        {
+          "type": "speaking",
+          "at": 1788933865801
+        },
+        {
+          "type": "spoke",
+          "at": 1788933868159
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 47754,
+        "heardMs": 438740,
+        "zeroFrames": 30080,
+        "gaps": 687,
+        "forwarded": 47754,
+        "transcripts": 24,
+        "spoke": 329,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 25,
+        "cuts": 0,
+        "gate": {
+          "sent": 5937,
+          "held": 19523,
+          "opens": 24,
+          "closes": 24,
+          "forced": 0,
+          "openMs": 133321,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788933878495,
+      "end": 1788933884819,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933887547
+        },
+        {
+          "type": "turn",
+          "at": 1788933887548
+        },
+        {
+          "type": "spoke",
+          "at": 1788933888949
+        }
+      ],
+      "audibleRoomChunksAfterCue": 35,
+      "heartbeat": {
+        "heard": 49778,
+        "heardMs": 457335,
+        "zeroFrames": 31291,
+        "gaps": 739,
+        "forwarded": 49778,
+        "transcripts": 25,
+        "spoke": 334,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 26,
+        "cuts": 0,
+        "gate": {
+          "sent": 6206,
+          "held": 20270,
+          "opens": 25,
+          "closes": 25,
+          "forced": 0,
+          "openMs": 139114,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788933900193,
+      "end": 1788933908287,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933911050
+        },
+        {
+          "type": "speaking",
+          "at": 1788933911053
+        },
+        {
+          "type": "spoke",
+          "at": 1788933914661
+        }
+      ],
+      "audibleRoomChunksAfterCue": 144,
+      "heartbeat": {
+        "heard": 52255,
+        "heardMs": 480093,
+        "zeroFrames": 32777,
+        "gaps": 800,
+        "forwarded": 52255,
+        "transcripts": 26,
+        "spoke": 347,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 27,
+        "cuts": 0,
+        "gate": {
+          "sent": 6567,
+          "held": 21081,
+          "opens": 26,
+          "closes": 26,
+          "forced": 0,
+          "openMs": 146986,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 3,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788933923586,
+      "end": 1788933927138,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933930175
+        },
+        {
+          "type": "speaking",
+          "at": 1788933930183
+        },
+        {
+          "type": "spoke",
+          "at": 1788933932267
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 54253,
+        "heardMs": 498449,
+        "zeroFrames": 34243,
+        "gaps": 816,
+        "forwarded": 54253,
+        "transcripts": 27,
+        "spoke": 356,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 28,
+        "cuts": 0,
+        "gate": {
+          "sent": 6729,
+          "held": 21961,
+          "opens": 27,
+          "closes": 27,
+          "forced": 0,
+          "openMs": 150526,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 4,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788933942458,
+      "end": 1788933956489,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788933951448
+        },
+        {
+          "type": "speaking",
+          "at": 1788933951452
+        },
+        {
+          "type": "interrupted",
+          "at": 1788933954392
+        },
+        {
+          "type": "turn",
+          "at": 1788933959115
+        },
+        {
+          "type": "speaking",
+          "at": 1788933959117
+        },
+        {
+          "type": "spoke",
+          "at": 1788933963664
+        }
+      ],
+      "audibleRoomChunksAfterCue": 24,
+      "heartbeat": {
+        "heard": 56738,
+        "heardMs": 521280,
+        "zeroFrames": 35342,
+        "gaps": 837,
+        "forwarded": 56738,
+        "transcripts": 29,
+        "spoke": 393,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 30,
+        "cuts": 0,
+        "gate": {
+          "sent": 7171,
+          "held": 23034,
+          "opens": 29,
+          "closes": 29,
+          "forced": 0,
+          "openMs": 159961,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 4,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788933971828,
+      "end": 1788933977677,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788933980836
+        },
+        {
+          "type": "turn",
+          "at": 1788933980837
+        },
+        {
+          "type": "spoke",
+          "at": 1788933982571
+        }
+      ],
+      "audibleRoomChunksAfterCue": 121,
+      "heartbeat": {
+        "heard": 59241,
+        "heardMs": 544277,
+        "zeroFrames": 37038,
+        "gaps": 853,
+        "forwarded": 59241,
+        "transcripts": 30,
+        "spoke": 400,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 31,
+        "cuts": 0,
+        "gate": {
+          "sent": 7440,
+          "held": 24021,
+          "opens": 30,
+          "closes": 30,
+          "forced": 0,
+          "openMs": 166017,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 4,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788933993078,
+      "end": 1788933999423,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934001786
+        },
+        {
+          "type": "speaking",
+          "at": 1788934001786
+        },
+        {
+          "type": "spoke",
+          "at": 1788934003444
+        }
+      ],
+      "audibleRoomChunksAfterCue": 318,
+      "heartbeat": {
+        "heard": 61238,
+        "heardMs": 562624,
+        "zeroFrames": 38225,
+        "gaps": 863,
+        "forwarded": 61238,
+        "transcripts": 31,
+        "spoke": 405,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 32,
+        "cuts": 0,
+        "gate": {
+          "sent": 7714,
+          "held": 24737,
+          "opens": 31,
+          "closes": 31,
+          "forced": 0,
+          "openMs": 172073,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 5,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934014812,
+      "end": 1788934022908,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934025179
+        },
+        {
+          "type": "speaking",
+          "at": 1788934025180
+        },
+        {
+          "type": "spoke",
+          "at": 1788934028547
+        }
+      ],
+      "audibleRoomChunksAfterCue": 222,
+      "heartbeat": {
+        "heard": 63732,
+        "heardMs": 585538,
+        "zeroFrames": 39741,
+        "gaps": 867,
+        "forwarded": 63732,
+        "transcripts": 32,
+        "spoke": 418,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 33,
+        "cuts": 0,
+        "gate": {
+          "sent": 8068,
+          "held": 25700,
+          "opens": 32,
+          "closes": 32,
+          "forced": 0,
+          "openMs": 180005,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 7,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934038303,
+      "end": 1788934041951,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934044381
+        },
+        {
+          "type": "turn",
+          "at": 1788934044389
+        },
+        {
+          "type": "spoke",
+          "at": 1788934046579
+        }
+      ],
+      "audibleRoomChunksAfterCue": 127,
+      "heartbeat": {
+        "heard": 65720,
+        "heardMs": 603803,
+        "zeroFrames": 41202,
+        "gaps": 868,
+        "forwarded": 65720,
+        "transcripts": 33,
+        "spoke": 427,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 34,
+        "cuts": 0,
+        "gate": {
+          "sent": 8217,
+          "held": 26585,
+          "opens": 33,
+          "closes": 33,
+          "forced": 0,
+          "openMs": 183392,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 7,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934057278,
+      "end": 1788934070959,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934065748
+        },
+        {
+          "type": "turn",
+          "at": 1788934065754
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934068498
+        },
+        {
+          "type": "turn",
+          "at": 1788934073012
+        },
+        {
+          "type": "speaking",
+          "at": 1788934073013
+        },
+        {
+          "type": "spoke",
+          "at": 1788934077511
+        }
+      ],
+      "audibleRoomChunksAfterCue": 284,
+      "heartbeat": {
+        "heard": 68206,
+        "heardMs": 626643,
+        "zeroFrames": 42424,
+        "gaps": 870,
+        "forwarded": 68206,
+        "transcripts": 35,
+        "spoke": 464,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 36,
+        "cuts": 0,
+        "gate": {
+          "sent": 8647,
+          "held": 27680,
+          "opens": 35,
+          "closes": 35,
+          "forced": 0,
+          "openMs": 192651,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934086316,
+      "end": 1788934092293,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934094568
+        },
+        {
+          "type": "speaking",
+          "at": 1788934094568
+        },
+        {
+          "type": "spoke",
+          "at": 1788934096285
+        }
+      ],
+      "audibleRoomChunksAfterCue": 118,
+      "heartbeat": {
+        "heard": 70706,
+        "heardMs": 649611,
+        "zeroFrames": 44113,
+        "gaps": 871,
+        "forwarded": 70706,
+        "transcripts": 36,
+        "spoke": 471,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 37,
+        "cuts": 0,
+        "gate": {
+          "sent": 8910,
+          "held": 28661,
+          "opens": 36,
+          "closes": 36,
+          "forced": 0,
+          "openMs": 198306,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934107635,
+      "end": 1788934113982,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934116087
+        },
+        {
+          "type": "turn",
+          "at": 1788934116088
+        },
+        {
+          "type": "spoke",
+          "at": 1788934117644
+        }
+      ],
+      "audibleRoomChunksAfterCue": 39,
+      "heartbeat": {
+        "heard": 72701,
+        "heardMs": 667940,
+        "zeroFrames": 45298,
+        "gaps": 871,
+        "forwarded": 72701,
+        "transcripts": 37,
+        "spoke": 476,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 38,
+        "cuts": 0,
+        "gate": {
+          "sent": 9189,
+          "held": 29370,
+          "opens": 37,
+          "closes": 37,
+          "forced": 0,
+          "openMs": 204435,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934129365,
+      "end": 1788934137535,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934139972
+        },
+        {
+          "type": "speaking",
+          "at": 1788934139973
+        },
+        {
+          "type": "spoke",
+          "at": 1788934142918
+        }
+      ],
+      "audibleRoomChunksAfterCue": 209,
+      "heartbeat": {
+        "heard": 75170,
+        "heardMs": 690624,
+        "zeroFrames": 46834,
+        "gaps": 876,
+        "forwarded": 75170,
+        "transcripts": 38,
+        "spoke": 487,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 39,
+        "cuts": 0,
+        "gate": {
+          "sent": 9563,
+          "held": 30276,
+          "opens": 38,
+          "closes": 38,
+          "forced": 0,
+          "openMs": 212697,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934152919,
+      "end": 1788934156577,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934158572
+        },
+        {
+          "type": "speaking",
+          "at": 1788934158576
+        },
+        {
+          "type": "spoke",
+          "at": 1788934160958
+        }
+      ],
+      "audibleRoomChunksAfterCue": 153,
+      "heartbeat": {
+        "heard": 77165,
+        "heardMs": 708953,
+        "zeroFrames": 48544,
+        "gaps": 877,
+        "forwarded": 77165,
+        "transcripts": 39,
+        "spoke": 496,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 40,
+        "cuts": 0,
+        "gate": {
+          "sent": 9713,
+          "held": 31166,
+          "opens": 39,
+          "closes": 39,
+          "forced": 0,
+          "openMs": 215994,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934171884,
+      "end": 1788934185415,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934180177
+        },
+        {
+          "type": "speaking",
+          "at": 1788934180178
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934183155
+        },
+        {
+          "type": "speaking",
+          "at": 1788934187704
+        },
+        {
+          "type": "turn",
+          "at": 1788934187706
+        },
+        {
+          "type": "spoke",
+          "at": 1788934192071
+        }
+      ],
+      "audibleRoomChunksAfterCue": 294,
+      "heartbeat": {
+        "heard": 79658,
+        "heardMs": 731858,
+        "zeroFrames": 49648,
+        "gaps": 880,
+        "forwarded": 79658,
+        "transcripts": 41,
+        "spoke": 533,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 42,
+        "cuts": 0,
+        "gate": {
+          "sent": 10144,
+          "held": 32257,
+          "opens": 41,
+          "closes": 41,
+          "forced": 0,
+          "openMs": 225545,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934200753,
+      "end": 1788934206598,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934208950
+        },
+        {
+          "type": "turn",
+          "at": 1788934208952
+        },
+        {
+          "type": "spoke",
+          "at": 1788934210772
+        }
+      ],
+      "audibleRoomChunksAfterCue": 112,
+      "heartbeat": {
+        "heard": 82152,
+        "heardMs": 754772,
+        "zeroFrames": 51330,
+        "gaps": 885,
+        "forwarded": 82152,
+        "transcripts": 42,
+        "spoke": 540,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 43,
+        "cuts": 0,
+        "gate": {
+          "sent": 10399,
+          "held": 33247,
+          "opens": 42,
+          "closes": 42,
+          "forced": 0,
+          "openMs": 231192,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934221910,
+      "end": 1788934228224,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934230501
+        },
+        {
+          "type": "speaking",
+          "at": 1788934230502
+        },
+        {
+          "type": "spoke",
+          "at": 1788934231942
+        }
+      ],
+      "audibleRoomChunksAfterCue": 44,
+      "heartbeat": {
+        "heard": 84144,
+        "heardMs": 773073,
+        "zeroFrames": 52515,
+        "gaps": 889,
+        "forwarded": 84144,
+        "transcripts": 43,
+        "spoke": 545,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 44,
+        "cuts": 0,
+        "gate": {
+          "sent": 10682,
+          "held": 33947,
+          "opens": 43,
+          "closes": 43,
+          "forced": 0,
+          "openMs": 237472,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934243621,
+      "end": 1788934251732,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934253899
+        },
+        {
+          "type": "speaking",
+          "at": 1788934253904
+        },
+        {
+          "type": "spoke",
+          "at": 1788934256603
+        }
+      ],
+      "audibleRoomChunksAfterCue": 217,
+      "heartbeat": {
+        "heard": 86141,
+        "heardMs": 791420,
+        "zeroFrames": 53589,
+        "gaps": 893,
+        "forwarded": 86141,
+        "transcripts": 44,
+        "spoke": 557,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 45,
+        "cuts": 0,
+        "gate": {
+          "sent": 11043,
+          "held": 34651,
+          "opens": 44,
+          "closes": 44,
+          "forced": 0,
+          "openMs": 245561,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934267009,
+      "end": 1788934270588,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934272847
+        },
+        {
+          "type": "turn",
+          "at": 1788934272850
+        },
+        {
+          "type": "spoke",
+          "at": 1788934274952
+        }
+      ],
+      "audibleRoomChunksAfterCue": 156,
+      "heartbeat": {
+        "heard": 88132,
+        "heardMs": 809713,
+        "zeroFrames": 55045,
+        "gaps": 895,
+        "forwarded": 88132,
+        "transcripts": 45,
+        "spoke": 566,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 46,
+        "cuts": 0,
+        "gate": {
+          "sent": 11196,
+          "held": 35537,
+          "opens": 45,
+          "closes": 45,
+          "forced": 0,
+          "openMs": 248691,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934285888,
+      "end": 1788934299021,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934294272
+        },
+        {
+          "type": "speaking",
+          "at": 1788934294273
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934296465
+        },
+        {
+          "type": "speaking",
+          "at": 1788934301577
+        },
+        {
+          "type": "turn",
+          "at": 1788934301578
+        },
+        {
+          "type": "spoke",
+          "at": 1788934305871
+        }
+      ],
+      "audibleRoomChunksAfterCue": 286,
+      "heartbeat": {
+        "heard": 91131,
+        "heardMs": 837266,
+        "zeroFrames": 56655,
+        "gaps": 896,
+        "forwarded": 91131,
+        "transcripts": 47,
+        "spoke": 603,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 48,
+        "cuts": 0,
+        "gate": {
+          "sent": 11633,
+          "held": 36833,
+          "opens": 47,
+          "closes": 47,
+          "forced": 0,
+          "openMs": 258211,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934314379,
+      "end": 1788934320239,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934322810
+        },
+        {
+          "type": "speaking",
+          "at": 1788934322811
+        },
+        {
+          "type": "spoke",
+          "at": 1788934324641
+        }
+      ],
+      "audibleRoomChunksAfterCue": 114,
+      "heartbeat": {
+        "heard": 93131,
+        "heardMs": 855641,
+        "zeroFrames": 57846,
+        "gaps": 898,
+        "forwarded": 93131,
+        "transcripts": 48,
+        "spoke": 610,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 49,
+        "cuts": 0,
+        "gate": {
+          "sent": 11895,
+          "held": 37591,
+          "opens": 48,
+          "closes": 48,
+          "forced": 0,
+          "openMs": 263930,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934335566,
+      "end": 1788934341941,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934344101
+        },
+        {
+          "type": "speaking",
+          "at": 1788934344102
+        },
+        {
+          "type": "spoke",
+          "at": 1788934345417
+        }
+      ],
+      "audibleRoomChunksAfterCue": 47,
+      "heartbeat": {
+        "heard": 95631,
+        "heardMs": 878610,
+        "zeroFrames": 59531,
+        "gaps": 899,
+        "forwarded": 95631,
+        "transcripts": 49,
+        "spoke": 615,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 50,
+        "cuts": 0,
+        "gate": {
+          "sent": 12174,
+          "held": 38528,
+          "opens": 49,
+          "closes": 49,
+          "forced": 0,
+          "openMs": 270023,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934357224,
+      "end": 1788934365341,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934367885
+        },
+        {
+          "type": "speaking",
+          "at": 1788934367889
+        },
+        {
+          "type": "spoke",
+          "at": 1788934370519
+        }
+      ],
+      "audibleRoomChunksAfterCue": 206,
+      "heartbeat": {
+        "heard": 97630,
+        "heardMs": 896976,
+        "zeroFrames": 60769,
+        "gaps": 901,
+        "forwarded": 97630,
+        "transcripts": 50,
+        "spoke": 627,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 51,
+        "cuts": 0,
+        "gate": {
+          "sent": 12546,
+          "held": 39222,
+          "opens": 50,
+          "closes": 50,
+          "forced": 0,
+          "openMs": 278057,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934380629,
+      "end": 1788934384181,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934386652
+        },
+        {
+          "type": "turn",
+          "at": 1788934386653
+        },
+        {
+          "type": "spoke",
+          "at": 1788934388851
+        }
+      ],
+      "audibleRoomChunksAfterCue": 162,
+      "heartbeat": {
+        "heard": 99623,
+        "heardMs": 915286,
+        "zeroFrames": 62222,
+        "gaps": 902,
+        "forwarded": 99623,
+        "transcripts": 51,
+        "spoke": 636,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 52,
+        "cuts": 0,
+        "gate": {
+          "sent": 12703,
+          "held": 40100,
+          "opens": 51,
+          "closes": 51,
+          "forced": 0,
+          "openMs": 281484,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934399478,
+      "end": 1788934413108,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934407907
+        },
+        {
+          "type": "speaking",
+          "at": 1788934407908
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934410506
+        },
+        {
+          "type": "speaking",
+          "at": 1788934415459
+        },
+        {
+          "type": "turn",
+          "at": 1788934415460
+        },
+        {
+          "type": "spoke",
+          "at": 1788934419682
+        }
+      ],
+      "audibleRoomChunksAfterCue": 290,
+      "heartbeat": {
+        "heard": 102624,
+        "heardMs": 942858,
+        "zeroFrames": 63836,
+        "gaps": 905,
+        "forwarded": 102624,
+        "transcripts": 53,
+        "spoke": 673,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 54,
+        "cuts": 0,
+        "gate": {
+          "sent": 13127,
+          "held": 41425,
+          "opens": 53,
+          "closes": 53,
+          "forced": 0,
+          "openMs": 291032,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934428478,
+      "end": 1788934434331,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934436605
+        },
+        {
+          "type": "turn",
+          "at": 1788934436605
+        },
+        {
+          "type": "spoke",
+          "at": 1788934438813
+        }
+      ],
+      "audibleRoomChunksAfterCue": 118,
+      "heartbeat": {
+        "heard": 104608,
+        "heardMs": 961086,
+        "zeroFrames": 65015,
+        "gaps": 908,
+        "forwarded": 104608,
+        "transcripts": 54,
+        "spoke": 680,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 55,
+        "cuts": 0,
+        "gate": {
+          "sent": 13289,
+          "held": 42186,
+          "opens": 55,
+          "closes": 54,
+          "forced": 0,
+          "openMs": 293768,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934449699,
+      "end": 1788934456077,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934458493
+        },
+        {
+          "type": "speaking",
+          "at": 1788934458496
+        },
+        {
+          "type": "spoke",
+          "at": 1788934459849
+        }
+      ],
+      "audibleRoomChunksAfterCue": 42,
+      "heartbeat": {
+        "heard": 106592,
+        "heardMs": 979314,
+        "zeroFrames": 66214,
+        "gaps": 910,
+        "forwarded": 106592,
+        "transcripts": 55,
+        "spoke": 685,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 56,
+        "cuts": 0,
+        "gate": {
+          "sent": 13567,
+          "held": 42886,
+          "opens": 56,
+          "closes": 55,
+          "forced": 0,
+          "openMs": 300167,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934471475,
+      "end": 1788934479580,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934482209
+        },
+        {
+          "type": "speaking",
+          "at": 1788934482211
+        },
+        {
+          "type": "spoke",
+          "at": 1788934484881
+        }
+      ],
+      "audibleRoomChunksAfterCue": 208,
+      "heartbeat": {
+        "heard": 109081,
+        "heardMs": 1002182,
+        "zeroFrames": 67768,
+        "gaps": 910,
+        "forwarded": 109081,
+        "transcripts": 56,
+        "spoke": 697,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 57,
+        "cuts": 0,
+        "gate": {
+          "sent": 13933,
+          "held": 43812,
+          "opens": 57,
+          "closes": 56,
+          "forced": 0,
+          "openMs": 308264,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934494902,
+      "end": 1788934498472,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934501058
+        },
+        {
+          "type": "turn",
+          "at": 1788934501059
+        },
+        {
+          "type": "spoke",
+          "at": 1788934502994
+        }
+      ],
+      "audibleRoomChunksAfterCue": 156,
+      "heartbeat": {
+        "heard": 111074,
+        "heardMs": 1020492,
+        "zeroFrames": 69228,
+        "gaps": 912,
+        "forwarded": 111074,
+        "transcripts": 57,
+        "spoke": 707,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 58,
+        "cuts": 0,
+        "gate": {
+          "sent": 14083,
+          "held": 44696,
+          "opens": 58,
+          "closes": 57,
+          "forced": 0,
+          "openMs": 311721,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934513797,
+      "end": 1788934527403,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934522268
+        },
+        {
+          "type": "turn",
+          "at": 1788934522269
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934524872
+        },
+        {
+          "type": "speaking",
+          "at": 1788934529776
+        },
+        {
+          "type": "turn",
+          "at": 1788934529777
+        },
+        {
+          "type": "spoke",
+          "at": 1788934534148
+        }
+      ],
+      "audibleRoomChunksAfterCue": 285,
+      "heartbeat": {
+        "heard": 114066,
+        "heardMs": 1047981,
+        "zeroFrames": 70838,
+        "gaps": 915,
+        "forwarded": 114066,
+        "transcripts": 59,
+        "spoke": 745,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 60,
+        "cuts": 0,
+        "gate": {
+          "sent": 14498,
+          "held": 46030,
+          "opens": 60,
+          "closes": 59,
+          "forced": 0,
+          "openMs": 321022,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934542774,
+      "end": 1788934548668,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934550975
+        },
+        {
+          "type": "speaking",
+          "at": 1788934550979
+        },
+        {
+          "type": "spoke",
+          "at": 1788934553055
+        }
+      ],
+      "audibleRoomChunksAfterCue": 108,
+      "heartbeat": {
+        "heard": 116053,
+        "heardMs": 1066237,
+        "zeroFrames": 72023,
+        "gaps": 918,
+        "forwarded": 116053,
+        "transcripts": 60,
+        "spoke": 752,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 61,
+        "cuts": 0,
+        "gate": {
+          "sent": 14760,
+          "held": 46780,
+          "opens": 61,
+          "closes": 60,
+          "forced": 0,
+          "openMs": 326800,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 1,
+          "answered": 1
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934564141,
+      "end": 1788934570442,
+      "events": [
+        {
+          "type": "lookup",
+          "at": 1788934567549
+        },
+        {
+          "type": "cut",
+          "at": 1788934568472
+        },
+        {
+          "type": "speaking",
+          "at": 1788934572513
+        },
+        {
+          "type": "turn",
+          "at": 1788934572514
+        },
+        {
+          "type": "spoke",
+          "at": 1788934574042
+        }
+      ],
+      "audibleRoomChunksAfterCue": 36,
+      "heartbeat": {
+        "heard": 118046,
+        "heardMs": 1084548,
+        "zeroFrames": 73209,
+        "gaps": 920,
+        "forwarded": 118046,
+        "transcripts": 61,
+        "spoke": 757,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 63,
+        "cuts": 1,
+        "gate": {
+          "sent": 15036,
+          "held": 47486,
+          "opens": 63,
+          "closes": 62,
+          "forced": 0,
+          "openMs": 333002,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934585767,
+      "end": 1788934593862,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934596100
+        },
+        {
+          "type": "speaking",
+          "at": 1788934596101
+        },
+        {
+          "type": "spoke",
+          "at": 1788934599153
+        }
+      ],
+      "audibleRoomChunksAfterCue": 215,
+      "heartbeat": {
+        "heard": 120539,
+        "heardMs": 1107452,
+        "zeroFrames": 74767,
+        "gaps": 923,
+        "forwarded": 120539,
+        "transcripts": 62,
+        "spoke": 768,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 64,
+        "cuts": 1,
+        "gate": {
+          "sent": 15399,
+          "held": 48422,
+          "opens": 64,
+          "closes": 63,
+          "forced": 0,
+          "openMs": 341009,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934609195,
+      "end": 1788934612768,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934615242
+        },
+        {
+          "type": "speaking",
+          "at": 1788934615244
+        },
+        {
+          "type": "spoke",
+          "at": 1788934617463
+        }
+      ],
+      "audibleRoomChunksAfterCue": 155,
+      "heartbeat": {
+        "heard": 122535,
+        "heardMs": 1125790,
+        "zeroFrames": 76232,
+        "gaps": 926,
+        "forwarded": 122535,
+        "transcripts": 63,
+        "spoke": 777,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 65,
+        "cuts": 1,
+        "gate": {
+          "sent": 15555,
+          "held": 49305,
+          "opens": 65,
+          "closes": 64,
+          "forced": 0,
+          "openMs": 344460,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934628126,
+      "end": 1788934641175,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934636309
+        },
+        {
+          "type": "turn",
+          "at": 1788934636310
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934638716
+        },
+        {
+          "type": "speaking",
+          "at": 1788934643375
+        },
+        {
+          "type": "turn",
+          "at": 1788934643376
+        },
+        {
+          "type": "spoke",
+          "at": 1788934647771
+        }
+      ],
+      "audibleRoomChunksAfterCue": 289,
+      "heartbeat": {
+        "heard": 125026,
+        "heardMs": 1148676,
+        "zeroFrames": 77373,
+        "gaps": 928,
+        "forwarded": 125026,
+        "transcripts": 65,
+        "spoke": 815,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 67,
+        "cuts": 1,
+        "gate": {
+          "sent": 15984,
+          "held": 50369,
+          "opens": 67,
+          "closes": 66,
+          "forced": 0,
+          "openMs": 353947,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934656548,
+      "end": 1788934662421,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934664756
+        },
+        {
+          "type": "speaking",
+          "at": 1788934664756
+        },
+        {
+          "type": "spoke",
+          "at": 1788934666356
+        }
+      ],
+      "audibleRoomChunksAfterCue": 111,
+      "heartbeat": {
+        "heard": 127523,
+        "heardMs": 1171618,
+        "zeroFrames": 79064,
+        "gaps": 931,
+        "forwarded": 127523,
+        "transcripts": 66,
+        "spoke": 822,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 68,
+        "cuts": 1,
+        "gate": {
+          "sent": 16240,
+          "held": 51359,
+          "opens": 68,
+          "closes": 67,
+          "forced": 0,
+          "openMs": 359610,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934677806,
+      "end": 1788934684164,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934686378
+        },
+        {
+          "type": "speaking",
+          "at": 1788934686379
+        },
+        {
+          "type": "spoke",
+          "at": 1788934687879
+        }
+      ],
+      "audibleRoomChunksAfterCue": 43,
+      "heartbeat": {
+        "heard": 129517,
+        "heardMs": 1189937,
+        "zeroFrames": 80247,
+        "gaps": 934,
+        "forwarded": 129517,
+        "transcripts": 67,
+        "spoke": 827,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 69,
+        "cuts": 1,
+        "gate": {
+          "sent": 16524,
+          "held": 52054,
+          "opens": 69,
+          "closes": 68,
+          "forced": 0,
+          "openMs": 365743,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934699537,
+      "end": 1788934707644,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934709677
+        },
+        {
+          "type": "speaking",
+          "at": 1788934709678
+        },
+        {
+          "type": "spoke",
+          "at": 1788934712744
+        }
+      ],
+      "audibleRoomChunksAfterCue": 204,
+      "heartbeat": {
+        "heard": 132007,
+        "heardMs": 1212814,
+        "zeroFrames": 81805,
+        "gaps": 936,
+        "forwarded": 132007,
+        "transcripts": 68,
+        "spoke": 838,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 70,
+        "cuts": 1,
+        "gate": {
+          "sent": 16882,
+          "held": 52988,
+          "opens": 70,
+          "closes": 69,
+          "forced": 0,
+          "openMs": 373547,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934722975,
+      "end": 1788934726540,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934728772
+        },
+        {
+          "type": "speaking",
+          "at": 1788934728798
+        },
+        {
+          "type": "spoke",
+          "at": 1788934730845
+        }
+      ],
+      "audibleRoomChunksAfterCue": 155,
+      "heartbeat": {
+        "heard": 134008,
+        "heardMs": 1231199,
+        "zeroFrames": 83265,
+        "gaps": 938,
+        "forwarded": 134008,
+        "transcripts": 69,
+        "spoke": 847,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 71,
+        "cuts": 1,
+        "gate": {
+          "sent": 17033,
+          "held": 53876,
+          "opens": 71,
+          "closes": 70,
+          "forced": 0,
+          "openMs": 376842,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934741861,
+      "end": 1788934747972,
+      "events": [
+        {
+          "type": "cut",
+          "at": 1788934750199
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 137480,
+        "heardMs": 1263098,
+        "zeroFrames": 86008,
+        "gaps": 941,
+        "forwarded": 137480,
+        "transcripts": 70,
+        "spoke": 847,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 72,
+        "cuts": 2,
+        "gate": {
+          "sent": 17293,
+          "held": 55211,
+          "opens": 72,
+          "closes": 71,
+          "forced": 0,
+          "openMs": 382778,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934778582,
+      "end": 1788934784500,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934786946
+        },
+        {
+          "type": "speaking",
+          "at": 1788934786946
+        },
+        {
+          "type": "spoke",
+          "at": 1788934788499
+        }
+      ],
+      "audibleRoomChunksAfterCue": 114,
+      "heartbeat": {
+        "heard": 139464,
+        "heardMs": 1281326,
+        "zeroFrames": 87182,
+        "gaps": 944,
+        "forwarded": 139464,
+        "transcripts": 71,
+        "spoke": 854,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 73,
+        "cuts": 2,
+        "gate": {
+          "sent": 17555,
+          "held": 55952,
+          "opens": 73,
+          "closes": 72,
+          "forced": 0,
+          "openMs": 388431,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934799904,
+      "end": 1788934806195,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934808412
+        },
+        {
+          "type": "turn",
+          "at": 1788934808413
+        },
+        {
+          "type": "spoke",
+          "at": 1788934809658
+        }
+      ],
+      "audibleRoomChunksAfterCue": 45,
+      "heartbeat": {
+        "heard": 141470,
+        "heardMs": 1299756,
+        "zeroFrames": 88621,
+        "gaps": 948,
+        "forwarded": 141470,
+        "transcripts": 72,
+        "spoke": 859,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 74,
+        "cuts": 2,
+        "gate": {
+          "sent": 17836,
+          "held": 56661,
+          "opens": 74,
+          "closes": 73,
+          "forced": 0,
+          "openMs": 394560,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934821536,
+      "end": 1788934829639,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934832047
+        },
+        {
+          "type": "speaking",
+          "at": 1788934832050
+        },
+        {
+          "type": "spoke",
+          "at": 1788934834898
+        }
+      ],
+      "audibleRoomChunksAfterCue": 211,
+      "heartbeat": {
+        "heard": 143976,
+        "heardMs": 1322780,
+        "zeroFrames": 90129,
+        "gaps": 952,
+        "forwarded": 143976,
+        "transcripts": 73,
+        "spoke": 871,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 75,
+        "cuts": 2,
+        "gate": {
+          "sent": 18203,
+          "held": 57592,
+          "opens": 75,
+          "closes": 74,
+          "forced": 0,
+          "openMs": 402706,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934845056,
+      "end": 1788934848643,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934850972
+        },
+        {
+          "type": "turn",
+          "at": 1788934850972
+        },
+        {
+          "type": "spoke",
+          "at": 1788934853111
+        }
+      ],
+      "audibleRoomChunksAfterCue": 157,
+      "heartbeat": {
+        "heard": 145968,
+        "heardMs": 1341081,
+        "zeroFrames": 91574,
+        "gaps": 955,
+        "forwarded": 145968,
+        "transcripts": 74,
+        "spoke": 880,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 76,
+        "cuts": 2,
+        "gate": {
+          "sent": 18359,
+          "held": 58470,
+          "opens": 76,
+          "closes": 75,
+          "forced": 0,
+          "openMs": 406300,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934864035,
+      "end": 1788934877628,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934872512
+        },
+        {
+          "type": "speaking",
+          "at": 1788934872517
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934875042
+        },
+        {
+          "type": "turn",
+          "at": 1788934880003
+        },
+        {
+          "type": "speaking",
+          "at": 1788934880006
+        },
+        {
+          "type": "spoke",
+          "at": 1788934884209
+        }
+      ],
+      "audibleRoomChunksAfterCue": 286,
+      "heartbeat": {
+        "heard": 148970,
+        "heardMs": 1368662,
+        "zeroFrames": 93171,
+        "gaps": 956,
+        "forwarded": 148970,
+        "transcripts": 76,
+        "spoke": 918,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 78,
+        "cuts": 2,
+        "gate": {
+          "sent": 18789,
+          "held": 59791,
+          "opens": 78,
+          "closes": 77,
+          "forced": 0,
+          "openMs": 415677,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788934893000,
+      "end": 1788934898850,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934901001
+        },
+        {
+          "type": "speaking",
+          "at": 1788934901005
+        },
+        {
+          "type": "spoke",
+          "at": 1788934903043
+        }
+      ],
+      "audibleRoomChunksAfterCue": 108,
+      "heartbeat": {
+        "heard": 150973,
+        "heardMs": 1387064,
+        "zeroFrames": 94362,
+        "gaps": 957,
+        "forwarded": 150973,
+        "transcripts": 77,
+        "spoke": 925,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 79,
+        "cuts": 2,
+        "gate": {
+          "sent": 19046,
+          "held": 60549,
+          "opens": 79,
+          "closes": 78,
+          "forced": 0,
+          "openMs": 421192,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788934914334,
+      "end": 1788934920654,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934922683
+        },
+        {
+          "type": "speaking",
+          "at": 1788934922684
+        },
+        {
+          "type": "spoke",
+          "at": 1788934924130
+        }
+      ],
+      "audibleRoomChunksAfterCue": 44,
+      "heartbeat": {
+        "heard": 152973,
+        "heardMs": 1405439,
+        "zeroFrames": 95673,
+        "gaps": 960,
+        "forwarded": 152973,
+        "transcripts": 78,
+        "spoke": 930,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 80,
+        "cuts": 2,
+        "gate": {
+          "sent": 19323,
+          "held": 61258,
+          "opens": 80,
+          "closes": 79,
+          "forced": 0,
+          "openMs": 427224,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 2,
+          "answered": 2
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788934935992,
+      "end": 1788934944097,
+      "events": [
+        {
+          "type": "lookup",
+          "at": 1788934942213
+        },
+        {
+          "type": "cut",
+          "at": 1788934943373
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 155473,
+        "heardMs": 1428408,
+        "zeroFrames": 97241,
+        "gaps": 960,
+        "forwarded": 155473,
+        "transcripts": 78,
+        "spoke": 930,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 81,
+        "cuts": 3,
+        "gate": {
+          "sent": 19688,
+          "held": 61919,
+          "opens": 82,
+          "closes": 81,
+          "forced": 0,
+          "openMs": 435271,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788934959588,
+      "end": 1788934963220,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788934965442
+        },
+        {
+          "type": "turn",
+          "at": 1788934965442
+        },
+        {
+          "type": "spoke",
+          "at": 1788934967213
+        }
+      ],
+      "audibleRoomChunksAfterCue": 102,
+      "heartbeat": {
+        "heard": 157475,
+        "heardMs": 1446802,
+        "zeroFrames": 98699,
+        "gaps": 963,
+        "forwarded": 157475,
+        "transcripts": 79,
+        "spoke": 936,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 82,
+        "cuts": 3,
+        "gate": {
+          "sent": 19843,
+          "held": 62764,
+          "opens": 83,
+          "closes": 82,
+          "forced": 0,
+          "openMs": 438842,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788934978645,
+      "end": 1788934991688,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788934986861
+        },
+        {
+          "type": "speaking",
+          "at": 1788934986862
+        },
+        {
+          "type": "interrupted",
+          "at": 1788934989208
+        },
+        {
+          "type": "speaking",
+          "at": 1788934993984
+        },
+        {
+          "type": "turn",
+          "at": 1788934993985
+        },
+        {
+          "type": "spoke",
+          "at": 1788934998452
+        }
+      ],
+      "audibleRoomChunksAfterCue": 281,
+      "heartbeat": {
+        "heard": 160470,
+        "heardMs": 1474318,
+        "zeroFrames": 100347,
+        "gaps": 968,
+        "forwarded": 160470,
+        "transcripts": 81,
+        "spoke": 974,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 84,
+        "cuts": 3,
+        "gate": {
+          "sent": 20265,
+          "held": 64070,
+          "opens": 85,
+          "closes": 84,
+          "forced": 0,
+          "openMs": 448130,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 9,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788935007093,
+      "end": 1788935012967,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788935015195
+        },
+        {
+          "type": "speaking",
+          "at": 1788935015195
+        },
+        {
+          "type": "spoke",
+          "at": 1788935017143
+        }
+      ],
+      "audibleRoomChunksAfterCue": 115,
+      "heartbeat": {
+        "heard": 162473,
+        "heardMs": 1492721,
+        "zeroFrames": 101541,
+        "gaps": 970,
+        "forwarded": 162473,
+        "transcripts": 82,
+        "spoke": 981,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 85,
+        "cuts": 3,
+        "gate": {
+          "sent": 20519,
+          "held": 64837,
+          "opens": 86,
+          "closes": 85,
+          "forced": 0,
+          "openMs": 453823,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788935028299,
+      "end": 1788935034600,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788935037015
+        },
+        {
+          "type": "speaking",
+          "at": 1788935037016
+        },
+        {
+          "type": "spoke",
+          "at": 1788935038413
+        }
+      ],
+      "audibleRoomChunksAfterCue": 44,
+      "heartbeat": {
+        "heard": 164459,
+        "heardMs": 1510967,
+        "zeroFrames": 102709,
+        "gaps": 973,
+        "forwarded": 164459,
+        "transcripts": 83,
+        "spoke": 986,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 86,
+        "cuts": 3,
+        "gate": {
+          "sent": 20802,
+          "held": 65531,
+          "opens": 87,
+          "closes": 86,
+          "forced": 0,
+          "openMs": 460128,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788935049979,
+      "end": 1788935058073,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788935060209
+        },
+        {
+          "type": "speaking",
+          "at": 1788935060211
+        },
+        {
+          "type": "spoke",
+          "at": 1788935063160
+        }
+      ],
+      "audibleRoomChunksAfterCue": 201,
+      "heartbeat": {
+        "heard": 166965,
+        "heardMs": 1533991,
+        "zeroFrames": 104222,
+        "gaps": 974,
+        "forwarded": 166965,
+        "transcripts": 84,
+        "spoke": 998,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 87,
+        "cuts": 3,
+        "gate": {
+          "sent": 21163,
+          "held": 66465,
+          "opens": 88,
+          "closes": 87,
+          "forced": 0,
+          "openMs": 468028,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "followup",
+      "start": 1788935073404,
+      "end": 1788935076986,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788935079467
+        },
+        {
+          "type": "speaking",
+          "at": 1788935079471
+        },
+        {
+          "type": "spoke",
+          "at": 1788935081680
+        }
+      ],
+      "audibleRoomChunksAfterCue": 158,
+      "heartbeat": {
+        "heard": 168967,
+        "heardMs": 1552384,
+        "zeroFrames": 105687,
+        "gaps": 978,
+        "forwarded": 168967,
+        "transcripts": 85,
+        "spoke": 1007,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 88,
+        "cuts": 3,
+        "gate": {
+          "sent": 21320,
+          "held": 67350,
+          "opens": 89,
+          "closes": 88,
+          "forced": 0,
+          "openMs": 471797,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "long",
+      "start": 1788935092421,
+      "end": 1788935106078,
+      "events": [
+        {
+          "type": "turn",
+          "at": 1788935100978
+        },
+        {
+          "type": "speaking",
+          "at": 1788935100979
+        },
+        {
+          "type": "interrupted",
+          "at": 1788935103747
+        },
+        {
+          "type": "turn",
+          "at": 1788935108346
+        },
+        {
+          "type": "speaking",
+          "at": 1788935108349
+        },
+        {
+          "type": "spoke",
+          "at": 1788935112654
+        }
+      ],
+      "audibleRoomChunksAfterCue": 287,
+      "heartbeat": {
+        "heard": 171465,
+        "heardMs": 1575335,
+        "zeroFrames": 106856,
+        "gaps": 979,
+        "forwarded": 171465,
+        "transcripts": 87,
+        "spoke": 1044,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "COOLDOWN",
+        "status": "in_call",
+        "answers": 90,
+        "cuts": 3,
+        "gate": {
+          "sent": 21750,
+          "held": 68429,
+          "opens": 91,
+          "closes": 90,
+          "forced": 0,
+          "openMs": 481626,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "resume",
+      "start": 1788935121424,
+      "end": 1788935127269,
+      "events": [
+        {
+          "type": "speaking",
+          "at": 1788935129843
+        },
+        {
+          "type": "turn",
+          "at": 1788935129844
+        },
+        {
+          "type": "spoke",
+          "at": 1788935131609
+        }
+      ],
+      "audibleRoomChunksAfterCue": 113,
+      "heartbeat": {
+        "heard": 173968,
+        "heardMs": 1598331,
+        "zeroFrames": 108672,
+        "gaps": 985,
+        "forwarded": 173968,
+        "transcripts": 88,
+        "spoke": 1051,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "ENGAGED",
+        "status": "in_call",
+        "answers": 91,
+        "cuts": 3,
+        "gate": {
+          "sent": 22017,
+          "held": 69410,
+          "opens": 92,
+          "closes": 91,
+          "forced": 0,
+          "openMs": 487408,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "greet",
+      "start": 1788935142600,
+      "end": 1788935148905,
+      "events": [
+        {
+          "type": "cut",
+          "at": 1788935149802
+        },
+        {
+          "type": "cut",
+          "at": 1788935150065
+        },
+        {
+          "type": "cut",
+          "at": 1788935151366
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 175966,
+        "heardMs": 1616688,
+        "zeroFrames": 109855,
+        "gaps": 987,
+        "forwarded": 175966,
+        "transcripts": 89,
+        "spoke": 1051,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "PASSIVE",
+        "status": "in_call",
+        "answers": 94,
+        "cuts": 6,
+        "gate": {
+          "sent": 22300,
+          "held": 70045,
+          "opens": 94,
+          "closes": 93,
+          "forced": 0,
+          "openMs": 493671,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 3,
+          "answered": 3
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    },
+    {
+      "id": "numbers",
+      "start": 1788935164271,
+      "end": 1788935172487,
+      "events": [
+        {
+          "type": "lookup",
+          "at": 1788935172970
+        },
+        {
+          "type": "cut",
+          "at": 1788935173889
+        },
+        {
+          "type": "cut",
+          "at": 1788935174952
+        }
+      ],
+      "audibleRoomChunksAfterCue": 0,
+      "heartbeat": {
+        "heard": 178464,
+        "heardMs": 1639638,
+        "zeroFrames": 111581,
+        "gaps": 989,
+        "forwarded": 178464,
+        "transcripts": 90,
+        "spoke": 1051,
+        "cues": 0,
+        "faces": 0,
+        "shown": 0,
+        "sanctioned": false,
+        "state": "OBSERVING",
+        "engagement": "PASSIVE",
+        "status": "in_call",
+        "answers": 96,
+        "cuts": 8,
+        "gate": {
+          "sent": 22661,
+          "held": 70831,
+          "opens": 96,
+          "closes": 95,
+          "forced": 0,
+          "openMs": 501666,
+          "bargeIns": 0
+        },
+        "lookups": {
+          "asked": 4,
+          "answered": 4
+        },
+        "fps": 8,
+        "avatar": "ok"
+      }
+    }
+  ]
+}

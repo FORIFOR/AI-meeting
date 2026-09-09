@@ -1,0 +1,225 @@
+{
+  "scope": "Paired diagnostic Aoede: affective dialog on/off, five trials each; same synthetic input; no production setting change",
+  "rows": [
+    {
+      "voice": "on-1",
+      "startedAt": "2026-09-09T05:51:59.037Z",
+      "chunks": 25,
+      "samples": 274152,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.758056640625,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から1時間ですね。それは、午後4時に終わる計算になりますね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1454,
+      "rms": 0.09798559189026604,
+      "pcmChecksPassed": true,
+      "pcmSha256": "063f72fd039e930c62d901c22a86b40d0814f0e936af23a50fe22fecf0826769",
+      "audioFile": "/tmp/auto-go-affective-samples/on-1.wav"
+    },
+    {
+      "voice": "off-1",
+      "startedAt": "2026-09-09T05:52:25.346Z",
+      "chunks": 21,
+      "samples": 233832,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.639678955078125,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から1時間ですね。午後4時に終わることでよろしいですか。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1342,
+      "rms": 0.10146907924562881,
+      "pcmChecksPassed": true,
+      "pcmSha256": "512bd27b44dc1155ae8990966b24f8865144b5d6763a810d209428b502041e7f",
+      "audioFile": "/tmp/auto-go-affective-samples/off-1.wav"
+    },
+    {
+      "voice": "on-2",
+      "startedAt": "2026-09-09T05:52:51.517Z",
+      "chunks": 18,
+      "samples": 187752,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.90301513671875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後3時から1時間だと、 4時に終わりますね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1375,
+      "rms": 0.13290019109140777,
+      "pcmChecksPassed": true,
+      "pcmSha256": "59e38beeb22037e1b744d23944c6f01acb1db8150aed6e0bdf7f43a323033eef",
+      "audioFile": "/tmp/auto-go-affective-samples/on-2.wav"
+    },
+    {
+      "voice": "off-2",
+      "startedAt": "2026-09-09T05:53:16.881Z",
+      "chunks": 17,
+      "samples": 178152,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.826019287109375,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後4時に終わる感じですね。了解しました。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1471,
+      "rms": 0.13551251444094722,
+      "pcmChecksPassed": true,
+      "pcmSha256": "e4e7341ae0e1cd70ea071c5cf1b424d26873929ab7665877eca2c667c00ed9f8",
+      "audioFile": "/tmp/auto-go-affective-samples/off-2.wav"
+    },
+    {
+      "voice": "on-3",
+      "startedAt": "2026-09-09T05:53:43.014Z",
+      "chunks": 29,
+      "samples": 304872,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.761016845703125,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "了解しました。明日の午後3時から1時間ですね。午後4時に終わる計算になります。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1420,
+      "rms": 0.09208984372959561,
+      "pcmChecksPassed": true,
+      "pcmSha256": "3ba4c8377804fe26cb44db87ac707a7ee444a1bfee06f41b74ffc3b0ce6d88ce",
+      "audioFile": "/tmp/auto-go-affective-samples/on-3.wav"
+    },
+    {
+      "voice": "off-3",
+      "startedAt": "2026-09-09T05:54:09.211Z",
+      "chunks": 16,
+      "samples": 170472,
+      "nonFinite": 0,
+      "clipped": 1,
+      "peak": 0.999969482421875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後 4時に終わる計算ですね。了解しました。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1434,
+      "rms": 0.1213706320617367,
+      "pcmChecksPassed": false,
+      "pcmSha256": "ba004fa3e8cf9c8f23da23565bb730387e7b5715ec9e434c4ce59ed95cb51594",
+      "audioFile": "/tmp/auto-go-affective-samples/off-3.wav"
+    },
+    {
+      "voice": "on-4",
+      "startedAt": "2026-09-09T05:54:34.687Z",
+      "chunks": 23,
+      "samples": 237672,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.6961669921875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から 1時間ですね。午後4時に終わる計算になります。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1611,
+      "rms": 0.09024185234256793,
+      "pcmChecksPassed": true,
+      "pcmSha256": "3414389dad99175b980f7ddc88cbaadfe5940c590cbb80160de7a7e9b94a978f",
+      "audioFile": "/tmp/auto-go-affective-samples/on-4.wav"
+    },
+    {
+      "voice": "off-4",
+      "startedAt": "2026-09-09T05:55:00.822Z",
+      "chunks": 25,
+      "samples": 268392,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.976898193359375,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から1時間だと、午後4時に終わる計算ですね。それでよろしいですか?"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1404,
+      "rms": 0.12894753119769156,
+      "pcmChecksPassed": true,
+      "pcmSha256": "bf855fecdb51ff9503703f5655a9d61fb38df479ec3515cc7af2ae04cee1b09b",
+      "audioFile": "/tmp/auto-go-affective-samples/off-4.wav"
+    },
+    {
+      "voice": "on-5",
+      "startedAt": "2026-09-09T05:55:26.946Z",
+      "chunks": 35,
+      "samples": 368232,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.882537841796875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後3時から1時間ですね。午後4時に終わる計算になりますね。それでよろしいですか?"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1726,
+      "rms": 0.10945625978783906,
+      "pcmChecksPassed": true,
+      "pcmSha256": "bbfae5aff136bea26c17be7d33abbb9a705a19ea3b66c60984978b3ff51d2fa0",
+      "audioFile": "/tmp/auto-go-affective-samples/on-5.wav"
+    },
+    {
+      "voice": "off-5",
+      "startedAt": "2026-09-09T05:55:53.037Z",
+      "chunks": 20,
+      "samples": 218472,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.5946044921875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後 3時から1時間ですね。午後4時に終わる予定ですよ。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1228,
+      "rms": 0.09659156394305107,
+      "pcmChecksPassed": true,
+      "pcmSha256": "ab4d0aa06890aefe6d38f8047e39e4883ea74242a31e2b96a851eea65374a70f",
+      "audioFile": "/tmp/auto-go-affective-samples/off-5.wav"
+    }
+  ]
+}

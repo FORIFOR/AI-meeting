@@ -1,0 +1,20 @@
+{
+  "scope": "Synthetic speech and returned PCM before speaker hardware; no human quality rating",
+  "longUtterance": {
+    "voices": 5,
+    "completeEndingTranscribed": 5,
+    "pcmChecksPassed": 5,
+    "firstAudioAfterInputMs": [
+      1494,
+      1425,
+      1515,
+      1535,
+      1512
+    ]
+  },
+  "addressAudio": {
+    "clips": 5,
+    "recognizedAsAddressed": 5,
+    "scope": "Each clip is a new conversation; follow-up context and Hosted relay are not exercised"
+  }
+}

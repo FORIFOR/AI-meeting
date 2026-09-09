@@ -1,0 +1,9 @@
+{
+  "scope": "Same localhost-to-public-agent setup that previously emitted CORS errors; two-minute regression only",
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "httpErrors": 0,
+  "unusedAgentProbeRegression": "PASS",
+  "overallPerformanceVerdict": "FAIL",
+  "note": "Short run does not meet performance sample counts and remains FAIL; do not convert this into a 30-minute PASS."
+}

@@ -1,0 +1,170 @@
+{
+  "scope": "Actual synthetic Meet test clips through current Gemini provider and AddressDetector; not the Hosted relay or full meeting controller",
+  "rows": [
+    {
+      "voice": "greet",
+      "startedAt": "2026-09-09T05:38:26.478Z",
+      "chunks": 13,
+      "samples": 149352,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.539703369140625,
+      "heard": [
+        "ゆい 、 こんにちは 。 私 の 声 が 聞こえ たら 、 聞こえ ます 。 と 返し て ください 。"
+      ],
+      "said": [
+        "はい、聞こえますよ。どうしましたか?"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1472,
+      "rms": 0.06555176633706249,
+      "addressDetections": [
+        {
+          "text": "ゆい 、 こんにちは 。 私 の 声 が 聞こえ たら 、 聞こえ ます 。 と 返し て ください 。",
+          "detection": {
+            "addressed": true,
+            "invited": false,
+            "confidence": 0.85,
+            "reason": "name + question/request"
+          }
+        }
+      ],
+      "pcmChecksPassed": true,
+      "pcmSha256": "d71d8d3129a8d50152fa2f9f24ee0c38df4e8db99762714b07b2b07bd56be512",
+      "audioFile": "/tmp/auto-go-address-audio/greet.wav"
+    },
+    {
+      "voice": "numbers",
+      "startedAt": "2026-09-09T05:38:49.159Z",
+      "chunks": 33,
+      "samples": 335592,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.53302001953125,
+      "heard": [
+        "ゆい 、 明日 の 15 時 から 1 時間 の 予定 です 。 開始 時刻 と 終了 時刻 を 確認 し て ください 。"
+      ],
+      "said": [
+        "明日15時から1時間ですね。開始時刻は15:00、終了時刻は16:00で合っていますか?"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1476,
+      "rms": 0.06815266501725709,
+      "addressDetections": [
+        {
+          "text": "ゆい 、 明日 の 15 時 から 1 時間 の 予定 です 。 開始 時刻 と 終了 時刻 を 確認 し て ください 。",
+          "detection": {
+            "addressed": true,
+            "invited": false,
+            "confidence": 0.85,
+            "reason": "name + question/request"
+          }
+        }
+      ],
+      "pcmChecksPassed": true,
+      "pcmSha256": "00860869f7f7fb205ffa5432a8b196b0c97ffe51dd0bc7ee28324b5044c7c1c6",
+      "audioFile": "/tmp/auto-go-address-audio/numbers.wav"
+    },
+    {
+      "voice": "followup",
+      "startedAt": "2026-09-09T05:39:13.053Z",
+      "chunks": 28,
+      "samples": 297192,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.589202880859375,
+      "heard": [
+        "ゆい その 予定 は 何時 に 終わり ます か ?"
+      ],
+      "said": [
+        "その予定は、特に何時までと決まっていないんですよ。何かご都合が悪いですか?"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1424,
+      "rms": 0.10060726614174431,
+      "addressDetections": [
+        {
+          "text": "ゆい その 予定 は 何時 に 終わり ます か ?",
+          "detection": {
+            "addressed": true,
+            "invited": false,
+            "confidence": 0.85,
+            "reason": "name + question/request"
+          }
+        }
+      ],
+      "pcmChecksPassed": true,
+      "pcmSha256": "dd0af9b2de7ba0f875a777ce18dd56ad6f192892cec92822542fa070335821aa",
+      "audioFile": "/tmp/auto-go-address-audio/followup.wav"
+    },
+    {
+      "voice": "long",
+      "startedAt": "2026-09-09T05:39:32.056Z",
+      "chunks": 60,
+      "samples": 637032,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.555084228515625,
+      "heard": [
+        "ゆい 英 会話 の 練習 方法 を 3 つ 少し 詳しく 説明 し て ください 。"
+      ],
+      "said": [
+        "わかった。シャドーイング、オンライン英会話、独り言練習がおすすめだよ。それぞれ、聞いた音声を真似する、ネイティブと話す、自分の考えを英語で言う練習方法なんだ。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1513,
+      "rms": 0.08538598631661316,
+      "addressDetections": [
+        {
+          "text": "ゆい 英 会話 の 練習 方法 を 3 つ 少し 詳しく 説明 し て ください 。",
+          "detection": {
+            "addressed": true,
+            "invited": false,
+            "confidence": 0.85,
+            "reason": "name + question/request"
+          }
+        }
+      ],
+      "pcmChecksPassed": true,
+      "pcmSha256": "a77fa9017a5f96f828822e8761eb47c656ec842b29432222ec12d01642c68380",
+      "audioFile": "/tmp/auto-go-address-audio/long.wav"
+    },
+    {
+      "voice": "resume",
+      "startedAt": "2026-09-09T05:39:54.526Z",
+      "chunks": 21,
+      "samples": 222312,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.95263671875,
+      "heard": [
+        "ゆい もう 一度 会話 を 続け ます 。 英語 で おはよう は 何 と 言い ます か ?"
+      ],
+      "said": [
+        "「おはよう」は \"Good morning\" だよ。 また話せて嬉しいな。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1495,
+      "rms": 0.14170505671969283,
+      "addressDetections": [
+        {
+          "text": "ゆい もう 一度 会話 を 続け ます 。 英語 で おはよう は 何 と 言い ます か ?",
+          "detection": {
+            "addressed": true,
+            "invited": false,
+            "confidence": 0.85,
+            "reason": "name + question/request"
+          }
+        }
+      ],
+      "pcmChecksPassed": true,
+      "pcmSha256": "e34a8d81c136489100703892e4d146e83aa338cf7e79296282574686c4e56197",
+      "audioFile": "/tmp/auto-go-address-audio/resume.wav"
+    }
+  ]
+}

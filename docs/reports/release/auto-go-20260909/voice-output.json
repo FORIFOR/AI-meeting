@@ -1,0 +1,115 @@
+{
+  "scope": "Real cloud provider output before physical playback; 1 synthetic utterance per voice; no human quality score",
+  "rows": [
+    {
+      "voice": "Kore",
+      "startedAt": "2026-09-09T05:25:55.196Z",
+      "chunks": 16,
+      "samples": 185832,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.974365234375,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後3時から1時間だと、終わりは午後4時ですね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1494,
+      "rms": 0.13420768956094373,
+      "pcmChecksPassed": true,
+      "pcmSha256": "b3013fbc82935ad4dba8f04f2048fb1597c067f21f143b537a5879130079e7b5",
+      "audioFile": "/tmp/long-utterance-voice-samples/Kore.wav"
+    },
+    {
+      "voice": "Aoede",
+      "startedAt": "2026-09-09T05:26:21.788Z",
+      "chunks": 23,
+      "samples": 245352,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.975555419921875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から1時間ですね。それなら、午後4時に終わりますよ。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1425,
+      "rms": 0.14478161743532267,
+      "pcmChecksPassed": true,
+      "pcmSha256": "c17009ebcbdffcf72f7021544a62c0adfeb1713403d513906a27fa5daf514e5f",
+      "audioFile": "/tmp/long-utterance-voice-samples/Aoede.wav"
+    },
+    {
+      "voice": "Leda",
+      "startedAt": "2026-09-09T05:26:48.283Z",
+      "chunks": 24,
+      "samples": 272232,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.92547607421875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後3時から 1時間ですね。午後4時に終わることになりますね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1515,
+      "rms": 0.1455270286627083,
+      "pcmChecksPassed": true,
+      "pcmSha256": "103fcc0ea881fc3efa5c1d7fd9fcc63cf73cf2a88ad272bced8c377ff574ee3c",
+      "audioFile": "/tmp/long-utterance-voice-samples/Leda.wav"
+    },
+    {
+      "voice": "Puck",
+      "startedAt": "2026-09-09T05:27:14.605Z",
+      "chunks": 17,
+      "samples": 185832,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.7186279296875,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "明日午後3時から1時間だと、午後4時に終わりますね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1535,
+      "rms": 0.07665777837418696,
+      "pcmChecksPassed": true,
+      "pcmSha256": "3443bceb4b3592a3bc009dae0a126844bf31738e91c149b300c8bd096e5aa997",
+      "audioFile": "/tmp/long-utterance-voice-samples/Puck.wav"
+    },
+    {
+      "voice": "Zephyr",
+      "startedAt": "2026-09-09T05:27:40.910Z",
+      "chunks": 19,
+      "samples": 203112,
+      "nonFinite": 0,
+      "clipped": 0,
+      "peak": 0.75177001953125,
+      "heard": [
+        "こんにちは 。 明日 の 午後 3 時 から 1 時間 英 会話 を 練習 し たい です 。 何時 に 終わる か 短く 確認 し て ください 。"
+      ],
+      "said": [
+        "午後3時から1時間なら、午後4時に終わりますね。"
+      ],
+      "errors": [],
+      "sampleRate": 48000,
+      "firstAudioAfterInputMs": 1512,
+      "rms": 0.11254892261451928,
+      "pcmChecksPassed": true,
+      "pcmSha256": "e5f174d1c8237246a78722c795bf86ad8897a7ae38afc69b2c49c3fafc8ddd9d",
+      "audioFile": "/tmp/long-utterance-voice-samples/Zephyr.wav"
+    }
+  ]
+}
