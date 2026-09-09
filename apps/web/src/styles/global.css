@@ -357,3 +357,23 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .task-review button { color: #111; background: #eee; border: 1px solid #999; border-radius: 6px; padding: 8px; cursor: pointer; }
 
 .credit-balance { padding: 12px 16px; margin: 16px 0; border: 1px solid var(--line, #ddd); border-radius: 8px; font-size: 13px; line-height: 1.7; }
+
+.credit-title { display: block; font-size: 15px; margin-bottom: 12px; }
+.credit-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.credit-summary > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.credit-summary strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.credit-summary small { font-size: 12px; font-weight: normal; }
+.credit-summary span { font-size: 12px; }
+.credit-note { border-left: 3px solid currentColor; padding-left: 10px; margin: 12px 0; }
+.credit-details { margin: 12px 0; }
+.credit-details summary { cursor: pointer; padding: 6px 0; }
+.credit-controls { margin: 16px 0; }
+.credit-controls label { display: flex; flex-direction: column; gap: 4px; }
+.credit-controls input { max-width: 180px; width: 100%; box-sizing: border-box; padding: 7px 9px; font: inherit; }
+.credit-controls output { display: block; font-weight: 600; }
+.credit-input-row { display: flex; gap: 16px; margin: 8px 0; }
+.credit-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-variant-numeric: tabular-nums; }
+.credit-table caption { text-align: left; font-weight: 600; }
+.credit-table th, .credit-table td { text-align: left; border-bottom: 1px solid var(--line, #ddd); padding: 6px; }
+.credit-plan { border-top: 1px solid var(--line, #ddd); padding-top: 12px; }
+@media (max-width: 560px) { .credit-summary { grid-template-columns: 1fr; gap: 14px; } .credit-input-row { flex-wrap: wrap; } }
