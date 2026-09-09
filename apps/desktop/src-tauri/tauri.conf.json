@@ -25,7 +25,8 @@
     "active": true,
     "targets": [
       "app",
-      "dmg"
+      "dmg",
+      "deb"
     ],
     "icon": [
       "icons/icon.png"
