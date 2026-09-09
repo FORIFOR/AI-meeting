@@ -166,6 +166,12 @@ export async function createAttendeeBot(
       ...(body.automaticLeave?.maxUptimeSeconds !== undefined ? { max_uptime_seconds: body.automaticLeave.maxUptimeSeconds } : {}),
     },
   };
+  // Zoom's native SDK rejects voice-agent pages and meeting captions. Use the Web SDK
+  // for both the character and its listener so they exercise the same meeting path.
+  const meetingHost = new URL(body.meetingUrl).hostname.toLowerCase();
+  if (["zoom.us", "zoom.com"].some(domain => meetingHost === domain || meetingHost.endsWith(`.${domain}`))) {
+    payload.zoom_settings = { sdk: "web" };
+  }
   /**
    * The vendor's own transcript, in the meeting's language. Left to auto-detect it rendered a Japanese
    * meeting as confident English, which made it useless as evidence of what was said. The page query

@@ -566,6 +566,7 @@ describe("Attendee provider", () => {
     expect((req.init!.headers as Record<string, string>).Authorization).toBe("Token ak");
     const sent = JSON.parse(req.init!.body as string);
     expect(sent.meeting_url).toBe("https://meet.google.com/abc-defg-hij");
+    expect(sent.zoom_settings).toBeUndefined();
     // 16 kHz is what the agent's binary input is defined at; 24 kHz stretched every utterance.
     expect(sent.websocket_settings.audio.sample_rate).toBe(16000);
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
@@ -640,6 +641,25 @@ describe("Attendee listener bot", () => {
     expect(res.status).toBe(200);
     const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
     expect(sent.transcription_settings).toEqual({ meeting_closed_captions: { google_meet_language: "ja-JP", merge_consecutive_captions: true } });
+  });
+});
+
+describe("Attendee Zoom Web SDK", () => {
+  it.each(["character", "listener"] as const)("creates a Zoom %s with supported voice/caption settings", async role => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", RECALL_BOT_PAGE_URL: "https://web.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
+      fetch: mockFetch((_url, init) => {
+        const payload = JSON.parse(init!.body as string);
+        if (payload.zoom_settings?.sdk !== "web") return new Response("Native SDK does not support voice agent/captions", { status: 400 });
+        return new Response(JSON.stringify({ id: "att_zoom", state: "joining" }));
+      }, calls),
+    });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://us04web.zoom.us/j/123456789", role, transcription: "closed_captions" });
+    expect(res.status).toBe(200);
+    const sent = JSON.parse(calls.find(c => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
+    expect(sent.transcription_settings.meeting_closed_captions).toBeDefined();
+    expect(Boolean(sent.voice_agent_settings)).toBe(role === "character");
   });
 });
 
