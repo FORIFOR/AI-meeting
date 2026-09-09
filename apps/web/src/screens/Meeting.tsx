@@ -1,3 +1,5 @@
+import { MeetingUsageTracker, type MeetingUsageReceipt } from "../billing/meetingUsage.js";
+import { MeetingUsageSummary } from "../components/MeetingUsageSummary.js";
 import { ZoomConnection } from "../components/ZoomConnection.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VOICE_OPTIONS, type Persona } from "@rcai/persona-core";
@@ -33,6 +35,8 @@ const POLICY_JA: Record<ParticipationState, string> = { OBSERVING: "見守り中
 /** P0-1: join a Google Meet / Zoom as the character. Operator view + bot-page view share one controller. */
 export function Meeting(p: MeetingProps) {
   const isBot = Boolean(p.botParams);
+  const usage = useRef(new MeetingUsageTracker());
+  const [usageReceipt, setUsageReceipt] = useState<MeetingUsageReceipt | null>(null);
   const [url, setUrl] = useState(() => { try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState(p.settings.characterId);
@@ -99,6 +103,9 @@ export function Meeting(p: MeetingProps) {
     if (!character || !persona) return;
     setBusy(true);
     setError(null);
+    const attemptUsage = new MeetingUsageTracker();
+    usage.current = attemptUsage;
+    setUsageReceipt(null);
     try {
       /**
        * The operator's engine travels in the bot-page URL, and until now the page stored it and then
@@ -148,7 +155,15 @@ export function Meeting(p: MeetingProps) {
           return () => { for (const s of stops) s(); };
         } : undefined,
         handlers: {
-          onStatus: (s, d) => { setStatus(s); note(`${STATUS_JA[s]}${d ? ` · ${d}` : ""}`); },
+          onStatus: (s, d) => {
+            if (usage.current !== attemptUsage) return;
+            setStatus(s); note(`${STATUS_JA[s]}${d ? ` · ${d}` : ""}`);
+            if (!isBot && p.brokerMeeting?.attendee) {
+              if (d === "bot created") attemptUsage.created(Date.now());
+              const receipt = attemptUsage.status(s, Date.now());
+              if (receipt) setUsageReceipt(receipt);
+            }
+          },
           onTranscript: (line) => setLines((ls) => {
             const same = ls.findIndex((x) => x.id === line.id);
             if (same >= 0) return ls.map((x, k) => (k === same ? line : x)); // a revised reading of a line already shown
@@ -230,6 +245,8 @@ export function Meeting(p: MeetingProps) {
 
   const leave = async () => {
     setBusy(true);
+    const receipt = usage.current.finish(Date.now());
+    if (receipt) setUsageReceipt(receipt);
     await ctrl.current?.leave();
     ctrl.current = null;
     setBusy(false);
@@ -262,6 +279,7 @@ export function Meeting(p: MeetingProps) {
         </div>
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
+        {usageReceipt && <MeetingUsageSummary receipt={usageReceipt} />}
         <CreditBalance enabled={!strict} />
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
