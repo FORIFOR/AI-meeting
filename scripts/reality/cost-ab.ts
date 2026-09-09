@@ -39,7 +39,7 @@ const inner = new GeminiLiveProvider({ brokerUrl, legacyCostPolicy: variant === 
         for (const key of ["promptTokensDetails", "responseTokensDetails", "candidatesTokensDetails"]) if (Array.isArray(u[key])) safe[key] = u[key].filter((x: any) => ["TEXT", "AUDIO", "IMAGE", "VIDEO"].includes(x.modality) && Number.isSafeInteger(x.tokenCount)).map((x: any) => ({ modality: x.modality, tokenCount: x.tokenCount }));
         report.usage.push({ elapsed: (Date.now() - started) / 1000, completedBefore: report.completedTurns, ...safe });
         // Bound this experiment even if a configuration accidentally creates a response loop.
-        if (report.usage.length > 150 || report.usage.reduce((n: number, x: any) => n + (x.totalTokenCount ?? 0), 0) > 1000000) fatal = true;
+        if (report.usage.length > 150 || report.usage.reduce((n: number, x: any) => n + (x.totalTokenCount ?? 0), 0) > 2000000) fatal = true;
       }
       if (m.serverContent?.turnComplete) report.completedTurns++;
     });
