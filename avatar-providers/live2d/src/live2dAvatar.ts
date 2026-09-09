@@ -34,7 +34,7 @@ export interface Live2DAvatarOptions extends MotionStackAvatarOptions {
    * most expensive thing on the page, and invisible after the capture and two encodes between the
    * page and the room. Default "default": the operator's own screen.
    */
-  framing?: "default" | "meeting";
+  framing?: "default" | "meeting" | "preview";
   /**
    * Cap on the render ticker. A camera tile is captured at 15–30 fps by the meeting vendor, so frames
    * above that are drawn for nothing — and in a software-GL browser each one is expensive. Default: the
@@ -247,13 +247,16 @@ export class Live2DAvatarProvider extends MotionStackAvatarBase {
     this.app.renderer.resolution = renderResolution(w, h, typeof devicePixelRatio === "number" ? devicePixelRatio : 1, this.opts.framing === "meeting");
     this.app.renderer.resize(w, h);
     const im = this.model.internalModel;
+    const preview = this.opts.framing === "preview";
     const view = this.opts.framing === "meeting" ? { ...(character.view ?? {}), ...(character.view?.meeting ?? {}) } : (character.view ?? {});
     // Fit the model height into the container, then apply the pack's scale; portrait framing.
     const fit = Math.min(w / im.originalWidth, h / im.originalHeight);
-    const scale = fit * (view.scale ?? 1) * 1.15;
+    // Selection previews show the whole character. Meeting and session views intentionally use
+    // the pack's closer framing, while preview mode keeps the model inside the portrait card.
+    const scale = fit * (preview ? 0.82 : (view.scale ?? 1) * 1.15);
     this.model.scale.set(scale);
     this.model.x = w / 2 + (view.x ?? 0) * w;
-    this.model.y = h / 2 + (view.y ?? 0) * h + (im.originalHeight * scale - h) * 0.2;
+    this.model.y = h / 2 + (preview ? 0 : (view.y ?? 0) * h) + (im.originalHeight * scale - h) * 0.2;
   }
 
   protected applyParams(params: AvatarParams): void {

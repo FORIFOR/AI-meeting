@@ -51,6 +51,7 @@ export function CharacterSelect(p: CharacterSelectProps) {
           container: mount,
           brokerUrl: p.settings.brokerUrl,
           privacyMode: p.settings.privacyMode,
+          framing: "preview",
           maxFps: 30,
         });
         await avatar.prepare(definition);
