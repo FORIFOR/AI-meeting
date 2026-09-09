@@ -29,7 +29,7 @@ function fixture() {
     }
     if (init?.method === "DELETE") {
       if (failDelete) return new Response("upstream failed", { status: 503 });
-      deleted.push(id); connections.delete(id); return new Response(null, { status: 204 });
+      deleted.push(id); connections.delete(id); return new Response(null, { status: 200 });
     }
     return connections.has(id) ? Response.json(connections.get(id)) : new Response("missing", { status: 404 });
   };

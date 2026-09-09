@@ -29,7 +29,7 @@ export class ZoomConnections {
       ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000),
     });
     if (!response.ok) throw new ZoomAuthError(response.status === 404 ? "ZOOM_CONNECTION_REVOKED" : "ZOOM_PROVIDER_UNAVAILABLE", response.status === 404 ? 401 : 503);
-    return response.status === 204 ? {} : await response.json() as ZoomRecord;
+    return method === "DELETE" || response.status === 204 ? {} : await response.json() as ZoomRecord;
   }
   async start(challenge: string): Promise<{ state: string; cookie: string; url: string }> {
     if (!valid(challenge)) throw new ZoomAuthError("INVALID_ZOOM_CHALLENGE", 400);
