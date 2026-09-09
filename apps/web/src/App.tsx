@@ -1,3 +1,4 @@
+import { ZoomReturn } from "./components/ZoomConnection.js";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
@@ -151,6 +152,7 @@ export function App() {
   const brokerMeeting = broker?.meeting ?? null;
   return (
     <div className="app">
+      <ZoomReturn onDone={() => setScreen({ name: "meeting" })} />
       {!inSession && (
         <header className="topbar">
           <a className="brand" href="#" onClick={(e) => { e.preventDefault(); setScreen({ name: "home" }); }}>

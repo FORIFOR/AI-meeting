@@ -1,3 +1,4 @@
+import { zoomToken } from "../api/zoom.js";
 /**
  * The ONLY file that touches sibling integration packages. Everything is loaded lazily and
  * typed against the @rcai/*-core contracts, so the app typechecks/builds even while a sibling
@@ -248,8 +249,8 @@ export async function createMeetingConnector(id: "recall" | "attendee" | "zoom_n
       // Same contract, different economics: Attendee streams the character's audio back on the socket it
       // sends on, so there is no clip encoding and no WebGL surcharge to pay for the avatar.
       const mod = await import("@rcai/connector-attendee");
-      const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string; botPageQuery?: Record<string, string> }>>(mod, "AttendeeConnector", "BLOCKED_BY_CONNECTOR_ATTENDEE");
-      return new C({ brokerUrl: o.brokerUrl, botPageQuery: o.botPageQuery });
+      const C = pick<Ctor<MeetingConnectorLike, { brokerUrl: string; botPageQuery?: Record<string, string>; authToken?: () => string | null }>>(mod, "AttendeeConnector", "BLOCKED_BY_CONNECTOR_ATTENDEE");
+      return new C({ brokerUrl: o.brokerUrl, botPageQuery: o.botPageQuery, authToken: () => zoomToken(o.brokerUrl) });
     }
     default:
       throw new Error(`BLOCKED_BY_CONNECTOR_${id.toUpperCase()}: not implemented`);

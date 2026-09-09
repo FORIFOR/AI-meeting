@@ -1,3 +1,4 @@
+import { ZoomConnection } from "../components/ZoomConnection.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VOICE_OPTIONS, type Persona } from "@rcai/persona-core";
 import { purposeLabel } from "../components/choiceLabels.js";
@@ -32,7 +33,7 @@ const POLICY_JA: Record<ParticipationState, string> = { OBSERVING: "見守り中
 /** P0-1: join a Google Meet / Zoom as the character. Operator view + bot-page view share one controller. */
 export function Meeting(p: MeetingProps) {
   const isBot = Boolean(p.botParams);
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(() => { try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState(p.settings.characterId);
   const [voices, setVoices] = useState<Record<string, string>>({});
@@ -278,6 +279,7 @@ export function Meeting(p: MeetingProps) {
             {voiceOptions.map(v => <option key={v.id} value={v.id}>{v.note}（{v.label}）</option>)}
           </select>
         </div>
+        <ZoomConnection base={p.settings.brokerUrl} meetingUrl={url} disabled={busy || joined} />
         <details><summary>話し方・カメラなどの設定</summary>
         <div className="field"><label>表示名（変更したいときだけ）</label><input className="input" value={name} placeholder={character?.name ?? "Yui"} onChange={(e) => setName(e.target.value)} disabled={joined} /></div>
         <div className="field"><label>発言のしかた</label>

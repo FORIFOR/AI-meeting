@@ -69,6 +69,8 @@ export interface AttendeeJoinBody {
 export const ATTENDEE_SILENCE_TIMEOUT_SECONDS = 3600;
 
 export interface AttendeeDeps {
+  /** Derived only from a verified server-side Zoom account session. */
+  zoomUserId?: string;
   relay: RelayRegistry & { clientUrl(botId: string): string };
   sessions: MeetingSessionRegistry;
   /** Durable record, so an Attendee meeting has a lifecycle and a result screen like a Recall one. */
@@ -170,7 +172,7 @@ export async function createAttendeeBot(
   // for both the character and its listener so they exercise the same meeting path.
   const meetingHost = new URL(body.meetingUrl).hostname.toLowerCase();
   if (["zoom.us", "zoom.com"].some(domain => meetingHost === domain || meetingHost.endsWith(`.${domain}`))) {
-    payload.zoom_settings = { sdk: "web" };
+    payload.zoom_settings = { sdk: "web", ...(deps.zoomUserId ? { onbehalf_token: { zoom_oauth_connection_user_id: deps.zoomUserId } } : {}) };
   }
   /**
    * The vendor's own transcript, in the meeting's language. Left to auto-detect it rendered a Japanese

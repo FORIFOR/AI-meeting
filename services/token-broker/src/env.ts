@@ -3,6 +3,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
+  /** Zoom user authorization, backed by a server-only Firestore database. */
+  ZOOM_OAUTH_CLIENT_ID?: string;
+  ZOOM_OAUTH_CALLBACK_URL?: string;
+  ZOOM_OAUTH_WEB_ORIGIN?: string;
+  ZOOM_FIRESTORE_DATABASE?: string;
+  ZOOM_REQUIRE_AUTH?: string;
   PORT?: string;
   /** Container deployments bind 0.0.0.0; local development defaults to loopback. */
   HOST?: string;

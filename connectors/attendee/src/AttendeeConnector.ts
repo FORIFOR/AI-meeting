@@ -15,6 +15,8 @@ export interface AttendeeConnectorOptions {
   /** services/token-broker base URL. The API key never reaches this side. */
   brokerUrl: string;
   botPageQuery?: Record<string, string>;
+  /** Application session, never a Zoom/provider secret. */
+  authToken?: () => string | null;
   wsFactory?: (url: string) => WebSocketLike;
   fetchImpl?: typeof fetch;
   clock?: () => number;
@@ -53,13 +55,23 @@ export class AttendeeConnector implements MeetingConnector {
 
   async join(req: JoinRequest): Promise<MeetingSession> {
     const fetchImpl = this.opts.fetchImpl ?? fetch;
+    const token = this.opts.authToken?.();
     const res = await fetchImpl(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/meeting/attendee/bots`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ meetingUrl: req.meetingUrl, botName: req.displayName, botPageQuery: { ...this.opts.botPageQuery, ...req.options } }),
     });
     const body = (await res.json().catch(() => ({}))) as { botId?: string; clientWsUrl?: string; sampleRate?: number; error?: string; detail?: string };
-    if (!res.ok || !body.botId || !body.clientWsUrl) throw new Error(`${body.error ?? "attendee_join_failed"}${body.detail ? `: ${body.detail}` : ""}`);
+    if (!res.ok || !body.botId || !body.clientWsUrl) {
+      const zoomErrors: Record<string, string> = {
+        ZOOM_LOGIN_REQUIRED: "先に「Zoomと連携」からログインしてください。",
+        ZOOM_CONNECTION_REVOKED: "Zoomの連携が無効になりました。もう一度連携してください。",
+        ZOOM_NOT_CONFIGURED: "Zoom連携の準備中です。時間をおいてお試しください。",
+        ZOOM_PROVIDER_UNAVAILABLE: "Zoomの接続を確認できませんでした。時間をおいてお試しください。",
+        ZOOM_CONNECTION_UNAVAILABLE: "Zoomの接続を確認できませんでした。時間をおいてお試しください。",
+      };
+      throw new Error(zoomErrors[body.error ?? ""] ?? `${body.error ?? "attendee_join_failed"}${body.detail ? `: ${body.detail}` : ""}`);
+    }
     return new AttendeeSession(body.botId, detectPlatform(req.meetingUrl), body.clientWsUrl, body.sampleRate ?? 24000, this.opts);
   }
 }

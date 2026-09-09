@@ -15,6 +15,7 @@
     "smoke:recall": "tsx scripts/smoke-recall-webhooks.ts"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^9.0.1",
     "@hono/node-server": "latest",
     "@rcai/behavior-engine": "workspace:*",
     "@rcai/conversation-core": "workspace:*",

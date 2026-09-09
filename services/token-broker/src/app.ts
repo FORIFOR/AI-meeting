@@ -1,3 +1,6 @@
+import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
+import { FirestoreZoomStore } from "./zoom/store.js";
+import { registerZoomRoutes, bearer } from "./zoom/routes.js";
 import { VertexLiveRelay } from "./vertex-live.js";
 import { lookupLiveInfo } from "./routes/lookup.js";
 import { parseLookupArguments } from "@rcai/meeting-core";
@@ -32,6 +35,7 @@ import { calendarEvents, calendarStatus, forwardCalendarCallback, getRule, putRu
 
 export interface AppDeps {
   env: BrokerEnv;
+  zoom?: ZoomConnections;
   vertex?: VertexLiveRelay;
   fetch?: typeof fetch;
   now?: () => number;
@@ -430,9 +434,22 @@ export function createApp(deps: AppDeps): Hono {
 
   // Persisted product output: the meetings the bot attended and their transcripts.
   /** Operational: how much bot time is being spent. Cached; safe to poll from a dashboard. */
+  const zoom = deps.zoom ?? (env.ZOOM_OAUTH_CLIENT_ID && env.ZOOM_OAUTH_CALLBACK_URL && env.ZOOM_OAUTH_WEB_ORIGIN && env.GOOGLE_CLOUD_PROJECT && env.ATTENDEE_API_KEY
+    ? new ZoomConnections({ clientId: env.ZOOM_OAUTH_CLIENT_ID, callbackUrl: env.ZOOM_OAUTH_CALLBACK_URL, webOrigin: env.ZOOM_OAUTH_WEB_ORIGIN, attendeeKey: env.ATTENDEE_API_KEY, attendeeBase: env.ATTENDEE_API_BASE_URL }, new FirestoreZoomStore(env.GOOGLE_CLOUD_PROJECT, env.ZOOM_FIRESTORE_DATABASE), fetchImpl, now)
+    : null);
+  registerZoomRoutes(app, zoom);
   app.post("/api/meeting/attendee/bots", async (c) => {
     const { createAttendeeBot } = await import("./routes/attendee.js");
-    const r = await createAttendeeBot(env, await json(c), fetchImpl, { relay, sessions, store });
+    const body = await json<import("./routes/attendee.js").AttendeeJoinBody>(c);
+    let zoomUserId: string | undefined;
+    let isZoom = false;
+    try { const host = new URL(body.meetingUrl).hostname; isZoom = /(^|\.)zoom\.(us|com)$/.test(host); } catch { /* validated below */ }
+    if (isZoom && (zoom || env.ZOOM_REQUIRE_AUTH === "1" || bearer(c))) {
+      if (!zoom) return c.json({ error: "ZOOM_NOT_CONFIGURED" }, 503);
+      try { zoomUserId = await zoom.authorize(bearer(c)); }
+      catch (e) { return c.json({ error: e instanceof ZoomAuthError ? e.code : "ZOOM_CONNECTION_UNAVAILABLE" }, e instanceof ZoomAuthError ? e.status as 401 : 503); }
+    }
+    const r = await createAttendeeBot(env, body, fetchImpl, { relay, sessions, store, zoomUserId });
     if ((r.body as { error?: string }).error === "BLOCKED_BY_ATTENDEE_CREDIT") lastCreditRefusalAt = now();
     return c.json(r.body, r.status as 200);
   });
