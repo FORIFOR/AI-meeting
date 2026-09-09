@@ -1,0 +1,56 @@
+{
+  "scope": "Public UI OAuth-authorized Yui + synthetic Hosted API Tester in real Zoom; mixed audio only; no human or release-quality claim",
+  "startedAt": "2026-09-09T13:38:24.142Z",
+  "endedAt": "2026-09-09T13:42:44.623Z",
+  "execution": "COMPLETE",
+  "source": "872a13c",
+  "backendRevision": "ai-meeting-broker-00015-6k4",
+  "hostingVersionDuringTest": "f6b5c3bd7d3ad65a",
+  "cuesSent": 5,
+  "testerCaptionUtterances": 9,
+  "testerCaptionYuiUtterances": 5,
+  "captionAccuracy": "Unreliable: Japanese speech rendered incorrectly; semantic correctness not scored",
+  "yuiTranscriptionState": "failed",
+  "testerRecordingSeconds": 159.7388125,
+  "recordingSha256": "49562eb32037a88aa175046e1bd1dcec102332edc871b07fc83e4ea6698d1c6b",
+  "audioWindows": [
+    {
+      "cue": "greet",
+      "observedSeconds": 22.39625,
+      "rms": 0.05307238219191537
+    },
+    {
+      "cue": "numbers",
+      "observedSeconds": 20.5966875,
+      "rms": 0.04607120115633088
+    },
+    {
+      "cue": "followup",
+      "observedSeconds": 25.1478125,
+      "rms": 0.027222594621833393
+    },
+    {
+      "cue": "long",
+      "observedSeconds": 22.582,
+      "rms": 0.0701148226051179
+    },
+    {
+      "cue": "resume",
+      "observedSeconds": 22.849,
+      "rms": 0.023122832260570797
+    }
+  ],
+  "cleanup": [
+    {
+      "id": "bot_pmQoGl8hPTfaAQzW",
+      "leaveRequested": true,
+      "finalState": "ended"
+    },
+    {
+      "id": "bot_dENLz4LHHc8Ba9ix",
+      "leaveRequested": true,
+      "finalState": "ended"
+    }
+  ],
+  "humanConfirmation": "pending"
+}
