@@ -1,0 +1,677 @@
+[
+  {
+    "pause": 250,
+    "id": "numbers",
+    "events": [
+      {
+        "at": 1788923495245,
+        "type": "assistant_transcript",
+        "text": "はい、どうぞ。",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 0
+        }
+      },
+      {
+        "at": 1788923495552,
+        "type": "assistant_transcript",
+        "text": " いつ",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 6
+        }
+      },
+      {
+        "at": 1788923495618,
+        "type": "assistant_transcript",
+        "text": "の予定",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 8
+        }
+      },
+      {
+        "at": 1788923495708,
+        "type": "assistant_transcript",
+        "text": "ですか？",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 11
+        }
+      },
+      {
+        "at": 8072.637334,
+        "type": "interrupted",
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 14
+        }
+      },
+      {
+        "at": 1788923495877,
+        "type": "metrics",
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 14
+        },
+        "turn": {
+          "source": "speech",
+          "totalMs": 1819.1661670000003,
+          "engines": {
+            "llm": "gemini-live-2.5-flash-native-audio"
+          }
+        }
+      },
+      {
+        "at": 1788923499121,
+        "type": "user_transcript",
+        "text": "開始 時刻 と 終了 時刻 を 確認 し て ください 。",
+        "final": false
+      },
+      {
+        "at": 1788923499645,
+        "type": "assistant_transcript",
+        "text": "確認したい",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 0
+        }
+      },
+      {
+        "at": 1788923499645,
+        "type": "user_transcript",
+        "text": "開始 時刻 と 終了 時刻 を 確認 し て ください 。",
+        "final": true
+      },
+      {
+        "at": 1788923499866,
+        "type": "assistant_transcript",
+        "text": "予定",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 5
+        }
+      },
+      {
+        "at": 1788923499988,
+        "type": "assistant_transcript",
+        "text": "は",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 8
+        }
+      },
+      {
+        "at": 1788923499997,
+        "type": "assistant_transcript",
+        "text": "どの",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 10
+        }
+      },
+      {
+        "at": 1788923500025,
+        "type": "assistant_transcript",
+        "text": "ことです",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 12
+        }
+      },
+      {
+        "at": 1788923500172,
+        "type": "assistant_transcript",
+        "text": "か？",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 15
+        }
+      },
+      {
+        "at": 1788923500265,
+        "type": "assistant_transcript",
+        "text": "確認したい予定はどのことですか？",
+        "final": true,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 19
+        }
+      },
+      {
+        "at": 1788923500265,
+        "type": "metrics",
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 3,
+          "generationId": 2,
+          "sequence": 20
+        },
+        "turn": {
+          "source": "speech",
+          "firstAudioSentMs": 1291.4799169999987,
+          "totalMs": 1910.9699999999993,
+          "engines": {
+            "llm": "gemini-live-2.5-flash-native-audio"
+          }
+        }
+      }
+    ],
+    "gate": {
+      "sent": 375,
+      "held": 706,
+      "opens": 2,
+      "closes": 2,
+      "forced": 0,
+      "openMs": 7956,
+      "bargeIns": 1
+    }
+  },
+  {
+    "pause": 250,
+    "id": "followup",
+    "events": [
+      {
+        "at": 1788923517170,
+        "type": "user_transcript",
+        "text": "ゆい その 予定 は 何時 に 終わり ます か ?",
+        "final": false
+      },
+      {
+        "at": 1788923517581,
+        "type": "assistant_transcript",
+        "text": "どの予定",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 0
+        }
+      },
+      {
+        "at": 1788923517581,
+        "type": "user_transcript",
+        "text": "ゆい その 予定 は 何時 に 終わり ます か ?",
+        "final": true
+      },
+      {
+        "at": 1788923517757,
+        "type": "assistant_transcript",
+        "text": "を指",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 5
+        }
+      },
+      {
+        "at": 1788923517836,
+        "type": "assistant_transcript",
+        "text": "している",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 7
+        }
+      },
+      {
+        "at": 1788923517996,
+        "type": "assistant_transcript",
+        "text": "のか、",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 9
+        }
+      },
+      {
+        "at": 1788923517997,
+        "type": "assistant_transcript",
+        "text": "教えて",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 11
+        }
+      },
+      {
+        "at": 1788923518121,
+        "type": "assistant_transcript",
+        "text": "もらえ",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 15
+        }
+      },
+      {
+        "at": 1788923518220,
+        "type": "assistant_transcript",
+        "text": "ますか？",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 17
+        }
+      },
+      {
+        "at": 1788923518375,
+        "type": "assistant_transcript",
+        "text": "どの予定を指しているのか、教えてもらえますか？",
+        "final": true,
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 22
+        }
+      },
+      {
+        "at": 1788923518375,
+        "type": "metrics",
+        "gen": {
+          "sessionId": "g_mttiutep_cqwh",
+          "turnId": 4,
+          "generationId": 3,
+          "sequence": 23
+        },
+        "turn": {
+          "source": "speech",
+          "firstAudioSentMs": 1194.5845420000005,
+          "totalMs": 1987.9415420000005,
+          "engines": {
+            "llm": "gemini-live-2.5-flash-native-audio"
+          }
+        }
+      }
+    ],
+    "gate": {
+      "sent": 530,
+      "held": 1404,
+      "opens": 3,
+      "closes": 3,
+      "forced": 0,
+      "openMs": 11221,
+      "bargeIns": 1
+    }
+  },
+  {
+    "pause": 500,
+    "id": "numbers",
+    "events": [
+      {
+        "at": 1788923540830,
+        "type": "user_transcript",
+        "text": "ゆい 明日 の 15 時 から 1 時間 の 予定 です 。 開始 時刻 と 終了 時刻 を 確認 し て ください 。",
+        "final": false
+      },
+      {
+        "at": 1788923541099,
+        "type": "assistant_transcript",
+        "text": "明日15時",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 0
+        }
+      },
+      {
+        "at": 1788923541153,
+        "type": "user_transcript",
+        "text": "ゆい 明日 の 15 時 から 1 時間 の 予定 です 。 開始 時刻 と 終了 時刻 を 確認 し て ください 。",
+        "final": true
+      },
+      {
+        "at": 1788923541467,
+        "type": "assistant_transcript",
+        "text": "から",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 6
+        }
+      },
+      {
+        "at": 1788923541496,
+        "type": "assistant_transcript",
+        "text": "1時間",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 8
+        }
+      },
+      {
+        "at": 1788923541626,
+        "type": "assistant_transcript",
+        "text": "ですね。",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 12
+        }
+      },
+      {
+        "at": 1788923541735,
+        "type": "assistant_transcript",
+        "text": "開始",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 15
+        }
+      },
+      {
+        "at": 1788923541979,
+        "type": "assistant_transcript",
+        "text": "時刻",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 20
+        }
+      },
+      {
+        "at": 1788923542115,
+        "type": "assistant_transcript",
+        "text": "は15:00、",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 23
+        }
+      },
+      {
+        "at": 1788923542314,
+        "type": "assistant_transcript",
+        "text": "終了",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 28
+        }
+      },
+      {
+        "at": 1788923542492,
+        "type": "assistant_transcript",
+        "text": "時刻",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 33
+        }
+      },
+      {
+        "at": 1788923542653,
+        "type": "assistant_transcript",
+        "text": "は16:00",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 36
+        }
+      },
+      {
+        "at": 1788923542824,
+        "type": "assistant_transcript",
+        "text": "で",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 40
+        }
+      },
+      {
+        "at": 1788923542884,
+        "type": "assistant_transcript",
+        "text": "間違い",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 42
+        }
+      },
+      {
+        "at": 1788923543012,
+        "type": "assistant_transcript",
+        "text": "ないで",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 45
+        }
+      },
+      {
+        "at": 1788923543071,
+        "type": "assistant_transcript",
+        "text": "すか?",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 47
+        }
+      },
+      {
+        "at": 1788923543230,
+        "type": "assistant_transcript",
+        "text": "明日15時から1時間ですね。開始時刻は15:00、終了時刻は16:00で間違いないですか?",
+        "final": true,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 51
+        }
+      },
+      {
+        "at": 1788923543230,
+        "type": "metrics",
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 3,
+          "generationId": 1,
+          "sequence": 52
+        },
+        "turn": {
+          "source": "speech",
+          "firstAudioSentMs": 1204.0140830000018,
+          "totalMs": 3280.907625,
+          "engines": {
+            "llm": "gemini-live-2.5-flash-native-audio"
+          }
+        }
+      }
+    ],
+    "gate": {
+      "sent": 378,
+      "held": 703,
+      "opens": 1,
+      "closes": 1,
+      "forced": 1,
+      "openMs": 8013,
+      "bargeIns": 0
+    }
+  },
+  {
+    "pause": 500,
+    "id": "followup",
+    "events": [
+      {
+        "at": 1788923559053,
+        "type": "user_transcript",
+        "text": "ゆい その 予定 は 何時 に 終わり ます か ?",
+        "final": false
+      },
+      {
+        "at": 1788923559448,
+        "type": "assistant_transcript",
+        "text": "16時に",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 0
+        }
+      },
+      {
+        "at": 1788923559497,
+        "type": "user_transcript",
+        "text": "ゆい その 予定 は 何時 に 終わり ます か ?",
+        "final": true
+      },
+      {
+        "at": 1788923559746,
+        "type": "assistant_transcript",
+        "text": "終わる",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 6
+        }
+      },
+      {
+        "at": 1788923559940,
+        "type": "assistant_transcript",
+        "text": "予定",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 8
+        }
+      },
+      {
+        "at": 1788923559941,
+        "type": "assistant_transcript",
+        "text": "ですよ。",
+        "final": false,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 10
+        }
+      },
+      {
+        "at": 1788923560031,
+        "type": "assistant_transcript",
+        "text": "16時に終わる予定ですよ。",
+        "final": true,
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 15
+        }
+      },
+      {
+        "at": 1788923560031,
+        "type": "metrics",
+        "gen": {
+          "sessionId": "g_mttivpy3_i0sv",
+          "turnId": 4,
+          "generationId": 2,
+          "sequence": 16
+        },
+        "turn": {
+          "source": "speech",
+          "firstAudioSentMs": 1541.2267500000016,
+          "totalMs": 2075.877250000005,
+          "engines": {
+            "llm": "gemini-live-2.5-flash-native-audio"
+          }
+        }
+      }
+    ],
+    "gate": {
+      "sent": 544,
+      "held": 1390,
+      "opens": 2,
+      "closes": 2,
+      "forced": 1,
+      "openMs": 11513,
+      "bargeIns": 0
+    }
+  }
+]

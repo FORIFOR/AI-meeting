@@ -143,7 +143,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
    * first: the VAD's own hangover (250 ms) is what decides the person has stopped, and every millisecond
    * here is added to the wait before the model may answer. Overridable for measurement.
    */
-  private static readonly GATE_HANGOVER_MS = 250;
+  // A 350 ms clause boundary in real speech is not the end of the request.
+  // Keep the audio turn open through it so the model retains dates and numbers.
+  private static readonly GATE_HANGOVER_MS = 500;
   private loudUntil = 0;
   /**
    * No utterance runs this long. Whatever the meters say, a turn held open past this is a gate that
@@ -548,7 +550,9 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
      * Somebody is talking over her. Her own reply stops here, not when the model gets round to it: the
      * person who said 「ちょっと待って」 has already waited long enough by the time a round trip lands.
      */
-    if (selfSpeaking) {
+    // An open input turn may contain quiet syllables while assistant audio arrives.
+    // Keeping that input must not count silence as sustained barge-in speech.
+    if (selfSpeaking && level >= GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
       if (!this.bargeInSince) this.bargeInSince = now;
       if (now - this.bargeInSince >= GeminiLiveProvider.BARGE_IN_CONFIRM_MS) {
         this.bargeInSince = 0;

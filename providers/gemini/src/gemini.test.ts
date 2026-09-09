@@ -457,7 +457,7 @@ describe("what the API is charged for", () => {
 });
 
 describe("the gate's fallback", () => {
-  it("keeps a brief pause inside a turn, then closes sustained silence without a 500 ms wait", async () => {
+  it("keeps a clause pause inside a turn, then closes sustained silence at 500 ms", async () => {
     const { p, ws } = await connected();
     let ts = 0;
     const quiet = (ms: number) => {
@@ -469,10 +469,10 @@ describe("the gate's fallback", () => {
     const ends = () => ws.sent.filter((m) => (m as { realtimeInput?: { activityEnd?: unknown } }).realtimeInput?.activityEnd !== undefined).length;
     quiet(600);
     speech();
-    quiet(240);
+    quiet(360);
     expect(ends()).toBe(0);
     speech();
-    quiet(240);
+    quiet(480);
     expect(ends()).toBe(0);
     quiet(40);
     expect(ends()).toBe(1);
@@ -637,16 +637,18 @@ it('delivers a tool-first reply after interruption while dropping cancelled tool
  await runtime.stop();
 });
 it('does not cut an already open user utterance when assistant audio overlaps a quiet syllable',async()=>{
- const {p,ws}=await connected();
+ const {p,ws,events}=await connected();
  let ts=2000;
  for(let i=0;i<60;i++){p.pushAudio(createFrame(new Float32Array(960),48000,ts));ts+=20;}
  for(let i=0;i<20;i++){p.pushAudio(createFrame(sine(48000,20,.5),48000,ts));ts+=20;}
  expect(p.gateStats.opens).toBeGreaterThan(0);
  ws.receive({serverContent:{modelTurn:{parts:[{inlineData:{mimeType:'audio/pcm;rate=24000',data:float32ToBase64Pcm16(sine(24000,1000))}}]}}});await ws.flush();
  const before=p.gateStats.sent,closes=p.gateStats.closes;
- for(let i=0;i<5;i++){p.pushAudio(createFrame(sine(48000,20,.02),48000,ts));ts+=20;}
+ for(let i=0;i<10;i++){p.pushAudio(createFrame(sine(48000,20,.02),48000,ts));ts+=20;}
  expect(p.gateStats.sent).toBeGreaterThan(before);
  expect(p.gateStats.closes).toBe(closes);
+ expect(p.gateStats.bargeIns).toBe(0);
+ expect(events.some(e=>e.type==='interrupted')).toBe(false);
  await p.disconnect();
 });
 it('keeps a default retry available after a ten-second outage and cancels it on leave',async()=>{
