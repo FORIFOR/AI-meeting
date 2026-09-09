@@ -1,0 +1,31 @@
+{
+  "release": "NO_GO",
+  "sourceCommit": "8ea80913de4896709d817ea3db87302585f35168",
+  "cloudRevision": "ai-meeting-broker-00012-xc9",
+  "cloudTrafficPercent": 100,
+  "cloudBuildId": "fbad1530-0ade-4974-adcd-4492117b1033",
+  "tests": {
+    "filesPassed": 72,
+    "testsPassed": 730,
+    "typecheck": "PASS"
+  },
+  "attempts": [
+    {
+      "startedAt": "2026-09-09T09:43:12.329Z",
+      "endedAt": "2026-09-09T09:43:16.825Z",
+      "httpStatus": 502,
+      "cause": "Native SDK rejects voice agent and closed captions"
+    },
+    {
+      "startedAt": "2026-09-09T09:47:45.133Z",
+      "endedAt": "2026-09-09T09:47:45.798Z",
+      "httpStatus": 502,
+      "cause": "Zoom App credentials required; dashboard confirms OAuth App not registered"
+    }
+  ],
+  "botsCreated": 0,
+  "admittedBots": 0,
+  "audioVideoRoundTrip": "NOT_RUN",
+  "durationTest": "NOT_RUN",
+  "cleanup": "No bots created; no test participants left in meeting"
+}
