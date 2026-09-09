@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "b944d8f8b9a53c8792f6f7eeb096d56162095721",
+  "fullSuite": {
+    "files": 72,
+    "passed": 731
+  },
+  "subsequentControllerSuite": {
+    "passed": 13,
+    "includesOneAdditionalRegression": true
+  },
+  "typecheck": "PASS (workspace, plus web after the additional controller test)",
+  "build": "PASS",
+  "regressionOriginalImplementation": "FAIL",
+  "regressionFixedImplementation": "PASS",
+  "hostingVersion": "e31a3792a3225e0a"
+}

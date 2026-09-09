@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "buildId": "3494c78124ef59b5bc1db7fb9610ae9fe94cffa9cb59c0adaaf9e4ea2d55f55e",
+  "measurements": {},
+  "note": "The new candidate has local regression tests. Prior candidate live metrics are not relabelled as this build."
+}
