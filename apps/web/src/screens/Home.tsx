@@ -2,7 +2,7 @@ import { CreditBalance } from "../components/CreditBalance.js";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import type { BrokerHealth, AgentHealth } from "../api/health.js";
-import { blockedReason } from "../components/characters.js";
+import { blockedReason, RENDERER_JA } from "../components/characters.js";
 import type { CharacterEntry } from "../integrations/registry.js";
 import type { Settings, SettingsAction } from "../state/settings.js";
 import { whenLabel, type Recent } from "../state/recent.js";
@@ -67,9 +67,9 @@ export function Home(p: HomeProps) {
           <div className="home__companion-copy">
             <span className="home__overline">話す相手</span>
             <strong>{character?.name ?? "準備中"}</strong>
-            <span>{blocked ? "接続を確認中" : "いつでも話せます"}</span>
+            <span>{character ? RENDERER_JA[character.renderer] : "準備中"} · {blocked ? "接続を確認中" : "いつでも話せます"}</span>
           </div>
-          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>変更</button>
+          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>プレビューして選ぶ</button>
         </aside>
       </section>
 
