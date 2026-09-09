@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-08T16:48:21.475Z",
-  "count": 391,
+  "generatedAt": "2026-09-09T16:48:15.521Z",
+  "count": 430,
   "packages": [
     {
       "name": "@asamuzakjp/css-color",
@@ -313,6 +313,46 @@
       "description": "The macOS ARM 64-bit binary for esbuild, a JavaScript bundler."
     },
     {
+      "name": "@google-cloud/firestore",
+      "versions": [
+        "9.0.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google Inc.",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/handwritten/firestore",
+      "description": "Firestore Client Library for Node.js"
+    },
+    {
+      "name": "@google-cloud/firestore-api",
+      "versions": [
+        "0.2.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google LLC",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/packages/google-firestore-admin",
+      "description": "Cloud Firestore API client for Node.js"
+    },
+    {
+      "name": "@grpc/grpc-js",
+      "versions": [
+        "1.14.4"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google Inc.",
+      "homepage": "https://grpc.io/",
+      "description": "gRPC Library for Node - pure JS implementation"
+    },
+    {
+      "name": "@grpc/proto-loader",
+      "versions": [
+        "0.8.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google Inc.",
+      "homepage": "https://grpc.io/",
+      "description": "gRPC utility library for loading .proto files"
+    },
+    {
       "name": "@hono/node-server",
       "versions": [
         "2.1.1"
@@ -383,6 +423,16 @@
       "description": "Prebuilt libvips and dependencies for use with sharp on macOS 64-bit ARM"
     },
     {
+      "name": "@isaacs/cliui",
+      "versions": [
+        "8.0.2"
+      ],
+      "license": "ISC",
+      "author": "Ben Coe",
+      "homepage": "https://github.com/yargs/cliui#readme",
+      "description": "easily create complex multi-column command-line-interfaces"
+    },
+    {
       "name": "@jridgewell/gen-mapping",
       "versions": [
         "0.3.13"
@@ -433,6 +483,16 @@
       "description": "Trace the original position through a source map"
     },
     {
+      "name": "@js-sdsl/ordered-map",
+      "versions": [
+        "4.4.2"
+      ],
+      "license": "MIT",
+      "author": "ZLY201",
+      "homepage": "https://js-sdsl.org",
+      "description": "javascript standard data structure library which benchmark against C++ STL"
+    },
+    {
       "name": "@livekit/mutex",
       "versions": [
         "1.1.1"
@@ -445,8 +505,8 @@
     {
       "name": "@livekit/protocol",
       "versions": [
-        "1.48.0",
-        "1.50.4"
+        "1.50.4",
+        "1.51.0"
       ],
       "license": "Apache-2.0",
       "author": "LiveKit",
@@ -462,6 +522,16 @@
       "author": "mediapipe@google.com",
       "homepage": "http://mediapipe.dev",
       "description": "MediaPipe Vision Tasks. See the privacy notice at https://goo.gle/mediapipe-privacy."
+    },
+    {
+      "name": "@opentelemetry/api",
+      "versions": [
+        "1.9.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "OpenTelemetry Authors",
+      "homepage": "https://github.com/open-telemetry/opentelemetry-js/tree/main/api",
+      "description": "Public API for OpenTelemetry"
     },
     {
       "name": "@pixi/accessibility",
@@ -962,6 +1032,16 @@
       "author": "pixiv",
       "homepage": "https://github.com/pixiv/three-vrm#readme",
       "description": "Type definitions of VRMC_vrm 1.0 schema"
+    },
+    {
+      "name": "@pkgjs/parseargs",
+      "versions": [
+        "0.11.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/pkgjs/parseargs#readme",
+      "description": "Polyfill of future proposal for `util.parseArgs()`"
     },
     {
       "name": "@protobufjs/aspromise",
@@ -1568,7 +1648,8 @@
     {
       "name": "brace-expansion",
       "versions": [
-        "1.1.18"
+        "1.1.18",
+        "2.1.4"
       ],
       "license": "MIT",
       "author": "Julian Gruber",
@@ -1757,6 +1838,16 @@
       "description": "Converts a source-map from/to  different formats and allows adding/changing properties."
     },
     {
+      "name": "cross-spawn",
+      "versions": [
+        "7.0.6"
+      ],
+      "license": "MIT",
+      "author": "André Cruz",
+      "homepage": "https://github.com/moxystudio/node-cross-spawn",
+      "description": "Cross platform child_process#spawn and child_process#spawnSync"
+    },
+    {
       "name": "cssstyle",
       "versions": [
         "4.6.0"
@@ -1887,6 +1978,16 @@
       "description": "If available, the `Object.prototype.__proto__` accessor and mutator, call-bound"
     },
     {
+      "name": "duplexify",
+      "versions": [
+        "4.1.3"
+      ],
+      "license": "MIT",
+      "author": "Mathias Buus",
+      "homepage": "https://github.com/mafintosh/duplexify",
+      "description": "Turn a writable and readable stream into a streams2 duplex stream with support for async initialization and streams1/streams2 input"
+    },
+    {
       "name": "earcut",
       "versions": [
         "2.2.4"
@@ -1895,6 +1996,16 @@
       "author": "Vladimir Agafonkin",
       "homepage": "https://github.com/mapbox/earcut#readme",
       "description": "The fastest and smallest JavaScript polygon triangulation library for your WebGL apps"
+    },
+    {
+      "name": "eastasianwidth",
+      "versions": [
+        "0.2.0"
+      ],
+      "license": "MIT",
+      "author": "Masaki Komagata",
+      "homepage": "https://github.com/komagata/eastasianwidth#readme",
+      "description": "Get East Asian Width from a character."
     },
     {
       "name": "ecdsa-sig-formatter",
@@ -1930,12 +2041,23 @@
       "name": "emoji-regex",
       "versions": [
         "8.0.0",
+        "9.2.2",
         "10.6.0"
       ],
       "license": "MIT",
       "author": "Mathias Bynens",
       "homepage": "https://mths.be/emoji-regex",
       "description": "A regular expression to match all Emoji-only symbols as per the Unicode Standard."
+    },
+    {
+      "name": "end-of-stream",
+      "versions": [
+        "1.4.5"
+      ],
+      "license": "MIT",
+      "author": "Mathias Buus",
+      "homepage": "https://github.com/mafintosh/end-of-stream",
+      "description": "Call a callback when a readable/writable/duplex stream has completed or failed."
     },
     {
       "name": "entities",
@@ -2069,6 +2191,16 @@
       "description": "Port of jQuery.extend for node.js and the browser"
     },
     {
+      "name": "fast-deep-equal",
+      "versions": [
+        "3.1.3"
+      ],
+      "license": "MIT",
+      "author": "Evgeny Poberezkin",
+      "homepage": "https://github.com/epoberezkin/fast-deep-equal#readme",
+      "description": "Fast deep equal"
+    },
+    {
       "name": "fdir",
       "versions": [
         "6.5.0"
@@ -2159,6 +2291,16 @@
       "description": "Memory Efficient Serialization Library"
     },
     {
+      "name": "foreground-child",
+      "versions": [
+        "3.3.1"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/tapjs/foreground-child#readme",
+      "description": "Run a child as if it's the foreground process. Give it stdio. Exit when it exits."
+    },
+    {
       "name": "formdata-polyfill",
       "versions": [
         "4.0.10"
@@ -2209,8 +2351,19 @@
       "description": "Implementation of Function.prototype.bind"
     },
     {
+      "name": "functional-red-black-tree",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Mikola Lysenko",
+      "homepage": "https://github.com/mikolalysenko/functional-red-black-tree#readme",
+      "description": "A fully persistent balanced binary search tree"
+    },
+    {
       "name": "gaxios",
       "versions": [
+        "7.1.3",
         "7.3.1"
       ],
       "license": "Apache-2.0",
@@ -2221,6 +2374,7 @@
     {
       "name": "gcp-metadata",
       "versions": [
+        "8.1.4",
         "9.0.3"
       ],
       "license": "Apache-2.0",
@@ -2291,12 +2445,13 @@
     {
       "name": "glob",
       "versions": [
-        "7.2.3"
+        "7.2.3",
+        "10.5.0"
       ],
       "license": "ISC",
       "author": "Isaac Z. Schlueter",
       "homepage": "https://github.com/isaacs/node-glob#readme",
-      "description": "a little globber"
+      "description": "the most correct and second fastest glob implementation in JavaScript"
     },
     {
       "name": "global-agent",
@@ -2331,6 +2486,7 @@
     {
       "name": "google-auth-library",
       "versions": [
+        "10.5.0",
         "11.0.2"
       ],
       "license": "Apache-2.0",
@@ -2339,8 +2495,20 @@
       "description": "Google APIs Authentication Client Library for Node.js"
     },
     {
+      "name": "google-gax",
+      "versions": [
+        "5.0.8",
+        "6.2.0"
+      ],
+      "license": "Apache-2.0",
+      "author": "Google API Authors",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/gax",
+      "description": "Google API Extensions"
+    },
+    {
       "name": "google-logging-utils",
       "versions": [
+        "1.1.3",
         "2.0.1"
       ],
       "license": "Apache-2.0",
@@ -2367,6 +2535,16 @@
       "author": "",
       "homepage": "https://github.com/isaacs/node-graceful-fs#readme",
       "description": "A drop-in replacement for fs, making various improvements."
+    },
+    {
+      "name": "gtoken",
+      "versions": [
+        "8.0.0"
+      ],
+      "license": "MIT",
+      "author": "Google, LLC",
+      "homepage": "https://github.com/google/node-gtoken#readme",
+      "description": "Node.js Google Authentication Service Account Tokens"
     },
     {
       "name": "guid-typescript",
@@ -2509,6 +2687,26 @@
       "description": "Check whether a given string matches the `PotentialCustomElementName` production as defined in the HTML Standard."
     },
     {
+      "name": "isexe",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/isexe#readme",
+      "description": "Minimal module to check if a file is executable."
+    },
+    {
+      "name": "jackspeak",
+      "versions": [
+        "3.4.3"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/jackspeak#readme",
+      "description": "A very strict and proper argument parser."
+    },
+    {
       "name": "jose",
       "versions": [
         "5.10.0",
@@ -2623,7 +2821,7 @@
     {
       "name": "livekit-server-sdk",
       "versions": [
-        "2.18.0"
+        "2.19.0"
       ],
       "license": "Apache-2.0",
       "author": "David Zhao",
@@ -2649,6 +2847,16 @@
       "author": "John-David Dalton",
       "homepage": "https://lodash.com/",
       "description": "Lodash modular utilities."
+    },
+    {
+      "name": "lodash.camelcase",
+      "versions": [
+        "4.3.0"
+      ],
+      "license": "MIT",
+      "author": "John-David Dalton",
+      "homepage": "https://lodash.com/",
+      "description": "The lodash method `_.camelCase` exported as a module."
     },
     {
       "name": "loglevel",
@@ -2754,12 +2962,23 @@
     {
       "name": "minimatch",
       "versions": [
-        "3.1.5"
+        "3.1.5",
+        "9.0.9"
       ],
       "license": "ISC",
       "author": "Isaac Z. Schlueter",
       "homepage": "https://github.com/isaacs/minimatch#readme",
       "description": "a glob matcher in javascript"
+    },
+    {
+      "name": "minipass",
+      "versions": [
+        "7.1.3"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/minipass#readme",
+      "description": "minimal implementation of a PassThrough stream"
     },
     {
       "name": "mitt",
@@ -2850,6 +3069,16 @@
       "author": "Sindre Sorhus",
       "homepage": "https://github.com/sindresorhus/object-assign#readme",
       "description": "ES2015 `Object.assign()` ponyfill"
+    },
+    {
+      "name": "object-hash",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Scott Puleo",
+      "homepage": "https://github.com/puleos/object-hash",
+      "description": "Generate hashes from javascript objects in node and the browser."
     },
     {
       "name": "object-inspect",
@@ -2943,6 +3172,16 @@
       "description": "`Start a promise chain"
     },
     {
+      "name": "package-json-from-dist",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/package-json-from-dist#readme",
+      "description": "Load the local package.json from either src or dist folder"
+    },
+    {
       "name": "parse5",
       "versions": [
         "7.3.0"
@@ -2971,6 +3210,26 @@
       "author": "Sindre Sorhus",
       "homepage": "https://github.com/sindresorhus/path-is-absolute#readme",
       "description": "Node.js 0.12 path.isAbsolute() ponyfill"
+    },
+    {
+      "name": "path-key",
+      "versions": [
+        "3.1.1"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/path-key#readme",
+      "description": "Get the PATH environment variable key cross-platform"
+    },
+    {
+      "name": "path-scurry",
+      "versions": [
+        "1.11.1"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/path-scurry#readme",
+      "description": "walk paths fast and efficiently"
     },
     {
       "name": "pathe",
@@ -3103,6 +3362,17 @@
       "description": "Lightweight promise polyfill. A+ compliant"
     },
     {
+      "name": "proto3-json-serializer",
+      "versions": [
+        "3.0.4",
+        "4.0.2"
+      ],
+      "license": "Apache-2.0",
+      "author": "",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/proto3-json-serializer-nodejs",
+      "description": "Support for proto3 JSON serialiazation/deserialization for protobuf.js"
+    },
+    {
       "name": "protobufjs",
       "versions": [
         "7.6.6"
@@ -3174,6 +3444,16 @@
       "description": "React is a JavaScript library for building user interfaces."
     },
     {
+      "name": "readable-stream",
+      "versions": [
+        "3.6.2"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/nodejs/readable-stream#readme",
+      "description": "Streams3, a user-land copy of the stream library from Node.js"
+    },
+    {
       "name": "require-directory",
       "versions": [
         "2.1.1"
@@ -3182,6 +3462,27 @@
       "author": "Troy Goode",
       "homepage": "https://github.com/troygoode/node-require-directory/",
       "description": "Recursively iterates over specified directory, require()'ing each file, and returning a nested hash structure containing those modules."
+    },
+    {
+      "name": "retry-request",
+      "versions": [
+        "8.0.4",
+        "9.0.1"
+      ],
+      "license": "MIT",
+      "author": "Stephen Sawchuk",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/retry-request",
+      "description": "Retry a request."
+    },
+    {
+      "name": "rimraf",
+      "versions": [
+        "5.0.10"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/rimraf#readme",
+      "description": "A deep deletion module for node (like `rm -rf`)"
     },
     {
       "name": "rollup",
@@ -3305,6 +3606,26 @@
       "description": "High performance Node.js image processing, the fastest module to resize JPEG, PNG, WebP, GIF, AVIF and TIFF images"
     },
     {
+      "name": "shebang-command",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "MIT",
+      "author": "Kevin Mårtensson",
+      "homepage": "https://github.com/kevva/shebang-command#readme",
+      "description": "Get the command from a shebang"
+    },
+    {
+      "name": "shebang-regex",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Sindre Sorhus",
+      "homepage": "https://github.com/sindresorhus/shebang-regex#readme",
+      "description": "Regular expression for matching a shebang line"
+    },
+    {
       "name": "shell-quote",
       "versions": [
         "1.9.0"
@@ -3385,6 +3706,16 @@
       "description": "Utility module to print pretty messages on SIGINFO/SIGUSR1"
     },
     {
+      "name": "signal-exit",
+      "versions": [
+        "4.1.0"
+      ],
+      "license": "ISC",
+      "author": "Ben Coe",
+      "homepage": "https://github.com/tapjs/signal-exit#readme",
+      "description": "when you want to fire an event no matter how a process exits."
+    },
+    {
       "name": "source-map-js",
       "versions": [
         "1.2.1"
@@ -3415,9 +3746,40 @@
       "description": "Runtime agnostic JS utils"
     },
     {
+      "name": "stream-events",
+      "versions": [
+        "1.0.5"
+      ],
+      "license": "MIT",
+      "author": "Stephen Sawchuk",
+      "homepage": "https://github.com/stephenplusplus/stream-events",
+      "description": "Get an event when you're being sent data or asked for it."
+    },
+    {
+      "name": "stream-shift",
+      "versions": [
+        "1.0.3"
+      ],
+      "license": "MIT",
+      "author": "Mathias Buus",
+      "homepage": "https://github.com/mafintosh/stream-shift",
+      "description": "Returns the next buffer/object in a stream's readable queue"
+    },
+    {
+      "name": "string_decoder",
+      "versions": [
+        "1.3.0"
+      ],
+      "license": "MIT",
+      "author": "",
+      "homepage": "https://github.com/nodejs/string_decoder",
+      "description": "The string_decoder module from Node core"
+    },
+    {
       "name": "string-width",
       "versions": [
         "4.2.3",
+        "5.1.2",
         "7.2.0",
         "8.2.2"
       ],
@@ -3458,6 +3820,16 @@
       "description": "Strip a substring from the start/end of a string"
     },
     {
+      "name": "stubs",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Stephen Sawchuk",
+      "homepage": "https://github.com/stephenplusplus/stubs",
+      "description": "Easy method stubber."
+    },
+    {
       "name": "supports-color",
       "versions": [
         "7.2.0",
@@ -3477,6 +3849,17 @@
       "author": "Joris van der Wel",
       "homepage": "https://github.com/jsdom/js-symbol-tree#symbol-tree",
       "description": "Turn any collection of objects into its own efficient tree or linked list using Symbol"
+    },
+    {
+      "name": "teeny-request",
+      "versions": [
+        "10.1.4",
+        "11.0.1"
+      ],
+      "license": "Apache-2.0",
+      "author": "fhinkel",
+      "homepage": "https://github.com/googleapis/google-cloud-node/tree/main/core/packages/teeny-request",
+      "description": "Like request, but smaller."
     },
     {
       "name": "three",
@@ -3710,6 +4093,16 @@
       "description": "The core `url` packaged standalone for use with Browserify."
     },
     {
+      "name": "util-deprecate",
+      "versions": [
+        "1.0.2"
+      ],
+      "license": "MIT",
+      "author": "Nathan Rajlich",
+      "homepage": "https://github.com/TooTallNate/util-deprecate",
+      "description": "The Node.js `util.deprecate()` function with browser support"
+    },
+    {
       "name": "vite",
       "versions": [
         "7.3.6"
@@ -3820,6 +4213,16 @@
       "description": "An implementation of the WHATWG URL Standard's URL API and parsing machinery"
     },
     {
+      "name": "which",
+      "versions": [
+        "2.0.2"
+      ],
+      "license": "ISC",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/node-which#readme",
+      "description": "Like which(1) unix command. Find the first instance of an executable in the PATH."
+    },
+    {
       "name": "why-is-node-running",
       "versions": [
         "2.3.0"
@@ -3833,6 +4236,7 @@
       "name": "wrap-ansi",
       "versions": [
         "7.0.0",
+        "8.1.0",
         "9.0.2"
       ],
       "license": "MIT",

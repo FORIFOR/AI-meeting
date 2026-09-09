@@ -377,7 +377,9 @@ button.row:hover .row__value, button.row:hover .row__label { color: var(--app-te
 .credit-table th, .credit-table td { text-align: left; border-bottom: 1px solid var(--line, #ddd); padding: 6px; }
 .credit-plan { border-top: 1px solid var(--line, #ddd); padding-top: 12px; }
 @media (max-width: 560px) { .credit-summary { grid-template-columns: 1fr; gap: 14px; } .credit-input-row { flex-wrap: wrap; } }
-.meeting-usage-summary { border: 2px solid currentColor; }
+.meeting-usage-summary { border: 2px solid currentColor; scroll-margin-top: 24px; }
+.meeting-usage-summary h2 { margin: 0 0 12px; }
+.meeting-usage-summary details { margin-top: 16px; }
 .meeting-usage-summary p { margin: 6px 0; }
 .meeting-usage-amount { font-size: 20px; }
-.meeting-usage-amount strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.meeting-usage-amount strong { font-size: 42px; font-variant-numeric: tabular-nums; }

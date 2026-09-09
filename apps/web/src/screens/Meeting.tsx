@@ -254,10 +254,10 @@ export function Meeting(p: MeetingProps) {
 
   const leave = async () => {
     setBusy(true);
-    const receipt = usage.current.finish(Date.now());
-    if (receipt) setUsageReceipt(receipt);
     try {
       await ctrl.current?.leave();
+      const receipt = usage.current.finish(Date.now());
+      if (receipt) setUsageReceipt(receipt);
       ctrl.current = null;
       setStatus("left");
     } catch (e) {
@@ -290,10 +290,10 @@ export function Meeting(p: MeetingProps) {
           <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。相手・用途・声を選んで、参加してください。</p>
         </div>
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
+        {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
         <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
-        {usageReceipt && <MeetingUsageSummary receipt={usageReceipt} />}
-        {aiUsage && <LiveCostSummary counters={aiUsage} />}
-        <CreditBalance enabled={!strict} />
+        {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
+        <details><summary>サービス全体の利用履歴・料金を見る</summary><CreditBalance enabled={!strict} /></details>
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
             {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker ?? null, strict)}>{c.name}{blockedReason(c, p.broker ?? null, strict) ? "（準備中）" : ""}</option>)}

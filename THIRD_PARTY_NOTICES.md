@@ -1,6 +1,6 @@
 # Third-party notices
 
-Generated 2026-09-08T16:48:21.477Z by `scripts/licenses.mjs`. 391 npm packages.
+Generated 2026-09-09T16:48:15.524Z by `scripts/licenses.mjs`. 430 npm packages.
 
 ## Non-OSS and specially licensed components (curated)
 
@@ -56,6 +56,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @digital-go-jp/design-tokens | 2.0.1 | MIT |
 | @dimforge/rapier3d-compat | 0.12.0 | Apache-2.0 |
 | @esbuild/darwin-arm64 | 0.28.2 | MIT |
+| @google-cloud/firestore | 9.0.1 | Apache-2.0 |
+| @google-cloud/firestore-api | 0.2.0 | Apache-2.0 |
+| @grpc/grpc-js | 1.14.4 | Apache-2.0 |
+| @grpc/proto-loader | 0.8.1 | Apache-2.0 |
 | @hono/node-server | 2.1.1 | MIT |
 | @huggingface/jinja | 0.5.9 | MIT |
 | @huggingface/tokenizers | 0.1.3 | Apache-2.0 |
@@ -63,14 +67,17 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @img/colour | 1.1.0 | MIT |
 | @img/sharp-darwin-arm64 | 0.34.5 | Apache-2.0 |
 | @img/sharp-libvips-darwin-arm64 | 1.2.4 | LGPL-3.0-or-later |
+| @isaacs/cliui | 8.0.2 | ISC |
 | @jridgewell/gen-mapping | 0.3.13 | MIT |
 | @jridgewell/remapping | 2.3.5 | MIT |
 | @jridgewell/resolve-uri | 3.1.2 | MIT |
 | @jridgewell/sourcemap-codec | 1.6.0 | MIT |
 | @jridgewell/trace-mapping | 0.3.31 | MIT |
+| @js-sdsl/ordered-map | 4.4.2 | MIT |
 | @livekit/mutex | 1.1.1 | Apache-2.0 |
-| @livekit/protocol | 1.48.0, 1.50.4 | Apache-2.0 |
+| @livekit/protocol | 1.50.4, 1.51.0 | Apache-2.0 |
 | @mediapipe/tasks-vision | 1.0.1 | Apache-2.0 |
+| @opentelemetry/api | 1.9.1 | Apache-2.0 |
 | @pixi/accessibility | 6.5.10 | MIT |
 | @pixi/app | 6.5.10 | MIT |
 | @pixi/compressed-textures | 6.5.10 | MIT |
@@ -121,6 +128,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | @pixiv/types-vrmc-springbone-1.0 | 3.5.5 | MIT |
 | @pixiv/types-vrmc-springbone-extended-collider-1.0 | 3.5.5 | MIT |
 | @pixiv/types-vrmc-vrm-1.0 | 3.5.5 | MIT |
+| @pkgjs/parseargs | 0.11.0 | MIT |
 | @protobufjs/aspromise | 1.1.2 | BSD-3-Clause |
 | @protobufjs/base64 | 1.1.2 | BSD-3-Clause |
 | @protobufjs/codegen | 2.0.5 | BSD-3-Clause |
@@ -181,7 +189,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | baseline-browser-mapping | 2.11.20 | Apache-2.0 |
 | bignumber.js | 9.3.1 | MIT |
 | bowser | 2.14.1 | MIT |
-| brace-expansion | 1.1.18 | MIT |
+| brace-expansion | 1.1.18, 2.1.4 | MIT |
 | browserslist | 4.28.8 | MIT |
 | buffer-equal-constant-time | 1.0.1 | BSD-3-Clause |
 | cac | 6.7.14 | MIT |
@@ -200,6 +208,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | concat-map | 0.0.1 | MIT |
 | concurrently | 9.2.4 | MIT |
 | convert-source-map | 2.0.0 | MIT |
+| cross-spawn | 7.0.6 | MIT |
 | cssstyle | 4.6.0 | MIT |
 | csstype | 3.2.3 | MIT |
 | data-uri-to-buffer | 4.0.1 | MIT |
@@ -213,11 +222,14 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | detect-libc | 2.1.2 | Apache-2.0 |
 | devtools-protocol | 0.0.1666840 | BSD-3-Clause |
 | dunder-proto | 1.0.1 | MIT |
+| duplexify | 4.1.3 | MIT |
 | earcut | 2.2.4 | ISC |
+| eastasianwidth | 0.2.0 | MIT |
 | ecdsa-sig-formatter | 1.0.11 | Apache-2.0 |
 | electron-to-chromium | 1.5.416 | ISC |
 | email-addresses | 3.1.0 | MIT |
-| emoji-regex | 8.0.0, 10.6.0 | MIT |
+| emoji-regex | 8.0.0, 9.2.2, 10.6.0 | MIT |
+| end-of-stream | 1.4.5 | MIT |
 | entities | 6.0.1 | BSD-2-Clause |
 | es-define-property | 1.0.1 | MIT |
 | es-errors | 1.3.0 | MIT |
@@ -231,6 +243,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | events | 3.3.0 | MIT |
 | expect-type | 1.4.0 | Apache-2.0 |
 | extend | 3.0.2 | MIT |
+| fast-deep-equal | 3.1.3 | MIT |
 | fdir | 6.5.0 | MIT |
 | fetch-blob | 3.2.0 | MIT |
 | fflate | 0.8.3 | MIT |
@@ -240,27 +253,31 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | find-cache-dir | 3.3.2 | MIT |
 | find-up | 4.1.0 | MIT |
 | flatbuffers | 25.9.23 | Apache-2.0 |
+| foreground-child | 3.3.1 | ISC |
 | formdata-polyfill | 4.0.10 | MIT |
 | fs-extra | 8.1.0 | MIT |
 | fs.realpath | 1.0.0 | ISC |
 | fsevents | 2.3.3 | MIT |
 | function-bind | 1.1.2 | MIT |
-| gaxios | 7.3.1 | Apache-2.0 |
-| gcp-metadata | 9.0.3 | Apache-2.0 |
+| functional-red-black-tree | 1.0.1 | MIT |
+| gaxios | 7.1.3, 7.3.1 | Apache-2.0 |
+| gcp-metadata | 8.1.4, 9.0.3 | Apache-2.0 |
 | gensync | 1.0.0-beta.2 | MIT |
 | get-caller-file | 2.0.5 | ISC |
 | get-east-asian-width | 1.6.0 | MIT |
 | get-intrinsic | 1.3.0 | MIT |
 | get-proto | 1.0.1 | MIT |
 | gh-pages | 4.0.0 | MIT |
-| glob | 7.2.3 | ISC |
+| glob | 7.2.3, 10.5.0 | ISC |
 | global-agent | 4.1.3 | BSD-3-Clause |
 | globalthis | 1.0.4 | MIT |
 | globby | 6.1.0 | MIT |
-| google-auth-library | 11.0.2 | Apache-2.0 |
-| google-logging-utils | 2.0.1 | Apache-2.0 |
+| google-auth-library | 10.5.0, 11.0.2 | Apache-2.0 |
+| google-gax | 5.0.8, 6.2.0 | Apache-2.0 |
+| google-logging-utils | 1.1.3, 2.0.1 | Apache-2.0 |
 | gopd | 1.2.0 | MIT |
 | graceful-fs | 4.2.11 | ISC |
+| gtoken | 8.0.0 | MIT |
 | guid-typescript | 1.0.9 | ISC |
 | has-flag | 4.0.0 | MIT |
 | has-property-descriptors | 1.0.2 | MIT |
@@ -275,6 +292,8 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | inherits | 2.0.4 | ISC |
 | is-fullwidth-code-point | 3.0.0 | MIT |
 | is-potential-custom-element-name | 1.0.1 | MIT |
+| isexe | 2.0.0 | ISC |
+| jackspeak | 3.4.3 | BlueOak-1.0.0 |
 | jose | 5.10.0, 6.2.10 | MIT |
 | js-tokens | 4.0.0, 9.0.1 | MIT |
 | js-yaml | 5.4.1 | MIT |
@@ -286,9 +305,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | jwa | 2.0.1 | MIT |
 | jws | 4.0.1 | MIT |
 | livekit-client | 2.22.1 | Apache-2.0 |
-| livekit-server-sdk | 2.18.0 | Apache-2.0 |
+| livekit-server-sdk | 2.19.0 | Apache-2.0 |
 | locate-path | 5.0.0 | MIT |
 | lodash | 4.18.1 | MIT |
+| lodash.camelcase | 4.3.0 | MIT |
 | loglevel | 1.9.2 | MIT |
 | long | 5.3.2 | Apache-2.0 |
 | loupe | 3.2.1 | MIT |
@@ -299,7 +319,8 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | matcher | 4.0.0 | MIT |
 | math-intrinsics | 1.1.0 | MIT |
 | meshoptimizer | 1.1.1 | MIT |
-| minimatch | 3.1.5 | ISC |
+| minimatch | 3.1.5, 9.0.9 | ISC |
+| minipass | 7.1.3 | BlueOak-1.0.0 |
 | mitt | 3.0.1 | MIT |
 | modern-tar | 0.8.4 | MIT |
 | ms | 2.1.3 | MIT |
@@ -309,6 +330,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | node-releases | 2.0.54 | MIT |
 | nwsapi | 2.2.26 | MIT |
 | object-assign | 4.1.1 | MIT |
+| object-hash | 3.0.0 | MIT |
 | object-inspect | 1.13.4 | MIT |
 | object-keys | 1.1.1 | MIT |
 | once | 1.4.0 | ISC |
@@ -318,9 +340,12 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | p-limit | 2.3.0 | MIT |
 | p-locate | 4.1.0 | MIT |
 | p-try | 2.2.0 | MIT |
+| package-json-from-dist | 1.0.1 | BlueOak-1.0.0 |
 | parse5 | 7.3.0 | MIT |
 | path-exists | 4.0.0 | MIT |
 | path-is-absolute | 1.0.1 | MIT |
+| path-key | 3.1.1 | MIT |
+| path-scurry | 1.11.1 | BlueOak-1.0.0 |
 | pathe | 2.0.3 | MIT |
 | pathval | 2.0.1 | MIT |
 | picocolors | 1.1.1 | ISC |
@@ -334,6 +359,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | platform | 1.3.6 | MIT |
 | postcss | 8.5.26 | MIT |
 | promise-polyfill | 8.3.0 | MIT |
+| proto3-json-serializer | 3.0.4, 4.0.2 | Apache-2.0 |
 | protobufjs | 7.6.6 | BSD-3-Clause |
 | punycode | 1.4.1, 2.3.1 | MIT |
 | puppeteer-core | 25.9.0 | Apache-2.0 |
@@ -341,7 +367,10 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | react | 19.2.8 | MIT |
 | react-dom | 19.2.8 | MIT |
 | react-refresh | 0.18.0 | MIT |
+| readable-stream | 3.6.2 | MIT |
 | require-directory | 2.1.1 | MIT |
+| retry-request | 8.0.4, 9.0.1 | MIT |
+| rimraf | 5.0.10 | ISC |
 | rollup | 4.63.1 | MIT |
 | rrweb-cssom | 0.8.0 | MIT |
 | rxjs | 7.8.2 | Apache-2.0 |
@@ -354,6 +383,8 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | semver | 6.3.1, 7.8.5 | ISC |
 | serialize-error | 8.1.0 | MIT |
 | sharp | 0.34.5 | Apache-2.0 |
+| shebang-command | 2.0.0 | MIT |
+| shebang-regex | 3.0.0 | MIT |
 | shell-quote | 1.9.0 | MIT |
 | sherpa-onnx-darwin-arm64 | 1.13.7 | Apache-2.0 |
 | sherpa-onnx-node | 1.13.7 | Apache-2.0 |
@@ -362,15 +393,21 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | side-channel-map | 1.0.1 | MIT |
 | side-channel-weakmap | 1.0.2 | MIT |
 | siginfo | 2.0.0 | ISC |
+| signal-exit | 4.1.0 | ISC |
 | source-map-js | 1.2.1 | BSD-3-Clause |
 | stackback | 0.0.2 | MIT |
 | std-env | 3.10.0 | MIT |
-| string-width | 4.2.3, 7.2.0, 8.2.2 | MIT |
+| stream-events | 1.0.5 | MIT |
+| stream-shift | 1.0.3 | MIT |
+| string_decoder | 1.3.0 | MIT |
+| string-width | 4.2.3, 5.1.2, 7.2.0, 8.2.2 | MIT |
 | strip-ansi | 6.0.1, 7.2.0 | MIT |
 | strip-literal | 3.1.0 | MIT |
 | strip-outer | 1.0.1 | MIT |
+| stubs | 3.0.0 | MIT |
 | supports-color | 7.2.0, 8.1.1 | MIT |
 | symbol-tree | 3.2.4 | MIT |
+| teeny-request | 10.1.4, 11.0.1 | Apache-2.0 |
 | three | 0.185.1 | MIT |
 | tinybench | 2.9.0 | MIT |
 | tinyexec | 0.3.2 | MIT |
@@ -394,6 +431,7 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | universalify | 0.1.2 | MIT |
 | update-browserslist-db | 1.3.2 | MIT |
 | url | 0.11.4 | MIT |
+| util-deprecate | 1.0.2 | MIT |
 | vite | 7.3.6 | MIT |
 | vite-node | 3.2.4 | MIT |
 | vitest | 3.2.7 | MIT |
@@ -405,8 +443,9 @@ These are **not** plain MIT/Apache OSS. Each has its own terms that must be hono
 | whatwg-encoding | 3.1.1 | MIT |
 | whatwg-mimetype | 4.0.0 | MIT |
 | whatwg-url | 14.2.0 | MIT |
+| which | 2.0.2 | ISC |
 | why-is-node-running | 2.3.0 | MIT |
-| wrap-ansi | 7.0.0, 9.0.2 | MIT |
+| wrap-ansi | 7.0.0, 8.1.0, 9.0.2 | MIT |
 | wrappy | 1.0.2 | ISC |
 | ws | 8.21.3 | MIT |
 | xml-name-validator | 5.0.0 | Apache-2.0 |

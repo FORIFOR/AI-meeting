@@ -4,10 +4,10 @@ import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { Meeting } from "./Meeting.js";
 import { DEFAULT_SETTINGS } from "../state/settings.js";
-const capture = vi.hoisted(() => ({ init: null as any }));
+const capture = vi.hoisted(() => ({ init: null as any, failLeave: false }));
 vi.mock("../session/MeetingSessionController.js", () => ({ MeetingSessionController: class {
   constructor(init: unknown) { capture.init = init; }
-  async start() { capture.init.handlers.onStatus("joining", "bot created"); } async leave() {} stop() {} dispose() {}
+  async start() { capture.init.handlers.onStatus("joining", "bot created"); } async leave() { if (capture.failLeave) throw new Error("退出未確認"); } stop() {} dispose() {}
 } }));
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 it("shows the receipt after host end, preserves it on leave, and resets it on another meeting", async () => {
@@ -35,14 +35,18 @@ it("shows the receipt after host end, preserves it on leave, and resets it on an
     const receipt=host.querySelector('[aria-label="今回の会議の利用クレジット"]');
     expect(receipt?.textContent).toContain("0.17");
     expect(receipt?.textContent).toContain("10分0秒");
-    expect(receipt?.textContent).toContain("確定額ではありません");
+    expect(receipt?.textContent).toContain("概算");
     now=620000;
     await act(async()=>capture.init.handlers.onStatus("left"));
     expect(receipt?.textContent).toContain("10分0秒");
     await act(async()=>[...host.querySelectorAll("button")].find(b=>b.textContent==="参加する")!.click());
     expect(host.querySelector('[aria-label="今回の会議の利用クレジット"]')).toBeNull();
     now=680000;
+    capture.failLeave = true;
     await act(async()=>[...host.querySelectorAll("button")].find(b=>b.textContent==="退出する")!.click());
-    expect(host.querySelector('[aria-label="今回の会議の利用クレジット"]')?.textContent).toContain("0.02");
-  } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); clock.mockRestore(); }
+    expect(host.querySelector('[aria-label="今回の会議の利用クレジット"]')).toBeNull();
+    capture.failLeave = false; now=740000;
+    await act(async()=>[...host.querySelectorAll("button")].find(b=>b.textContent==="退出する")!.click());
+    expect(host.querySelector('[aria-label="今回の会議の利用クレジット"]')?.textContent).toContain("0.04");
+  } finally { capture.failLeave = false; await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); clock.mockRestore(); }
 });
