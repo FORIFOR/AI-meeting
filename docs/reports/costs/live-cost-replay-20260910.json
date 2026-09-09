@@ -1,0 +1,5500 @@
+{
+  "scope": "Synthetic Vertex replay with fixture observer captions; not a real Meet/Zoom or human trial",
+  "model": "gemini-live-2.5-flash-native-audio",
+  "priceSource": "https://cloud.google.com/vertex-ai/generative-ai/pricing",
+  "ratesUsdPerMillion": {
+    "input_text": 0.5,
+    "input_audio": 3,
+    "input_image": 3,
+    "input_video": 3,
+    "output_text": 2,
+    "output_audio": 12
+  },
+  "runs": [
+    {
+      "runId": "baseline-full",
+      "variant": "baseline",
+      "status": "COMPLETE",
+      "startedAt": "2026-09-09T15:47:45.997Z",
+      "finishedAt": "2026-09-09T16:17:46.762Z",
+      "replaySeconds": 1800.011,
+      "liveActiveSeconds": 1800.294,
+      "audioInputSeconds": 609.24,
+      "audioOutputSeconds": 486.81,
+      "liveConnections": 4,
+      "errorEventCount": 6,
+      "completedTurns": 71,
+      "pricedResponses": 71,
+      "unpricedResponses": 0,
+      "peakInputTokens": 31698,
+      "tokens": {
+        "input_text": 208710,
+        "input_audio": 971701,
+        "output_text": 3315,
+        "output_audio": 12389
+      },
+      "estimatedUsd": 3.174756,
+      "syntheticTaskFactMentionsWithin20s": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "usage": [
+        {
+          "elapsed": 17.641,
+          "completedBefore": 0,
+          "promptTokenCount": 785,
+          "totalTokenCount": 1125,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 542
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 243
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 73
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 267
+            }
+          ]
+        },
+        {
+          "elapsed": 44.88,
+          "completedBefore": 1,
+          "promptTokenCount": 1379,
+          "totalTokenCount": 1572,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 763
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 616
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 137
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            }
+          ]
+        },
+        {
+          "elapsed": 74.762,
+          "completedBefore": 2,
+          "promptTokenCount": 1825,
+          "totalTokenCount": 2101,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 673
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1152
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 67
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 209
+            }
+          ]
+        },
+        {
+          "elapsed": 104.651,
+          "completedBefore": 3,
+          "promptTokenCount": 2356,
+          "totalTokenCount": 2615,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1615
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 741
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 194
+            }
+          ]
+        },
+        {
+          "elapsed": 120.796,
+          "completedBefore": 4,
+          "promptTokenCount": 2693,
+          "totalTokenCount": 2693,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 884
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1809
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 135.139,
+          "completedBefore": 5,
+          "promptTokenCount": 2983,
+          "totalTokenCount": 3279,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2061
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 922
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 225
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 71
+            }
+          ]
+        },
+        {
+          "elapsed": 164.942,
+          "completedBefore": 6,
+          "promptTokenCount": 3532,
+          "totalTokenCount": 3805,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 994
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2538
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 206
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 67
+            }
+          ]
+        },
+        {
+          "elapsed": 194.704,
+          "completedBefore": 7,
+          "promptTokenCount": 4057,
+          "totalTokenCount": 4321,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2995
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1062
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 199
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            }
+          ]
+        },
+        {
+          "elapsed": 224.928,
+          "completedBefore": 8,
+          "promptTokenCount": 4574,
+          "totalTokenCount": 4848,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1128
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3446
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 209
+            }
+          ]
+        },
+        {
+          "elapsed": 255.996,
+          "completedBefore": 9,
+          "promptTokenCount": 5101,
+          "totalTokenCount": 5369,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3907
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1194
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 203
+            }
+          ]
+        },
+        {
+          "elapsed": 270.85,
+          "completedBefore": 10,
+          "promptTokenCount": 5447,
+          "totalTokenCount": 5447,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1337
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4110
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 286.476,
+          "completedBefore": 11,
+          "promptTokenCount": 5738,
+          "totalTokenCount": 6071,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4363
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1375
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 73
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 260
+            }
+          ]
+        },
+        {
+          "elapsed": 314.998,
+          "completedBefore": 12,
+          "promptTokenCount": 6323,
+          "totalTokenCount": 6599,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1449
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4874
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 64
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 212
+            }
+          ]
+        },
+        {
+          "elapsed": 344.779,
+          "completedBefore": 13,
+          "promptTokenCount": 6851,
+          "totalTokenCount": 7136,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5337
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1514
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 220
+            }
+          ]
+        },
+        {
+          "elapsed": 374.664,
+          "completedBefore": 14,
+          "promptTokenCount": 7389,
+          "totalTokenCount": 7654,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1580
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5809
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 62
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 203
+            }
+          ]
+        },
+        {
+          "elapsed": 404.586,
+          "completedBefore": 15,
+          "promptTokenCount": 7907,
+          "totalTokenCount": 8190,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6264
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1643
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 218
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 65
+            }
+          ]
+        },
+        {
+          "elapsed": 420.812,
+          "completedBefore": 16,
+          "promptTokenCount": 8268,
+          "totalTokenCount": 8268,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1786
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6482
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 435.574,
+          "completedBefore": 17,
+          "promptTokenCount": 8558,
+          "totalTokenCount": 8900,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6734
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1824
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 73
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 269
+            }
+          ]
+        },
+        {
+          "elapsed": 464.896,
+          "completedBefore": 18,
+          "promptTokenCount": 9152,
+          "totalTokenCount": 9433,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1898
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7254
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 61
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 220
+            }
+          ]
+        },
+        {
+          "elapsed": 494.73,
+          "completedBefore": 19,
+          "promptTokenCount": 9688,
+          "totalTokenCount": 9966,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7728
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1960
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 55
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 223
+            }
+          ]
+        },
+        {
+          "elapsed": 525.372,
+          "completedBefore": 20,
+          "promptTokenCount": 10098,
+          "totalTokenCount": 10343,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2002
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8096
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 196
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 49
+            }
+          ]
+        },
+        {
+          "elapsed": 554.402,
+          "completedBefore": 21,
+          "promptTokenCount": 10611,
+          "totalTokenCount": 10879,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8546
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2065
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 222
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 46
+            }
+          ]
+        },
+        {
+          "elapsed": 570.794,
+          "completedBefore": 22,
+          "promptTokenCount": 10957,
+          "totalTokenCount": 10957,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2189
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8768
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 585.434,
+          "completedBefore": 23,
+          "promptTokenCount": 11250,
+          "totalTokenCount": 11593,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 9023
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2227
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 73
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 270
+            }
+          ]
+        },
+        {
+          "elapsed": 614.661,
+          "completedBefore": 24,
+          "promptTokenCount": 11845,
+          "totalTokenCount": 12128,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2301
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 9544
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 237
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 46
+            }
+          ]
+        },
+        {
+          "elapsed": 643.963,
+          "completedBefore": 25,
+          "promptTokenCount": 12380,
+          "totalTokenCount": 12617,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10032
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2348
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 46
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 191
+            }
+          ]
+        },
+        {
+          "elapsed": 675.578,
+          "completedBefore": 26,
+          "promptTokenCount": 12870,
+          "totalTokenCount": 13130,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2395
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10475
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 62
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            }
+          ]
+        },
+        {
+          "elapsed": 704.142,
+          "completedBefore": 27,
+          "promptTokenCount": 13383,
+          "totalTokenCount": 13630,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10925
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2458
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 47
+            }
+          ]
+        },
+        {
+          "elapsed": 723.874,
+          "completedBefore": 28,
+          "promptTokenCount": 13708,
+          "totalTokenCount": 13952,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2583
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 11125
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 26
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 218
+            }
+          ]
+        },
+        {
+          "elapsed": 734.421,
+          "completedBefore": 29,
+          "promptTokenCount": 14243,
+          "totalTokenCount": 14490,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 11596
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2647
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 47
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 764.027,
+          "completedBefore": 30,
+          "promptTokenCount": 14744,
+          "totalTokenCount": 14988,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2695
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 12049
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 199
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 45
+            }
+          ]
+        },
+        {
+          "elapsed": 794.135,
+          "completedBefore": 31,
+          "promptTokenCount": 15240,
+          "totalTokenCount": 15485,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 12499
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2741
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 45
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 824.142,
+          "completedBefore": 32,
+          "promptTokenCount": 15738,
+          "totalTokenCount": 15982,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2787
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 12951
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 44
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 854.08,
+          "completedBefore": 33,
+          "promptTokenCount": 16234,
+          "totalTokenCount": 16478,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 13402
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2832
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 44
+            }
+          ]
+        },
+        {
+          "elapsed": 870.792,
+          "completedBefore": 34,
+          "promptTokenCount": 16556,
+          "totalTokenCount": 16556,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2954
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 13602
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 884.913,
+          "completedBefore": 35,
+          "promptTokenCount": 16847,
+          "totalTokenCount": 17128,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 13855
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2992
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 218
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 63
+            }
+          ]
+        },
+        {
+          "elapsed": 914.438,
+          "completedBefore": 36,
+          "promptTokenCount": 17380,
+          "totalTokenCount": 17622,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3056
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 14324
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 944.116,
+          "completedBefore": 37,
+          "promptTokenCount": 17875,
+          "totalTokenCount": 18117,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 14776
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3099
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            }
+          ]
+        },
+        {
+          "elapsed": 974.113,
+          "completedBefore": 38,
+          "promptTokenCount": 18369,
+          "totalTokenCount": 18611,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3142
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15227
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            }
+          ]
+        },
+        {
+          "elapsed": 1004.169,
+          "completedBefore": 39,
+          "promptTokenCount": 18864,
+          "totalTokenCount": 19106,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15679
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3185
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            }
+          ]
+        },
+        {
+          "elapsed": 1020.809,
+          "completedBefore": 40,
+          "promptTokenCount": 19184,
+          "totalTokenCount": 19184,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3305
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15879
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1034.752,
+          "completedBefore": 41,
+          "promptTokenCount": 19232,
+          "totalTokenCount": 19474,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15919
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3313
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 211
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 31
+            }
+          ]
+        },
+        {
+          "elapsed": 1064.804,
+          "completedBefore": 42,
+          "promptTokenCount": 19757,
+          "totalTokenCount": 20013,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3375
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16382
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 199
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            }
+          ]
+        },
+        {
+          "elapsed": 1094.979,
+          "completedBefore": 43,
+          "promptTokenCount": 20267,
+          "totalTokenCount": 20557,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16834
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3433
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 228
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 62
+            }
+          ]
+        },
+        {
+          "elapsed": 1124.363,
+          "completedBefore": 44,
+          "promptTokenCount": 20810,
+          "totalTokenCount": 21054,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3496
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 17314
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 44
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 1154.792,
+          "completedBefore": 45,
+          "promptTokenCount": 21307,
+          "totalTokenCount": 21583,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 17766
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3541
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 217
+            }
+          ]
+        },
+        {
+          "elapsed": 1170.811,
+          "completedBefore": 46,
+          "promptTokenCount": 21661,
+          "totalTokenCount": 21661,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3678
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 17983
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1184.966,
+          "completedBefore": 47,
+          "promptTokenCount": 21952,
+          "totalTokenCount": 22237,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18236
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3716
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 223
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 62
+            }
+          ]
+        },
+        {
+          "elapsed": 1214.652,
+          "completedBefore": 48,
+          "promptTokenCount": 22490,
+          "totalTokenCount": 22744,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3779
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18711
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 61
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 193
+            }
+          ]
+        },
+        {
+          "elapsed": 1244.688,
+          "completedBefore": 49,
+          "promptTokenCount": 22997,
+          "totalTokenCount": 23242,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 19156
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3841
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 45
+            }
+          ]
+        },
+        {
+          "elapsed": 1274.694,
+          "completedBefore": 50,
+          "promptTokenCount": 23493,
+          "totalTokenCount": 23740,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3887
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 19606
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 61
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 186
+            }
+          ]
+        },
+        {
+          "elapsed": 1304.889,
+          "completedBefore": 51,
+          "promptTokenCount": 23993,
+          "totalTokenCount": 24260,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20044
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3949
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 67
+            }
+          ]
+        },
+        {
+          "elapsed": 1320.804,
+          "completedBefore": 52,
+          "promptTokenCount": 24338,
+          "totalTokenCount": 24338,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4094
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20244
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1334.719,
+          "completedBefore": 53,
+          "promptTokenCount": 24627,
+          "totalTokenCount": 24871,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20495
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4132
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 62
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 182
+            }
+          ]
+        },
+        {
+          "elapsed": 1365.019,
+          "completedBefore": 54,
+          "promptTokenCount": 25124,
+          "totalTokenCount": 25380,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4195
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20929
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 199
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            }
+          ]
+        },
+        {
+          "elapsed": 1394.735,
+          "completedBefore": 55,
+          "promptTokenCount": 25633,
+          "totalTokenCount": 25873,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 21380
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4253
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 181
+            }
+          ]
+        },
+        {
+          "elapsed": 1424.5,
+          "completedBefore": 56,
+          "promptTokenCount": 26126,
+          "totalTokenCount": 26377,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4313
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 21813
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 51
+            }
+          ]
+        },
+        {
+          "elapsed": 1454.272,
+          "completedBefore": 57,
+          "promptTokenCount": 26631,
+          "totalTokenCount": 26869,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22266
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4365
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 180
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 58
+            }
+          ]
+        },
+        {
+          "elapsed": 1470.889,
+          "completedBefore": 58,
+          "promptTokenCount": 26947,
+          "totalTokenCount": 26947,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4501
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22446
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1484.588,
+          "completedBefore": 59,
+          "promptTokenCount": 27236,
+          "totalTokenCount": 27487,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22697
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4539
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 193
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 58
+            }
+          ]
+        },
+        {
+          "elapsed": 1514.819,
+          "completedBefore": 60,
+          "promptTokenCount": 27742,
+          "totalTokenCount": 27991,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4598
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 23144
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 58
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 191
+            }
+          ]
+        },
+        {
+          "elapsed": 1574.801,
+          "completedBefore": 61,
+          "promptTokenCount": 28246,
+          "totalTokenCount": 28503,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4657
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 23589
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            }
+          ]
+        },
+        {
+          "elapsed": 1604.483,
+          "completedBefore": 62,
+          "promptTokenCount": 28756,
+          "totalTokenCount": 29009,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 24039
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4717
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 54
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 199
+            }
+          ]
+        },
+        {
+          "elapsed": 1620.835,
+          "completedBefore": 63,
+          "promptTokenCount": 29087,
+          "totalTokenCount": 29087,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4849
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 24238
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1634.249,
+          "completedBefore": 64,
+          "promptTokenCount": 29376,
+          "totalTokenCount": 29618,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 24489
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4887
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 1664.389,
+          "completedBefore": 65,
+          "promptTokenCount": 29870,
+          "totalTokenCount": 30127,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4930
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 24940
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            }
+          ]
+        },
+        {
+          "elapsed": 1694.282,
+          "completedBefore": 66,
+          "promptTokenCount": 30380,
+          "totalTokenCount": 30634,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 25390
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4990
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            }
+          ]
+        },
+        {
+          "elapsed": 1724.371,
+          "completedBefore": 67,
+          "promptTokenCount": 30883,
+          "totalTokenCount": 31125,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 5047
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 25836
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            }
+          ]
+        },
+        {
+          "elapsed": 1754.439,
+          "completedBefore": 68,
+          "promptTokenCount": 31378,
+          "totalTokenCount": 31620,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 26288
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 5090
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 200
+            }
+          ]
+        },
+        {
+          "elapsed": 1770.794,
+          "completedBefore": 69,
+          "promptTokenCount": 31698,
+          "totalTokenCount": 31698,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 5210
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 26488
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1784.048,
+          "completedBefore": 70,
+          "promptTokenCount": 25392,
+          "totalTokenCount": 25628,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 21182
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4210
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 46
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 190
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "optimized-full",
+      "variant": "optimized",
+      "status": "COMPLETE",
+      "startedAt": "2026-09-09T16:09:38.522Z",
+      "finishedAt": "2026-09-09T16:39:38.729Z",
+      "replaySeconds": 1800.006,
+      "liveActiveSeconds": 1679.645,
+      "audioInputSeconds": 566.08,
+      "audioOutputSeconds": 258.692,
+      "liveConnections": 4,
+      "errorEventCount": 6,
+      "completedTurns": 67,
+      "pricedResponses": 67,
+      "unpricedResponses": 0,
+      "peakInputTokens": 9698,
+      "tokens": {
+        "input_text": 94905,
+        "input_audio": 294750,
+        "output_audio": 6479,
+        "output_text": 408
+      },
+      "estimatedUsd": 1.0102665,
+      "syntheticTaskFactMentionsWithin20s": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "usage": [
+        {
+          "elapsed": 122.067,
+          "completedBefore": 0,
+          "promptTokenCount": 619,
+          "totalTokenCount": 619,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ]
+        },
+        {
+          "elapsed": 134.29,
+          "completedBefore": 1,
+          "promptTokenCount": 859,
+          "totalTokenCount": 1079,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 651
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 208
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 195
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 25
+            }
+          ]
+        },
+        {
+          "elapsed": 163.083,
+          "completedBefore": 2,
+          "promptTokenCount": 1374,
+          "totalTokenCount": 1492,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 657
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 717
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 15
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 103
+            }
+          ]
+        },
+        {
+          "elapsed": 192.988,
+          "completedBefore": 3,
+          "promptTokenCount": 1784,
+          "totalTokenCount": 1922,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 773
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1011
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 17
+            }
+          ]
+        },
+        {
+          "elapsed": 222.613,
+          "completedBefore": 4,
+          "promptTokenCount": 2218,
+          "totalTokenCount": 2296,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1387
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 831
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 11
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 67
+            }
+          ]
+        },
+        {
+          "elapsed": 253.378,
+          "completedBefore": 5,
+          "promptTokenCount": 2592,
+          "totalTokenCount": 2730,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 883
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1709
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 17
+            }
+          ]
+        },
+        {
+          "elapsed": 270.25,
+          "completedBefore": 6,
+          "promptTokenCount": 2848,
+          "totalTokenCount": 2848,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1830
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1018
+            }
+          ]
+        },
+        {
+          "elapsed": 283.972,
+          "completedBefore": 7,
+          "promptTokenCount": 3137,
+          "totalTokenCount": 3350,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1056
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2081
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 24
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 189
+            }
+          ]
+        },
+        {
+          "elapsed": 313.237,
+          "completedBefore": 8,
+          "promptTokenCount": 3641,
+          "totalTokenCount": 3778,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2520
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1121
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 16
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 342.416,
+          "completedBefore": 9,
+          "promptTokenCount": 4070,
+          "totalTokenCount": 4149,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1178
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2892
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 12
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 67
+            }
+          ]
+        },
+        {
+          "elapsed": 373.333,
+          "completedBefore": 10,
+          "promptTokenCount": 4441,
+          "totalTokenCount": 4578,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3210
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1231
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 16
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 402.532,
+          "completedBefore": 11,
+          "promptTokenCount": 4869,
+          "totalTokenCount": 4948,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1288
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3581
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 67
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 12
+            }
+          ]
+        },
+        {
+          "elapsed": 420.254,
+          "completedBefore": 12,
+          "promptTokenCount": 5066,
+          "totalTokenCount": 5066,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3648
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1418
+            }
+          ]
+        },
+        {
+          "elapsed": 433.899,
+          "completedBefore": 13,
+          "promptTokenCount": 5355,
+          "totalTokenCount": 5569,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1456
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3899
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 193
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 21
+            }
+          ]
+        },
+        {
+          "elapsed": 462.981,
+          "completedBefore": 14,
+          "promptTokenCount": 5860,
+          "totalTokenCount": 5995,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4342
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1518
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 14
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 492.353,
+          "completedBefore": 15,
+          "promptTokenCount": 6289,
+          "totalTokenCount": 6369,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1573
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4716
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 12
+            }
+          ]
+        },
+        {
+          "elapsed": 523.069,
+          "completedBefore": 16,
+          "promptTokenCount": 6662,
+          "totalTokenCount": 6797,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5036
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1626
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 14
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 552.299,
+          "completedBefore": 17,
+          "promptTokenCount": 7088,
+          "totalTokenCount": 7161,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1681
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5407
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 5
+            }
+          ]
+        },
+        {
+          "elapsed": 570.25,
+          "completedBefore": 18,
+          "promptTokenCount": 7279,
+          "totalTokenCount": 7279,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5475
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1804
+            }
+          ]
+        },
+        {
+          "elapsed": 584.092,
+          "completedBefore": 19,
+          "promptTokenCount": 7569,
+          "totalTokenCount": 7830,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1842
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5727
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 240
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 21
+            }
+          ]
+        },
+        {
+          "elapsed": 613.056,
+          "completedBefore": 20,
+          "promptTokenCount": 8124,
+          "totalTokenCount": 8259,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6220
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1904
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 14
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 642.479,
+          "completedBefore": 21,
+          "promptTokenCount": 8390,
+          "totalTokenCount": 8468,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6450
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1940
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 10
+            }
+          ]
+        },
+        {
+          "elapsed": 672.823,
+          "completedBefore": 22,
+          "promptTokenCount": 8763,
+          "totalTokenCount": 8887,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1993
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6770
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 702.591,
+          "completedBefore": 23,
+          "promptTokenCount": 9179,
+          "totalTokenCount": 9252,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7142
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2037
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 5
+            }
+          ]
+        },
+        {
+          "elapsed": 720.251,
+          "completedBefore": 24,
+          "promptTokenCount": 9370,
+          "totalTokenCount": 9370,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2160
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7210
+            }
+          ]
+        },
+        {
+          "elapsed": 733.665,
+          "completedBefore": 25,
+          "promptTokenCount": 9659,
+          "totalTokenCount": 9867,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7461
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2198
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 10
+            }
+          ]
+        },
+        {
+          "elapsed": 762.175,
+          "completedBefore": 26,
+          "promptTokenCount": 2830,
+          "totalTokenCount": 2889,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 887
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1943
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 51
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 8
+            }
+          ]
+        },
+        {
+          "elapsed": 792.383,
+          "completedBefore": 27,
+          "promptTokenCount": 3182,
+          "totalTokenCount": 3255,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2246
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 936
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 5
+            }
+          ]
+        },
+        {
+          "elapsed": 822.806,
+          "completedBefore": 28,
+          "promptTokenCount": 3547,
+          "totalTokenCount": 3671,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 982
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2565
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 852.411,
+          "completedBefore": 29,
+          "promptTokenCount": 3964,
+          "totalTokenCount": 4036,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2938
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1026
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            }
+          ]
+        },
+        {
+          "elapsed": 870.252,
+          "completedBefore": 30,
+          "promptTokenCount": 4154,
+          "totalTokenCount": 4154,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1148
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3006
+            }
+          ]
+        },
+        {
+          "elapsed": 883.655,
+          "completedBefore": 31,
+          "promptTokenCount": 4444,
+          "totalTokenCount": 4644,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3258
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1186
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            }
+          ]
+        },
+        {
+          "elapsed": 912.914,
+          "completedBefore": 32,
+          "promptTokenCount": 4936,
+          "totalTokenCount": 5060,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1229
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3707
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 942.591,
+          "completedBefore": 33,
+          "promptTokenCount": 5352,
+          "totalTokenCount": 5424,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4079
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1273
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 972.778,
+          "completedBefore": 34,
+          "promptTokenCount": 5719,
+          "totalTokenCount": 5843,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1318
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4401
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1002.462,
+          "completedBefore": 35,
+          "promptTokenCount": 6140,
+          "totalTokenCount": 6212,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4778
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1362
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1020.288,
+          "completedBefore": 36,
+          "promptTokenCount": 6330,
+          "totalTokenCount": 6330,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1484
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4846
+            }
+          ]
+        },
+        {
+          "elapsed": 1033.585,
+          "completedBefore": 37,
+          "promptTokenCount": 6622,
+          "totalTokenCount": 6822,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5100
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1522
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            }
+          ]
+        },
+        {
+          "elapsed": 1063.125,
+          "completedBefore": 38,
+          "promptTokenCount": 7118,
+          "totalTokenCount": 7242,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1565
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5553
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1092.369,
+          "completedBefore": 39,
+          "promptTokenCount": 7534,
+          "totalTokenCount": 7606,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5925
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1609
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            }
+          ]
+        },
+        {
+          "elapsed": 1122.848,
+          "completedBefore": 40,
+          "promptTokenCount": 7895,
+          "totalTokenCount": 8019,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1654
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6241
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 1170.255,
+          "completedBefore": 41,
+          "promptTokenCount": 8137,
+          "totalTokenCount": 8137,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6362
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1775
+            }
+          ]
+        },
+        {
+          "elapsed": 1183.571,
+          "completedBefore": 42,
+          "promptTokenCount": 8425,
+          "totalTokenCount": 8625,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1813
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6612
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 198
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            }
+          ]
+        },
+        {
+          "elapsed": 1213.07,
+          "completedBefore": 43,
+          "promptTokenCount": 8916,
+          "totalTokenCount": 9040,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7060
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1856
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1242.584,
+          "completedBefore": 44,
+          "promptTokenCount": 9334,
+          "totalTokenCount": 9406,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1900
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7434
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1272.996,
+          "completedBefore": 45,
+          "promptTokenCount": 9698,
+          "totalTokenCount": 9822,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7753
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1945
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 1302.436,
+          "completedBefore": 46,
+          "promptTokenCount": 2595,
+          "totalTokenCount": 2667,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 833
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1762
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1320.338,
+          "completedBefore": 47,
+          "promptTokenCount": 2785,
+          "totalTokenCount": 2785,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1830
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 955
+            }
+          ]
+        },
+        {
+          "elapsed": 1333.654,
+          "completedBefore": 48,
+          "promptTokenCount": 3075,
+          "totalTokenCount": 3273,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 993
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2082
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 196
+            }
+          ]
+        },
+        {
+          "elapsed": 1362.888,
+          "completedBefore": 49,
+          "promptTokenCount": 3565,
+          "totalTokenCount": 3689,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2529
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1036
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1392.177,
+          "completedBefore": 50,
+          "promptTokenCount": 3981,
+          "totalTokenCount": 4053,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1080
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2901
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            }
+          ]
+        },
+        {
+          "elapsed": 1422.942,
+          "completedBefore": 51,
+          "promptTokenCount": 4347,
+          "totalTokenCount": 4471,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3222
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1125
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 1452.302,
+          "completedBefore": 52,
+          "promptTokenCount": 4764,
+          "totalTokenCount": 4836,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1169
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3595
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            }
+          ]
+        },
+        {
+          "elapsed": 1470.283,
+          "completedBefore": 53,
+          "promptTokenCount": 4954,
+          "totalTokenCount": 4954,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3663
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1291
+            }
+          ]
+        },
+        {
+          "elapsed": 1483.629,
+          "completedBefore": 54,
+          "promptTokenCount": 5244,
+          "totalTokenCount": 5453,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1329
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3915
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 207
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            }
+          ]
+        },
+        {
+          "elapsed": 1512.98,
+          "completedBefore": 55,
+          "promptTokenCount": 5745,
+          "totalTokenCount": 5869,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4373
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1372
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 1542.265,
+          "completedBefore": 56,
+          "promptTokenCount": 6161,
+          "totalTokenCount": 6233,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1416
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4745
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1573.096,
+          "completedBefore": 57,
+          "promptTokenCount": 6526,
+          "totalTokenCount": 6650,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5065
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1461
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1602.77,
+          "completedBefore": 58,
+          "promptTokenCount": 6941,
+          "totalTokenCount": 7013,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1505
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5436
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1620.254,
+          "completedBefore": 59,
+          "promptTokenCount": 7131,
+          "totalTokenCount": 7131,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5504
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1627
+            }
+          ]
+        },
+        {
+          "elapsed": 1633.826,
+          "completedBefore": 60,
+          "promptTokenCount": 7424,
+          "totalTokenCount": 7633,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1665
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5759
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 207
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            }
+          ]
+        },
+        {
+          "elapsed": 1662.792,
+          "completedBefore": 61,
+          "promptTokenCount": 7929,
+          "totalTokenCount": 8053,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6221
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1708
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            }
+          ]
+        },
+        {
+          "elapsed": 1692.438,
+          "completedBefore": 62,
+          "promptTokenCount": 8345,
+          "totalTokenCount": 8417,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6593
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1752
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            }
+          ]
+        },
+        {
+          "elapsed": 1722.924,
+          "completedBefore": 63,
+          "promptTokenCount": 8710,
+          "totalTokenCount": 8834,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1797
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6913
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 121
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3
+            }
+          ]
+        },
+        {
+          "elapsed": 1752.327,
+          "completedBefore": 64,
+          "promptTokenCount": 9126,
+          "totalTokenCount": 9198,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7285
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1841
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 68
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4
+            }
+          ]
+        },
+        {
+          "elapsed": 1770.241,
+          "completedBefore": 65,
+          "promptTokenCount": 9316,
+          "totalTokenCount": 9316,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1963
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7353
+            }
+          ]
+        },
+        {
+          "elapsed": 1783.65,
+          "completedBefore": 66,
+          "promptTokenCount": 9609,
+          "totalTokenCount": 9819,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7608
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2001
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 208
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "baseline",
+      "variant": "baseline",
+      "status": "STOPPED_BY_LIMIT",
+      "startedAt": "2026-09-09T15:18:30.658Z",
+      "finishedAt": "2026-09-09T15:46:47.000Z",
+      "replaySeconds": 1692.986,
+      "liveActiveSeconds": 1695.907,
+      "audioInputSeconds": 581.34,
+      "audioOutputSeconds": 420.324,
+      "liveConnections": 4,
+      "errorEventCount": 6,
+      "completedTurns": 67,
+      "pricedResponses": 67,
+      "unpricedResponses": 0,
+      "peakInputTokens": 28189,
+      "tokens": {
+        "input_audio": 807734,
+        "input_text": 180060,
+        "output_audio": 10520,
+        "output_text": 2894
+      },
+      "estimatedUsd": 2.64526,
+      "syntheticTaskFactMentionsWithin20s": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "usage": [
+        {
+          "elapsed": 19.219,
+          "completedBefore": 0,
+          "promptTokenCount": 785,
+          "totalTokenCount": 1032,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 243
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 542
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 184
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 63
+            }
+          ]
+        },
+        {
+          "elapsed": 48.116,
+          "completedBefore": 1,
+          "promptTokenCount": 1285,
+          "totalTokenCount": 1542,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 606
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 679
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 193
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 64
+            }
+          ]
+        },
+        {
+          "elapsed": 77.449,
+          "completedBefore": 2,
+          "promptTokenCount": 1796,
+          "totalTokenCount": 1992,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1125
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 671
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 137
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            }
+          ]
+        },
+        {
+          "elapsed": 107.355,
+          "completedBefore": 3,
+          "promptTokenCount": 2246,
+          "totalTokenCount": 2444,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 731
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1515
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 139
+            }
+          ]
+        },
+        {
+          "elapsed": 123.4,
+          "completedBefore": 4,
+          "promptTokenCount": 2522,
+          "totalTokenCount": 2522,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1654
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 868
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 137.877,
+          "completedBefore": 5,
+          "promptTokenCount": 2814,
+          "totalTokenCount": 3048,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 906
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 1908
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 59
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 175
+            }
+          ]
+        },
+        {
+          "elapsed": 167.889,
+          "completedBefore": 6,
+          "promptTokenCount": 3302,
+          "totalTokenCount": 3525,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2336
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 966
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 60
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            }
+          ]
+        },
+        {
+          "elapsed": 196.625,
+          "completedBefore": 7,
+          "promptTokenCount": 3779,
+          "totalTokenCount": 4002,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1027
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 2752
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 60
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            }
+          ]
+        },
+        {
+          "elapsed": 226.74,
+          "completedBefore": 8,
+          "promptTokenCount": 4255,
+          "totalTokenCount": 4474,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3167
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1088
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            }
+          ]
+        },
+        {
+          "elapsed": 256.716,
+          "completedBefore": 9,
+          "promptTokenCount": 4728,
+          "totalTokenCount": 4945,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1145
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3583
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 54
+            }
+          ]
+        },
+        {
+          "elapsed": 273.398,
+          "completedBefore": 10,
+          "promptTokenCount": 5023,
+          "totalTokenCount": 5023,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3746
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1277
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 288.239,
+          "completedBefore": 11,
+          "promptTokenCount": 5314,
+          "totalTokenCount": 5549,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1315
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 3999
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 175
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 60
+            }
+          ]
+        },
+        {
+          "elapsed": 316.663,
+          "completedBefore": 12,
+          "promptTokenCount": 5802,
+          "totalTokenCount": 6018,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4426
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1376
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            }
+          ]
+        },
+        {
+          "elapsed": 346.814,
+          "completedBefore": 13,
+          "promptTokenCount": 6272,
+          "totalTokenCount": 6489,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1430
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 4842
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 164
+            }
+          ]
+        },
+        {
+          "elapsed": 377.7,
+          "completedBefore": 14,
+          "promptTokenCount": 6742,
+          "totalTokenCount": 6959,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5258
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1484
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 55
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 162
+            }
+          ]
+        },
+        {
+          "elapsed": 406.551,
+          "completedBefore": 15,
+          "promptTokenCount": 7213,
+          "totalTokenCount": 7430,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1540
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5673
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 55
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 162
+            }
+          ]
+        },
+        {
+          "elapsed": 423.413,
+          "completedBefore": 16,
+          "promptTokenCount": 7508,
+          "totalTokenCount": 7508,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 5835
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1673
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 437.039,
+          "completedBefore": 17,
+          "promptTokenCount": 7800,
+          "totalTokenCount": 8036,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1711
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6089
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 176
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 60
+            }
+          ]
+        },
+        {
+          "elapsed": 466.644,
+          "completedBefore": 18,
+          "promptTokenCount": 8289,
+          "totalTokenCount": 8509,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6517
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1772
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            }
+          ]
+        },
+        {
+          "elapsed": 497.023,
+          "completedBefore": 19,
+          "promptTokenCount": 8763,
+          "totalTokenCount": 8979,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1830
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 6933
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 163
+            }
+          ]
+        },
+        {
+          "elapsed": 526.587,
+          "completedBefore": 20,
+          "promptTokenCount": 9116,
+          "totalTokenCount": 9298,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7246
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 1870
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 42
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 140
+            }
+          ]
+        },
+        {
+          "elapsed": 556.328,
+          "completedBefore": 21,
+          "promptTokenCount": 9564,
+          "totalTokenCount": 9759,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 1926
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7638
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 140
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 55
+            }
+          ]
+        },
+        {
+          "elapsed": 573.412,
+          "completedBefore": 22,
+          "promptTokenCount": 9837,
+          "totalTokenCount": 9837,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 7778
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2059
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 587.203,
+          "completedBefore": 23,
+          "promptTokenCount": 10127,
+          "totalTokenCount": 10382,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2097
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8030
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 195
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 60
+            }
+          ]
+        },
+        {
+          "elapsed": 616.73,
+          "completedBefore": 24,
+          "promptTokenCount": 10634,
+          "totalTokenCount": 10829,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8476
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2158
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 140
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 55
+            }
+          ]
+        },
+        {
+          "elapsed": 647.932,
+          "completedBefore": 25,
+          "promptTokenCount": 11082,
+          "totalTokenCount": 11280,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2214
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 8868
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 142
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            }
+          ]
+        },
+        {
+          "elapsed": 676.335,
+          "completedBefore": 26,
+          "promptTokenCount": 11533,
+          "totalTokenCount": 11732,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 9262
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2271
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 143
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            }
+          ]
+        },
+        {
+          "elapsed": 706.529,
+          "completedBefore": 27,
+          "promptTokenCount": 11984,
+          "totalTokenCount": 12179,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2328
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 9656
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 142
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            }
+          ]
+        },
+        {
+          "elapsed": 723.401,
+          "completedBefore": 28,
+          "promptTokenCount": 12257,
+          "totalTokenCount": 12257,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 9798
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2459
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 736.942,
+          "completedBefore": 29,
+          "promptTokenCount": 12547,
+          "totalTokenCount": 12799,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2497
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10050
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 195
+            }
+          ]
+        },
+        {
+          "elapsed": 766.285,
+          "completedBefore": 30,
+          "promptTokenCount": 13051,
+          "totalTokenCount": 13246,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10496
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2555
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 142
+            }
+          ]
+        },
+        {
+          "elapsed": 801.792,
+          "completedBefore": 31,
+          "promptTokenCount": 13499,
+          "totalTokenCount": 14187,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2609
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 10890
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 604
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 84
+            }
+          ]
+        },
+        {
+          "elapsed": 826.81,
+          "completedBefore": 32,
+          "promptTokenCount": 14233,
+          "totalTokenCount": 14428,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 11586
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2647
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 142
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            }
+          ]
+        },
+        {
+          "elapsed": 861.636,
+          "completedBefore": 33,
+          "promptTokenCount": 14680,
+          "totalTokenCount": 15412,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2701
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 11979
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 665
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 67
+            }
+          ]
+        },
+        {
+          "elapsed": 873.467,
+          "completedBefore": 34,
+          "promptTokenCount": 15490,
+          "totalTokenCount": 15490,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 12644
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2846
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 887.147,
+          "completedBefore": 35,
+          "promptTokenCount": 15781,
+          "totalTokenCount": 16046,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2884
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 12897
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 56
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 209
+            }
+          ]
+        },
+        {
+          "elapsed": 916.532,
+          "completedBefore": 36,
+          "promptTokenCount": 16299,
+          "totalTokenCount": 16494,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 13358
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 2941
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 142
+            }
+          ]
+        },
+        {
+          "elapsed": 951.533,
+          "completedBefore": 37,
+          "promptTokenCount": 16746,
+          "totalTokenCount": 17428,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 2995
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 13751
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 44
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 638
+            }
+          ]
+        },
+        {
+          "elapsed": 981.138,
+          "completedBefore": 38,
+          "promptTokenCount": 17116,
+          "totalTokenCount": 17801,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 14083
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3033
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 622
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 63
+            }
+          ]
+        },
+        {
+          "elapsed": 1006.492,
+          "completedBefore": 39,
+          "promptTokenCount": 17862,
+          "totalTokenCount": 18059,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3071
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 14791
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 144
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 53
+            }
+          ]
+        },
+        {
+          "elapsed": 1023.412,
+          "completedBefore": 40,
+          "promptTokenCount": 18137,
+          "totalTokenCount": 18137,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 14935
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3202
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1067.24,
+          "completedBefore": 41,
+          "promptTokenCount": 18427,
+          "totalTokenCount": 18682,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15187
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3240
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 54
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 201
+            }
+          ]
+        },
+        {
+          "elapsed": 1096.601,
+          "completedBefore": 42,
+          "promptTokenCount": 18935,
+          "totalTokenCount": 19127,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3295
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 15640
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 48
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 144
+            }
+          ]
+        },
+        {
+          "elapsed": 1125.963,
+          "completedBefore": 43,
+          "promptTokenCount": 19381,
+          "totalTokenCount": 19522,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16037
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3344
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1156.373,
+          "completedBefore": 44,
+          "promptTokenCount": 19776,
+          "totalTokenCount": 19917,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3386
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16390
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            }
+          ]
+        },
+        {
+          "elapsed": 1173.411,
+          "completedBefore": 45,
+          "promptTokenCount": 19995,
+          "totalTokenCount": 19995,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16490
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3505
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1189.233,
+          "completedBefore": 46,
+          "promptTokenCount": 20285,
+          "totalTokenCount": 20758,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3543
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 16742
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 416
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            }
+          ]
+        },
+        {
+          "elapsed": 1215.948,
+          "completedBefore": 47,
+          "promptTokenCount": 21011,
+          "totalTokenCount": 21152,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 17410
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3601
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1245.854,
+          "completedBefore": 48,
+          "promptTokenCount": 21407,
+          "totalTokenCount": 21548,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3643
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 17764
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            }
+          ]
+        },
+        {
+          "elapsed": 1276.022,
+          "completedBefore": 49,
+          "promptTokenCount": 21803,
+          "totalTokenCount": 21944,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18118
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3685
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            }
+          ]
+        },
+        {
+          "elapsed": 1306.092,
+          "completedBefore": 50,
+          "promptTokenCount": 22200,
+          "totalTokenCount": 22360,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3727
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18473
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1323.406,
+          "completedBefore": 51,
+          "promptTokenCount": 22438,
+          "totalTokenCount": 22438,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18592
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3846
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1339.353,
+          "completedBefore": 52,
+          "promptTokenCount": 22729,
+          "totalTokenCount": 23202,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3884
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 18845
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 57
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 416
+            }
+          ]
+        },
+        {
+          "elapsed": 1365.746,
+          "completedBefore": 53,
+          "promptTokenCount": 23458,
+          "totalTokenCount": 23599,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 19516
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 3942
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            }
+          ]
+        },
+        {
+          "elapsed": 1396.001,
+          "completedBefore": 54,
+          "promptTokenCount": 23854,
+          "totalTokenCount": 24014,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 3984
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 19870
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1426.001,
+          "completedBefore": 55,
+          "promptTokenCount": 24269,
+          "totalTokenCount": 24429,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20243
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4026
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1455.831,
+          "completedBefore": 56,
+          "promptTokenCount": 24684,
+          "totalTokenCount": 24825,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4068
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20616
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1473.413,
+          "completedBefore": 57,
+          "promptTokenCount": 24903,
+          "totalTokenCount": 24903,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20716
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4187
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1486.035,
+          "completedBefore": 58,
+          "promptTokenCount": 25194,
+          "totalTokenCount": 25335,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4225
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 20969
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 100
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1515.931,
+          "completedBefore": 59,
+          "promptTokenCount": 25589,
+          "totalTokenCount": 25749,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 21322
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4267
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1546.204,
+          "completedBefore": 60,
+          "promptTokenCount": 26003,
+          "totalTokenCount": 26163,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4309
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 21694
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1576.15,
+          "completedBefore": 61,
+          "promptTokenCount": 26416,
+          "totalTokenCount": 26576,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4351
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22065
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1606.069,
+          "completedBefore": 62,
+          "promptTokenCount": 26831,
+          "totalTokenCount": 26991,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22438
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4393
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1623.403,
+          "completedBefore": 63,
+          "promptTokenCount": 27069,
+          "totalTokenCount": 27069,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4512
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22557
+            }
+          ],
+          "candidatesTokensDetails": []
+        },
+        {
+          "elapsed": 1636.347,
+          "completedBefore": 64,
+          "promptTokenCount": 27360,
+          "totalTokenCount": 27520,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 22810
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4550
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        },
+        {
+          "elapsed": 1665.828,
+          "completedBefore": 65,
+          "promptTokenCount": 27775,
+          "totalTokenCount": 27935,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 4592
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 23183
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            }
+          ]
+        },
+        {
+          "elapsed": 1696.132,
+          "completedBefore": 66,
+          "promptTokenCount": 28189,
+          "totalTokenCount": 28349,
+          "promptTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 23555
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 4634
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 119
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 41
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "optimized",
+      "variant": "optimized",
+      "status": "COMPLETE",
+      "startedAt": "2026-09-09T15:18:31.767Z",
+      "finishedAt": "2026-09-09T15:48:31.976Z",
+      "replaySeconds": 1800.007,
+      "liveActiveSeconds": 445.142,
+      "audioInputSeconds": 0,
+      "audioOutputSeconds": 57.138,
+      "liveConnections": 12,
+      "errorEventCount": 0,
+      "completedTurns": 12,
+      "pricedResponses": 12,
+      "unpricedResponses": 0,
+      "peakInputTokens": 619,
+      "tokens": {
+        "input_text": 7428,
+        "output_text": 218,
+        "output_audio": 1431
+      },
+      "estimatedUsd": 0.021322,
+      "syntheticTaskFactMentionsWithin20s": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "usage": [
+        {
+          "elapsed": 124.368,
+          "completedBefore": 0,
+          "promptTokenCount": 619,
+          "totalTokenCount": 753,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 17
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 117
+            }
+          ]
+        },
+        {
+          "elapsed": 274.134,
+          "completedBefore": 1,
+          "promptTokenCount": 619,
+          "totalTokenCount": 731,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 98
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 14
+            }
+          ]
+        },
+        {
+          "elapsed": 424.703,
+          "completedBefore": 2,
+          "promptTokenCount": 619,
+          "totalTokenCount": 768,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 129
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 20
+            }
+          ]
+        },
+        {
+          "elapsed": 574.614,
+          "completedBefore": 3,
+          "promptTokenCount": 619,
+          "totalTokenCount": 766,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 18
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 129
+            }
+          ]
+        },
+        {
+          "elapsed": 724.511,
+          "completedBefore": 4,
+          "promptTokenCount": 619,
+          "totalTokenCount": 753,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 115
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 19
+            }
+          ]
+        },
+        {
+          "elapsed": 874.461,
+          "completedBefore": 5,
+          "promptTokenCount": 619,
+          "totalTokenCount": 745,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 107
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 19
+            }
+          ]
+        },
+        {
+          "elapsed": 1025.01,
+          "completedBefore": 6,
+          "promptTokenCount": 619,
+          "totalTokenCount": 780,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 141
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 20
+            }
+          ]
+        },
+        {
+          "elapsed": 1173.615,
+          "completedBefore": 7,
+          "promptTokenCount": 619,
+          "totalTokenCount": 752,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 15
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 118
+            }
+          ]
+        },
+        {
+          "elapsed": 1324.863,
+          "completedBefore": 8,
+          "promptTokenCount": 619,
+          "totalTokenCount": 746,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "AUDIO",
+              "tokenCount": 108
+            },
+            {
+              "modality": "TEXT",
+              "tokenCount": 19
+            }
+          ]
+        },
+        {
+          "elapsed": 1474.7,
+          "completedBefore": 9,
+          "promptTokenCount": 619,
+          "totalTokenCount": 759,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 18
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 122
+            }
+          ]
+        },
+        {
+          "elapsed": 1624.814,
+          "completedBefore": 10,
+          "promptTokenCount": 619,
+          "totalTokenCount": 774,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 20
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 135
+            }
+          ]
+        },
+        {
+          "elapsed": 1774.706,
+          "completedBefore": 11,
+          "promptTokenCount": 619,
+          "totalTokenCount": 750,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 619
+            }
+          ],
+          "candidatesTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 19
+            },
+            {
+              "modality": "AUDIO",
+              "tokenCount": 112
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "billingReconciled": false,
+  "comparison": {
+    "baselineRunId": "baseline-full",
+    "optimizedRunId": "optimized-full",
+    "estimatedAiCostReductionPercent": 68.1781,
+    "qualityMaintained": false,
+    "strictControlledTrial": false,
+    "limitations": [
+      "Fixture captions; no platform or controller policy simulation",
+      "Questions overlap scheduled room audio, potentially interrupting responses",
+      "Broker deployed during optimized run",
+      "Single replay per condition; no human quality evaluation"
+    ],
+    "excludedRuns": {
+      "baseline": "Stopped before 30 minutes by the initial token safety limit",
+      "optimized": "Engaged audio was omitted; not comparable to production audio forwarding"
+    }
+  },
+  "diagnosticProbes": {
+    "contextPressure": {
+      "pricedResponses": 9,
+      "estimatedUsd": 0.0322165,
+      "inputTokenSequence": [
+        2790,
+        5100,
+        7411,
+        9722,
+        2790,
+        5147,
+        7525,
+        2790,
+        3081
+      ],
+      "syntheticOwnerDeadlineRecalled": true
+    },
+    "outputDuration": {
+      "scope": "One short paid response to verify deployed numeric output-duration counters; no bot",
+      "mimeTypes": [
+        "audio/pcm"
+      ],
+      "usage": {
+        "estimatedMicroUsd": 1015,
+        "pricedTurns": 1,
+        "unpricedTurns": 0,
+        "contextPeakTokens": 486,
+        "inputAudioSeconds": 0,
+        "outputAudioSeconds": 2.511541666666667,
+        "imageCount": 0,
+        "liveActiveSeconds": 4.566970208000001
+      }
+    }
+  },
+  "listedExperimentsEstimatedUsd": 6.884836,
+  "costScope": "Listed replay and diagnostic AI calls only; excludes earlier lifecycle probe, infrastructure, bots, taxes, discounts, and currency conversion"
+}
