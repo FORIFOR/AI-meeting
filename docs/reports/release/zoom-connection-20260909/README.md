@@ -11,3 +11,7 @@ No bots were created in either attempt. No admission, voice/video round trip, or
 Next: authenticate to Zoom Marketplace, configure the Meeting SDK app and register its credentials with Attendee, then retry real admission. External-meeting authorization may also be required; verify it for the actual account rather than assuming credentials alone are sufficient. Follow the [Attendee Zoom OAuth guide](https://docs.attendee.dev/guides/zoom/zoomoauth). Secrets must stay out of Git and chat.
 
 Previous voice latency/interruption failures, repeated Meet/Zoom sessions, and the actual 15-person × 3-session evaluation remain open. This attempt does not change those gates.
+
+## Follow-up
+
+The missing-credential blocker was resolved later on the same date. See [the registered-app live test](../zoom-registered-20260909/README.md): actual admission/audio worked, but two response-suppression windows remain. The historical failed attempts above are unchanged.
