@@ -252,7 +252,7 @@ export class MeetingSessionController {
   private muted = false;
   private meetingStatus: MeetingStatus | null = null;
   private activated: { sessionId: string; botId: string; clientToken?: string } | null = null;
-  /** Frames drawn since the last heartbeat — the page's render rate, which is what the room's tile is made of. */
+  /** Animation-frame callbacks since the heartbeat; measures page scheduling, not the avatar ticker or captured video rate. */
   private drawn = 0;
   private drawLoop: number | null = null;
   private lastBeatAt = 0;

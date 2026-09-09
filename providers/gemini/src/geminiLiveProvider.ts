@@ -546,7 +546,10 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (selfSpeaking && !this.speechOpen && level < GeminiLiveProvider.BARGE_IN_LEVEL_DB) {
       this.bargeInSince = 0;
       this.gateStats.held++;
-      this.preroll.length = 0;
+      // Do not transmit the quiet return path while speaking. Keep only its bounded prefix:
+      // a person's soft first mora can precede the louder syllable that opens the barge-in gate.
+      // Clearing this on every held frame irreversibly dropped that onset (including the name).
+      for (const chunk of this.outbound.push(frame)) this.rememberPreroll(bytesToBase64(int16ToBytes(chunk)));
       return;
     }
     /**
@@ -579,8 +582,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       if (!this.gating || this.speechOpen) { this.gateStats.sent++; this.sendAudioChunk(b64); continue; }
       this.gateStats.held++;
       // Silence: keep the last 300 ms so the first mora survives the moment the turn opens.
-      this.preroll.push(b64);
-      if (this.preroll.length > GeminiLiveProvider.PREROLL_CHUNKS) this.preroll.shift();
+      this.rememberPreroll(b64);
     }
     // The turn closes when both signals agree the room has stopped: the VAD is out of speech and the
     // level has been under the gate for its hangover. Closing on the VAD event alone left the gate
@@ -618,6 +620,11 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
      * (2026-09-07 20:5x). We closed the user's turn ourselves; the words in it are complete.
      */
     this.flushUserTranscript();
+  }
+
+  private rememberPreroll(data: string): void {
+    this.preroll.push(data);
+    if (this.preroll.length > GeminiLiveProvider.PREROLL_CHUNKS) this.preroll.shift();
   }
 
   private sendAudioChunk(data: string): void {

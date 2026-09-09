@@ -711,3 +711,28 @@ it('keeps a default retry available after a ten-second outage and cancels it on 
  offline=false;await vi.advanceTimersByTimeAsync(30000);
  expect(FakeWS.instances.length).toBe(count);
 });
+
+
+it("preserves a quiet word onset before a louder interruption without transmitting the held return path", async () => {
+  const { p, ws } = await connected();
+  let ts = 2000;
+  for (let i = 0; i < 60; i++) { p.pushAudio(createFrame(new Float32Array(960), 48000, ts)); ts += 20; }
+  ws.receive({ serverContent: { modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 1000)) } }] } } });
+  await ws.flush();
+  const audio = () => ws.sent.flatMap((m) => {
+    const input = m.realtimeInput as { audio?: { data: string } } | undefined;
+    return input?.audio ? [input.audio.data] : [];
+  });
+  const before = audio().length;
+  for (let i = 0; i < 30; i++) { p.pushAudio(createFrame(sine(48000, 20, .02), 48000, ts)); ts += 20; }
+  expect(audio()).toHaveLength(before);
+  p.pushAudio(createFrame(sine(48000, 20, .5), 48000, ts));
+  const sent = audio().slice(before);
+  // The 300 ms prefix must precede the louder syllable, but cannot grow with time spent muted.
+  expect(sent.length).toBeGreaterThan(1);
+  expect(sent.length).toBeLessThanOrEqual(16);
+  const samples = (b64: string) => { const b = Buffer.from(b64, "base64"); return Array.from({ length: b.length / 2 }, (_, i) => Math.abs(b.readInt16LE(i * 2)) / 32768); };
+  expect(Math.max(...samples(sent[0]!))).toBeLessThan(.03);
+  expect(Math.max(...samples(sent.at(-1)!))).toBeGreaterThan(.1);
+  await p.disconnect();
+});
