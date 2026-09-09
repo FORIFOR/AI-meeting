@@ -572,6 +572,33 @@ describe("the first second of a session", () => {
 });
 
 describe("when the user's words are delivered", () => {
+  it("keeps a late address suffix in the same utterance before reply audio", async () => {
+    const { p, ws, events } = await connected();
+    let ts = 0;
+    for (let i = 0; i < 10; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    for (let i = 0; i < 20; i++) { p.pushAudio(createFrame(sine(48000, 20), 48000, ts)); ts += 20; }
+    ws.receive({ serverContent: { inputTranscription: { text: "ゆ" } } });
+    await ws.flush();
+    for (let i = 0; i < 60; i++) { p.pushAudio(createFrame(new Float32Array(960).fill(0.0005), 48000, ts)); ts += 20; }
+    const first = events.find(e => e.type === "user_transcript" && e.final === true);
+    expect(first).toMatchObject({ text: "ゆ", final: true });
+    ws.receive({ serverContent: { inputTranscription: { text: "い、その予定は何時に終わりますか。" }, modelTurn: { parts: [{ inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(new Float32Array(240).fill(0.1)) } }] } } });
+    await ws.flush();
+    const revisions = events.filter(e => e.type === "user_transcript_revised");
+    expect(revisions).toHaveLength(1);
+    expect(revisions[0]).toMatchObject({ id: (first as { id: number }).id, text: "ゆい、その予定は何時に終わりますか。" });
+    expect(events.indexOf(revisions[0]!)).toBeLessThan(events.findIndex(e => e.type === "assistant_speech_started"));
+    ws.receive({ serverContent: { turnComplete: true } });
+    await ws.flush();
+    expect(events.filter(e => e.type === "user_transcript" && e.final === true)).toHaveLength(1);
+    ws.receive({ serverContent: { inputTranscription: { text: "次の質問です。" }, turnComplete: true } });
+    await ws.flush();
+    const next = events.filter(e => e.type === "user_transcript" && e.final === true).at(-1);
+    expect(next).toMatchObject({ text: "次の質問です。" });
+    expect((next as { id: number }).id).not.toBe((first as { id: number }).id);
+    await p.disconnect();
+  });
+
   it("is when the user stops talking, not when the model finishes answering", async () => {
     const { p, ws, events } = await connected();
     let ts = 0;

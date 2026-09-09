@@ -1056,8 +1056,13 @@ export class MeetingSessionController {
         break;
       case "user_transcript_revised":
         if (!this.hasExternalTranscripts) {
-          const revised = this.reviseTranscript(e.id, e.text);
-          if (revised) this.secondOpinion(e.id, e.text, revised.was, revised.entry, now);
+          this.providerTranscriptTurn = this.decision.conversation === "google" || this.decision.conversation === "openai";
+          try {
+            const revised = this.reviseTranscript(e.id, e.text);
+            if (revised) this.secondOpinion(e.id, e.text, revised.was, revised.entry, now);
+          } finally {
+            this.providerTranscriptTurn = false;
+          }
         }
         break;
       case "assistant_speech_started":

@@ -64,10 +64,10 @@ vi.mock("@rcai/avatar-core", async (importOriginal) => {
 
 import { MeetingSessionController } from "./MeetingSessionController.js";
 
-function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only") {
+function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local") {
   return new MeetingSessionController({
-    settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "local", autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
-    availability: { openai: false, google: false, local: true },
+    settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine, autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
+    availability: { openai: false, google: engine === "google", local: true },
     persona: { id: "p", name: "P", mode: "free_talk", systemPrompt: "x", language: "ja-JP", speakingStyle: { speed: "normal", energy: 0.5, politeness: "casual", sentenceLength: "short" }, turnPolicy: { maxSentences: 2, allowSilenceMs: 2000, backchannel: true, interruptible: true, correctionPolicy: "none" }, motionProfile: "m" },
     character: { id: "yui", name: "Yui", renderer: "live2d", baseUrl: "/c/yui" },
     meetingUrl: "https://meet.google.com/aaa-bbbb-ccc",
@@ -313,6 +313,19 @@ describe("an answer the provider decided to give", () => {
     expect(sendText).not.toHaveBeenCalled(); // the answer is already being spoken
     emit({ type: "assistant_speech_ended", at: Date.now() });
     expect(c.policy.state).toBe("OBSERVING");
+    await c.leave();
+  });
+
+  it("accepts a late Gemini address without sending a duplicate prompt", async () => {
+    const c = botPage("bot", "addressed_only", "google");
+    await c.start();
+    emit({ type: "user_transcript", id: 7, text: "Yu", final: true });
+    expect(c.policy.state).toBe("LISTENING");
+    emit({ type: "user_transcript_revised", id: 7, text: "Yui, what time does the meeting end?" });
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    expect(sendText).not.toHaveBeenCalled();
     await c.leave();
   });
 

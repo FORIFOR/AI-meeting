@@ -198,6 +198,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   private timing: { setupCompleteAt: number; userSpeechStartAt: number; userSpeechEndAt: number; source: "speech" | "text" } =
     { setupCompleteAt: 0, userSpeechStartAt: 0, userSpeechEndAt: 0, source: "speech" };
   private userTranscript = "";
+  private userTranscriptId = 0;
+  private deliveredUserTranscript = "";
   private assistantTranscript = "";
   private endedTimer: ReturnType<typeof setTimeout> | null = null;
   private resumptionHandle: string | null = null;
@@ -490,7 +492,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.config = null;
     this.pendingContext = "";
     this.resumptionHandle = null;
-    this.userTranscript = "";
+    this.resetUserTranscript();
     this.outbound = null;
     this.inbound.reset();
     this.vad?.reset();
@@ -515,6 +517,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (this.vad) {
       for (const ev of this.vad.process(frame)) {
         if (ev.type === "speech_start") {
+          if (!this.gating) this.resetUserTranscript();
           this.genCounter.nextTurn();
           this.timing.userSpeechStartAt = ev.timestamp ?? this.clock();
           this.timing.source = "speech";
@@ -563,6 +566,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (!this.firstFrameAt) this.firstFrameAt = now;
     const warming = now - this.firstFrameAt < GeminiLiveProvider.WARMUP_MS;
     if (this.gating && (opened || (loud && !this.rearm && !warming)) && !this.speechOpen) {
+      this.resetUserTranscript();
       this.speechOpen = true;
       this.openedAt = now;
       this.gateStats.opens++;
@@ -723,7 +727,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     }
     if (sc.inputTranscription?.text) {
       this.userTranscript += sc.inputTranscription.text;
-      this.emit({ type: "user_transcript", text: this.userTranscript, final: false });
+      this.emit({ type: "user_transcript", id: this.userTranscriptId, text: this.userTranscript, final: false });
+      if (this.deliveredUserTranscript) this.flushUserTranscript();
     }
     if (sc.modelTurn?.parts?.length && this.droppingUntilTurn) return; // the tail of a cut reply
     if (sc.modelTurn?.parts?.length) {
@@ -768,6 +773,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
           },
         });
       }
+      this.resetUserTranscript();
       this.scheduleSpeechEnded(now);
       this.genOpen = false; // the next modelTurn is a new generation
     }
@@ -824,9 +830,21 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
   }
 
   private flushUserTranscript(): void {
-    if (!this.userTranscript.trim()) return;
-    this.emit({ type: "user_transcript", text: this.userTranscript, final: true });
+    if (!this.userTranscript.trim() || this.userTranscript === this.deliveredUserTranscript) return;
+    // Transcription may trail our activityEnd and arrive alongside model audio. Keep the
+    // original utterance ID and append late words instead of inventing a second question.
+    if (this.deliveredUserTranscript) {
+      this.emit({ type: "user_transcript_revised", id: this.userTranscriptId, text: this.userTranscript });
+    } else {
+      this.emit({ type: "user_transcript", id: this.userTranscriptId, text: this.userTranscript, final: true });
+    }
+    this.deliveredUserTranscript = this.userTranscript;
+  }
+
+  private resetUserTranscript(): void {
     this.userTranscript = "";
+    this.deliveredUserTranscript = "";
+    this.userTranscriptId++;
   }
 
   private resetTurn(): void {
@@ -853,7 +871,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     this.rearm = false;
     this.droppingUntilTurn = false;
     this.bargeInSince = 0;
-    this.userTranscript = "";
+    this.resetUserTranscript();
     this.outbound = new OutboundAudioConverter({ targetRate: GEMINI_INPUT_RATE, chunkMs: 20 });
     this.vad?.reset();
     this.clearEndedTimer();
