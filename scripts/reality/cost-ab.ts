@@ -71,8 +71,9 @@ try {
     }
     const offset = Math.floor((elapsed % 30000) / 20) * 320;
     const frame = offset < pcm.length ? pcm.slice(offset, offset + 320) : new Float32Array(320);
-    // The baseline hears every room utterance; observer captions are deterministic fixture input.
-    if (variant === "baseline") provider.pushAudio(createFrame(frame, 16000, performance.now()));
+    // Same room audio enters both paths. The wrapper drops it only while observing,
+    // matching production: engaged Live still hears the room, including follow-ups.
+    provider.pushAudio(createFrame(frame, 16000, performance.now()));
     await sleep(20);
   }
   report.status = fatal ? "STOPPED_BY_LIMIT" : "COMPLETE";

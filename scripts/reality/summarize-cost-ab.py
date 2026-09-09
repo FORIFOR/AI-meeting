@@ -32,6 +32,7 @@ def summarize(path):
         answers = [x["text"] for x in data.get("answers", []) if second <= x["elapsed"] <= second + 20]
         mentions.append(any("田中" in x and "金曜" in x for x in answers))
     return {
+        "runId": Path(path).stem,
         "variant": data["variant"], "status": data["status"],
         "startedAt": data["startedAt"], "finishedAt": data.get("finishedAt"),
         "replaySeconds": data.get("replaySeconds"),
