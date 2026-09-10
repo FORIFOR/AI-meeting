@@ -112,10 +112,16 @@ export function Meeting(p: MeetingProps) {
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
-   * Broker relay socket for this bot — the second transcript source (see botTranscriptFeed). A ref, not
-   * state: `start()` captures it in a closure, and a render-timing miss silently costs the redundancy.
+   * Broker relay socket for this bot — the second transcript source (see botTranscriptFeed). Keep a ref
+   * for callbacks that run after render, and mirror it in state below so the start effect can gate on it.
    */
   const relayWsUrl = useRef<string | undefined>(undefined);
+  /**
+   * The bot page must not start until the activation response has been rendered with its client
+   * socket URL. Keeping this in state gives the start effect a dependable readiness edge instead
+   * of relying on a ref update that React cannot observe.
+   */
+  const [botRelayWsUrl, setBotRelayWsUrl] = useState<string | null>(null);
   /**
    * What the bot page can actually reach. The operator's health poll runs against loopback URLs the bot
    * process blocks, so inside the bot every provider reads "unavailable" and routing falls back to a cloud
@@ -176,6 +182,9 @@ export function Meeting(p: MeetingProps) {
     setBusy(true);
     setError(null);
     setVisualNotice(null);
+    // Mark the session as starting before the provider responds. This keeps the operator view from
+    // showing the idle URL form while the meeting page is already being opened in Attendee.
+    setStatus("joining");
     const attemptUsage = new MeetingUsageTracker();
     usage.current = attemptUsage;
     setAiUsage(null);
@@ -215,7 +224,7 @@ export function Meeting(p: MeetingProps) {
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
         // than through getUserMedia, and the page's own speaker is what Attendee streams back.
         observer: isBot ? (botConfig?.observer === "captions" ? "captions" : undefined) : persona?.id === MEETING_PERSONA_ID && observeWithCaptions && p.brokerMeeting?.attendee ? "captions" : "live",
-        attendeeAttach: botConfig?.provider === "attendee" && relayWsUrl.current ? { botId: activation?.botId ?? "", clientWsUrl: relayWsUrl.current } : undefined,
+        attendeeAttach: botConfig?.provider === "attendee" && botRelayWsUrl ? { botId: activation?.botId ?? "", clientWsUrl: botRelayWsUrl } : undefined,
         botTranscriptFeed: role === "bot" ? (cb) => {
           // Two sources for the same transcripts: the bot's own socket, and the broker relay Recall also
           // delivers to. Either alone is a single point of failure for a character that only answers when
@@ -276,12 +285,13 @@ export function Meeting(p: MeetingProps) {
         },
       });
       ctrl.current = c;
-      if (isBot) console.log("[rcai:bot] starting", JSON.stringify({ engine: settings.engine, character: character?.id, persona: persona?.id, provider: botConfig?.provider, vision, proactivity: (isBot ? botConfig?.proactivity : proactivity) ?? proactivity, relay: !!relayWsUrl.current, agent: botOrigins.agentUrl ?? null }));
+      if (isBot) console.log("[rcai:bot] starting", JSON.stringify({ engine: settings.engine, character: character?.id, persona: persona?.id, provider: botConfig?.provider, vision, proactivity: (isBot ? botConfig?.proactivity : proactivity) ?? proactivity, relay: !!botRelayWsUrl, agent: botOrigins.agentUrl ?? null }));
       await c.start();
       if (isBot) console.log("[rcai:bot] started", c.providerId);
     } catch (e) {
       const raw = e instanceof Error ? e.message : String(e);
       const message = meetingErrorMessage(raw);
+      setStatus("failed");
       setError(message);
       note(`error ${message}`);
     } finally {
@@ -308,6 +318,7 @@ export function Meeting(p: MeetingProps) {
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
+        setBotRelayWsUrl(act.clientWsUrl);
         if (origins.brokerUrl && origins.agentUrl) {
           const { probe, shouldProbeLocalAgent } = await import("../api/health.js");
           const engine = (act.botPageQuery.engine as typeof p.settings.engine | undefined) ?? p.settings.engine;
@@ -335,10 +346,11 @@ export function Meeting(p: MeetingProps) {
      * before creating the controller; the config is also a dependency so the effect retries once it
      * has been committed.
      */
-    if (isBot && activation && botConfig && !ctrl.current && character && persona && p.characters.length && p.personas.length) void start("bot");
+    const attendeeReady = !isBot || botConfig?.provider !== "attendee" || !!botRelayWsUrl;
+    if (isBot && activation && botConfig && attendeeReady && !ctrl.current && character && persona && p.characters.length && p.personas.length) void start("bot");
     return () => { void ctrl.current?.leave().catch(() => {}); ctrl.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBot, activation, botConfig, character?.id, persona?.id, p.characters.length, p.personas.length]);
+  }, [isBot, activation, botConfig, botRelayWsUrl, character?.id, persona?.id, p.characters.length, p.personas.length]);
 
   const leave = async () => {
     setBusy(true);
@@ -356,11 +368,14 @@ export function Meeting(p: MeetingProps) {
   const pill = pillFor(avatarState, false);
   const terminal = status === "left" || status === "failed" || status === "denied" || status === "removed" || status === "ended";
   const joined = status !== null && !terminal;
+  /** Keep the mount in the DOM for the controller, but never show an empty black tile before/after a call. */
+  const showRelayStage = joined && meetingMode === "relay";
 
   if (isBot) {
     return (
       <div className="session session--bot">
         <div className="stage" ref={stage}>
+          <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>音声で参加中</span></div>
           <div className={`pill pill--${pill.key}`}><span className="pill__dot" /> {muted ? "ミュート中" : POLICY_JA[policy]} <span style={{ opacity: 0.5 }}>{pill.en}</span></div>
           {!activation && !error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12, opacity: 0.6 }}>接続中…</div>}
           {error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12 }}>{error}</div>}
@@ -381,10 +396,19 @@ export function Meeting(p: MeetingProps) {
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         {visualNotice && <p className="hint" role="status">{visualNotice}</p>}
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
-        <div className="field meeting__url-field">
-          <label htmlFor="meeting-url">最初に、会議のURLを貼り付けてください</label>
-          <input id="meeting-url" className="input" type="url" inputMode="url" autoComplete="url" spellCheck={false} aria-describedby="meeting-url-hint" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} />
-          <p id="meeting-url-hint" className={urlError ? "err" : "hint"}>{urlError ?? "Google Meet・Zoomの招待リンクに対応しています。前後に空白があっても自動で整えます。"}</p>
+        <div className={`field meeting__url-field${joined ? " meeting__url-field--active" : ""}`}>
+          {joined ? (
+            <div className="meeting__active-status" role="status" aria-live="polite">
+              <span className="meeting__active-dot" aria-hidden="true" />
+              <span><strong>会議に参加中</strong><small>{displayName} が会議を見守っています</small></span>
+            </div>
+          ) : (
+            <>
+              <label htmlFor="meeting-url">最初に、会議のURLを貼り付けてください</label>
+              <input id="meeting-url" className="input" type="url" inputMode="url" autoComplete="url" spellCheck={false} aria-describedby="meeting-url-hint" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} />
+              <p id="meeting-url-hint" className={urlError ? "err" : "hint"}>{urlError ?? "Google Meet・Zoomの招待リンクに対応しています。前後に空白があっても自動で整えます。"}</p>
+            </>
+          )}
         </div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
         <details><summary>残りのクレジットを確認</summary><CreditBalance enabled={!strict} /></details>
@@ -449,7 +473,12 @@ export function Meeting(p: MeetingProps) {
       </div>
       <div className="meeting__side">
         <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>
-        <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none" }} />
+        <div className="meeting__stage-wrap">
+          <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none", visibility: showRelayStage ? "visible" : "hidden" }} aria-hidden={!showRelayStage}>
+            <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>参加中はここに表示されます</span></div>
+          </div>
+          {!showRelayStage && <div className="meeting__stage-empty" role="status">参加すると、{displayName} がここに表示されます</div>}
+        </div>
         <ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul>
         <h3>会議の文字起こし</h3>
         <div className="captions captions--list">

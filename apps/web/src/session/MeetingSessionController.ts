@@ -248,7 +248,10 @@ export class MeetingSessionController {
         ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
         // Attendee captures this page in a separate GPU-limited browser. Canvas is deterministic
         // there and guarantees a visible first frame in the bot's outgoing camera track.
-        preferCanvas: this.init.role === "bot" && this.init.meetingProvider === "attendee",
+        // Attendee renders the operator preview and the bot camera in different Chromium
+        // processes. Use the same deterministic software renderer for both so the preview
+        // cannot be black while the meeting audio is already flowing.
+        preferCanvas: this.init.meetingProvider === "attendee",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
