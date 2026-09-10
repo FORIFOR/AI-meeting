@@ -327,10 +327,18 @@ export function Meeting(p: MeetingProps) {
 
   // Bot page step 2: start once activated and content is loaded (the bot grants mic access without a gesture).
   useEffect(() => {
-    if (isBot && activation && !ctrl.current && character && persona && p.characters.length && p.personas.length) void start("bot");
+    /**
+     * Activation and its server-side render config arrive together, but React may commit the
+     * activation state before the config state. Starting in that intermediate render loses the
+     * Attendee provider/relay fields, so the page falls back to getUserMedia and never connects
+     * the bot's audio socket (a black, silent meeting tile). Wait until the signed config is present
+     * before creating the controller; the config is also a dependency so the effect retries once it
+     * has been committed.
+     */
+    if (isBot && activation && botConfig && !ctrl.current && character && persona && p.characters.length && p.personas.length) void start("bot");
     return () => { void ctrl.current?.leave().catch(() => {}); ctrl.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBot, activation, character?.id, persona?.id, p.characters.length, p.personas.length]);
+  }, [isBot, activation, botConfig, character?.id, persona?.id, p.characters.length, p.personas.length]);
 
   const leave = async () => {
     setBusy(true);
