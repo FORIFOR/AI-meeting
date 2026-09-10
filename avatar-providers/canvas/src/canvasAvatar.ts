@@ -29,6 +29,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   private readonly characterId?: string;
   private readonly staticPreview: boolean;
   private previewImage: HTMLImageElement | null = null;
+  private animationSheets: HTMLImageElement[] = [];
   private resizeObserver: ResizeObserver | null = null;
 
   constructor(private readonly opts: CanvasAvatarOptions) {
@@ -58,6 +59,13 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
         this.applyParams(neutralParams());
       };
       image.src = `/avatar-fallbacks/${encodeURIComponent(this.characterId ?? character.manifest.id)}.png`;
+      if ((this.characterId ?? character.manifest.id) === "yui" && this.opts.framing === "meeting") {
+        for (const [index, pose] of ["idle", "speaking"].entries()) {
+          const sheet = new Image();
+          sheet.onload = () => { this.animationSheets[index] = sheet; };
+          sheet.src = `/avatar-fallbacks/yui-${pose}.webp`;
+        }
+      }
     }
     // Paint immediately after the canvas is attached. Attendee's webpage streamer may capture
     // its first frame before requestAnimationFrame runs, so waiting for the motion loop can yield
@@ -84,6 +92,19 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
     if (this.staticPreview) {
+      const pose = this.state === "SPEAKING" && p.mouthOpenY > 0.08 ? 1 : 0;
+      const sheet = this.animationSheets[pose] ?? this.animationSheets[0];
+      if (sheet) {
+        const w = canvas.clientWidth || canvas.width;
+        const h = canvas.clientHeight || canvas.height;
+        const frame = Math.floor(performance.now() / 125) % 32;
+        const scale = Math.min(w / 640, h / 360);
+        ctx.fillStyle = "#f6f1ea";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(sheet, (frame % 8) * 640, Math.floor(frame / 8) * 360, 640, 360,
+          (w - 640 * scale) / 2, (h - 360 * scale) / 2, 640 * scale, 360 * scale);
+        return;
+      }
       drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label, this.opts.framing === "meeting", this.characterId);
       return;
     }
@@ -96,6 +117,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas?.remove();
     this.canvas = null;
     this.ctx = null;
+    this.animationSheets = [];
   }
 }
 

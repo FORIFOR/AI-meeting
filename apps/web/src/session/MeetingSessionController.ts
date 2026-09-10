@@ -248,12 +248,9 @@ export class MeetingSessionController {
         framing,
         staticPreview: this.init.meetingProvider === "attendee",
         ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
-        // Attendee captures this page in a separate GPU-limited browser. Canvas is deterministic
-        // there and guarantees a visible first frame in the bot's outgoing camera track.
-        // Attendee renders the operator preview and the bot camera in different Chromium
-        // processes. Use the same deterministic software renderer for both so the preview
-        // cannot be black while the meeting audio is already flowing.
-        preferCanvas: this.init.meetingProvider === "attendee",
+        // Prefer the live model when WebGL is available; GPU-limited meeting browsers
+        // use the same character’s pre-rendered animation via the Canvas fallback.
+        preferCanvas: false,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -849,6 +846,10 @@ export class MeetingSessionController {
    * still better than every turn needing the name again.
    */
   onMeetingTranscript(text: string, final: boolean, speakerName: string | null, participantId?: string, utterance?: number): void {
+    // The platform also captions our outgoing voice. The provider's assistant transcript is
+    // authoritative for that speaker; do not display it twice or feed our answer back as a question.
+    const normalizeName = (name: string) => name.normalize("NFKC").trim().toLocaleLowerCase();
+    if (speakerName && this.names.some((name) => normalizeName(name) === normalizeName(speakerName))) return;
     if (final) this.transcripts++;
     if (final && !this.sawTranscript) {
       this.sawTranscript = true;

@@ -119,6 +119,19 @@ describe("greeting on arrival", () => {
     await c.leave();
   });
 
+  it("shows the assistant transcript once and ignores the platform echo of Yui", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_transcript", text: "本日はよろしくお願いします。", final: true });
+    meetingEmit({ type: "transcript", text: "本日は よろしくお願いします", final: true, speakerName: "Yui", participantId: "bot" });
+    meetingEmit({ type: "transcript", text: "今日のニュースを教えて。", final: true, speakerName: "shuhei horio", participantId: "host" });
+    expect(transcriptShown.mock.calls.map(([line]) => line.text)).toEqual(["本日はよろしくお願いします。", "今日のニュースを教えて。"]);
+    await c.leave();
+  });
+
   it("prefers platform captions without stopping ordinary Live audio", async () => {
     const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
     await c.start();
