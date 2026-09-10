@@ -4,12 +4,14 @@ export interface CanvasAvatarOptions extends MotionStackAvatarOptions {
   container: HTMLElement;
   /** Accent colour for hair/clothes. */
   accent?: string;
+  /** Optional caption for environments where the video tile has no surrounding UI. */
+  label?: string;
 }
 
 /**
- * DEV / DEBUG renderer. Draws a stylised 2D face from the same canonical AvatarParams the
- * Live2D/VRM providers consume, so behaviour, lip sync and state logic can be inspected
- * without a licensed model. It is NOT a product avatar and never counts as Gate 2 evidence.
+ * Lightweight 2D renderer. Draws a stylised face from the same canonical AvatarParams the
+ * Live2D/VRM providers consume. It is used as a visible fallback when a meeting page cannot
+ * initialise WebGL, and also remains useful for local renderer diagnostics.
  */
 export class CanvasAvatarProvider extends MotionStackAvatarBase {
   readonly id = "canvas";
@@ -17,6 +19,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   private ctx: CanvasRenderingContext2D | null = null;
   private accent: string;
   private name = "";
+  private label = "";
   private background = "#f3f0ea";
   private resizeObserver: ResizeObserver | null = null;
 
@@ -27,6 +30,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
 
   protected async loadModel(character: CharacterDefinition): Promise<void> {
     this.name = character.manifest.name;
+    this.label = this.opts.label ?? this.name;
     this.background = character.view?.background ?? this.background;
     const canvas = document.createElement("canvas");
     canvas.style.width = "100%";
@@ -56,7 +60,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const ctx = this.ctx;
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
-    drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, state: this.state });
+    drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, label: this.label, state: this.state });
   }
 
   protected async disposeModel(): Promise<void> {
@@ -72,6 +76,7 @@ export interface DrawStyle {
   accent: string;
   background: string;
   name: string;
+  label?: string;
   state: string;
 }
 
@@ -196,6 +201,6 @@ export function drawFace(ctx: CanvasRenderingContext2D, w: number, h: number, p:
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.font = "12px system-ui, sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText(`DEBUG RENDERER (canvas) — ${style.name} — ${style.state}`, 10, h - 10);
+  ctx.fillText(`${style.label ?? style.name} · AIミーティング`, 10, h - 10);
   ctx.restore();
 }

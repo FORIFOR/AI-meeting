@@ -238,7 +238,15 @@ export class MeetingSessionController {
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
     try {
       const framing = this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default");
-      return await createAvatarProvider(character.renderer, { container: stage, brokerUrl, privacyMode, framing, ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}) });
+      return await createAvatarProvider(character.renderer, {
+        container: stage,
+        brokerUrl,
+        characterId: character.id,
+        characterName: character.name,
+        privacyMode,
+        framing,
+        ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.avatarFailure = message;
@@ -524,12 +532,35 @@ export class MeetingSessionController {
      * A missing avatar must not cost the meeting its voice. A meeting vendor runs this page in its own
      * browser, and Attendee's launches Chrome with --disable-gpu and no swiftshader override, which in
      * current Chrome means no WebGL and so no Live2D. Heard but not seen beats a session that refuses to
-     * start — provided the reason is reported instead of leaving a blank tile and clean logs.
+     * start — provided the reason is reported and a visible 2D fallback is used when possible.
      */
-    const avatar = stage ? await this.createAvatar(character, stage, brokerUrl, settings.privacyMode) : null;
+    let avatar = stage ? await this.createAvatar(character, stage, brokerUrl, settings.privacyMode) : null;
     if (stage && avatar) {
       this.avatar = avatar;
-      await avatar.prepare(def);
+      try {
+        await avatar.prepare(def);
+      } catch (err) {
+        /**
+         * A hosted meeting browser can expose WebGL but still fail to initialise a model (GPU
+         * process policy, a transient asset load, or a renderer-specific limitation). Keep Yui
+         * visible in that case by falling back to the same 2D renderer used for no-WebGL pages.
+         */
+        if (character.renderer !== "live2d") throw err;
+        const detail = err instanceof Error ? err.message : String(err);
+        console.warn("[rcai:avatar] Live2D unavailable in meeting page; using 2D fallback", detail);
+        await avatar.stop().catch(() => {});
+        avatar = await createAvatarProvider("canvas", {
+          container: stage,
+          brokerUrl,
+          characterId: character.id,
+          characterName: character.name,
+          privacyMode: settings.privacyMode,
+          framing: this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default"),
+          ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
+        });
+        await avatar.prepare(def);
+        this.avatar = avatar;
+      }
       const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
       this.avatarRuntime = avatarRuntime;
       avatarRuntime.onStateChange((t) => handlers.onAvatarState?.(t));

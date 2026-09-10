@@ -120,6 +120,9 @@ export type Renderer = CharacterManifest["renderer"];
 export interface AvatarFactoryOptions {
   container: HTMLElement;
   brokerUrl: string;
+  /** Character metadata used to make a renderer fallback identifiable in a meeting tile. */
+  characterId?: string;
+  characterName?: string;
   privacyMode?: "default" | "strict_local";
   /** "meeting": the page is a camera tile, not an operator's screen (see Live2DAvatarOptions.framing). */
   framing?: "default" | "meeting" | "preview";
@@ -152,6 +155,18 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
   const strict = o.privacyMode === "strict_local";
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
   if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
+    /**
+     * Attendee and similar meeting page browsers may disable GPU/WebGL. A hard failure here leaves
+     * the bot audible but invisible in the participant tile. Live2D has a canonical 2D renderer
+     * that uses the same motion parameters, so keep the tile useful and identifiable in that case.
+     * VRM remains an explicit error until a 2D equivalent is available for it.
+     */
+    if (renderer === "live2d") {
+      const mod = await import("@rcai/avatar-canvas");
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
+      return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterName ? { label: o.characterName } : {}) });
+    }
     throw new Error(`BLOCKED_BY_NO_WEBGL: ${renderer} needs a WebGL context and this browser has none (a meeting vendor's page browser may run with --disable-gpu)`);
   }
   switch (renderer) {
@@ -162,7 +177,7 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
     }
     case "canvas": {
       const mod = await import("@rcai/avatar-canvas");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
       return new C({ container: o.container });
     }
     case "vrm": {

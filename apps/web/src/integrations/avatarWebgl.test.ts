@@ -4,16 +4,17 @@ import { createAvatarProvider, webglAvailable } from "./registry.js";
 /**
  * A meeting vendor runs the bot page in its own browser. Attendee's webpage streamer launches Chrome
  * with `--disable-gpu` and no `--enable-unsafe-swiftshader`, which in current Chrome means no WebGL
- * context at all (measured both ways — see docs/commercial-gate.md). Live2D then draws nothing, and
- * without this check the only symptom is a blank camera tile with clean logs.
+ * context at all (measured both ways — see docs/commercial-gate.md). Live2D needs a visible 2D
+ * fallback there so the bot is not audible-only in the participant tile.
  */
 describe("avatar renderers that need WebGL", () => {
   const container = { appendChild: () => {} } as unknown as HTMLElement;
 
-  it("reports no WebGL rather than loading a renderer that cannot draw", async () => {
+  it("uses the visible 2D fallback for Live2D and still rejects VRM", async () => {
     vi.stubGlobal("document", { createElement: () => ({ getContext: () => null }) });
     expect(webglAvailable()).toBe(false);
-    await expect(createAvatarProvider("live2d", { container, brokerUrl: "http://b" })).rejects.toThrow(/BLOCKED_BY_NO_WEBGL/);
+    const fallback = await createAvatarProvider("live2d", { container, brokerUrl: "http://b", characterId: "yui", characterName: "Yui" });
+    expect(fallback.id).toBe("canvas");
     await expect(createAvatarProvider("vrm", { container, brokerUrl: "http://b" })).rejects.toThrow(/BLOCKED_BY_NO_WEBGL/);
     vi.unstubAllGlobals();
   });
