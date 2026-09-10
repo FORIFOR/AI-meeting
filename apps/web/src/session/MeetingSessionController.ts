@@ -425,6 +425,10 @@ export class MeetingSessionController {
       botPageQuery: {
         character: character.id,
         persona: persona.id,
+        // The bot page receives the signed query back from the broker after activation. Carry the
+        // connector identity with it so an Attendee page attaches to the meeting audio relay instead
+        // of falling back to getUserMedia (which is silent inside the vendor's browser).
+        provider,
         engine: this.decision.conversation,
         name: displayName,
         proactivity: this.init.proactivity,
