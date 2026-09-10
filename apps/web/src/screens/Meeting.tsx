@@ -139,6 +139,10 @@ export function Meeting(p: MeetingProps) {
   const voiceOptions = VOICE_OPTIONS[selectedProvider];
   const strict = p.settings.privacyMode === "strict_local";
   const meetingProvider = isBot ? (botConfig?.provider === "attendee" ? "attendee" : botConfig?.provider === "recall" ? "recall" : null) : resolveMeetingProvider(p.brokerMeeting);
+  // Attendee carries the call over the relay, so the operator page can render the same
+  // character locally. Keeping the stage hidden in the default output_media mode made
+  // the meeting audible while the Yui avatar appeared to be missing.
+  const meetingMode = !isBot && meetingProvider === "attendee" ? "relay" : mode;
   const connectorPending = !isBot && p.brokerMeeting === null;
   const blocked = strict
     ? "BLOCKED_BY_STRICT_LOCAL"
@@ -204,8 +208,8 @@ export function Meeting(p: MeetingProps) {
         // Which vendor is carrying this call. The bot page learns it from its own URL; without it the
         // page cannot know that Attendee sends no transcripts and must listen for itself.
         meetingProvider: meetingProvider === "attendee" ? "attendee" : meetingProvider === "recall" ? "recall" : undefined,
-        connectorMode: mode,
-        stage: role === "bot" || mode === "relay" ? stage.current : null,
+        connectorMode: meetingMode,
+        stage: role === "bot" || meetingMode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
         // than through getUserMedia, and the page's own speaker is what Attendee streams back.
         observer: isBot ? (botConfig?.observer === "captions" ? "captions" : undefined) : persona?.id === MEETING_PERSONA_ID && observeWithCaptions && p.brokerMeeting?.attendee ? "captions" : "live",
@@ -426,7 +430,7 @@ export function Meeting(p: MeetingProps) {
       </div>
       <div className="meeting__side">
         <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>
-        <div className="stage stage--mini" ref={stage} style={{ display: mode === "relay" ? "block" : "none" }} />
+        <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none" }} />
         <ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul>
         <h3>会議の文字起こし</h3>
         <div className="captions captions--list">

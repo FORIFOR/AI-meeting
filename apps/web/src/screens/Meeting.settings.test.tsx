@@ -29,7 +29,7 @@ it("starts Hosted meeting with the selected character, purpose and voice", async
     const join=[...host.querySelectorAll("button")].find(b=>b.textContent==="参加する")!;
     expect(join.disabled).toBe(false);
     await act(async () => join.click());
-    expect(capture.init).toMatchObject({character:{id:"haru"},persona:{id:"lesson"},voiceId:"Aoede",meetingProvider:"attendee",connectorMode:"output_media"});
+    expect(capture.init).toMatchObject({character:{id:"haru"},persona:{id:"lesson"},voiceId:"Aoede",meetingProvider:"attendee",connectorMode:"relay"});
   } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); }
 });
 
