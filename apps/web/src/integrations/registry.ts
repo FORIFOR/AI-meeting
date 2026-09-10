@@ -32,6 +32,7 @@ export interface ProviderFactoryOptions {
   agentUrl: string;
   privacyMode: PrivacyMode;
   model?: string;
+  openaiVoiceModel?: "realtime" | "gpt-live-1";
   /**
    * Prefer a model that reacts to how something was said, and may choose to say nothing, over the
    * fastest one. Only Gemini's native-audio family has either; everywhere else it is ignored.
@@ -46,6 +47,7 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
   switch (id) {
     case "openai": {
       const mod = await import("@rcai/provider-openai");
+      if (o.openaiVoiceModel === "gpt-live-1") return new mod.OpenAILiveProvider({ brokerUrl: o.brokerUrl });
       const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; turnDetection?: "server_vad" | "semantic_vad" }>>(mod, "OpenAIRealtimeProvider", "BLOCKED_BY_PROVIDER_OPENAI");
       /**
        * Semantic VAD estimates whether an utterance *finished*, rather than whether sound stopped —

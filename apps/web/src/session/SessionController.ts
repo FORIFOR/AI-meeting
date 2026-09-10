@@ -57,6 +57,7 @@ export interface SessionOutcome {
   report: SessionReport | null;
   /** Round 3 Gate 6: presence incidents captured during the session (media only if opted in). */
   incidents: PresenceIncident[];
+  liveUsage?: { model: string; seconds: number; finalized: boolean };
   telemetry?: "sent" | "skipped-strict" | "failed";
 }
 
@@ -105,7 +106,7 @@ export class SessionController {
 
   private get factoryOptions() {
     const { settings } = this.init;
-    return { brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode };
+    return { brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode, openaiVoiceModel: settings.openaiVoiceModel };
   }
 
   get signal(): AbortSignal {
@@ -265,6 +266,7 @@ export class SessionController {
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
     if (persona.id === "thinking_ja" && params.previousMemory) config.systemPrompt += "\n\n" + params.previousMemory.slice(0,3000);
     configureSessionTools(config, provider.capabilities().toolCalling);
+    provider.attachInputStream?.(stream);
     await runtime.start(provider, config);
     this.checkpoint();
     runtime.attachMicStream(stream);
@@ -336,8 +338,9 @@ export class SessionController {
     if (!this.runtime) throw new Error("session not started");
     if (this.init.settings.privacyMode === "strict_local" && id !== "local") throw new Error("BLOCKED_BY_STRICT_LOCAL");
     const provider = await createConversationProvider(id, this.factoryOptions);
-    await this.runtime.switchProvider(provider);
     const stream = this.mic?.mediaStream;
+    if (stream) provider.attachInputStream?.(stream);
+    await this.runtime.switchProvider(provider);
     if (stream) this.runtime.attachMicStream(stream);
     this._providerId = id;
     this.observer?.setProvider(id);
@@ -416,7 +419,9 @@ export class SessionController {
   async end(): Promise<SessionOutcome> {
     if (!this.runtime) throw new Error("session not started");
     const runtime = this.runtime;
+    const liveProvider = runtime.currentProvider as unknown as {usage?:SessionOutcome["liveUsage"]};
     const record = await runtime.stop();
+    const liveUsage = liveProvider?.usage ? { ...liveProvider.usage } : undefined;
     const latency = runtime.latency.report();
     this.syncLatencyNotes();
     this.observer?.end();
@@ -439,7 +444,7 @@ export class SessionController {
     } catch (err) {
       evaluationError = err instanceof Error ? err.message : String(err);
     }
-    return { tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
+    return { liveUsage, tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
   }
 
   /** Idempotent; safe during start(). Order: abort → mic tracks → runtime/provider → avatar → speaker/context. */

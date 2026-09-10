@@ -1,3 +1,4 @@
+import { createOpenAILiveSession } from "./routes/openaiLive.js";
 import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
 import { FirestoreZoomStore } from "./zoom/store.js";
 import { registerZoomRoutes, bearer } from "./zoom/routes.js";
@@ -194,6 +195,11 @@ export function createApp(deps: AppDeps): Hono {
     if (!req) return c.json({ error: "kind must be news or weather" }, 400);
     const result = await lookupLiveInfo(req, fetchImpl);
     return c.json(result.body, 200);
+  });
+
+  app.post("/api/session/openai-live", async (c) => {
+    const r = await createOpenAILiveSession(env, await json(c), fetchImpl);
+    return c.json(r.body, r.status as 200);
   });
 
   app.post("/api/token/openai", async (c) => {

@@ -2,6 +2,7 @@ import type { PrivacyMode, ProviderId } from "@rcai/conversation-core";
 import { resolveRouting, type AutoPolicy, type EngineSelection, type Role, type RouterConfig, type RoutingDecision } from "@rcai/provider-core";
 
 export interface Settings {
+  openaiVoiceModel?: "realtime" | "gpt-live-1";
   brokerUrl: string;
   agentUrl: string;
   engine: EngineSelection;
@@ -46,6 +47,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export type SettingsAction =
+  | { type: "openaiVoiceModel"; model: "realtime" | "gpt-live-1" }
   | { type: "engine"; engine: EngineSelection }
   | { type: "autoPolicy"; policy: AutoPolicy }
   | { type: "advanced"; role: Role; provider: ProviderId | undefined }
@@ -62,6 +64,7 @@ export type SettingsAction =
 /** strict_local (spec §6) forces the local engine and clears cloud overrides. */
 export function settingsReducer(s: Settings, a: SettingsAction): Settings {
   switch (a.type) {
+    case "openaiVoiceModel": return { ...s, openaiVoiceModel: a.model };
     case "engine":
       if (s.privacyMode === "strict_local" && a.engine !== "local") return s;
       return { ...s, engine: a.engine };
