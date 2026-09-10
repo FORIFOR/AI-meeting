@@ -125,6 +125,7 @@ export function Meeting(p: MeetingProps) {
   const [botAvailability, setBotAvailability] = useState<Availability | null>(null);
   const [lines, setLines] = useState<MeetingTranscriptLine[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [visualNotice, setVisualNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ctrl = useRef<MeetingSessionController | null>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -174,6 +175,7 @@ export function Meeting(p: MeetingProps) {
     }
     setBusy(true);
     setError(null);
+    setVisualNotice(null);
     const attemptUsage = new MeetingUsageTracker();
     usage.current = attemptUsage;
     setAiUsage(null);
@@ -254,6 +256,14 @@ export function Meeting(p: MeetingProps) {
           onActivated: (a) => { setActivation(a); note(`bot page activated · session ${a.sessionId.slice(0, 8)} · bot ${a.botId}`); },
           onError: (m, code) => {
             const line = `${code ? `${code}: ` : ""}${m}`;
+            // Visual cues are an optional enhancement. Do not put their failure in the fatal
+            // error state: bot-page activation and the voice session must continue.
+            if (code === "VISUAL") {
+              setVisualNotice("表情の読み取りは現在利用できません。会議と音声はそのまま続けられます。");
+              note("visual cues unavailable");
+              if (isBot) console.warn("[rcai:bot]", line);
+              return;
+            }
             setError(line);
             note(`error ${m}`);
             /**
@@ -361,6 +371,7 @@ export function Meeting(p: MeetingProps) {
         </div>
         {connectorPending && <p className="hint" role="status">会議サービスを確認しています…</p>}
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
+        {visualNotice && <p className="hint" role="status">{visualNotice}</p>}
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
         <div className="field meeting__url-field">
           <label htmlFor="meeting-url">最初に、会議のURLを貼り付けてください</label>
