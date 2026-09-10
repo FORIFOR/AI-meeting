@@ -73,6 +73,90 @@ function meetingErrorMessage(value: string): string {
   return messages[code] ?? value;
 }
 
+/**
+ * A voice-agent page can be captured by Attendee before the realtime pipeline has finished mounting.
+ * Keep a small, self-contained portrait on the page from the first paint so a Meet participant never
+ * sees a black camera tile while the audio connection is coming up. The real Live2D/Canvas renderer
+ * is layered above this once it is ready.
+ */
+function BotAvatarFallback({ name }: { name: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const paint = () => {
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(320, rect.width || 1280);
+      const h = Math.max(180, rect.height || 720);
+      const dpr = Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#eef3ff";
+      ctx.fillRect(0, 0, w, h);
+
+      const scale = Math.min(w / 420, h / 420);
+      const cx = w / 2;
+      const cy = h * 0.42;
+      const r = 94 * scale;
+      ctx.save();
+      // A friendly, high-contrast portrait that remains recognizable at Meet's small tile size.
+      ctx.fillStyle = "#7c6de6";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 1.7, r * 1.45, r * 1.6, 0, Math.PI, 2 * Math.PI);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r * 1.1, r * 1.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffe4cf";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 0.04, r, r * 1.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#7c6de6";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - r * 0.74, r * 1.02, r * 0.46, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+      for (const side of [-1, 1]) {
+        const ex = cx + side * r * 0.4;
+        const ey = cy - r * 0.1;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, r * 0.16, r * 0.19, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#3b2f4a";
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, r * 0.08, r * 0.11, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.strokeStyle = "#b3444f";
+      ctx.lineWidth = Math.max(2, r * 0.04);
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.2, cy + r * 0.5);
+      ctx.quadraticCurveTo(cx, cy + r * 0.6, cx + r * 0.2, cy + r * 0.5);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(0,0,0,0.58)";
+      ctx.font = `${Math.max(14, 16 * scale)}px system-ui, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.fillText(`${name} · AIミーティング`, 16, h - 16);
+      ctx.restore();
+    };
+    paint();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(paint) : null;
+    observer?.observe(canvas);
+    window.addEventListener("resize", paint);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", paint);
+    };
+  }, [name]);
+
+  return <canvas ref={canvasRef} className="stage__fallback-canvas" aria-hidden="true" />;
+}
+
 /** P0-1: join a Google Meet / Zoom as the character. Operator view + bot-page view share one controller. */
 export function Meeting(p: MeetingProps) {
   const isBot = Boolean(p.botParams);
@@ -376,7 +460,8 @@ export function Meeting(p: MeetingProps) {
     return (
       <div className="session session--bot">
         <div className="stage" ref={stage}>
-          <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>音声で参加中</span></div>
+          <BotAvatarFallback name={displayName} />
+          <div className="stage__fallback stage__fallback--bot" aria-hidden="true"><strong>{displayName}</strong><span>音声で参加中</span></div>
           <div className={`pill pill--${pill.key}`}><span className="pill__dot" /> {muted ? "ミュート中" : POLICY_JA[policy]} <span style={{ opacity: 0.5 }}>{pill.en}</span></div>
           {!activation && !error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12, opacity: 0.6 }}>接続中…</div>}
           {error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12 }}>{error}</div>}
