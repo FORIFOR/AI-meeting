@@ -87,6 +87,23 @@ describe("ConversationRuntime", () => {
     expect(sink.resumed).toBe(2);
   });
 
+  it.each(["pending", "rejected"])("tap interruption completes locally with a %s network cancel", async (failure) => {
+    const sink = new FakeSink(), p = new FakeProvider();
+    p.interrupt = () => failure === "pending" ? new Promise<void>(() => {}) : Promise.reject(new Error("offline"));
+    const rt = new ConversationRuntime({ sink });
+    const events: string[] = [];
+    rt.on(e => events.push(e.type));
+    await rt.start(p, config);
+    p.emit({ type: "assistant_audio", frame: createFrame(new Float32Array(480)) });
+    const stopped = rt.interrupt();
+    expect(sink.isPlaying).toBe(false);
+    expect(rt.state).toBe("idle");
+    expect(events).toContain("interrupted");
+    await stopped;
+    expect(rt.getRecord().turns[0]?.interrupted).toBe(true);
+    await rt.stop();
+  });
+
   it("derives speaking state from audio when provider has no explicit start event", async () => {
     const rt = new ConversationRuntime({ sink: new FakeSink(), clock: () => 0 });
     const p = new FakeProvider();

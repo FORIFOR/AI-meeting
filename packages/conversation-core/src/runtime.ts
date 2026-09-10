@@ -191,8 +191,9 @@ export class ConversationRuntime {
     this.latency.mark("interrupt_requested");
     const cancelled = this.cancelGeneration();
     this.latency.mark("audio_stopped");
-    await this.provider?.interrupt();
+    // Avatar and turn state must stop locally even when the network cancel hangs.
     this.handleProviderEvent({ type: "interrupted", at: this.clock(), gen: cancelled ?? undefined });
+    void this.provider?.interrupt().catch(() => {});
   }
 
   /**

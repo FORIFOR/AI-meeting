@@ -9,3 +9,7 @@ Startup measures Talk activation through first audible response. Response measur
 Targets: startup p95 <5000ms; response p50 <700ms and p95 <1300ms; interruption p95 <150ms; lip sync p95 <80ms; listening response p95 <100ms; FPS p05 >=30; all listed incidents zero.
 
 Existing runtime telemetry covers some timings but does not automatically produce this full evidence format. End-to-end startup, lip-sync offset and representative FPS collection remain unverified. The gate checks supplied data; it does not establish measurement provenance or replace user evaluation. Paid Meet/Zoom and 15x3 user testing remain waived by the user, not marked as passed.
+
+## Local playback cancellation
+
+With Vite on 127.0.0.1:5185, run `node scripts/ux/local-playback.mjs` on macOS with Chrome installed. External requests are blocked. Twenty synthetic-tone trials exercise the actual SpeakerOutput and AudioWorklet, assert queue clearing and stale-generation rejection, and measure the time from cancel invocation to the first silent rendered PCM batch received on the main thread. A zero-valued test source keeps the tap active after removal of the tone source. This does not measure physical speaker latency, microphone/VAD onset, model response or perceptual lip sync, and must not be supplied as complete UX-gate evidence.
