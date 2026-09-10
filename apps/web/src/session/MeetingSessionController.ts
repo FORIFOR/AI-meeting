@@ -533,7 +533,15 @@ export class MeetingSessionController {
     // participant while it is already speaking. Keep the local VAD on for bot pages
     // using that provider so the runtime can take the same immediate interruption
     // path as the operator page. The runtime suppresses duplicate provider VAD events.
-    const localVad = this.init.role !== "bot" || this.decision.conversation === "google";
+    // Attendee already supplies the mixed meeting stream to the Gemini provider, which has its own
+    // endpointing and barge-in detector. Running a second EnergyVAD over that same stream on the
+    // operator page makes Yui's return audio (and ordinary room noise) look like user speech; every
+    // generated answer is then cancelled before its first audible frame. Keep the local VAD for the
+    // headset/operator path and for non-Attendee bot pages, but let Attendee's provider be the sole
+    // authority for interruptions.
+    const localVad = this.init.meetingProvider === "attendee"
+      ? false
+      : this.init.role !== "bot" || this.decision.conversation === "google";
     const runtime = new ConversationRuntime({ sink: speaker, localVad });
     this.runtime = runtime;
 

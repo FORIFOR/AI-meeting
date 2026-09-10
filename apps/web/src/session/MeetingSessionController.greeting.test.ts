@@ -64,7 +64,7 @@ vi.mock("@rcai/avatar-core", async (importOriginal) => {
 
 import { MeetingSessionController } from "./MeetingSessionController.js";
 
-function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local", observer?: "captions") {
+function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local", observer?: "captions", meetingProvider?: "attendee" | "recall") {
   return new MeetingSessionController({
     observer,
     settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine, autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
@@ -75,6 +75,7 @@ function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only"
     displayName: "Yui",
     proactivity,
     role,
+    meetingProvider,
     connectorMode: "relay",
     stage: null as unknown as HTMLElement,
     botActivation: { sessionId: "s", botId: "bot_test", clientToken: "ct" },
@@ -293,6 +294,24 @@ describe("greeting on arrival", () => {
     // 600 ms: the local VAD spends its first 400 ms learning what this room's quiet sounds like.
     for (let i = 0; i < 60; i++) c.onMeetingAudio(loud());
     expect(providerInterrupt).toHaveBeenCalledTimes(1);
+    clock.mockRestore();
+    await c.leave();
+  });
+
+  it("Attendee operator page: the provider VAD owns interruptions for the mixed room stream", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined", at: Date.now() });
+    const later = Date.now() + 5000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => later);
+    c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    // The mixed Attendee stream contains the character's return audio and room noise. It must not
+    // trigger the operator page's duplicate local VAD while the provider is speaking.
+    for (let i = 0; i < 60; i++) c.onMeetingAudio(loud());
+    expect(providerInterrupt).not.toHaveBeenCalled();
     clock.mockRestore();
     await c.leave();
   });
