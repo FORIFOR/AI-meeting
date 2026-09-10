@@ -246,6 +246,9 @@ export class MeetingSessionController {
         privacyMode,
         framing,
         ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
+        // Attendee captures this page in a separate GPU-limited browser. Canvas is deterministic
+        // there and guarantees a visible first frame in the bot's outgoing camera track.
+        preferCanvas: this.init.role === "bot" && this.init.meetingProvider === "attendee",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -557,6 +560,7 @@ export class MeetingSessionController {
           privacyMode: settings.privacyMode,
           framing: this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default"),
           ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
+          preferCanvas: true,
         });
         await avatar.prepare(def);
         this.avatar = avatar;

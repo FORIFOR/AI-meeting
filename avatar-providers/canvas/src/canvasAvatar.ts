@@ -1,4 +1,4 @@
-import { MotionStackAvatarBase, type AvatarParams, type CharacterDefinition, type MotionStackAvatarOptions } from "@rcai/avatar-core";
+import { MotionStackAvatarBase, neutralParams, type AvatarParams, type CharacterDefinition, type MotionStackAvatarOptions } from "@rcai/avatar-core";
 
 export interface CanvasAvatarOptions extends MotionStackAvatarOptions {
   container: HTMLElement;
@@ -40,6 +40,10 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.resize();
+    // Paint immediately after the canvas is attached. Attendee's webpage streamer may capture
+    // its first frame before requestAnimationFrame runs, so waiting for the motion loop can yield
+    // an apparently blank bot camera even though the provider is ready.
+    this.applyParams(neutralParams());
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => this.resize());
       this.resizeObserver.observe(this.opts.container);

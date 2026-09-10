@@ -31,6 +31,13 @@ describe("avatar renderers that need WebGL", () => {
     vi.unstubAllGlobals();
   });
 
+  it("can force the software renderer for a captured Attendee page", async () => {
+    vi.stubGlobal("document", { createElement: () => ({ getContext: (k: string) => (k === "webgl2" ? {} : null) }) });
+    const forced = await createAvatarProvider("live2d", { container, brokerUrl: "http://b", characterId: "yui", characterName: "Yui", preferCanvas: true });
+    expect(forced.id).toBe("canvas");
+    vi.unstubAllGlobals();
+  });
+
   it("assumes availability where there is no DOM at all (node, tests)", () => {
     vi.stubGlobal("document", undefined);
     expect(webglAvailable()).toBe(true);

@@ -128,6 +128,12 @@ export interface AvatarFactoryOptions {
   framing?: "default" | "meeting" | "preview";
   /** Cap on the avatar's render frame rate (see Live2DAvatarOptions.maxFps). */
   maxFps?: number;
+  /**
+   * Use the software renderer even when WebGL exists. Attendee's webpage streamer captures a
+   * camera tile from a separate, GPU-limited browser; Canvas keeps the first frame deterministic
+   * and avoids a WebGL surface that can be omitted from the captured track.
+   */
+  preferCanvas?: boolean;
 }
 
 /** Renderers that cannot draw anything without a WebGL context. */
@@ -154,6 +160,12 @@ export function webglAvailable(): boolean {
 export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryOptions): Promise<AvatarProvider> {
   const strict = o.privacyMode === "strict_local";
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
+  if (renderer === "live2d" && o.preferCanvas) {
+    const mod = await import("@rcai/avatar-canvas");
+    const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+    const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
+    return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterName ? { label: o.characterName } : {}) });
+  }
   if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
     /**
      * Attendee and similar meeting page browsers may disable GPU/WebGL. A hard failure here leaves
