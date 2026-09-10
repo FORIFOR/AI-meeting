@@ -46,7 +46,7 @@ export interface GazeTarget {
 
 /** Spec §8 */
 export interface AvatarProvider {
-  readonly id: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas" | string;
+  readonly id: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas" | string;
   prepare(character: CharacterDefinition): Promise<void>;
   start(): Promise<void>;
   /** The PCM actually being played (from SpeakerOutput.tap) — the lip sync source of truth. */
@@ -159,7 +159,7 @@ export interface VoiceProfile {
 export interface CharacterManifest {
   id: string;
   name: string;
-  renderer: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas";
+  renderer: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas";
   defaultPersona: string;
   supportedLanguages: string[];
   motionProfile: string;

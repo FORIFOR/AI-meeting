@@ -2,7 +2,7 @@ import type { CharacterDefinition, CharacterManifest, MotionCategory, VoiceProfi
 
 export class CharacterValidationError extends Error {}
 
-const RENDERERS = new Set(["live2d", "vrm", "liveavatar", "tavus", "canvas"]);
+const RENDERERS = new Set(["live2d", "vrm", "human-glb", "liveavatar", "tavus", "canvas"]);
 const CATEGORIES: MotionCategory[] = ["idle", "listening", "speaking", "thinking", "reaction", "social", "teaching", "greeting"];
 
 export function validateManifest(raw: unknown): CharacterManifest {

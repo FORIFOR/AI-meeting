@@ -4,6 +4,7 @@ import type { CharacterEntry } from "../integrations/registry.js";
 /** Renderer names as a person would say them (never shown in the conversation screen). */
 export const RENDERER_JA: Record<CharacterEntry["renderer"], string> = {
   live2d: "アニメ 2D",
+  "human-glb": "3D人物",
   vrm: "アニメ 3D",
   canvas: "デバッグ表示",
   liveavatar: "実写",

@@ -36,7 +36,7 @@ export function CharacterSelect(p: CharacterSelectProps) {
   useEffect(() => {
     if (!current) return;
     const mount = previewRef.current;
-    if (!mount || blocked || (current.renderer !== "live2d" && current.renderer !== "vrm" && current.renderer !== "canvas")) {
+    if (!mount || blocked || (current.renderer !== "live2d" && current.renderer !== "vrm" && current.renderer !== "human-glb" && current.renderer !== "canvas")) {
       setPreview("fallback");
       return;
     }

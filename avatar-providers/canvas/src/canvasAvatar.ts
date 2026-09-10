@@ -29,7 +29,8 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   private readonly characterId?: string;
   private readonly staticPreview: boolean;
   private previewImage: HTMLImageElement | null = null;
-  private animationSheets: HTMLImageElement[] = [];
+  private animationVideos: HTMLVideoElement[] = [];
+  private disposed = false;
   private resizeObserver: ResizeObserver | null = null;
 
   constructor(private readonly opts: CanvasAvatarOptions) {
@@ -40,6 +41,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   }
 
   protected async loadModel(character: CharacterDefinition): Promise<void> {
+    this.disposed = false;
     this.name = character.manifest.name;
     this.label = this.opts.label ?? this.name;
     this.background = character.view?.background ?? this.background;
@@ -60,11 +62,24 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
       };
       image.src = `/avatar-fallbacks/${encodeURIComponent(this.characterId ?? character.manifest.id)}.png`;
       if ((this.characterId ?? character.manifest.id) === "yui" && this.opts.framing === "meeting") {
-        for (const [index, pose] of ["idle", "speaking"].entries()) {
-          const sheet = new Image();
-          sheet.onload = () => { this.animationSheets[index] = sheet; };
-          sheet.src = `/avatar-fallbacks/yui-${pose}.webp`;
+        for (const pose of ["idle", "speaking"]) {
+          const video = document.createElement("video");
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.src = `/avatar-fallbacks/yui-${pose}.webm`;
+          this.animationVideos.push(video);
         }
+        // Start both loops from the same clock after decoding. No audio or network AI calls.
+        void Promise.all(this.animationVideos.map(video => new Promise<void>(resolve => {
+          video.oncanplay = () => resolve(); video.onerror = () => resolve();
+          video.load();
+        }))).then(async () => {
+          if (this.disposed) return;
+          for (const video of this.animationVideos) video.currentTime = 0;
+          await Promise.all(this.animationVideos.map(video => video.play().catch(() => {})));
+        });
       }
     }
     // Paint immediately after the canvas is attached. Attendee's webpage streamer may capture
@@ -92,17 +107,22 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
     if (this.staticPreview) {
-      const pose = this.state === "SPEAKING" && p.mouthOpenY > 0.08 ? 1 : 0;
-      const sheet = this.animationSheets[pose] ?? this.animationSheets[0];
-      if (sheet) {
+      const [idle, speaking] = this.animationVideos;
+      if (idle && idle.readyState >= 2 && !idle.paused) {
         const w = canvas.clientWidth || canvas.width;
         const h = canvas.clientHeight || canvas.height;
-        const frame = Math.floor(performance.now() / 125) % 32;
         const scale = Math.min(w / 640, h / 360);
+        const x = (w - 640 * scale) / 2, y = (h - 360 * scale) / 2;
         ctx.fillStyle = "#f6f1ea";
         ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(sheet, (frame % 8) * 640, Math.floor(frame / 8) * 360, 640, 360,
-          (w - 640 * scale) / 2, (h - 360 * scale) / 2, 640 * scale, 360 * scale);
+        ctx.drawImage(idle, x, y, 640 * scale, 360 * scale);
+        if (speaking && speaking.readyState >= 2 && !speaking.paused) {
+          // Correct decode drift while keeping matching head/eye poses across both layers.
+          if (Math.abs(idle.currentTime - speaking.currentTime) > 0.08) speaking.currentTime = idle.currentTime;
+          ctx.globalAlpha = this.state === "SPEAKING" ? Math.max(0, Math.min(1, p.mouthOpenY / 0.8)) : 0;
+          ctx.drawImage(speaking, x, y, 640 * scale, 360 * scale);
+          ctx.globalAlpha = 1;
+        }
         return;
       }
       drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label, this.opts.framing === "meeting", this.characterId);
@@ -117,7 +137,12 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas?.remove();
     this.canvas = null;
     this.ctx = null;
-    this.animationSheets = [];
+    this.disposed = true;
+    for (const video of this.animationVideos) {
+      video.pause(); video.oncanplay = null; video.onerror = null;
+      video.removeAttribute("src"); video.load();
+    }
+    this.animationVideos = [];
   }
 }
 

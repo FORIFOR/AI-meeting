@@ -5,7 +5,7 @@
 export interface CharacterEntry {
   id: string;
   name: string;
-  renderer: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas";
+  renderer: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas";
   /** Served by the web app as a static directory (apps/web/public/characters → ../../characters). */
   baseUrl: string;
   license: string;

@@ -139,7 +139,7 @@ export interface AvatarFactoryOptions {
 }
 
 /** Renderers that cannot draw anything without a WebGL context. */
-const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm"];
+const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm", "human-glb"];
 
 /** Probe actual capabilities, never infer them from the meeting vendor or browser flags. */
 export function avatarCapabilities(): { webgl: boolean; api: "webgl2" | "webgl" | "none" | "unknown" } {
@@ -196,6 +196,10 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
       const mod = await import("@rcai/avatar-canvas");
       const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
       return new C({ container: o.container, framing: o.framing, characterId: o.characterId, staticPreview: o.staticPreview, label: o.characterName });
+    }
+    case "human-glb": {
+      const { HumanGLBAvatarProvider } = await import("@rcai/avatar-vrm");
+      return new HumanGLBAvatarProvider({ container: o.container });
     }
     case "vrm": {
       const mod = await import("@rcai/avatar-vrm");
