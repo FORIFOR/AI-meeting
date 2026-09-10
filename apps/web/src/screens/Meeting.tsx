@@ -368,6 +368,7 @@ export function Meeting(p: MeetingProps) {
   const pill = pillFor(avatarState, false);
   const terminal = status === "left" || status === "failed" || status === "denied" || status === "removed" || status === "ended";
   const joined = status !== null && !terminal;
+  const showPolicy = status === "in_call" || status === "in_call_not_recording" || status === "waiting_room" || status === "reconnecting";
   /** Keep the mount in the DOM for the controller, but never show an empty black tile before/after a call. */
   const showRelayStage = joined && meetingMode === "relay";
 
@@ -472,7 +473,7 @@ export function Meeting(p: MeetingProps) {
         {error && <p className="err" role="alert">{error}</p>}
       </div>
       <div className="meeting__side">
-        <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>
+        <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""}{showPolicy ? ` · ${POLICY_JA[policy]}` : ""}{ctrl.current?.botId ? ` · ${ctrl.current.botId}` : ""}</small></h3>
         <div className="meeting__stage-wrap">
           <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none", visibility: showRelayStage ? "visible" : "hidden" }} aria-hidden={!showRelayStage}>
             <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>参加中はここに表示されます</span></div>
