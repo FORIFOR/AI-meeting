@@ -56,7 +56,10 @@ for (const key of ["ZOOM_OAUTH_CLIENT_ID", "ZOOM_OAUTH_CALLBACK_URL", "ZOOM_OAUT
   if (process.env[key]) envVars.push(`${key}=${process.env[key]}`);
 }
 if (process.env.BROKER_PUBLIC_URL) envVars.push(`RECALL_PUBLIC_URL=${process.env.BROKER_PUBLIC_URL}`);
-envVars.push(`RECALL_BOT_PAGE_URL=${webUrl.origin}/agent/runtime`);
+// Firebase Hosting serves the bot page from the SPA entry point. Keep this at the
+// origin so output-media/Attendee links never point at an un-deployed sub-path
+// (which otherwise renders Firebase's Page Not Found screen).
+envVars.push(`RECALL_BOT_PAGE_URL=${webUrl.origin}`);
 if (vertex) envVars.push("GEMINI_BACKEND=vertex", `GOOGLE_CLOUD_PROJECT=${project}`, `GOOGLE_CLOUD_LOCATION=${process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1"}`, `VERTEX_LIVE_MODEL=${process.env.VERTEX_LIVE_MODEL ?? "gemini-live-2.5-flash-native-audio"}`);
 else envVars.push("GEMINI_BACKEND=developer");
 const deployArgs = ["run", "deploy", service, "--project", project, "--region", region, "--image", image, "--platform", "managed", "--allow-unauthenticated", "--port", "8787", "--timeout", "3600", "--min", "0", "--max", process.env.MAX_INSTANCES ?? "1", "--update-env-vars", envVars.join(",")];
