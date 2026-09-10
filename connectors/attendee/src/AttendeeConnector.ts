@@ -83,6 +83,32 @@ const PARTICIPANT_HANGOVER_MS = 500;
 /** A participant's loudness is reported at most this often: who is louder, not every 10 ms chunk. */
 const PARTICIPANT_LEVEL_EVERY_MS = 100;
 
+/** Broker lifecycle vocabulary → the common connector status used by the UI and controller. */
+const ATTENDEE_STATUS: Record<string, MeetingStatus> = {
+  creating: "joining",
+  scheduled: "joining",
+  staged: "joining",
+  ready: "joining",
+  joining: "joining",
+  joining_call: "joining",
+  waiting_room: "waiting_room",
+  in_waiting_room: "waiting_room",
+  joined_not_recording: "in_call_not_recording",
+  in_call_not_recording: "in_call_not_recording",
+  joined_recording: "in_call",
+  joined_recording_paused: "in_call",
+  in_call_recording: "in_call",
+  leaving: "leaving",
+  call_ended: "ended",
+  post_processing: "ended",
+  ended: "ended",
+  done: "ended",
+  left_meeting: "left",
+  left: "left",
+  fatal: "failed",
+  fatal_error: "failed",
+};
+
 class AttendeeSession implements MeetingSession {
   private ws: WebSocketLike | null = null;
   private listeners = new Set<MeetingEventListener>();
@@ -138,8 +164,27 @@ class AttendeeSession implements MeetingSession {
   private onMessage(raw: string): void {
     let msg: AttendeeAudioMessage | undefined;
     try {
-      const outer = JSON.parse(raw) as { relay?: { botId?: string }; message?: AttendeeAudioMessage; trigger?: string };
+      const outer = JSON.parse(raw) as {
+        relay?: { botId?: string };
+        message?: AttendeeAudioMessage & { event?: string; data?: AttendeeAudioMessage["data"] & { data?: { code?: string; sub_code?: string | null } } };
+        trigger?: string;
+        event?: string;
+        data?: { data?: { code?: string; sub_code?: string | null } };
+      };
       if (outer.relay && outer.relay.botId !== this.id) return; // another bot's feed
+      const event = outer.message?.event ?? outer.event;
+      if (event === "bot.status_change") {
+        const code = outer.message?.data?.data?.code ?? outer.data?.data?.code;
+        const status = code ? ATTENDEE_STATUS[code] : undefined;
+        if (status) {
+          // The provider has already closed (or removed) the bot. Mark it confirmed so cleanup does
+          // not issue a second paid leave request while the vendor is finalising the call.
+          if (status === "ended" || status === "left" || status === "failed") this.remoteLeft = true;
+          this.state = status;
+          this.emit({ type: "status", status, detail: outer.message?.data?.data?.sub_code ?? outer.data?.data?.sub_code ?? code, at: this.now() });
+        }
+        return;
+      }
       msg = outer.message ?? (outer as AttendeeAudioMessage);
     } catch {
       return;
