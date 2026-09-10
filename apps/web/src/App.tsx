@@ -178,6 +178,7 @@ export function App() {
           contentNote={contentNote}
           recent={recent}
           onContinue={onContinue}
+          onTalk={personas.some(p => p.id === "thinking_ja") ? () => startSession(personas.find(p => p.id === "thinking_ja")!, {}) : undefined}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
           onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
