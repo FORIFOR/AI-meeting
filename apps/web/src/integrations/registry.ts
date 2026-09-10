@@ -123,6 +123,8 @@ export interface AvatarFactoryOptions {
   /** Character metadata used to make a renderer fallback identifiable in a meeting tile. */
   characterId?: string;
   characterName?: string;
+  /** Use the character's real preview artwork when a bot browser cannot render Live2D/WebGL. */
+  staticPreview?: boolean;
   privacyMode?: "default" | "strict_local";
   /** "meeting": the page is a camera tile, not an operator's screen (see Live2DAvatarOptions.framing). */
   framing?: "default" | "meeting" | "preview";
@@ -164,7 +166,7 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
     const mod = await import("@rcai/avatar-canvas");
     const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
     const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
-    return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterName ? { label: o.characterName } : {}) });
+    return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
   }
   if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
     /**
@@ -177,7 +179,7 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
       const mod = await import("@rcai/avatar-canvas");
       const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
       const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
-      return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterName ? { label: o.characterName } : {}) });
+      return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
     }
     throw new Error(`BLOCKED_BY_NO_WEBGL: ${renderer} needs a WebGL context and this browser has none (a meeting vendor's page browser may run with --disable-gpu)`);
   }

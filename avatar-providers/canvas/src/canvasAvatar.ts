@@ -6,6 +6,10 @@ export interface CanvasAvatarOptions extends MotionStackAvatarOptions {
   accent?: string;
   /** Optional caption for environments where the video tile has no surrounding UI. */
   label?: string;
+  /** Character id used to locate a bundled preview image in a GPU-limited bot browser. */
+  characterId?: string;
+  /** Prefer the bundled character artwork over the generic diagnostic face. */
+  staticPreview?: boolean;
 }
 
 /**
@@ -21,11 +25,16 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   private name = "";
   private label = "";
   private background = "#f3f0ea";
+  private readonly characterId?: string;
+  private readonly staticPreview: boolean;
+  private previewImage: HTMLImageElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
   constructor(private readonly opts: CanvasAvatarOptions) {
     super(opts);
     this.accent = opts.accent ?? "#6b5b95";
+    this.characterId = opts.characterId;
+    this.staticPreview = opts.staticPreview === true;
   }
 
   protected async loadModel(character: CharacterDefinition): Promise<void> {
@@ -40,6 +49,15 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.resize();
+    if (this.staticPreview) {
+      const image = new Image();
+      image.onload = () => {
+        this.previewImage = image;
+        this.resize();
+        this.applyParams(neutralParams());
+      };
+      image.src = `/avatar-fallbacks/${encodeURIComponent(this.characterId ?? character.manifest.id)}.png`;
+    }
     // Paint immediately after the canvas is attached. Attendee's webpage streamer may capture
     // its first frame before requestAnimationFrame runs, so waiting for the motion loop can yield
     // an apparently blank bot camera even though the provider is ready.
@@ -64,6 +82,10 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const ctx = this.ctx;
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
+    if (this.staticPreview) {
+      drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label);
+      return;
+    }
     drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, label: this.label, state: this.state });
   }
 
@@ -74,6 +96,24 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas = null;
     this.ctx = null;
   }
+}
+
+/** Draws a bundled preview without ever flashing the generic diagnostic face in a meeting tile. */
+function drawPreview(ctx: CanvasRenderingContext2D, w: number, h: number, image: HTMLImageElement | null, name: string, label: string): void {
+  if (!image) return;
+  ctx.save();
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#f3f0ea";
+  ctx.fillRect(0, 0, w, h);
+  const scale = Math.min(w / image.naturalWidth, h / image.naturalHeight);
+  const dw = image.naturalWidth * scale;
+  const dh = image.naturalHeight * scale;
+  ctx.drawImage(image, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  ctx.fillStyle = "rgba(0,0,0,0.58)";
+  ctx.font = "16px system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`${label || name} · AIミーティング`, 16, h - 16);
+  ctx.restore();
 }
 
 export interface DrawStyle {

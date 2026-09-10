@@ -245,6 +245,7 @@ export class MeetingSessionController {
         characterName: character.name,
         privacyMode,
         framing,
+        staticPreview: this.init.role === "bot" && this.init.meetingProvider === "attendee",
         ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
         // Attendee captures this page in a separate GPU-limited browser. Canvas is deterministic
         // there and guarantees a visible first frame in the bot's outgoing camera track.
