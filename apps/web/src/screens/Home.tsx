@@ -1,3 +1,4 @@
+import { readConversationMemory, forgetConversationMemory } from "../state/conversationMemory.js";
 import { useState } from "react";
 import { CreditBalance } from "../components/CreditBalance.js";
 import type { ConversationMode } from "@rcai/conversation-core";
@@ -31,6 +32,7 @@ export interface HomeProps {
   contentNote?: string;
   recent: Recent | null;
   onContinue: (mode: ConversationMode) => void;
+  onResume?: () => void;
   onTalk?: () => void;
   onCharacter: () => void;
   onSettings: () => void;
@@ -53,6 +55,8 @@ export function Home(p: HomeProps) {
   const available = new Set(p.personas.map((x) => x.mode));
   const items = PRODUCTS.filter((x) => available.has(x.mode));
   const offline = !p.broker && !p.agent;
+  const [memoryVersion, setMemoryVersion] = useState(0);
+  const memory = readConversationMemory(character?.id ?? "yui");
   const [meetingUrl, setMeetingUrl] = useState("");
   const portrait = character && ["yui", "haru", "reina", "sora"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
   return (
@@ -68,6 +72,7 @@ export function Home(p: HomeProps) {
           <p>{character?.name ?? "AI"}と、アイデアも、迷っていることも。<br />会議URLは必要ありません。</p>
           <button className="btn btn--primary btn--lg" disabled={!!blocked || !p.onTalk} onClick={p.onTalk}>{character?.name ?? "AI"}と話す <span aria-hidden="true">↗</span></button>
           <p className="thinking-launch__hint">マイクを許可して、そのまま話しかけてください。</p>
+          {memory && <div className="thinking-memory" key={memoryVersion}><p>前回のメモ：{memory.conclusion || memory.nextStep}</p><button className="btn" disabled={!!blocked} onClick={p.onResume}>続きから話す</button><button className="btn btn--ghost" onClick={() => { forgetConversationMemory(memory.characterId); setMemoryVersion(v=>v+1); }}>メモを削除</button></div>}
           <div className="thinking-prompts"><span>「このアイデア、どう思う？」</span><span>「今日やることを整理したい」</span><span>「まだうまく言えないけれど…」</span></div>
         </section>
         <aside className="companion-feature" aria-label="選択中の相手">

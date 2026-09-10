@@ -49,6 +49,7 @@ export function Session(p: SessionProps) {
     [p.persona.id, p.character.id],
   );
   const s = useSession(init, stageRef, p.onEnded);
+  const [notes, setNotes] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [gate, setGate] = useState(false);
   const pill = pillFor(s.avatarState, s.status === "starting");
@@ -80,20 +81,20 @@ export function Session(p: SessionProps) {
             <b>{p.character.name}</b>
             <span className="session__mode">{MODE_NAME[p.persona.mode] ?? p.persona.mode}</span>
           </span>
+          <button type="button" className="more" aria-pressed={notes} onClick={() => setNotes(v=>!v)}>{notes ? "会話へ" : "ノート"}</button>
           <button type="button" className={`more ${sheet ? "is-open" : ""}`} aria-label="セッション設定" aria-expanded={sheet} onClick={() => setSheet((v) => !v)}>···</button>
         </div>
 
         {/* The state whisper fades after a glance; the character does the talking. */}
-        <div key={`${pill.key}-${s.captions.length}`} className={`pill pill--${pill.key}`}>
+        <div style={{ visibility: pill.key === "thinking" && s.status === "live" ? "hidden" : undefined }} key={`${pill.key}-${s.captions.length}`} className={`pill pill--${pill.key}`}>
           <span className="pill__dot" />
-          {pill.en}
-          <span className="pill__ja">{pill.ja}</span>
+          {pill.ja}
         </div>
 
         <Subtitle items={s.captions} on={p.settings.captionsOn} />
-        <TranscriptLog items={s.captions} />
-        {s.lookup && <LookupSources result={s.lookup} />}
-        {(s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
+        {notes && <TranscriptLog items={s.captions} />}
+        {notes && s.lookup && <LookupSources result={s.lookup} />}
+        {notes && (s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
         <SelfCamera enabled={p.settings.cameraOn} />
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
 
@@ -132,13 +133,13 @@ export function Session(p: SessionProps) {
             <span className="ctl__ring">{s.muted ? <MicOffIcon /> : <MicIcon />}</span>
             <span className="ctl__label">{s.muted ? "ミュート中" : "マイク"}</span>
           </button>
-          <button type="button" className={`ctl ${p.settings.cameraOn ? "is-active" : ""}`} onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })} aria-pressed={p.settings.cameraOn}>
+          {p.persona.id !== "thinking_ja" && <button type="button" className={`ctl ${p.settings.cameraOn ? "is-active" : ""}`} onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })} aria-pressed={p.settings.cameraOn}>
             <span className="ctl__ring"><CameraIcon /></span>
             <span className="ctl__label">カメラ</span>
-          </button>
+          </button>}
           <button type="button" className="ctl ctl--end" onClick={() => void s.end()} disabled={s.status === "ending" || s.status === "ended"}>
             <span className="ctl__ring"><EndIcon /></span>
-            <span className="ctl__label">{s.status === "ending" ? "評価中…" : "終了"}</span>
+            <span className="ctl__label">{s.status === "ending" ? "まとめています…" : "終了"}</span>
           </button>
         </div>
       </div>

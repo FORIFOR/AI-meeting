@@ -1,3 +1,5 @@
+import { ThinkingResult } from "./screens/ThinkingResult.js";
+import { memoryContext, readConversationMemory } from "./state/conversationMemory.js";
 import { ZoomReturn } from "./components/ZoomConnection.js";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import type { ConversationMode } from "@rcai/conversation-core";
@@ -178,6 +180,7 @@ export function App() {
           contentNote={contentNote}
           recent={recent}
           onContinue={onContinue}
+          onResume={() => { const memory = readConversationMemory(selectedCharacter?.id ?? "yui"); const persona = personas.find(p => p.id === "thinking_ja"); if (memory && persona) startSession(persona, { previousMemory: memoryContext(memory) }); }}
           onTalk={personas.some(p => p.id === "thinking_ja") ? () => startSession(personas.find(p => p.id === "thinking_ja")!, {}) : undefined}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
@@ -245,7 +248,7 @@ export function App() {
           onAbort={() => setScreen({ name: "home" })}
         />
       )}
-      {screen.name === "result" && <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />}
+      {screen.name === "result" && (screen.last.persona.id === "thinking_ja" ? <ThinkingResult outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} /> : <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />)}
     </div>
   );
 }

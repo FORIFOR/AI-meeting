@@ -40,7 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showHud: false,
   characterId: "",
   cameraOn: false,
-  captionsOn: true,
+  captionsOn: false,
   voices: {},
   expressive: false,
 };

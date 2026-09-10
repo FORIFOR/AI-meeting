@@ -44,7 +44,8 @@
     "budget:check": "node scripts/cloud/budget-check.mjs",
     "cloud:hosted:preflight": "node scripts/cloud/hosted-preflight.mjs",
     "cloud:gcp:preflight": "node scripts/cloud/gcp-preflight.mjs",
-    "cloud:gcp:deploy:broker": "node scripts/cloud/gcp-deploy-broker.mjs"
+    "cloud:gcp:deploy:broker": "node scripts/cloud/gcp-deploy-broker.mjs",
+    "ux-gate": "node scripts/ux/gate.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

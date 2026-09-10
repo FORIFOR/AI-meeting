@@ -263,6 +263,7 @@ export class SessionController {
     const provider = await createConversationProvider(this.decision.conversation, this.factoryOptions);
     this.checkpoint();
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
+    if (persona.id === "thinking_ja" && params.previousMemory) config.systemPrompt += "\n\n" + params.previousMemory.slice(0,3000);
     configureSessionTools(config, provider.capabilities().toolCalling);
     await runtime.start(provider, config);
     this.checkpoint();
@@ -430,7 +431,7 @@ export class SessionController {
     let evaluation: EvaluationResult | null = null;
     let evaluationError: string | undefined;
     let fallbackUsed = false;
-    if (record.mode !== "companion" && record.mode !== "task_planning") try {
+    if (this.init.persona.id !== "thinking_ja" && record.mode !== "companion" && record.mode !== "task_planning") try {
       const out = await this.sidecar!.finalize(record);
       evaluation = out.result;
       fallbackUsed = out.fallbackUsed;
