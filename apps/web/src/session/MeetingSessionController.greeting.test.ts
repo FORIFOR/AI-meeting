@@ -119,6 +119,18 @@ describe("greeting on arrival", () => {
     await c.leave();
   });
 
+  it("prefers platform captions without stopping ordinary Live audio", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "transcript", text: "資料の提出は金曜日です。", final: true, speakerName: "田中", participantId: "p1" });
+    emit({ type: "user_transcript", text: "Arriba", final: true, id: 1 });
+    emit({ type: "user_transcript_revised", text: "car", id: 1 });
+    expect(transcriptShown.mock.calls.map(([line]) => line.text)).toEqual(["資料の提出は金曜日です。"]);
+    c.onMeetingAudio(frame());
+    expect(c.isForwarding).toBe(true);
+    await c.leave();
+  });
+
   it("the caption observer wakes Live only on an address and supplies an older task quote", async () => {
     const c = botPage("bot", "addressed_only", "google", "captions");
     await c.start();

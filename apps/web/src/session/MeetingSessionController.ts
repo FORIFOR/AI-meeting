@@ -166,6 +166,7 @@ export class MeetingSessionController {
   /** Who spoke most recently, from the per-participant audio stream — the AI's transcripts carry no name. */
   private heardAnything = false;
   private sawTranscript = false;
+  private hasPlatformCaptions = false;
   private heard = 0;
   /**
    * The ears as a recording would show them: seconds actually delivered, frames that were digital
@@ -674,6 +675,7 @@ export class MeetingSessionController {
         this.onMeetingAudio(e.frame);
         break;
       case "transcript":
+        if (e.text.trim()) this.hasPlatformCaptions = true;
         this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId);
         break;
       case "speech_level": {
@@ -1126,7 +1128,7 @@ export class MeetingSessionController {
          * hears. Shown as a meeting line too — otherwise the operator sees a character answering
          * something nobody can read.
          */
-        if (!this.hasExternalTranscripts && e.final !== false && e.text.trim()) {
+        if (!this.hasExternalTranscripts && !this.hasPlatformCaptions && e.final !== false && e.text.trim()) {
           this.providerTranscriptTurn = this.decision.conversation === "google" || this.decision.conversation === "openai";
           try {
             this.onMeetingTranscript(e.text, true, this.lastSpeaker, this.attribute(now) ?? this.lastSpeakerId, e.id);
@@ -1136,7 +1138,7 @@ export class MeetingSessionController {
         }
         break;
       case "user_transcript_revised":
-        if (!this.hasExternalTranscripts) {
+        if (!this.hasExternalTranscripts && !this.hasPlatformCaptions) {
           this.providerTranscriptTurn = this.decision.conversation === "google" || this.decision.conversation === "openai";
           try {
             const revised = this.reviseTranscript(e.id, e.text);

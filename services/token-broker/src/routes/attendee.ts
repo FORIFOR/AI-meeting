@@ -111,7 +111,8 @@ export async function createAttendeeBot(
   const sampleRate = body.sampleRate ?? 16000;
   const session = deps.sessions.create({ meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
   const observing = body.botPageQuery?.observer === "captions";
-  const observerToken = observing ? deps.sessions.issue(session.id, "observer", { brokerPublicUrl: publicUrl }) : null;
+  // Deliver platform captions in regular voice meetings too; observer mode only controls Live activation.
+  const observerToken = deps.sessions.issue(session.id, "observer", { brokerPublicUrl: publicUrl });
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
   deps.relay.register(audioToken);
 

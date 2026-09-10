@@ -625,6 +625,7 @@ describe("Attendee listener bot", () => {
     expect(sent.bot_name).toBe("Tester");
     expect(sent.voice_agent_settings).toBeUndefined();
     expect(sent.transcription_settings).toEqual({ meeting_closed_captions: { google_meet_language: "ja-JP", merge_consecutive_captions: true } });
+    expect(sent.webhooks).toEqual(expect.arrayContaining([expect.objectContaining({ triggers: ["transcript.update"] })]));
     expect(sent.recording_settings).toEqual({ view: "gallery_view", resolution: "1080p" });
     // Still on the relay: the harness hears the room (and the character in it) on the same socket.
     expect(sent.websocket_settings.audio.url).toMatch(/^wss:\/\/tunnel\.example\/api\/meeting\/attendee\/audio\//);
@@ -641,6 +642,7 @@ describe("Attendee listener bot", () => {
     expect(res.status).toBe(200);
     const sent = JSON.parse(calls.find((c) => c.url.endsWith("/api/v1/bots"))!.init!.body as string);
     expect(sent.transcription_settings).toEqual({ meeting_closed_captions: { google_meet_language: "ja-JP", merge_consecutive_captions: true } });
+    expect(sent.webhooks).toEqual(expect.arrayContaining([expect.objectContaining({ triggers: ["transcript.update"] })]));
   });
 });
 
