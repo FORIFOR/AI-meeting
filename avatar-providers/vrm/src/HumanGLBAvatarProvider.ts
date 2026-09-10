@@ -45,6 +45,18 @@ export class HumanGLBAvatarProvider extends MotionStackAvatarBase {
       if (!this.faces.some(mesh => mesh.morphTargetDictionary?.jawOpen !== undefined || mesh.morphTargetDictionary?.viseme_aa !== undefined)) {
         throw new Error("BLOCKED_BY_GLB_RIG: model needs jawOpen or viseme_aa facial morph targets");
       }
+      // Relax the exported A/T pose in world space, independent of the rig's local axes.
+      gltf.scene.updateMatrixWorld(true);
+      for (const side of ["Left", "Right"]) {
+        const arm = gltf.scene.getObjectByName(`${side}Arm`);
+        const elbow = gltf.scene.getObjectByName(`${side}ForeArm`);
+        if (!arm?.parent || !elbow) continue;
+        const direction = elbow.getWorldPosition(new THREE.Vector3()).sub(arm.getWorldPosition(new THREE.Vector3())).normalize();
+        const delta = new THREE.Quaternion().setFromUnitVectors(direction, new THREE.Vector3(0, -1, 0.05).normalize());
+        const parent = arm.parent.getWorldQuaternion(new THREE.Quaternion());
+        arm.quaternion.premultiply(parent.clone().invert().multiply(delta).multiply(parent));
+      }
+      gltf.scene.updateMatrixWorld(true);
       if (this.head) this.headRest.copy(this.head.rotation);
       this.scene.add(gltf.scene);
       this.scene.add(new THREE.HemisphereLight(0xffffff, 0x777777, 2));
@@ -57,7 +69,11 @@ export class HumanGLBAvatarProvider extends MotionStackAvatarBase {
       const center = bounds.getCenter(new THREE.Vector3());
       const size = bounds.getSize(new THREE.Vector3());
       const extent = Math.max(size.x, size.y, size.z, 0.1);
-      this.camera.position.set(center.x, center.y, center.z + extent * 2.2);
+      if (this.head) {
+        const head = this.head.getWorldPosition(new THREE.Vector3());
+        center.set(head.x, head.y - size.y * 0.12, head.z);
+      }
+      this.camera.position.set(center.x, center.y, center.z + extent * (this.head ? 1.1 : 2.2));
       this.camera.lookAt(center);
       this.resize();
       this.resizeObserver = new ResizeObserver(() => this.resize()); this.resizeObserver.observe(this.opts.container);
@@ -66,7 +82,7 @@ export class HumanGLBAvatarProvider extends MotionStackAvatarBase {
 
   private resize(): void {
     const w = Math.max(1, this.opts.container.clientWidth), h = Math.max(1, this.opts.container.clientHeight);
-    const scale = Math.min(1, 960 / Math.max(w, h));
+    const scale = Math.min(1, 640 / Math.max(w, h));
     this.renderer?.setSize(Math.round(w * scale), Math.round(h * scale), false);
     if (this.renderer) Object.assign(this.renderer.domElement.style, { width: "100%", height: "100%", display: "block" });
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();

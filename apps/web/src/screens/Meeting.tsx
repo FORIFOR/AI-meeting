@@ -81,6 +81,7 @@ function meetingErrorMessage(value: string): string {
  */
 function BotAvatarFallback({ name, characterId }: { name: string; characterId?: string }) {
   const previewByCharacter: Record<string, string> = {
+    sora: "/avatar-fallbacks/sora.png",
     yui: "/avatar-fallbacks/yui.png",
     haru: "/avatar-fallbacks/haru.png",
     reina: "/avatar-fallbacks/reina.png",
@@ -495,7 +496,7 @@ export function Meeting(p: MeetingProps) {
           <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none", visibility: showRelayStage ? "visible" : "hidden" }} aria-hidden={!showRelayStage}>
             <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>参加中はここに表示されます</span></div>
           </div>
-          {!showRelayStage && <div className="meeting__stage-empty" role="status">{character && ["yui", "haru", "reina"].includes(character.id) && <img src={`/avatar-fallbacks/${character.id}.png`} alt={`${displayName}のプレビュー`} />}<span>{displayName} · 参加前のプレビュー</span></div>}
+          {!showRelayStage && <div className="meeting__stage-empty" role="status">{character && ["yui", "haru", "reina", "sora"].includes(character.id) && <img src={`/avatar-fallbacks/${character.id}.png`} alt={`${displayName}のプレビュー`} />}<span>{displayName} · 参加前のプレビュー</span></div>}
         </div>
         <details className="meeting-diagnostics"><summary>接続状況の詳細</summary><ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul></details>
         <h3>会議の文字起こし</h3>

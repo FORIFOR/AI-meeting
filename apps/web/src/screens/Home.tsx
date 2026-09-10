@@ -53,7 +53,7 @@ export function Home(p: HomeProps) {
   const items = PRODUCTS.filter((x) => available.has(x.mode));
   const offline = !p.broker && !p.agent;
   const [meetingUrl, setMeetingUrl] = useState("");
-  const portrait = character && ["yui", "haru", "reina"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
+  const portrait = character && ["yui", "haru", "reina", "sora"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
   return (
     <main className="home workspace-home">
       <section className="workspace-welcome">

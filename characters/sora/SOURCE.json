@@ -1,0 +1,9 @@
+{
+  "url": "https://raw.githubusercontent.com/met4citizen/TalkingHead/eed58d198076a7e1e825f804802921c4d3804d46/avatars/mpfb.glb",
+  "revision": "eed58d198076a7e1e825f804802921c4d3804d46",
+  "sha256": "63c645a2a863b9972e9a9c2ed576a1de4c390b8475508e1473e69c87a3ee299c",
+  "license": "CC0-1.0",
+  "licenseSource": "https://github.com/met4citizen/TalkingHead/blob/eed58d198076a7e1e825f804802921c4d3804d46/README.md",
+  "distributedSha256": "102094db8663a074b227a83bbb3a4425cf77b50112446e56fa80762967bae58d",
+  "modifications": "Retained runtime facial targets; limited textures to 1024px; re-exported as GLB."
+}

@@ -67,6 +67,12 @@ export const characters: CharacterEntry[] = [
     defaultPersona: "interviewer",
     description: "冷静でフォーマル。面接官・キャリア相談向け。",
   },
+  {
+    id: "sora", name: "Sora", renderer: "human-glb", baseUrl: "/characters/sora",
+    aliases: ["そら", "ソラ"], license: "MPFB sample by met4citizen — CC0-1.0",
+    defaultPersona: "friendly", description: "3Dの会話パートナー。試験提供。",
+  },
+
 ];
 
 export function getCharacter(id: string): CharacterEntry | undefined {

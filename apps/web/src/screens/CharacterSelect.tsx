@@ -6,6 +6,7 @@ import { loadCharacter } from "@rcai/avatar-core";
 import type { Settings, SettingsAction } from "../state/settings.js";
 
 const PERSONALITY: Record<string, string> = {
+  sora: "3Dの会話パートナー · 日本語 / English · 試験提供",
   yui: "明るく親しみやすい · 日本語 / English",
   haru: "落ち着いていて聞き上手 · 日本語",
   reina: "きびきびと率直 · 日本語",
