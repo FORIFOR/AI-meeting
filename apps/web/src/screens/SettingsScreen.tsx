@@ -1,3 +1,4 @@
+import { LocalSetup } from "../components/LocalSetup.js";
 import { useState } from "react";
 import type { ProviderId } from "@rcai/conversation-core";
 import type { AutoPolicy, EngineSelection, Role } from "@rcai/provider-core";
@@ -38,6 +39,7 @@ export function SettingsScreen({ settings, dispatch, availability, agentHealth, 
     <div className="page">
       <p className="page__eyebrow">設定</p>
       <h1 className="page__title">会話のしかた</h1>
+      <LocalSetup dispatch={dispatch} onReady={onBack} />
 
       <div className="group">
         <p className="group__title">会話</p>

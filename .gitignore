@@ -28,3 +28,5 @@ apps/web/public/mediapipe
 vendor/smart-turn
 vendor/supertonic
 .firebase/
+
+apps/desktop/src-tauri/resources/local-runtime/

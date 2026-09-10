@@ -7,7 +7,7 @@
     "devUrl": "http://localhost:5173",
     "frontendDist": "../../web/dist",
     "beforeDevCommand": "pnpm --filter @rcai/web dev",
-    "beforeBuildCommand": "pnpm --filter @rcai/web build"
+    "beforeBuildCommand": "node ../../scripts/build-local-runtime.mjs && pnpm --filter @rcai/web build"
   },
   "app": {
     "windows": [
@@ -36,6 +36,9 @@
       "entitlements": "Entitlements.plist",
       "minimumSystemVersion": "12.0",
       "signingIdentity": "Developer ID Application: Shuhei Horio (6RR7572ZLU)"
+    },
+    "resources": {
+      "resources/local-runtime/": "local-runtime/"
     }
   }
 }

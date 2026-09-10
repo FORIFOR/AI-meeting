@@ -67,3 +67,6 @@ body { background: var(--workspace-bg); }
 .companion-feature__portrait, .meeting__stage-empty { background:#f6f1ea; }
 .meeting__stage-empty img { mix-blend-mode:normal; }
 .meeting .credit-progress > span { background:var(--workspace-accent); }
+.local-setup { padding:28px; border:1px solid var(--workspace-line); border-radius:20px; background:#fff; margin-bottom:32px; max-width:760px; }
+.local-setup h2 { font-size:24px; margin:8px 0; }.local-setup p { font-size:14px; }.local-setup .hint { font-size:12px; color:var(--workspace-muted); }.local-setup .select { width:100%; white-space:normal; }.local-setup label { display:block; font-size:13px; margin:14px 0 8px; }.local-setup__spec { color:var(--workspace-muted); font-size:13px; }.local-setup__steps { display:flex; flex-wrap:wrap; padding:0; list-style:none; gap:8px; }.local-setup__steps li { background:#f2f2f7; color:#676a7f; padding:6px 10px; border-radius:20px; font-size:12px; }.local-setup__steps .is-current { color:#5042bb; background:#efedfc; }.local-setup progress { width:80%; accent-color:var(--workspace-accent); }.local-setup .actions { flex-wrap:wrap; }.local-setup details { font-size:12px; }
+@media(max-width:600px){.local-setup{padding:18px}.local-setup .select{font-size:12px}}
