@@ -342,3 +342,17 @@ describe("a turn taken before the words arrive", () => {
     expect(p.addressedBy?.text).toBe("今日は雨がひどかったですね");
   });
 });
+
+
+it("native audio turns continue across exchanges without a transcript, but require fresh speech", () => {
+  const policy = new ParticipationPolicy({ names: ["Yui"], proactivity: "addressed_only" });
+  expect(policy.acceptSelfTurn(1000, true)).toBe(false);
+  for (let i = 1; i <= 5; i++) {
+    const now = i * 10000;
+    policy.onSpeechActivity(true, now);
+    expect(policy.acceptSelfTurn(now + 1000, true)).toBe(true);
+    policy.markResponding(now + 1000);
+    policy.onAssistantDone(now + 2000);
+    expect(policy.acceptSelfTurn(now + 3000, true)).toBe(false);
+  }
+});

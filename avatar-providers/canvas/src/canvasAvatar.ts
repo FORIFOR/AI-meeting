@@ -10,6 +10,7 @@ export interface CanvasAvatarOptions extends MotionStackAvatarOptions {
   characterId?: string;
   /** Prefer the bundled character artwork over the generic diagnostic face. */
   staticPreview?: boolean;
+  framing?: "default" | "meeting" | "preview";
 }
 
 /**
@@ -83,7 +84,7 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
     if (this.staticPreview) {
-      drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label);
+      drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label, this.opts.framing === "meeting", this.characterId);
       return;
     }
     drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, label: this.label, state: this.state });
@@ -99,21 +100,29 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
 }
 
 /** Draws a bundled preview without ever flashing the generic diagnostic face in a meeting tile. */
-function drawPreview(ctx: CanvasRenderingContext2D, w: number, h: number, image: HTMLImageElement | null, name: string, label: string): void {
+function drawPreview(ctx: CanvasRenderingContext2D, w: number, h: number, image: HTMLImageElement | null, name: string, label: string, meeting = false, characterId?: string): void {
   if (!image) return;
   ctx.save();
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = "#f3f0ea";
   ctx.fillRect(0, 0, w, h);
-  const scale = Math.min(w / image.naturalWidth, h / image.naturalHeight);
-  const dw = image.naturalWidth * scale;
-  const dh = image.naturalHeight * scale;
-  ctx.drawImage(image, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  const crop = previewCrop(image.naturalWidth, image.naturalHeight, meeting, characterId);
+  const scale = Math.min(w / crop.width, h / crop.height);
+  const dw = crop.width * scale;
+  const dh = crop.height * scale;
+  ctx.drawImage(image, 0, crop.top, crop.width, crop.height, (w - dw) / 2, (h - dh) / 2, dw, dh);
   ctx.fillStyle = "rgba(0,0,0,0.58)";
   ctx.font = "16px system-ui, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText(`${label || name} · AIミーティング`, 16, h - 16);
   ctx.restore();
+}
+
+/** The bundled Yui portrait includes blank space above the head; meeting tiles show a bust. */
+export function previewCrop(width: number, height: number, meeting: boolean, characterId?: string) {
+  return meeting && characterId === "yui"
+    ? { width, top: height * 0.30, height: height * 0.60 }
+    : { width, top: 0, height };
 }
 
 export interface DrawStyle {

@@ -390,6 +390,39 @@ describe("an answer the provider decided to give", () => {
     await c.leave();
   });
 
+  it("delivers a native Gemini answer without any transcription or duplicate text turn", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    // Real room speech was detected, but no caption / Gemini transcription arrived.
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    expect(sendText).not.toHaveBeenCalled();
+    emit({ type: "assistant_speech_ended" });
+    c.reportHostMute(true);
+    outboundAudio.mockClear();
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).not.toHaveBeenCalled();
+    await c.leave();
+  });
+
+  it("does not send a second text request when captions address continuous Gemini", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    meetingEmit({ type: "transcript", text: "Yui、聞こえますか？", final: true, speakerName: "田中", participantId: "p1" });
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(sendText).not.toHaveBeenCalled();
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
+    await c.leave();
+  });
+
   it("accepts a late Gemini address without sending a duplicate prompt", async () => {
     const c = botPage("bot", "addressed_only", "google");
     await c.start();

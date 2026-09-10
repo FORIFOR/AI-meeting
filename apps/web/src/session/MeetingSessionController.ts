@@ -305,9 +305,9 @@ export class MeetingSessionController {
           console.log("[rcai:bot] turn", JSON.stringify(turn));
           this.report("turn", turn);
         }
-        // A turn the provider took on its own is already being spoken; asking for it again would
-        // answer twice.
-        if (t.reason !== SELF_TURN_REASON && !this.providerTranscriptTurn) void this.answer();
+        // Continuous Gemini receives the question in audio; captions must not submit it again.
+        // Only the arrival greeting needs an explicit prompt. Observer/local paths still use text.
+        if (t.reason !== SELF_TURN_REASON && !this.providerTranscriptTurn && (!this.nativeAudioTurns || t.reason === "joined the meeting")) void this.answer();
       }
       /**
        * The character's face follows the conversation, not only the audio. Being spoken to and
@@ -578,6 +578,7 @@ export class MeetingSessionController {
           framing: this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default"),
           ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
           preferCanvas: true,
+          staticPreview: true,
         });
         await avatar.prepare(def);
         this.avatar = avatar;
@@ -737,6 +738,11 @@ export class MeetingSessionController {
     const s = this.session as (MeetingSession & { setAudioMuted?(m: boolean): void }) | null;
     if (s?.setAudioMuted) s.setAudioMuted(muted);
     else this.setMuted(muted);
+  }
+
+  /** Gemini owns turn-taking while it receives the room audio continuously. */
+  private get nativeAudioTurns(): boolean {
+    return this.decision.conversation === "google" && !this.hasExternalTranscripts;
   }
 
   /** Gate audio only when an independent transcript path was configured for this meeting. */
@@ -1157,7 +1163,7 @@ export class MeetingSessionController {
         // A provider that does its own turn-taking beats the policy's timer to the same conclusion in
         // a one-to-one: adopt its turn instead of cutting the only answer the character gives.
         this.answers++;
-        if (!this.sanctioned) this.policy.acceptSelfTurn(now);
+        if (!this.sanctioned && this.outboundAllowed) this.policy.acceptSelfTurn(now, this.nativeAudioTurns);
         if (!this.sanctioned) {
           this.cut("unsanctioned");
           break;

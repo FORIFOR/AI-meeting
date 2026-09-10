@@ -164,9 +164,9 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
   if (renderer === "live2d" && o.preferCanvas) {
     const mod = await import("@rcai/avatar-canvas");
-    const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+    const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
     const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
-    return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
+    return new C({ container: o.container, framing: o.framing, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
   }
   if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
     /**
@@ -177,9 +177,9 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
      */
     if (renderer === "live2d") {
       const mod = await import("@rcai/avatar-canvas");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
       const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
-      return new C({ container: o.container, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
+      return new C({ container: o.container, framing: o.framing, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
     }
     throw new Error(`BLOCKED_BY_NO_WEBGL: ${renderer} needs a WebGL context and this browser has none (a meeting vendor's page browser may run with --disable-gpu)`);
   }
@@ -191,8 +191,8 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
     }
     case "canvas": {
       const mod = await import("@rcai/avatar-canvas");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
-      return new C({ container: o.container });
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      return new C({ container: o.container, framing: o.framing, characterId: o.characterId, staticPreview: o.staticPreview, label: o.characterName });
     }
     case "vrm": {
       const mod = await import("@rcai/avatar-vrm");

@@ -232,7 +232,7 @@ export function Meeting(p: MeetingProps) {
         botActivation: isBot && activation ? activation : undefined,
         voiceId: isBot ? botConfig?.voice : selectedVoice || undefined,
         outboundPath: (isBot ? botConfig?.outbound : undefined) === "page" ? "page" : "socket",
-        framing: isBot ? (botConfig?.framing === "default" ? "default" : "meeting") : "default",
+        framing: isBot && botConfig?.framing === "default" ? "default" : "meeting",
         avatarFps: isBot && Number(botConfig?.fps) > 0 ? Number(botConfig?.fps) : undefined,
         vision: (isBot ? botConfig?.vision : vision) === "model",
         visualCues: (isBot ? botConfig?.vision : vision) !== "off",
