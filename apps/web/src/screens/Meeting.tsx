@@ -422,7 +422,7 @@ export function Meeting(p: MeetingProps) {
           {joined ? (
             <div className="meeting__active-status" role="status" aria-live="polite">
               <span className="meeting__active-dot" aria-hidden="true" />
-              <span><strong>会議に参加中</strong><small>{displayName} が会議を見守っています</small></span>
+              <span><strong>会議に参加中</strong><small>{(proactivity ?? defaultProactivityFor({ personaId: persona?.id, mode: persona?.mode })) === "addressed_only" ? `「${displayName}、聞こえますか？」と会議で呼びかけてください` : `${displayName} が会議を聞いています`}</small></span>
             </div>
           ) : (
             <>

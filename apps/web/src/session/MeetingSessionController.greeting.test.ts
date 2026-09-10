@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 const sendText = vi.fn(async () => {});
 const connect = vi.fn(async (_config: unknown) => {});
+const outboundAudio = vi.fn();
+const transcriptShown = vi.fn();
 const providerInterrupt = vi.fn(async () => {});
 /** What the page sent back for a `tool_call`. */
 const toolResponses: { id?: string; name: string; response: Record<string, unknown> }[][] = [];
@@ -44,7 +46,7 @@ vi.mock("../integrations/registry.js", () => ({
   // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
   createMeetingConnector: async () => ({
     async join() {
-      return { id: "bot_test", status: () => "in_call", onEvent(cb: (e: unknown) => void) { meetingListeners.push(cb); }, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+      return { id: "bot_test", status: () => "in_call", onEvent(cb: (e: unknown) => void) { meetingListeners.push(cb); }, pushOutboundAudio: outboundAudio, async endOutboundUtterance() {}, async leave() {}, close() {} };
     },
   }),
 }));
@@ -52,7 +54,7 @@ vi.mock("../integrations/registry.js", () => ({
 vi.mock("@rcai/connector-attendee", () => ({
   AttendeeConnector: class {
     attach() {
-      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio: outboundAudio, async endOutboundUtterance() {}, async leave() {}, close() {} };
     }
   },
 }));
@@ -80,7 +82,7 @@ function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only"
     stage: null as unknown as HTMLElement,
     botActivation: { sessionId: "s", botId: "bot_test", clientToken: "ct" },
     attendeeAttach: { botId: "bot_test", clientWsUrl: "ws://localhost:1/relay" },
-    handlers: { onStatus() {}, onTranscript() {}, onPolicy() {}, onError() {} },
+    handlers: { onStatus() {}, onTranscript: transcriptShown, onPolicy() {}, onError() {} },
   });
 }
 
@@ -89,8 +91,33 @@ const frame = () => ({ data: new Float32Array(480), sampleRate: 48000, channels:
 const loud = () => ({ data: Float32Array.from({ length: 480 }, (_, i) => (i % 2 ? 0.3 : -0.3)), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
 
 describe("greeting on arrival", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
+
+  it("Attendee operator greets once and forwards a named reply, hiding unsanctioned drafts", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_ended" });
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_transcript", text: "uninvited draft", final: true });
+    expect(transcriptShown.mock.calls.some(([line]) => line.text === "uninvited draft")).toBe(false);
+    c.onMeetingTranscript("Yui、聞こえますか？", true, "Tester", "p1");
+    await vi.advanceTimersByTimeAsync(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(2);
+    await c.leave();
+  });
 
   it("the caption observer wakes Live only on an address and supplies an older task quote", async () => {
     const c = botPage("bot", "addressed_only", "google", "captions");
@@ -334,7 +361,7 @@ describe("greeting on arrival", () => {
  * answered none of them — every reply it began was cut for being unsanctioned.
  */
 describe("an answer the provider decided to give", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
 
   it("is spoken in a one-to-one, and not asked for a second time", async () => {
@@ -380,7 +407,7 @@ describe("an answer the provider decided to give", () => {
  * page runs it against the broker and hands back only what came back.
  */
 describe("the character looking up what is true right now", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; toolResponses.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; toolResponses.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   it("runs the lookup and answers the model with the facts", async () => {

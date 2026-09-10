@@ -773,13 +773,13 @@ export class MeetingSessionController {
      * vendor's "in_call" arrives when the audio socket opens, which on a bot page is before anyone has
      * admitted it. Greet once, a beat later, so the first thing the room hears is not the character
      * speaking over the click of the admit button. Bot role only: an operator page's first frame is
-     * the operator's own microphone.
+     * the operator's own microphone, except Attendee relay operators, which receive room audio.
      *
      * Not before the AI is connected, though. Admission can land while `startPipeline` is still
      * opening the agent socket, and a greeting sent then is dropped on the floor (Gate #8 run 9);
      * the frames keep coming, so the greeting simply waits for the first one after the connection.
      */
-    if (this.init.role === "bot" && !this.greeted && this.runtimeReady && this.outboundAllowed) {
+    if ((this.init.role === "bot" || this.init.meetingProvider === "attendee") && !this.greeted && this.runtimeReady && this.outboundAllowed) {
       this.greeted = true;
       setTimeout(() => {
         const now = this.policy.onJoined(Date.now());
@@ -1196,7 +1196,7 @@ export class MeetingSessionController {
       case "assistant_transcript":
         // Phrases arrive as partials while they play; the final carries the whole reply and replaces them.
         if (this.sanctioned) this.spokeText = e.final !== false ? e.text : this.spokeText + e.text;
-        if (e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
+        if (this.sanctioned && e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
         break;
       case "assistant_speech_ended":
         void this.session?.endOutboundUtterance?.();
@@ -1328,8 +1328,8 @@ export class MeetingSessionController {
   /** Stop whatever the character is saying, and tell the broker why (a bot's log is all we get from a room). */
   private cut(reason: string): void {
     this.cuts++;
+    console.log("[rcai:bot] cut", JSON.stringify({ reason, state: this.policy.state, sanctioned: this.sanctioned, proactivity: this.init.proactivity }));
     if (this.init.role === "bot") {
-      console.log("[rcai:bot] cut", JSON.stringify({ reason, state: this.policy.state, sanctioned: this.sanctioned }));
       this.report("cut", { reason, state: this.policy.state, sanctioned: this.sanctioned });
     }
     void this.runtime?.interrupt();

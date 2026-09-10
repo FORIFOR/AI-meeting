@@ -22,7 +22,7 @@ it("moves keyboard focus to the completed receipt without taking focus again on 
     const details = host.querySelector('summary')!; details.focus();
     await act(async () => root.render(<MeetingUsageSummary receipt={receipt} aiUsage={{ pricedTurns: 1, estimatedMicroUsd: 1000 }} />));
     expect(document.activeElement).toBe(details);
-    expect(host.textContent).toContain('確認できた応答：1件');
+    expect(host.textContent).toContain('AI処理の集計：1件');
     expect(host.textContent).not.toContain('$');
   } finally { await act(async () => root.unmount()); host.remove(); }
 });
