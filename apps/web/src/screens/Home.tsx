@@ -69,7 +69,7 @@ export function Home(p: HomeProps) {
             <strong>{character?.name ?? "準備中"}</strong>
             <span>{character ? RENDERER_JA[character.renderer] : "準備中"} · {blocked ? "接続を確認中" : "いつでも話せます"}</span>
           </div>
-          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>詳細を見る</button>
+          <button type="button" className="btn btn--ghost home__change" onClick={p.onCharacter}>相手を変更</button>
         </aside>
       </section>
 
@@ -86,11 +86,11 @@ export function Home(p: HomeProps) {
         </section>
       )}
 
-      <section className="home__setup" aria-label="会話を準備">
+      <section className="home__setup" aria-label="会議以外の使い方">
         <div className="home__section-head">
           <div>
-            <p className="home__step">STEP 1</p>
-            <h2>話す相手</h2>
+            <p className="home__step">会議以外</p>
+            <h2>1対1で使う</h2>
           </div>
           <label className="sr-only" htmlFor="home-character">話す相手を選択</label>
           <select id="home-character" className="select home__character-select" value={character?.id ?? ""} onChange={e => p.dispatch({ type: "character", id: e.target.value })}>

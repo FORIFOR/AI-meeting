@@ -291,7 +291,11 @@ export function Meeting(p: MeetingProps) {
         </div>
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
-        <div className="field"><label>会議の URL</label><input className="input" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} /></div>
+        <div className="field meeting__url-field">
+          <label htmlFor="meeting-url">最初に、会議のURLを貼り付けてください</label>
+          <input id="meeting-url" className="input" type="url" inputMode="url" autoComplete="url" spellCheck={false} aria-describedby="meeting-url-hint" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} />
+          <p id="meeting-url-hint" className="hint">Google Meet・Zoomの招待リンクに対応しています。</p>
+        </div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
         <details><summary>残りのクレジットを確認</summary><CreditBalance enabled={!strict} /></details>
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>

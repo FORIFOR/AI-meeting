@@ -198,7 +198,7 @@ export function App() {
         />
       )}
       {screen.name === "meeting" && (
-        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen(botParams ? { name: "home" } : { name: "meetings" })} />
+        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
       )}
       {screen.name === "meetings" && (
         <Meetings
