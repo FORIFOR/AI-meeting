@@ -149,6 +149,7 @@ export function App() {
 
   const inSession = screen.name === "session" || (screen.name === "meeting" && !!botParams);
   const brokerMeeting = broker?.meeting ?? null;
+  const [meetingDraft, setMeetingDraft] = useState("");
   return (
     <div className="app">
       <ZoomReturn onDone={() => setScreen({ name: "meeting" })} />
@@ -158,7 +159,12 @@ export function App() {
             <span className="brand__mark">AIミーティング</span>
             <span className="brand__sub">Realtime Character AI</span>
           </a>
-
+          <nav className="workspace-nav" aria-label="メインメニュー">
+            <button aria-current={screen.name === "home" ? "page" : undefined} onClick={() => setScreen({ name: "home" })}>ホーム</button>
+            <button aria-current={screen.name === "meeting" ? "page" : undefined} onClick={() => setScreen({ name: "meeting" })}>会議</button>
+            <button aria-current={screen.name === "meetings" ? "page" : undefined} onClick={() => setScreen({ name: "meetings" })}>会議の履歴</button>
+            <button aria-current={screen.name === "settings" ? "page" : undefined} onClick={() => setScreen({ name: "settings" })}>設定</button>
+          </nav>
         </header>
       )}
       {screen.name === "home" && (
@@ -174,7 +180,7 @@ export function App() {
           onContinue={onContinue}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
-          onMeeting={() => setScreen({ name: "meeting" })}
+          onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
         />
       )}
       {screen.name === "settings" && (
@@ -198,7 +204,7 @@ export function App() {
         />
       )}
       {screen.name === "meeting" && (
-        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
+        <Meeting initialUrl={meetingDraft} settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
       )}
       {screen.name === "meetings" && (
         <Meetings

@@ -18,6 +18,7 @@ import { pillFor } from "../session/pill.js";
 import { meetingPlatform } from "@rcai/conversation-core";
 
 export interface MeetingProps {
+  initialUrl?: string;
   settings: Settings;
   availability: Availability | null;
   personas: Persona[];
@@ -100,7 +101,7 @@ export function Meeting(p: MeetingProps) {
   const [usageReceipt, setUsageReceipt] = useState<MeetingUsageReceipt | null>(null);
   const [aiUsage, setAiUsage] = useState<Record<string, number> | null>(null);
   const [observeWithCaptions, setObserveWithCaptions] = useState(false);
-  const [url, setUrl] = useState(() => { try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
+  const [url, setUrl] = useState(() => { if (p.initialUrl) return p.initialUrl; try { const saved = sessionStorage.getItem("rcai.zoom.meeting") ?? ""; sessionStorage.removeItem("rcai.zoom.meeting"); return saved; } catch { return ""; } });
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState(p.settings.characterId);
   const [voices, setVoices] = useState<Record<string, string>>({});
@@ -410,9 +411,9 @@ export function Meeting(p: MeetingProps) {
     <div className="page meeting">
       <div>
         <div>
-          <div className="page__eyebrow">同席</div>
+          <div className="page__eyebrow">MEETING ROOM</div>
           <h1 className="page__title">会議に参加</h1>
-          <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。相手・用途・声を選んで、参加してください。</p>
+          <p className="page__lede">{displayName}と一緒に、会話に集中できる時間を。招待リンクと設定を確認して、会議を始めましょう。</p>
         </div>
         {connectorPending && <p className="hint" role="status">会議サービスを確認しています…</p>}
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
@@ -433,7 +434,7 @@ export function Meeting(p: MeetingProps) {
           )}
         </div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
-        <details><summary>残りのクレジットを確認</summary><CreditBalance enabled={!strict} /></details>
+        <CreditBalance enabled={!strict} />
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
             {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker ?? null, strict)}>{c.name}{blockedReason(c, p.broker ?? null, strict) ? "（準備中）" : ""}</option>)}
@@ -441,7 +442,7 @@ export function Meeting(p: MeetingProps) {
         </div>
         <div className="field"><label htmlFor="meeting-purpose">2. やりたいこと</label>
           <select id="meeting-purpose" className="select" value={persona?.id ?? ""} onChange={(e) => setPersonaId(e.target.value)} disabled={joined}>
-            {p.personas.map((x) => <option key={x.id} value={x.id}>{PRODUCTS.find(p => p.mode === x.mode)?.name ?? "会議"} · {purposeLabel(x.name)}</option>)}
+            {p.personas.map((x) => <option key={x.id} value={x.id}>{x.id === MEETING_PERSONA_ID ? "会議サポート" : PRODUCTS.find(p => p.mode === x.mode)?.name ?? "会議"} · {purposeLabel(x.name)}</option>)}
           </select>
         </div>
         <div className="field"><label htmlFor="meeting-voice">3. 声を選ぶ</label>
@@ -486,7 +487,7 @@ export function Meeting(p: MeetingProps) {
             <button type="button" className="btn btn--primary btn--lg" disabled={busy || !normalizeMeetingUrlInput(url) || !!urlError || !!blocked || connectorPending || !meetingProvider || !character} onClick={() => void start("operator")}>参加する</button>
           ) : (
             <>
-              <button type="button" className="btn btn--ghost" onClick={() => ctrl.current?.hush()}>黙らせる</button>
+              <button type="button" className="btn btn--ghost" onClick={() => ctrl.current?.hush()}>発話を止める</button>
               <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void leave()}>退出する</button>
             </>
           )}
@@ -494,16 +495,17 @@ export function Meeting(p: MeetingProps) {
         {error && <p className="err" role="alert">{error}</p>}
       </div>
       <div className="meeting__side">
-        <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""}{showPolicy ? ` · ${POLICY_JA[policy]}` : ""}{ctrl.current?.botId ? ` · ${ctrl.current.botId}` : ""}</small></h3>
+        <h3 className="meeting-status-title">会議パートナー <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""}{showPolicy ? ` · ${POLICY_JA[policy]}` : ""}</small></h3>
         <div className="meeting__stage-wrap">
           <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none", visibility: showRelayStage ? "visible" : "hidden" }} aria-hidden={!showRelayStage}>
             <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>参加中はここに表示されます</span></div>
           </div>
-          {!showRelayStage && <div className="meeting__stage-empty" role="status">参加すると、{displayName} がここに表示されます</div>}
+          {!showRelayStage && <div className="meeting__stage-empty" role="status">{character && ["yui", "haru", "reina"].includes(character.id) && <img src={`/avatar-fallbacks/${character.id}.png`} alt={`${displayName}のプレビュー`} />}<span>{displayName} · 参加前のプレビュー</span></div>}
         </div>
-        <ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul>
+        <details className="meeting-diagnostics"><summary>接続状況の詳細</summary><ul className="timeline">{timeline.map((t, i) => <li key={i}><span className="mono">{(t.at / 1000).toFixed(1)}s</span> {t.text}</li>)}</ul></details>
         <h3>会議の文字起こし</h3>
-        <div className="captions captions--list">
+        <div className="captions captions--list" role="log" aria-label="会議の文字起こし">
+          {!lines.length && <p className="caption-empty">会話が始まると、ここに文字起こしが表示されます。</p>}
           {lines.map((l) => (
             <div key={l.id} className={`caption ${l.self ? "caption--assistant" : "caption--user"} ${l.final ? "" : "caption--partial"}`}>
               <span className="caption__who">{l.speaker}</span> {l.text}
