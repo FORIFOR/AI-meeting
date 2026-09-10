@@ -15,6 +15,7 @@ import type { CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
 import { MeetingSessionController, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
 import { pillFor } from "../session/pill.js";
+import { meetingPlatform } from "@rcai/conversation-core";
 
 export interface MeetingProps {
   settings: Settings;
@@ -32,6 +33,45 @@ const STATUS_JA: Record<MeetingStatus, string> = {
   created: "作成済み", joining: "参加中…", waiting_room: "待機室（承認待ち）", in_call_not_recording: "入室（音声待ち）", in_call: "会議に参加中", reconnecting: "再接続中…", leaving: "退出中", left: "退出しました", denied: "入室が拒否されました", removed: "ホストに退出させられました", ended: "会議が終了しました", failed: "失敗",
 };
 const POLICY_JA: Record<ParticipationState, string> = { OBSERVING: "見守り中", LISTENING: "聞いています", ADDRESSED: "呼ばれました", RESPONDING: "返答中" };
+
+/** Keep pasted links usable when they include a trailing newline or surrounding spaces. */
+export function normalizeMeetingUrlInput(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  try {
+    return new URL(trimmed).href;
+  } catch {
+    return trimmed;
+  }
+}
+
+/** The operator must wait for the broker probe instead of falling back to the unavailable Recall connector. */
+export function resolveMeetingProvider(meeting: MeetingProps["brokerMeeting"]): "attendee" | "recall" | null {
+  if (!meeting) return null;
+  if (meeting.attendee) return "attendee";
+  if (meeting.recall) return "recall";
+  return null;
+}
+
+function meetingUrlHint(value: string): string | null {
+  const normalized = normalizeMeetingUrlInput(value);
+  if (!normalized) return null;
+  const platform = meetingPlatform(normalized);
+  return platform ? null : "Google Meet または Zoom の招待リンクを入力してください。URLの前後に説明文は入れず、そのまま貼り付けてください。";
+}
+
+function meetingErrorMessage(value: string): string {
+  const code = value.split(":", 1)[0] ?? value;
+  const messages: Record<string, string> = {
+    PLATFORM_NOT_RELEASED: "Google Meet または Zoom の招待リンクを確認してください。対応していないURLです。",
+    DUPLICATE_JOIN: "この会議にはすでに参加しています。先に退出してから、もう一度お試しください。",
+    BLOCKED_BY_ATTENDEE_KEY: "会議サービスの接続が準備中です。少し待ってからもう一度お試しください。",
+    BLOCKED_BY_ATTENDEE_CREDIT: "会議サービスの残高が不足しているため、参加できません。",
+    BLOCKED_BY_RECALL_KEY: "会議サービスの接続が準備中です。少し待ってからもう一度お試しください。",
+    BLOCKED_BY_RECALL_PUBLIC_URL: "会議サービスの公開接続が準備中です。管理者にお問い合わせください。",
+  };
+  return messages[code] ?? value;
+}
 
 /** P0-1: join a Google Meet / Zoom as the character. Operator view + bot-page view share one controller. */
 export function Meeting(p: MeetingProps) {
@@ -98,12 +138,36 @@ export function Meeting(p: MeetingProps) {
   const selectedVoice = voices[voiceKey] ?? chosenVoice(p.settings, character?.id, selectedProvider) ?? "";
   const voiceOptions = VOICE_OPTIONS[selectedProvider];
   const strict = p.settings.privacyMode === "strict_local";
-  const blocked = strict ? "BLOCKED_BY_STRICT_LOCAL" : p.brokerMeeting && !(p.brokerMeeting.recall || p.brokerMeeting.attendee) ? "BLOCKED_BY_RECALL_KEY" : p.brokerMeeting && !p.brokerMeeting.recallPublicUrl ? "BLOCKED_BY_RECALL_PUBLIC_URL" : null;
+  const meetingProvider = isBot ? (botConfig?.provider === "attendee" ? "attendee" : botConfig?.provider === "recall" ? "recall" : null) : resolveMeetingProvider(p.brokerMeeting);
+  const connectorPending = !isBot && p.brokerMeeting === null;
+  const blocked = strict
+    ? "BLOCKED_BY_STRICT_LOCAL"
+    : connectorPending
+      ? null
+      : !meetingProvider
+        ? "BLOCKED_BY_RECALL_KEY"
+        : p.brokerMeeting && !p.brokerMeeting.recallPublicUrl
+          ? "BLOCKED_BY_RECALL_PUBLIC_URL"
+          : null;
+  const urlError = meetingUrlHint(url);
 
   const note = (text: string) => setTimeline((t) => [...t.slice(-60), { at: Date.now() - t0.current, text }]);
 
   const start = async (role: "operator" | "bot") => {
     if (!character || !persona) return;
+    const meetingUrl = normalizeMeetingUrlInput(url);
+    if (!meetingUrl) {
+      setError("会議URLを入力してください。");
+      return;
+    }
+    if (!isBot && !meetingProvider) {
+      setError(connectorPending ? "会議サービスを確認しています。少し待ってから、もう一度参加してください。" : "会議サービスの接続が利用できません。管理者にお問い合わせください。");
+      return;
+    }
+    if (!meetingPlatform(meetingUrl)) {
+      setError(meetingUrlHint(meetingUrl) ?? "Google Meet または Zoom の招待リンクを入力してください。");
+      return;
+    }
     setBusy(true);
     setError(null);
     const attemptUsage = new MeetingUsageTracker();
@@ -123,7 +187,7 @@ export function Meeting(p: MeetingProps) {
         availability: (isBot ? botAvailability : p.availability) ?? { openai: false, google: false, local: false },
         persona,
         character,
-        meetingUrl: url,
+        meetingUrl,
         displayName,
         proactivity: (isBot ? (botConfig?.proactivity as Proactivity | undefined) : undefined) ?? proactivity ?? defaultProactivityFor({ personaId: persona?.id, mode: persona?.mode }),
         role,
@@ -139,7 +203,7 @@ export function Meeting(p: MeetingProps) {
         visualCues: (isBot ? botConfig?.vision : vision) !== "off",
         // Which vendor is carrying this call. The bot page learns it from its own URL; without it the
         // page cannot know that Attendee sends no transcripts and must listen for itself.
-        meetingProvider: (isBot ? botConfig?.provider : p.brokerMeeting?.attendee ? "attendee" : undefined) === "attendee" ? "attendee" : undefined,
+        meetingProvider: meetingProvider === "attendee" ? "attendee" : meetingProvider === "recall" ? "recall" : undefined,
         connectorMode: mode,
         stage: role === "bot" || mode === "relay" ? stage.current : null,
         // Attendee runs this page as its voice agent: meeting audio arrives on the broker relay rather
@@ -202,8 +266,10 @@ export function Meeting(p: MeetingProps) {
       await c.start();
       if (isBot) console.log("[rcai:bot] started", c.providerId);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      note(`error ${e instanceof Error ? e.message : String(e)}`);
+      const raw = e instanceof Error ? e.message : String(e);
+      const message = meetingErrorMessage(raw);
+      setError(message);
+      note(`error ${message}`);
     } finally {
       setBusy(false);
     }
@@ -289,12 +355,13 @@ export function Meeting(p: MeetingProps) {
           <h1 className="page__title">会議に参加</h1>
           <p className="page__lede">Google Meet / Zoom の URL を入れると、{displayName} が参加者として入室します。相手・用途・声を選んで、参加してください。</p>
         </div>
+        {connectorPending && <p className="hint" role="status">会議サービスを確認しています…</p>}
         {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
         <div className="field meeting__url-field">
           <label htmlFor="meeting-url">最初に、会議のURLを貼り付けてください</label>
           <input id="meeting-url" className="input" type="url" inputMode="url" autoComplete="url" spellCheck={false} aria-describedby="meeting-url-hint" placeholder="https://meet.google.com/xxx-xxxx-xxx" value={url} onChange={(e) => setUrl(e.target.value)} disabled={joined} />
-          <p id="meeting-url-hint" className="hint">Google Meet・Zoomの招待リンクに対応しています。</p>
+          <p id="meeting-url-hint" className={urlError ? "err" : "hint"}>{urlError ?? "Google Meet・Zoomの招待リンクに対応しています。前後に空白があっても自動で整えます。"}</p>
         </div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
         <details><summary>残りのクレジットを確認</summary><CreditBalance enabled={!strict} /></details>
@@ -347,7 +414,7 @@ export function Meeting(p: MeetingProps) {
         <div className="actions">
           <button type="button" className="btn btn--ghost" onClick={p.onBack} disabled={busy}>← 戻る</button>
           {!joined ? (
-            <button type="button" className="btn btn--primary btn--lg" disabled={busy || !url || !!blocked || !character} onClick={() => void start("operator")}>参加する</button>
+            <button type="button" className="btn btn--primary btn--lg" disabled={busy || !normalizeMeetingUrlInput(url) || !!urlError || !!blocked || connectorPending || !meetingProvider || !character} onClick={() => void start("operator")}>参加する</button>
           ) : (
             <>
               <button type="button" className="btn btn--ghost" onClick={() => ctrl.current?.hush()}>黙らせる</button>
@@ -355,7 +422,7 @@ export function Meeting(p: MeetingProps) {
             </>
           )}
         </div>
-        {error && <p className="err">{error}</p>}
+        {error && <p className="err" role="alert">{error}</p>}
       </div>
       <div className="meeting__side">
         <h3>状態 <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""} · {POLICY_JA[policy]} · {ctrl.current?.botId ?? ""}</small></h3>

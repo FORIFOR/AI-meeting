@@ -4,6 +4,8 @@ node_modules
 node_modules/**
 **/node_modules
 **/node_modules/**
+.pnpm-store
+.pnpm-store/**
 apps/web/dist/
 apps/web/public/
 vendor/

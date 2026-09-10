@@ -169,7 +169,7 @@ describe("meeting (Recall) routes", () => {
         return new Response("{}");
       }, calls),
     });
-    const created = await (await post(app, "/api/meeting/recall/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui", mode: "output_media", language: "ja-JP", botPageQuery: { character: "yui" } })).json();
+    const created = await (await post(app, "/api/meeting/recall/bots", { meetingUrl: "  https://meet.google.com/abc-defg-hij\n", botName: "Yui", mode: "output_media", language: "ja-JP", botPageQuery: { character: "yui" } })).json();
     expect(created).toMatchObject({ botId: "bot42", status: "joining_call", mode: "output_media", region: "ap-northeast-1" });
     expect(created.clientWsUrl).toMatch(/^ws:\/\/localhost:8787\/api\/meeting\/recall\/client\/bot42\?token=[A-Za-z0-9_%.-]+$/);
     expect(typeof created.sessionId).toBe("string");
@@ -558,7 +558,7 @@ describe("Attendee provider", () => {
       env: { ATTENDEE_API_KEY: "ak", RECALL_PUBLIC_URL: "https://tunnel.example", MEETING_TOKEN_SECRET: "s".repeat(64) },
       fetch: mockFetch(() => new Response(JSON.stringify({ id: "att_1", state: "joining" })), calls),
     });
-    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "https://meet.google.com/abc-defg-hij", botName: "Yui" });
+    const res = await post(app, "/api/meeting/attendee/bots", { meetingUrl: "  https://meet.google.com/abc-defg-hij\n", botName: "Yui" });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ provider: "attendee", botId: "att_1", sampleRate: 16000 });

@@ -90,12 +90,15 @@ export async function createAttendeeBot(
   fetchImpl: typeof fetch,
   deps: AttendeeDeps,
 ): Promise<RouteResult<Record<string, unknown>>> {
+  // Clipboard pastes often include a trailing newline. Normalize once at the broker boundary so the
+  // platform check, duplicate detection, vendor payload and durable record all use the same URL.
+  const meetingUrl = typeof body.meetingUrl === "string" ? body.meetingUrl.trim() : "";
   if (body.botPageQuery?.persona === "companion_ja" && !modeAvailable("companion", releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "MODE_NOT_RELEASED" } };
-  if (body.meetingUrl && !platformAvailable(body.meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
+  if (!meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
+  if (!platformAvailable(meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
   if (!env.ATTENDEE_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_ATTENDEE_KEY" } };
   const publicUrl = env.RECALL_PUBLIC_URL;
   if (!publicUrl) return { status: 503, body: { error: "BLOCKED_BY_PUBLIC_URL", detail: "Attendee needs a public wss endpoint to stream audio to" } };
-  if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
 
   const botName = body.botName ?? env.RECALL_BOT_NAME ?? "Yui";
   const role = body.role ?? "character";
@@ -106,7 +109,7 @@ export async function createAttendeeBot(
    * through the page, so its rate is a separate question.
    */
   const sampleRate = body.sampleRate ?? 16000;
-  const session = deps.sessions.create({ meetingUrl: body.meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
+  const session = deps.sessions.create({ meetingUrl, botName, mode: "relay", botPageQuery: { ...(body.botPageQuery ?? {}), provider: "attendee" } });
   const observing = body.botPageQuery?.observer === "captions";
   const observerToken = observing ? deps.sessions.issue(session.id, "observer", { brokerPublicUrl: publicUrl }) : null;
   const audioToken = deps.sessions.issue(session.id, "relay", { brokerPublicUrl: publicUrl });
@@ -117,7 +120,7 @@ export async function createAttendeeBot(
     ? `${env.RECALL_BOT_PAGE_URL!.replace(/\/$/, "")}/?${new URLSearchParams({ rcai_bot: "1", token: pageToken })}`
     : undefined;
 
-  const record = deps.store?.createIntent({ meetingUrl: body.meetingUrl, botName, source: "attendee" }) ?? null;
+  const record = deps.store?.createIntent({ meetingUrl, botName, source: "attendee" }) ?? null;
 
   /**
    * Per-speaker streams, on their own sockets because Attendee wants one URL per stream type.
@@ -136,7 +139,7 @@ export async function createAttendeeBot(
 
   const wsBase = publicWsBase(publicUrl);
   const payload: Record<string, unknown> = {
-    meeting_url: body.meetingUrl,
+    meeting_url: meetingUrl,
     bot_name: botName,
     websocket_settings: {
       audio: { url: `${wsBase}/api/meeting/attendee/audio/${encodeURIComponent(audioToken)}`, sample_rate: sampleRate },
@@ -175,7 +178,7 @@ export async function createAttendeeBot(
   };
   // Zoom's native SDK rejects voice-agent pages and meeting captions. Use the Web SDK
   // for both the character and its listener so they exercise the same meeting path.
-  const meetingHost = new URL(body.meetingUrl).hostname.toLowerCase();
+  const meetingHost = new URL(meetingUrl).hostname.toLowerCase();
   if (["zoom.us", "zoom.com"].some(domain => meetingHost === domain || meetingHost.endsWith(`.${domain}`))) {
     payload.zoom_settings = { sdk: "web", ...(deps.zoomUserId ? { onbehalf_token: { zoom_oauth_connection_user_id: deps.zoomUserId } } : {}) };
   }
