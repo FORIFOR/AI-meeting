@@ -141,22 +141,25 @@ export interface AvatarFactoryOptions {
 /** Renderers that cannot draw anything without a WebGL context. */
 const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm"];
 
-/**
- * Is there a WebGL context to be had in this browser?
- *
- * Not a theoretical question: a meeting vendor runs our page in its own Chrome, and Attendee's webpage
- * streamer launches it with `--disable-gpu` and no `--enable-unsafe-swiftshader`, which in current
- * Chrome means no WebGL at all — measured, both flag sets, in `docs/commercial-gate.md`. Without this
- * check the failure is a blank camera tile and a session that looks fine from every log we keep.
- */
-export function webglAvailable(): boolean {
-  if (typeof document === "undefined") return true;
-  try {
-    const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") ?? c.getContext("webgl"));
-  } catch {
-    return false;
+/** Probe actual capabilities, never infer them from the meeting vendor or browser flags. */
+export function avatarCapabilities(): { webgl: boolean; api: "webgl2" | "webgl" | "none" | "unknown" } {
+  if (typeof document === "undefined") return { webgl: true, api: "unknown" };
+  for (const api of ["webgl2", "webgl"] as const) {
+    try {
+      // Separate canvases: a canvas cannot change its context type once one is created.
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext(api) as WebGLRenderingContext | null;
+      if (!gl || gl.isContextLost?.()) continue;
+      // Release the probe so repeated character changes do not exhaust GPU contexts.
+      gl.getExtension?.("WEBGL_lose_context")?.loseContext();
+      return { webgl: true, api };
+    } catch { /* Some containers reject WebGL2 but still support WebGL1. */ }
   }
+  return { webgl: false, api: "none" };
+}
+
+export function webglAvailable(): boolean {
+  return avatarCapabilities().webgl;
 }
 
 export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryOptions): Promise<AvatarProvider> {

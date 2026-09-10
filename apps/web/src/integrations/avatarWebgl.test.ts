@@ -1,12 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createAvatarProvider, webglAvailable } from "./registry.js";
 
-/**
- * A meeting vendor runs the bot page in its own browser. Attendee's webpage streamer launches Chrome
- * with `--disable-gpu` and no `--enable-unsafe-swiftshader`, which in current Chrome means no WebGL
- * context at all (measured both ways — see docs/commercial-gate.md). Live2D needs a visible 2D
- * fallback there so the bot is not audible-only in the participant tile.
- */
+// Hosted capability must be measured; browser launch flags alone are not evidence.
 describe("avatar renderers that need WebGL", () => {
   const container = { appendChild: () => {} } as unknown as HTMLElement;
 
@@ -35,6 +30,23 @@ describe("avatar renderers that need WebGL", () => {
     vi.stubGlobal("document", { createElement: () => ({ getContext: (k: string) => (k === "webgl2" ? {} : null) }) });
     const forced = await createAvatarProvider("live2d", { container, brokerUrl: "http://b", characterId: "yui", characterName: "Yui", preferCanvas: true });
     expect(forced.id).toBe("canvas");
+    vi.unstubAllGlobals();
+  });
+
+  it("tries WebGL1 when WebGL2 throws and releases the probe context", () => {
+    const loseContext = vi.fn();
+    vi.stubGlobal("document", { createElement: () => ({ getContext: (api: string) => {
+      if (api === "webgl2") throw new Error("unsupported");
+      return { isContextLost: () => false, getExtension: () => ({ loseContext }) };
+    } }) });
+    expect(webglAvailable()).toBe(true);
+    expect(loseContext).toHaveBeenCalledOnce();
+    vi.unstubAllGlobals();
+  });
+
+  it("does not choose a lost context", () => {
+    vi.stubGlobal("document", { createElement: () => ({ getContext: () => ({ isContextLost: () => true }) }) });
+    expect(webglAvailable()).toBe(false);
     vi.unstubAllGlobals();
   });
 

@@ -1,14 +1,14 @@
 import { EnergyVAD, MicCapture, SpeakerOutput, dbfs, rms, type PCMFrame } from "@rcai/audio-core";
 import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@rcai/conversation-core";
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
-import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
+import { BehaviorEngine, HeuristicSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { JOINED_REASON, LIVE_LOOKUP_TOOL, ParticipationPolicy, SELF_TURN_REASON, parseLookupArguments, renderLookup, settingFor, type LiveLookupResult, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
 import type { VisualCue } from "@rcai/visual-core";
 import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { OnDemandConversation } from "./OnDemandConversation.js";
 import { MeetingMemory } from "./MeetingMemory.js";
-import { createAvatarProvider, createConversationProvider, createMeetingConnector, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
+import { createAvatarProvider, createConversationProvider, createMeetingConnector, type CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
 /** Gemini Live takes at most 1 fps, and every frame costs tokens whether or not it changes anything. */
@@ -239,7 +239,7 @@ export class MeetingSessionController {
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
     try {
       const framing = this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default");
-      return await createAvatarProvider(character.renderer, {
+      const selected = await createAvatarProvider(character.renderer, {
         container: stage,
         brokerUrl,
         characterId: character.id,
@@ -252,6 +252,8 @@ export class MeetingSessionController {
         // use the same character’s pre-rendered animation via the Canvas fallback.
         preferCanvas: false,
       });
+      this.report("avatar_renderer", { requested: character.renderer, selected: selected.id, framing, fallback: selected.id !== character.renderer });
+      return selected;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.avatarFailure = message;
@@ -564,6 +566,7 @@ export class MeetingSessionController {
          */
         if (character.renderer !== "live2d") throw err;
         const detail = err instanceof Error ? err.message : String(err);
+        this.report("avatar_fallback", { requested: "live2d", selected: "canvas", reason: "model_prepare_failed" });
         console.warn("[rcai:avatar] Live2D unavailable in meeting page; using 2D fallback", detail);
         await avatar.stop().catch(() => {});
         avatar = await createAvatarProvider("canvas", {
@@ -584,7 +587,7 @@ export class MeetingSessionController {
       this.avatarRuntime = avatarRuntime;
       avatarRuntime.onStateChange((t) => handlers.onAvatarState?.(t));
       await avatar.start();
-      const planner = new RemoteSemanticPlanner(plannerUrl(this.decision.conversation, { brokerUrl, agentUrl, privacyMode: settings.privacyMode }), 1500);
+      const planner = new HeuristicSemanticPlanner();
       const behavior = new BehaviorEngine(avatarRuntime, { planner, mode: persona.mode, baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? "warm_positive", baseEmotionIntensity: 0.25 });
       this.behavior = behavior;
       behavior.start();

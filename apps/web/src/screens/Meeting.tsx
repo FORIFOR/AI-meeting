@@ -106,12 +106,7 @@ export function Meeting(p: MeetingProps) {
   const [characterId, setCharacterId] = useState(p.settings.characterId);
   const [voices, setVoices] = useState<Record<string, string>>({});
   const [personaId, setPersonaId] = useState("");
-  /**
-   * Talking to the character one to one is the ordinary case, and there waiting to be called by name
-   * is a summons rather than a conversation: the default opens up and only a meeting keeps
-   * `addressed_only` (see defaultProactivityFor). The operator can still change it, and a bot page
-   * carries its own in the URL.
-   */
+  // Natural conversation by default; the operator can explicitly select quieter participation.
   const [proactivity, setProactivity] = useState<Proactivity | null>(null);
   /**
    * "cues" reads the webcam in this page only — nods, expressions, gaze — and nothing leaves it.

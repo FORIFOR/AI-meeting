@@ -6,9 +6,9 @@ import { ConversationRuntime, type ConversationEvent, type SessionRecord } from 
 import type { ProviderId } from "@rcai/conversation-core";
 import type { EvaluationResult } from "@rcai/provider-core";
 import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
-import { BehaviorEngine, RemoteSemanticPlanner } from "@rcai/behavior-engine";
+import { BehaviorEngine, HeuristicSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
-import { createAvatarProvider, createConversationProvider, createEvaluator, createHeuristicEvaluator, plannerUrl, type CharacterEntry } from "../integrations/registry.js";
+import { createAvatarProvider, createConversationProvider, createEvaluator, createHeuristicEvaluator, type CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 import { EvaluationSidecar, type DeferredFeedback } from "./sidecar.js";
 import { SessionObserver, createTelemetrySender, type SessionReport } from "@rcai/observability";
@@ -194,7 +194,7 @@ export class SessionController {
     this.checkpoint();
 
     // 4. Behavior engine (fast tier + async semantic planner; never blocks audio).
-    const planner = new RemoteSemanticPlanner(plannerUrl(this.decision.conversation, this.factoryOptions), 1500);
+    const planner = new HeuristicSemanticPlanner();
     const interview = persona.mode === "interview";
     const behavior = new BehaviorEngine(avatarRuntime, {
       planner,
