@@ -35,18 +35,19 @@ function lines(text: string, x: number, y: number, width: number, lineHeight: nu
 }
 function card(x: number, y: number, w: number, h: number, fill: string) { paint.fillStyle = fill; paint.beginPath(); paint.roundRect(x, y, w, h, 20); paint.fill(); }
 function draw() {
-  paint.fillStyle = '#f0f3ed'; paint.fillRect(0, 0, 1280, 720);
-  paint.fillStyle = '#174a43'; paint.font = '700 24px system-ui'; paint.fillText('AI Meeting', 48, 54);
+  paint.fillStyle = '#faf9f6'; paint.fillRect(0, 0, 1280, 720);
+  paint.fillStyle = '#2d3d33'; paint.font = '700 24px system-ui'; paint.fillText('AI Meeting', 48, 54);
   paint.font = '13px system-ui'; paint.fillStyle = '#52675e'; paint.fillText('録画用レイアウト  ·  入力は合成音声  ·  応答は実API', 628, 52);
   paint.fillStyle = '#102d29'; paint.font = '700 35px system-ui'; paint.fillText(display.phase, 48, 111);
-  card(40, 145, 470, 520, '#e2e9df');
+  card(40, 145, 470, 520, '#f1e7dc');
   const vrm = stage.querySelector('canvas');
-  if (vrm?.width && vrm.height) paint.drawImage(vrm, 40, 145, 470, 520);
-  paint.font = '14px system-ui'; paint.fillStyle = '#466052'; paint.fillText(display.state, 66, 636);
+  if (vrm?.width && vrm.height) { paint.save(); paint.beginPath(); paint.roundRect(40,145,470,520,20); paint.clip(); paint.drawImage(vrm, 40, 145, 470, 520); paint.restore(); }
+  paint.font = '14px system-ui'; paint.fillStyle = '#466052'; paint.fillText(display.state, 66, 175);
+  paint.font='italic 26px Georgia'; paint.fillStyle='#ffffff'; paint.fillText('VRoid B',66,638);
   card(536, 145, 700, 141, '#ffffff');
   paint.font = '700 14px system-ui'; paint.fillStyle = '#537867'; paint.fillText('あなた  ·  デモ用合成音声', 560, 174);
   paint.font = '20px system-ui'; paint.fillStyle = '#16372f'; lines(display.input || '入力を待っています。', 560, 205, 648, 29, 3);
-  card(536, 304, 700, 137, '#174a43');
+  card(536, 304, 700, 137, '#2d3d33');
   paint.font = '700 14px system-ui'; paint.fillStyle = '#bcddc9'; paint.fillText('AI  ·  Gemini Live の実応答', 560, 333);
   paint.font = '22px system-ui'; paint.fillStyle = '#ffffff'; lines(display.assistant || (display.live ? '…' : '接続前'), 560, 366, 645, 30, 2);
   card(536, 459, 700, 206, '#ffffff');
@@ -62,7 +63,7 @@ function draw() {
   });
   if (reviewNotice) { paint.font = '14px system-ui'; paint.fillStyle = '#537867'; lines(reviewNotice, 560, 632, 648, 18, 1); }
   paint.font = '12px system-ui'; paint.fillStyle = '#687b71';
-  paint.fillText('VRM1_Constraint_Twist_Sample © 2022 pixiv Inc.  /  ローカル描画・アバター生成APIなし', 48, 696);
+  paint.fillText('AvatarSample_B © pixiv Inc. / VRoid Project  /  ローカル描画・アバター生成APIなし', 48, 696);
   paint.fillText(`${display.live ? '● 実セッション' : '待機'}  ${Math.floor(display.seconds)}秒`, 1070, 696);
 }
 draw();
@@ -127,9 +128,9 @@ async function record(): Promise<void> {
     };
     controller = new SessionController({
       settings: { ...DEFAULT_SETTINGS, brokerUrl: config.broker, agentUrl: 'ws://127.0.0.1:1', engine: 'google', advanced: {}, privacyMode: 'default',
-        characterId: 'vrm-sample', avatarQuality: { 'vrm-sample': 'lightweight' }, cameraOn: false, captionsOn: true },
+        characterId: 'vroid-b', avatarQuality: { 'vroid-b': 'lightweight' }, cameraOn: false, captionsOn: true },
       availability: { google: true, openai: false, local: false }, persona: config.persona, params: { horizon: '今日' },
-      character: { id: 'vrm-sample', name: 'VRMサンプル', renderer: 'vrm', baseUrl: '/characters/vrm-sample' }, stage,
+      character: { id: 'vroid-b', name: 'VRoid B', renderer: 'vrm', baseUrl: '/characters/vroid-b' }, stage,
       handlers: { onEvent, onAvatarState: event => { display.state = event.to; }, onProviderChange: value => note('provider', { value }),
         onError: (_message, code) => { note('session_notice', { code: code ?? 'unknown' }); if (code === 'PROVIDER' || code === 'AVATAR_FALLBACK') { failed = '実接続またはVRM表示を確認できませんでした。'; stop(); } },
         onTasks: tasks => { display.tasks = tasks; note('tasks', { tasks }); }, onTaskProposals: proposals => { display.proposals = proposals; note('task_proposals', { proposals }); },
@@ -216,7 +217,7 @@ async function record(): Promise<void> {
     await pause(Math.max(2500, 45000 - clock()));
   } catch (error) {
     if (!(error instanceof DOMException && error.name === 'AbortError')) failed = '録画を完了できませんでした。記録ファイルで実行結果を確認してください。';
-    note('stopped', { reason: failed ? 'error' : 'duration_or_operator' });
+    note('stopped', { reason: failed ? 'error' : 'duration_or_operator', detail: error instanceof Error ? error.message.replace(/(?:https?|wss?):\/\/\S+/g, '[endpoint]').replace(/[A-Za-z0-9_-]{30,}/g, '[redacted]').slice(0,240) : 'unknown' });
   } finally {
     if (deadline) clearTimeout(deadline);
     const finalRecording = stopRecorder?.();

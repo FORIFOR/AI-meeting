@@ -27,6 +27,12 @@ export interface CharacterEntry {
 
 export const characters: CharacterEntry[] = [
   {
+    id: "vroid-b", name: "VRoid B", renderer: "vrm", baseUrl: "/characters/vroid-b",
+    aliases: ["ブイロイド", "ぶいろいど"],
+    license: "AvatarSample_B © pixiv Inc. / VRoid Project — VRM Public License 1.0 + sample conditions",
+    defaultPersona: "friendly", description: "表情豊かな3Dの会話パートナー。アイデアの壁打ちや、毎日の整理に。",
+  },
+  {
     id: "yui",
     name: "Yui",
     aliases: ["ゆい", "ユイ", "結衣", "唯"], // 唯: run 79 heard 「唯イ寮の予定を教えて」 for 「ゆい、今日の予定を教えて」

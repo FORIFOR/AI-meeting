@@ -11,7 +11,7 @@ export interface VRMAvatarOptions extends MotionStackAvatarOptions {
   modelUrl?: string;
   /** CSS colour or null for transparent. Default transparent. */
   background?: string | null;
-  /** Camera distance from the head (m). Default 1.45, leaving headroom in portrait previews. */
+  /** Optional fixed distance (m). Otherwise frame the head and shoulders responsively. */
   cameraDistance?: number;
   /** Reject remote model URLs and referenced resources before transmission in strict_local. */
   privacyMode?: "default" | "strict_local";
@@ -36,6 +36,8 @@ export class VRMAvatarProvider extends MotionStackAvatarBase {
   private vrm: VRM | null = null;
   private lookAtTarget = new THREE.Object3D();
   private headWorld = new THREE.Vector3(0, 1.4, 0);
+  private portraitTop = 1.7;
+  private portraitHeight = 0.76;
   private resizeObserver: ResizeObserver | null = null;
   private lastPose: VRMPose | null = null;
   private loadGeneration = 0;
@@ -102,10 +104,13 @@ export class VRMAvatarProvider extends MotionStackAvatarBase {
       container.appendChild(this.renderer.domElement);
 
       this.camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 20);
-      this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-      const key = new THREE.DirectionalLight(0xffffff, Math.PI * 0.6);
-      key.position.set(1, 2, 2);
+      this.scene.add(new THREE.HemisphereLight(0xfff4ec, 0x777b94, 1.25));
+      const key = new THREE.DirectionalLight(0xfff5ed, 2.2);
+      key.position.set(-1.5, 2, 3);
       this.scene.add(key);
+      const fill = new THREE.DirectionalLight(0xdce5ff, 0.7);
+      fill.position.set(2, 1, 1);
+      this.scene.add(fill);
       this.scene.add(this.lookAtTarget);
 
       this.wasmLipSync?.start();
@@ -163,9 +168,11 @@ export class VRMAvatarProvider extends MotionStackAvatarBase {
       const headNode = vrm.humanoid.getNormalizedBoneNode("head");
       if (headNode) headNode.getWorldPosition(this.headWorld);
       else this.headWorld.set(0, 1.4, 0);
-      const dist = this.vrmOpts.cameraDistance ?? 1.45;
-      this.camera.position.set(0, this.headWorld.y - 0.1, this.headWorld.z + dist);
-      this.camera.lookAt(0, this.headWorld.y - 0.15, this.headWorld.z);
+      const bounds = new THREE.Box3().setFromObject(vrm.scene);
+      this.portraitTop = bounds.isEmpty() ? this.headWorld.y + 0.25 : bounds.max.y;
+      const hips = vrm.humanoid.getNormalizedBoneNode("hips")?.getWorldPosition(new THREE.Vector3());
+      this.portraitHeight = hips ? Math.max(0.6, (this.headWorld.y - hips.y) * 1.5) : 0.76;
+      this.framePortrait();
 
       if (typeof ResizeObserver !== "undefined") {
         this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -198,7 +205,18 @@ export class VRMAvatarProvider extends MotionStackAvatarBase {
     const h = this.vrmOpts.container.clientHeight || 1;
     this.renderer.setSize(w, h);
     this.camera.aspect = w / h;
+    this.framePortrait();
     this.camera.updateProjectionMatrix();
+  }
+
+  private framePortrait(): void {
+    if (!this.camera) return;
+    // Keep the top of the hair inside the frame; narrow cards also need shoulder room.
+    const span = Math.max(this.portraitHeight, this.portraitHeight * 0.7 / this.camera.aspect);
+    const distance = this.vrmOpts.cameraDistance ?? span / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)));
+    const center = this.portraitTop - span * 0.43;
+    this.camera.position.set(this.headWorld.x, center + 0.015, this.headWorld.z + distance);
+    this.camera.lookAt(this.headWorld.x, center, this.headWorld.z);
   }
 
   protected applyParams(params: AvatarParams, dtMs: number): void {

@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'), dist=path.join(repo,'apps/web/dist-oss');
 const files=[];async function walk(dir){for(const entry of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,entry.name);if(entry.isDirectory())await walk(file);else files.push(file);}}
 await walk(dist);
-const forbiddenAssets=files.map(f=>path.relative(dist,f)).filter(f=>/^(vendor|avatar-fallbacks)\//.test(f)||/^characters\/(?!vrm-sample\/)/.test(f)||/meeting-credit|cloud-costs/.test(f));
+const forbiddenAssets=files.map(f=>path.relative(dist,f)).filter(f=>/^(vendor|avatar-fallbacks)\//.test(f)||/^characters\/(?!(?:vrm-sample|vroid-b)\/)/.test(f)||/meeting-credit|cloud-costs/.test(f));
 const packages=new Map(),forbiddenSources=[];
 const missingSourceMaps=[],invalidSourceMaps=[],unresolvedPackages=[],verifiedWorkerArtifacts=[],failedPackages=new Set();
 const runtimeFiles=files.filter(file=>/\.(?:js|mjs|cjs)$/.test(file)), fileSet=new Set(files);
@@ -86,8 +86,8 @@ for(const [dir,pkg] of packages){
   }
   if(!texts.length)missing.push(`${pkg.name}@${pkg.version}`);else notices.push(`## ${pkg.name}@${pkg.version}\n\n${texts.join('\n\n')}`);
 }
-await writeFile(path.join(dist,'THIRD_PARTY_LICENSES.txt'),'Third-party runtime licenses extracted from the actual OSS bundle source maps.\nThe model has separate conditions in characters/vrm-sample/LICENSE.md.\n\n'+notices.sort().join('\n\n'));
-const source=JSON.parse(await readFile(path.join(dist,'characters/vrm-sample/SOURCE.json'),'utf8'));const actual=createHash('sha256').update(await readFile(path.join(dist,'characters/vrm-sample/model.vrm'))).digest('hex');
+await writeFile(path.join(dist,'THIRD_PARTY_LICENSES.txt'),'Third-party runtime licenses extracted from the actual OSS bundle source maps.\nModels have separate conditions in characters/vroid-b/LICENSE.md and characters/vrm-sample/LICENSE.md.\n\n'+notices.sort().join('\n\n'));
+const modelHashes = await Promise.all(['vrm-sample','vroid-b'].map(async id => { const source=JSON.parse(await readFile(path.join(dist,`characters/${id}/SOURCE.json`),'utf8')); const actual=createHash('sha256').update(await readFile(path.join(dist,`characters/${id}/model.vrm`))).digest('hex'); return {id, sha256:actual, matched:source.sha256===actual}; }));
 const html=await readFile(path.join(dist,'index.html'),'utf8');
 const rootPackage=JSON.parse(await readFile(path.join(repo,'package.json'),'utf8'));
 let applicationLicenseText=null;
@@ -105,6 +105,7 @@ const applicationLicense={
   scope:'Application-specific source code and documentation only; third-party rights and service contracts remain separate.',
 };
 const licenseExceptions=[
+  {path:'characters/vroid-b/model.vrm',license:'VRM Public License 1.0 and VRoid sample model conditions',notice:'characters/vroid-b/LICENSE.md'},
   {path:'characters/vrm-sample/model.vrm',license:'VRM Public License 1.0 and embedded model permissions',notice:'characters/vrm-sample/LICENSE.md'},
   {path:'avatar-providers/vrm/src/wlipsync-profile.json',license:'MIT',notice:'avatar-providers/vrm/src/wlipsync-profile.LICENSE'},
   {path:'runtime dependencies',license:'Per-package upstream licenses',notice:'THIRD_PARTY_LICENSES.txt'},
@@ -112,7 +113,7 @@ const licenseExceptions=[
   {path:'scripts/reality/attendee-selfhost/local-patches.diff',distribution:'source tree only',license:'Elastic-2.0 for upstream material',notice:'scripts/reality/attendee-selfhost/LICENSE.upstream'},
   {path:'optional Live2D assets and hosted services',distribution:'excluded from OSS browser build',license:'Separate component, model and service terms',notice:'NOTICE.md'},
 ];
-const result={at:new Date().toISOString(),files:files.length,runtimePackages:[...new Set([...packages.values()].map(p=>`${p.name}@${p.version}`))].sort(),forbiddenAssets,forbiddenSources:[...new Set(forbiddenSources)],missingSourceMaps,invalidSourceMaps,unresolvedPackages,verifiedWorkerArtifacts,missingLicenseTexts:missing,verifiedSupplements,externalFontLinks:/<link[^>]*href="https?:\/\//.test(html),vrmHashMatched:source.sha256===actual,avatarApiRequired:false,applicationLicense,licenseExceptions,rootCodeLicenseFinalized:applicationLicense.verified};
+const result={at:new Date().toISOString(),files:files.length,runtimePackages:[...new Set([...packages.values()].map(p=>`${p.name}@${p.version}`))].sort(),forbiddenAssets,forbiddenSources:[...new Set(forbiddenSources)],missingSourceMaps,invalidSourceMaps,unresolvedPackages,verifiedWorkerArtifacts,missingLicenseTexts:missing,verifiedSupplements,externalFontLinks:/<link[^>]*href="https?:\/\//.test(html),modelHashes,vrmHashMatched:modelHashes.every(model=>model.matched),avatarApiRequired:false,applicationLicense,licenseExceptions,rootCodeLicenseFinalized:applicationLicense.verified};
 await writeFile(path.join(dist,'OSS-BUILD-AUDIT.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify(result,null,2));
 if(forbiddenAssets.length||forbiddenSources.length||missingSourceMaps.length||invalidSourceMaps.length||unresolvedPackages.length||missing.length||result.externalFontLinks||!result.vrmHashMatched||!applicationLicense.verified)process.exitCode=1;

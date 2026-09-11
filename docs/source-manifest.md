@@ -9,9 +9,10 @@ Updated: 2026-09-12
 | three-vrm | https://github.com/pixiv/three-vrm | `@pixiv/three-vrm@3.5.5`, `three@0.185.1`, MIT |
 | wLipSync | https://github.com/mrxz/wLipSync | `wlipsync@1.3.1`, source commit `73d0170f500c2845a62a8fe4384a4729499e8426`, MIT. WASM in a local Worker; calibration profile copied with its MIT notice. No extra audio playback or avatar API |
 | Official VRM 1.0 sample | https://github.com/vrm-c/vrm-specification/tree/821c11b250d8c70d5804ee13431e42bee56ea9c0/samples/VRM1_Constraint_Twist_Sample | Unmodified file in `characters/vrm-sample`, SHA-256/source/embedded metadata preserved. VRM Public License 1.0 and model permissions, separate from code license |
+| AvatarSample_B | https://github.com/pixiv/ChatVRM/blob/b542aa00e19dccf9fc48ba340cf7eee011d2329a/public/AvatarSample_B.vrm | Official pixiv archive, unmodified **VRM 1.0** v1.1; SHA-256 `ffbd8c92a9e67c0a948f69c7a2eec91e5c282c9ae70e9184309fc164d74cbc27`. VRM Public License 1.0 plus VRoid sample conditions, not Apache/CC0. Distinct from the Hub VRM 0.0 file. |
 | AvatarSample_A | https://hub.vroid.com/characters/2843975675147313744/models/5644550979324015604 | Official current distribution is VRM 0.0; not silently relabeled as VRM 1.0 or bundled from an unverified mirror. Local import supported |
 
-Distribution/source audit: [application license and component exceptions](../NOTICE). Local Anam portrait experiments are not an authorization to upload Live2D sample-derived images to an external renderer.
+Distribution/source audit: [application license and component exceptions](../NOTICE.md). Local Anam portrait experiments are not an authorization to upload Live2D sample-derived images to an external renderer.
 
 ## Anam optional synchronized renderer
 

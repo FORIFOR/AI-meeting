@@ -316,7 +316,7 @@ export class SessionController {
       const pending = this.tasks.propose(call.arguments);
       if (pending.proposal) {
         this.init.handlers.onTaskProposals?.(this.tasks.pending());
-        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更は未実行です。聞き取りを確認できなかったため、画面の「この変更を反映」で確認をお願いしてください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
+        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更案を画面に用意しましたが、まだ反映していません。ユーザー発話の引用を照合できなかったため、画面で内容を確認してもらう必要があります。「変更案を用意したよ。内容が合っていたら『この変更を反映』を押してね」のように短く案内してください。確認待ちの状態であり、システムの故障や処理失敗とは説明しないでください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
         return;
       }
     }

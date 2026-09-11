@@ -519,3 +519,7 @@ The npm metadata scan cannot verify model rights, Hosted contracts, root-code ow
 | yargs | 17.7.2, 18.1.0 | MIT |
 | yargs-parser | 21.1.1, 22.0.0 | ISC |
 | zod | 3.25.76 | MIT |
+
+### AvatarSample_B added 2026-09-12
+
+`characters/vroid-b/model.vrm` is an unmodified VRM 1.0 v1.1 from [pixiv/ChatVRM](https://github.com/pixiv/ChatVRM/blob/b542aa00e19dccf9fc48ba340cf7eee011d2329a/public/AvatarSample_B.vrm). © pixiv Inc. / VRoid Project. [Model conditions](characters/vroid-b/LICENSE.md) and [full provenance](characters/vroid-b/SOURCE.json) are separate from the application license. `portrait.png` is the embedded upstream thumbnail extracted without modification.

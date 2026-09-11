@@ -45,8 +45,10 @@ The helper does not publish, fabricate responses, or send session
 evaluation/telemetry. Audio is branched from the existing final output
 node for capture; it is never played a second time.
 
-The official `VRM1_Constraint_Twist_Sample` model and its separate pixiv license
-come from `apps/web/public-oss/characters/vrm-sample/`. Keep its attribution and
+The official `AvatarSample_B` model and its separate pixiv license
+come from `apps/web/public-oss/characters/vroid-b/`. Keep its attribution and
 license with any redistributed model files.
 
 Type check: `pnpm exec tsc -p scripts/launch/tsconfig.json`.
+
+The default broker is loopback `http://localhost:8787`. Start the configured local broker before recording; the public hosting broker intentionally rejects new paid AI sessions. Set `RCAI_CAPTURE_BROKER` only when using an explicitly configured alternative.

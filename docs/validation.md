@@ -4,7 +4,7 @@ Release review: **September 12, 2026**. AI-meeting is a beta. The public entry p
 
 ## Source checks
 
-The final source verification passed **1,027 tests across 114 test files** and all workspace type checks. An earlier check on the same day passed 1,003 tests; that older count is the baseline for the avatar integration report, not the final release count.
+The avatar refinement verification passed **1,028 tests across 114 test files** and all workspace type checks. A later confirmation-prompt wording adjustment passed 34 focused tests and a production build. The complete suite was run before that wording adjustment.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -17,7 +17,7 @@ pnpm build:oss
 
 ## Local VRM and audio checks
 
-These checks used local WAV fixtures with the real renderer, audio runtime, and wLipSync WASM. Their result is **PASS_AUTOMATED_ONLY**.
+These earlier checks used the VRM constraint sample and local WAV fixtures with the real renderer, audio runtime, and wLipSync WASM. Their result is **PASS_AUTOMATED_ONLY**.
 
 | Check | Observed result | What it establishes |
 | --- | --- | --- |
@@ -32,16 +32,22 @@ The timing run used the first 700 ms of each WAV with the same SpeakerOutput set
 
 The [machine-readable local summary](validation-assets/vrm-local.json) records the measurements and their scope. The [validation harness](../scripts/avatar/vrm-validation-server.mjs) is included; its original generated audio fixtures are not shipped.
 
+## AvatarSample_B refinement checks
+
+The new model passed desktop and 390-pixel mobile preview checks, recorded-audio playback and stopping, expression controls, responsive framing, and a real Gemini recording. The renderer progressed with 18 geometries, 41 textures, and 8 programs; the preview reported no browser warnings or errors during this check. These short observations do not establish a 60-minute soak result for AvatarSample_B.
+
+See the [design research](avatar-design-research.md), [model provenance](../characters/vroid-b/SOURCE.json), and [recorded-run observations](validation-assets/avatar-refinement.json).
+
 ## Recorded Gemini task demonstration
 
-A **46.27-second** local recording used the actual SessionController, Gemini Live provider, TaskLedger, SpeakerOutput, and VRM renderer. One provider connection produced audible assistant responses. The recorded run added two tasks, interrupted during assistant playback, updated the saved task state, and read back the resulting state. No pending task proposal remained at the end.
+A new **45.09-second** recording with AvatarSample_B used the actual SessionController, Gemini Live provider, TaskLedger, SpeakerOutput, and VRM renderer. One provider connection produced audible assistant responses. The recorded run added two tasks, interrupted during assistant playback, updated the saved task state, and read back the resulting state. No pending task proposal remained at the end.
 
 The final state was `資料確認` (review materials) → `done`, due `今日` (today), and `メール返信` (reply to email) → `deferred`, due `明日` (tomorrow). These are authored demonstration tasks, not customer records or an external Google Tasks integration.
 
 Important details of this demonstration:
 
 - The user-side input was synthesized with the macOS Kyoko voice. It was not a person speaking live into a microphone.
-- Assistant speech, transcripts, and task-tool responses came from the connected Gemini session. The avatar used the separately licensed pixiv VRM sample.
+- Assistant speech, transcripts, and task-tool responses came from the connected Gemini session. The avatar used the separately licensed official AvatarSample_B (VRM 1.0).
 - The video uses a dedicated recording layout, not the normal application's screen layout.
 - The runtime requested confirmation for the update. The recording script compared the proposed task titles, statuses, and deadlines against the disclosed synthetic input, showed the pending proposal, and invoked the actual `resolveTaskProposal` confirmation action. It did not directly rewrite the task state. This demonstrates the confirmation flow with a script; it is not evidence of unaided human approval or every voice command being applied automatically.
 

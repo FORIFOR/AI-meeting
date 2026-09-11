@@ -9,9 +9,9 @@
 
 **音声・アバターのデモはAPIキー不要です。** テスト音や手元の音声ファイルをブラウザーで再生し、VRMキャラクターの口を動かします。AIとの会話には、ローカルAIの起動またはクラウドサービスの設定が必要です。
 
-[![46秒の実録を見る：VRMアバター、Geminiの実応答、会話から記録したタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/sKWc8K2VHV4)
+[![45秒の実録を見る：VRMアバター、Geminiの実応答、会話から記録したタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
-**[46秒の実録を見る](https://youtu.be/sKWc8K2VHV4)** — タスクの追加、割り込み、変更の確認まで。入力はmacOS Kyokoの合成音声、返答は実際のGeminiで、専用の録画レイアウトを使っています。変更提案は台本との一致をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)も公開しています。
+**[45秒の実録を見る](https://youtu.be/qLenE6R7-nI)** — タスクの追加、割り込み、変更の確認まで。入力はmacOS Kyokoの合成音声、返答は実際のGeminiで、専用の録画レイアウトを使っています。変更提案は台本との一致をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)も公開しています。
 
 ## できること
 
@@ -45,13 +45,13 @@ corepack pnpm dev:oss
 | OpenAI Realtime | 利用できるアカウントと、token brokerに設定した自分のAPIキー。 |
 | Gemini Live | 自分のGemini APIキーと`GEMINI_BACKEND=developer`、または別途設定したVertex AIプロジェクト。 |
 
-クラウド接続では、[brokerの設定例](services/token-broker/.env.example)を`services/token-broker/.env`へコピーし、利用する接続先を設定して`pnpm dev`で起動します。同梱モデルを使う場合はアプリでVRMサンプルを選び、AIの接続先を指定してください。各サービスの利用可否・料金・データ処理条件が別途適用されます。APIキーはbroker側に置き、フロントエンドのコードやGitへ含めないでください。
+クラウド接続では、[brokerの設定例](services/token-broker/.env.example)を`services/token-broker/.env`へコピーし、利用する接続先を設定して`pnpm dev`で起動します。同梱モデルを使う場合はアプリでVRoid Bを選び、AIの接続先を指定してください。各サービスの利用可否・料金・データ処理条件が別途適用されます。APIキーはbroker側に置き、フロントエンドのコードやGitへ含めないでください。
 
 Live2Dやクラウドアバターは任意の追加連携です。SDK・素材・認証情報・サービス条件は、標準のVRM配布とは別に扱います。
 
 ## 現在の状態と検証
 
-**ベータ版です。** 2026年9月12日に自動テスト1,027件、型検査、OSSビルド監査が合格しました。実際の描画・音声処理へテスト音声を流すローカル検証では、日本語50文、割り込み20回、60分連続稼働を確認しています。
+**ベータ版です。** 2026年9月12日に自動テスト1,028件、型検査、OSSビルド監査が合格しました。従来のVRM制約サンプルでは、日本語50文、割り込み20回、60分連続稼働を確認しています。新しいAvatarSample_Bはブラウザー上と45秒の実Gemini録画で確認しました。このモデル単体での60分連続検証は未実施です。
 
 同じ20音声で測った、Live2Dに対するVRMのローカル再生の追加遅延は、各音声の差のp95で**+6.3ms**でした。**AIが返答するまでの時間ではありません。** 人が感じる自然さ、実AIとの60分連続会話、別のMeet/Zoom参加者の端末へ届く音声・映像は、この結果に含みません。会議連携には別途設定と検証が必要です。
 
@@ -59,7 +59,7 @@ Live2Dやクラウドアバターは任意の追加連携です。SDK・素材�
 
 ## ライセンス
 
-アプリ固有のコードは[Apache-2.0](LICENSE)で公開し、例外は[NOTICE](NOTICE)に記載しています。第三者のコード、モデル、イラスト、サービスにはそれぞれの条件が適用されます。同梱の[VRMサンプル](characters/vrm-sample/LICENSE.md)、Live2DのSDK・素材は別ライセンスです。Attendee由来の部分にはElastic License 2.0が適用され、アプリのライセンスでこれらの権利やサービス利用権を付与するものではありません。
+アプリ固有のコードは[Apache-2.0](LICENSE)で公開し、例外は[NOTICE](NOTICE)に記載しています。第三者のコード、モデル、イラスト、サービスにはそれぞれの条件が適用されます。同梱の[VRMサンプル](characters/vroid-b/LICENSE.md)、Live2DのSDK・素材は別ライセンスです。Attendee由来の部分にはElastic License 2.0が適用され、アプリのライセンスでこれらの権利やサービス利用権を付与するものではありません。
 
 ## 開発に参加する・チームで試す
 

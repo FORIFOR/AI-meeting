@@ -1,0 +1,31 @@
+{
+  "model": "AvatarSample_B",
+  "sourceUrl": "https://raw.githubusercontent.com/pixiv/ChatVRM/b542aa00e19dccf9fc48ba340cf7eee011d2329a/public/AvatarSample_B.vrm",
+  "repository": "https://github.com/pixiv/ChatVRM",
+  "commit": "b542aa00e19dccf9fc48ba340cf7eee011d2329a",
+  "sha256": "ffbd8c92a9e67c0a948f69c7a2eec91e5c282c9ae70e9184309fc164d74cbc27",
+  "format": "VRM 1.0",
+  "modified": false,
+  "retrievedAt": "2026-09-12",
+  "embeddedMeta": {
+    "name": "AvatarSample_B",
+    "version": "1.1",
+    "authors": [
+      "VRoid Project"
+    ],
+    "copyrightInformation": "pixiv Inc.",
+    "contactInformation": "https://www.pixiv.net/support.php?mode=select_vroid",
+    "thumbnailImage": 29,
+    "licenseUrl": "https://vrm.dev/licenses/1.0/",
+    "avatarPermission": "everyone",
+    "allowExcessivelyViolentUsage": true,
+    "allowExcessivelySexualUsage": true,
+    "commercialUsage": "corporation",
+    "allowPoliticalOrReligiousUsage": true,
+    "allowAntisocialOrHateUsage": false,
+    "creditNotation": "unnecessary",
+    "allowRedistribution": true,
+    "modification": "allowModificationRedistribution",
+    "otherLicenseUrl": "https://vroid.pixiv.help/hc/ja/articles/4402394424089-AvatarSample-A-B-C"
+  }
+}

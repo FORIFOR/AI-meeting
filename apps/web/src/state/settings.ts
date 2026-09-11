@@ -43,7 +43,7 @@ export const DEFAULT_SETTINGS: Settings = {
   advanced: {},
   privacyMode: OSS_PROFILE ? "strict_local" : "default",
   showHud: false,
-  characterId: OSS_PROFILE ? "vrm-sample" : "",
+  characterId: OSS_PROFILE ? "vroid-b" : "",
   cameraOn: false,
   captionsOn: false,
   voices: {},

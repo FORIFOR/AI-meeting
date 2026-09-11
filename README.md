@@ -9,9 +9,9 @@ Organize a plan, rehearse an interview, or speak a new language. Talk at your ow
 
 The **avatar/audio demo needs no API key**. It plays a test sound or your local audio file through a VRM character in your browser. Actual AI conversation requires a configured local AI runtime or a cloud provider.
 
-[![Watch the 46-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/sKWc8K2VHV4)
+[![Watch the 45-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
-**[Watch the 46-second demo](https://youtu.be/sKWc8K2VHV4):** add tasks, interrupt, and confirm an update. The recording uses synthetic Japanese input (macOS Kyoko), real Gemini responses, and a VRM avatar in a dedicated recording layout. A script confirms proposals that exactly match the demo inputs; see [the recording method and validation](docs/validation.md).
+**[Watch the 45-second demo](https://youtu.be/qLenE6R7-nI):** add tasks, interrupt, and confirm an update. The recording uses synthetic Japanese input (macOS Kyoko), real Gemini responses, and a VRM avatar in a dedicated recording layout. A script confirms proposals that exactly match the demo inputs; see [the recording method and validation](docs/validation.md).
 
 ## What you can do
 
@@ -52,13 +52,13 @@ Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentia
 
 ## Status and validation
 
-**Beta.** On September 12, 2026, 1,027 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Local avatar checks passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime.
+**Beta.** On September 12, 2026, 1,028 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
 
 For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
 
 ## License
 
-Application-specific code is licensed under [Apache-2.0](LICENSE), subject to the exceptions in [NOTICE](NOTICE). Third-party code, model weights, artwork, and services retain their own terms. The bundled [VRM sample](characters/vrm-sample/LICENSE.md) has separate model permissions. Live2D components and assets are separately licensed; Attendee-derived material remains under Elastic License 2.0. The app license does not grant rights to those components or hosted services.
+Application-specific code is licensed under [Apache-2.0](LICENSE), subject to the exceptions in [NOTICE](NOTICE). Third-party code, model weights, artwork, and services retain their own terms. The bundled [VRM sample](characters/vroid-b/LICENSE.md) has separate model permissions. Live2D components and assets are separately licensed; Attendee-derived material remains under Elastic License 2.0. The app license does not grant rights to those components or hosted services.
 
 ## Contribute or try it with your team
 

@@ -61,7 +61,7 @@ export function Home(p: HomeProps) {
   const [memoryVersion, setMemoryVersion] = useState(0);
   const memory = readConversationMemory(character?.id ?? "yui");
   const [meetingUrl, setMeetingUrl] = useState("");
-  const portrait = character && ["yui", "haru", "reina", "sora"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
+  const portrait = character?.id === "vroid-b" ? "/characters/vroid-b/portrait.png" : character && ["yui", "haru", "reina", "sora"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
   return (
     <main className="home workspace-home">
       <section className="workspace-welcome">

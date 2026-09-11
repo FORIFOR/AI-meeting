@@ -9,7 +9,7 @@ import path from 'node:path';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const output = process.env.RCAI_CAPTURE_DIR ?? '/private/tmp/ai-meeting-launch-capture';
 const origin = 'http://127.0.0.1:5180';
-const broker = process.env.RCAI_CAPTURE_BROKER ?? 'https://ai-meeting-broker-pdygkns5gq-an.a.run.app';
+const broker = process.env.RCAI_CAPTURE_BROKER ?? 'http://localhost:8787';
 const prompts = [
   '今日のタスクを二つ記録してください。タスク名は、資料確認とメール返信です。どちらも期限は今日です。二つを記録して、短く確認してください。',
   '変更です。資料確認は完了しました。メール返信は明日に延期してください。今の状態を短く教えてください。',

@@ -1,0 +1,41 @@
+{
+  "id": "778d922f-92e9-4ed3-a8c9-7f20627499f9",
+  "at": "2026-09-11T20:47:57.274Z",
+  "durationMs": 45111,
+  "tokenRequests": 1,
+  "peak": 0.768096923828125,
+  "audioFrames": 724,
+  "interruptWhilePlaying": true,
+  "actualTasks": [
+    {
+      "id": "task-1",
+      "title": "資料確認",
+      "status": "done",
+      "due": "今日"
+    },
+    {
+      "id": "task-2",
+      "title": "メール返信",
+      "status": "deferred",
+      "due": "明日"
+    }
+  ],
+  "pendingProposals": [],
+  "failed": null,
+  "captured": true,
+  "requirementsObserved": {
+    "realAssistantAudio": true,
+    "tasksAdded": true,
+    "taskUpdated": true
+  },
+  "avatar": "AvatarSample_B v1.1 / VRM 1.0",
+  "encodedVideoDurationSeconds": 45.09,
+  "input": "Synthetic macOS Kyoko speech",
+  "confirmation": "Recording script checks exact authored task changes and invokes resolveTaskProposal; no direct task-state edits",
+  "scope": "Actual local Gemini Live session; dedicated recording composition; waits preserved",
+  "notEstablished": [
+    "human conversational naturalness",
+    "60-minute soak of AvatarSample_B",
+    "Meet/Zoom recipient audio/video quality"
+  ]
+}

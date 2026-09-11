@@ -7,7 +7,7 @@ describe("OSS profile", () => {
     vi.resetModules();
     try {
       const oss = await import("./settings.js");
-      expect(oss.DEFAULT_SETTINGS).toMatchObject({ privacyMode: "strict_local", engine: "local", autoPolicy: "offline", characterId: "vrm-sample" });
+      expect(oss.DEFAULT_SETTINGS).toMatchObject({ privacyMode: "strict_local", engine: "local", autoPolicy: "offline", characterId: "vroid-b" });
       const normalSaved = JSON.stringify({ engine: "google", privacyMode: "default", characterId: "yui", avatarQuality: { yui: "natural" } });
       const entries = new Map<string, string>([["rcai.settings.v1", normalSaved]]);
       const storage = { getItem: (key: string) => entries.get(key) ?? null, setItem: (key: string, value: string) => { entries.set(key, value); } };
@@ -16,9 +16,9 @@ describe("OSS profile", () => {
       oss.saveSettings(loaded, storage);
       expect(entries.get("rcai.settings.v1")).toBe(normalSaved);
       expect(JSON.parse(entries.get("rcai.settings.oss.v1")!)).toEqual(oss.DEFAULT_SETTINGS);
-      const savedNatural = { ...loaded, privacyMode: "default" as const, avatarQuality: { "vrm-sample": "natural" as const } };
-      expect(oss.chosenAvatarQuality(savedNatural, "vrm-sample")).toBe("lightweight");
-      expect(oss.settingsReducer(savedNatural, { type: "avatarQuality", characterId: "vrm-sample", quality: "natural" })).toBe(savedNatural);
+      const savedNatural = { ...loaded, privacyMode: "default" as const, avatarQuality: { "vroid-b": "natural" as const } };
+      expect(oss.chosenAvatarQuality(savedNatural, "vroid-b")).toBe("lightweight");
+      expect(oss.settingsReducer(savedNatural, { type: "avatarQuality", characterId: "vroid-b", quality: "natural" })).toBe(savedNatural);
     } finally {
       vi.unstubAllEnvs();
       vi.resetModules();

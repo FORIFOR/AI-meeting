@@ -75,3 +75,5 @@ These entries retain prior inventory; exact shipped binaries, models and deploym
 | Shippori Mincho, Zen Kaku Gothic, IBM Plex Mono | SIL Open Font License 1.1 | Font license texts with self-hosted fonts. |
 
 The npm metadata scan cannot verify model rights, Hosted contracts, root-code ownership or missing upstream notices.
+
+AvatarSample_B (`characters/vroid-b`, including its extracted thumbnail) is also separately licensed. See [model conditions](characters/vroid-b/LICENSE.md) and [source](characters/vroid-b/SOURCE.json).
