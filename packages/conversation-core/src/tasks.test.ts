@@ -1,6 +1,25 @@
 import {describe,it,expect} from 'vitest';
 import {TaskLedger} from './tasks.js';
 describe('explicit session tasks',()=>{
+ it('rejects transcription variants of existing tasks without changing their original text',()=>{
+  const s=new TaskLedger();
+  const original='ＡＩ 資料確認';
+  s.apply({operations:[{action:'add',title:original,quote:original}]},original);
+  const repeated='AI資料 確認';
+  expect(s.apply({operations:[{action:'add',title:repeated,quote:repeated}]},repeated).error).toBe('task already exists; update its id');
+  expect(s.snapshot()).toEqual([{id:'task-1',title:original,status:'pending'}]);
+  expect(s.propose({operations:[{action:'add',title:repeated,quote:repeated}]}).error).toBe('task already exists; update its id');
+  expect(s.pending()).toEqual([]);
+ });
+ it('rejects malformed status values atomically instead of coercing them to an enum',()=>{
+  const s=new TaskLedger();
+  s.apply({operations:[{action:'add',title:'資料確認',quote:'資料確認'}]},'資料確認');
+  for(const status of [['done'],null,{},0,true]) {
+   const result=s.apply({operations:[{action:'add',title:'返信',quote:'返信'}, {action:'update',id:'task-1',status,quote:'完了'}]},'返信、完了');
+   expect(result.error).toBe('unknown status');
+   expect(s.snapshot()).toEqual([{id:'task-1',title:'資料確認',status:'pending'}]);
+  }
+ });
  it('preserves the parent action and deadline when prerequisites and completion arrive',()=>{
   const s=new TaskLedger();
   const quote='15時までに見積書を送る、牛乳を買う、領収書を整理する';

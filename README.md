@@ -1,5 +1,6 @@
 # AI-meeting
 
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Download beta / ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
 **Think out loud with an AI character.**
 
 Organize a plan, rehearse an interview, or speak a new language. Talk at your own pace, interrupt to change direction, and choose the character and AI connection that fit your setup.
@@ -51,7 +52,7 @@ Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentia
 
 ## Status and validation
 
-**Beta.** On September 12, 2026, 1,025 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Local avatar checks passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime.
+**Beta.** On September 12, 2026, 1,027 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Local avatar checks passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime.
 
 For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
 

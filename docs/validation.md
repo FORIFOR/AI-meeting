@@ -4,7 +4,7 @@ Release review: **September 12, 2026**. AI-meeting is a beta. The public entry p
 
 ## Source checks
 
-The final source verification passed **1,025 tests across 114 test files** and all workspace type checks. An earlier check on the same day passed 1,003 tests; that older count is the baseline for the avatar integration report, not the final release count.
+The final source verification passed **1,027 tests across 114 test files** and all workspace type checks. An earlier check on the same day passed 1,003 tests; that older count is the baseline for the avatar integration report, not the final release count.
 
 ```sh
 pnpm install --frozen-lockfile

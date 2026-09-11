@@ -52,12 +52,14 @@ export class TaskLedger {
       const op=raw as Record<string,unknown>,quote=op.quote;
       if(typeof quote!=='string'||!quote.trim()||!normalized(latestUserText).includes(normalized(quote)))return fail('quote must occur in the latest user statement');
       if(op.due!==undefined&&(typeof op.due!=='string'||!op.due.trim()||op.due.length>80||!normalized(quote).includes(normalized(op.due))))return fail('due must be quoted, not inferred');
-      const status=op.status??'pending';
-      if(!['pending','done','deferred'].includes(String(status)))return fail('unknown status');
+      const status=op.status===undefined?'pending':op.status;
+      if(typeof status!=='string'||!['pending','done','deferred'].includes(status))return fail('unknown status');
       if(op.action==='add') {
         if(typeof op.title!=='string'||!op.title.trim()||op.title.length>160||!normalized(quote).includes(normalized(op.title)))return fail('title must be quoted');
         if(next.length>=100)return fail('task limit reached');
-        if(next.some(t=>t.title===op.title))return fail('task already exists; update its id');
+        // Speech transcripts may insert spaces or vary full-width characters.
+        // Use the same normalization as quotation validation to avoid duplicate tasks.
+        if(next.some(t=>normalized(t.title)===normalized(op.title as string)))return fail('task already exists; update its id');
         // Retain an explicitly spoken clock deadline immediately before this action even if the
         // model omitted the optional field. Never convert relative dates or cross list separators.
         const prefix=normalized(quote).split(normalized(op.title))[0] ?? "";
