@@ -1,8 +1,0 @@
-{
-  "status": "PASS",
-  "scope": "post-deployment synthetic-microphone task scenario only",
-  "artifact": "tasks.json",
-  "sha256": "0c615e2aa45f2d340fc889aff9c3dd18861ba71e0ef07bd1bb7c4db2c6655a0b",
-  "browserErrors": 0,
-  "audioResourcesAfterEnd": 0
-}

@@ -71,7 +71,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
       const last = next[next.length - 1];
       switch (e.type) {
         case "user_transcript": {
-          if (last && last.role === "user" && !last.final) next[next.length - 1] = { ...last, text: e.text, final: e.final !== false };
+          if (last && last.role === "user" && !last.final) next[next.length - 1] = { ...last, text: e.delta ? last.text + e.text : e.text, final: e.final !== false };
           else next.push({ id: seq++, role: "user", text: e.text, final: e.final !== false });
           break;
         }

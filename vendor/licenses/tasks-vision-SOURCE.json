@@ -1,0 +1,106 @@
+{
+  "reviewedOn": "2026-09-12",
+  "package": {
+    "name": "@mediapipe/tasks-vision",
+    "version": "1.0.1",
+    "declaredLicense": "Apache-2.0",
+    "author": {
+      "name": "mediapipe@google.com"
+    },
+    "metadataUrl": "https://registry.npmjs.org/@mediapipe%2ftasks-vision/1.0.1",
+    "gitHead": null,
+    "repository": null
+  },
+  "artifact": {
+    "url": "https://registry.npmjs.org/@mediapipe/tasks-vision/-/tasks-vision-1.0.1.tgz",
+    "bytes": 10728587,
+    "sha256": "ee318eaa3d42230aa10910d114faf2a488c577c4e4d33c7cb04126924aca505f",
+    "npmShasum": "7ab992e2415d48e526934abd6390ffc208699fb1",
+    "npmIntegrity": "sha512-rvRE2FmAZ6ZxKSw7wq+e+jQDpN3t1B/tD2mJz9SmAzb1msoDkd4dMoE4wAh8Z30Um0PQwLiHr9QtomhmXk3aUQ==",
+    "integrityVerified": true,
+    "standaloneLicenseOrNoticeFiles": [],
+    "installedFilesMatchedToTarball": [
+      {
+        "path": "vision_bundle.cjs",
+        "sha256": "f4633bfe4446b00259b4a687eb62c5cf9b2660d7356a76e1469ea012137ac13a"
+      },
+      {
+        "path": "package.json",
+        "sha256": "f685301c07427e1d19a53b08afa586e5699aa1dfc2dd8c641887cc2c821b245e"
+      },
+      {
+        "path": "vision_bundle.cjs.map",
+        "sha256": "5ec14a440b7c4344d8d823729a9dfbb7dfe3fec2ee7183137cf0f4448ce513bb"
+      },
+      {
+        "path": "vision_bundle.mjs.map",
+        "sha256": "6c18f298e2ad49524e19c541c6cfe045e214c9bf3f5a66389f16830819580704"
+      },
+      {
+        "path": "vision_bundle.mjs",
+        "sha256": "d885630c297c0b20b1fe86096cb06291c4c8080876f27852e724f24ac603713f"
+      },
+      {
+        "path": "vision.d.ts",
+        "sha256": "dc272aff0a1b53c375815c6ef475c02c0a4892032683770d571e530ffded3d48"
+      }
+    ]
+  },
+  "licenseText": {
+    "artifactReferenceUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "downloadUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "bytes": 11358,
+    "transformation": "None; exact downloaded bytes appended after the preserved notices."
+  },
+  "noticeEvidence": [
+    {
+      "files": [
+        "vision_bundle.cjs.map",
+        "vision_bundle.mjs.map"
+      ],
+      "text": "/*\n\n Copyright The Closure Library Authors.\n SPDX-License-Identifier: Apache-2.0\n*/"
+    },
+    {
+      "files": [
+        "vision_bundle.cjs.map",
+        "vision_bundle.mjs.map"
+      ],
+      "text": "/*\n\n Copyright Google LLC\n SPDX-License-Identifier: Apache-2.0\n*/"
+    },
+    {
+      "files": [
+        "vision.d.ts"
+      ],
+      "text": "/**\r\n * Copyright 2022 The MediaPipe Authors.\r\n *\r\n * Licensed under the Apache License, Version 2.0 (the \"License\");\r\n * you may not use this file except in compliance with the License.\r\n * You may obtain a copy of the License at\r\n *\r\n *     http://www.apache.org/licenses/LICENSE-2.0\r\n *\r\n * Unless required by applicable law or agreed to in writing, software\r\n * distributed under the License is distributed on an \"AS IS\" BASIS,\r\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\r\n * See the License for the specific language governing permissions and\r\n * limitations under the License.\r\n */"
+    },
+    {
+      "files": [
+        "vision.d.ts"
+      ],
+      "text": "/**\r\n * Copyright 2023 The MediaPipe Authors.\r\n *\r\n * Licensed under the Apache License, Version 2.0 (the \"License\");\r\n * you may not use this file except in compliance with the License.\r\n * You may obtain a copy of the License at\r\n *\r\n *     http://www.apache.org/licenses/LICENSE-2.0\r\n *\r\n * Unless required by applicable law or agreed to in writing, software\r\n * distributed under the License is distributed on an \"AS IS\" BASIS,\r\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\r\n * See the License for the specific language governing permissions and\r\n * limitations under the License.\r\n */"
+    }
+  ],
+  "supplement": {
+    "path": "tasks-vision-LICENSE.txt",
+    "sha256": "ae7c9a1b1178cc1fe02b78f005f3490234ffad520111a409e6311ebb83566c1c",
+    "transformation": "Prepended provenance note; extracted all distinct copyright/license block comments from published JS, source maps, and declarations, preserving their text except CRLF-to-LF normalization."
+  },
+  "upstreamCorroboration": {
+    "repository": "https://github.com/google-ai-edge/mediapipe",
+    "commit": "d4f197be5af7c0db497a9eea6ee07d1d4710d2be",
+    "licenseUrl": "https://raw.githubusercontent.com/google-ai-edge/mediapipe/d4f197be5af7c0db497a9eea6ee07d1d4710d2be/LICENSE",
+    "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8",
+    "relationToNpmVersion": "Not established. This is independently observed upstream HEAD, not asserted to be the package build commit. It was not used as the supplement license source.",
+    "additionalText": "Upstream LICENSE also includes Lucent/Rob Pike/Ken Thompson terms scoped to tasks/cc/text/language_detector/custom_ops/utils/utf/."
+  },
+  "scope": {
+    "reviewed": "JavaScript vision_bundle runtime and its published source-map/declaration notices. Source-map package extraction identified this runtime in the OSS build.",
+    "buildObservation": "No MediaPipe WASM or face_landmarker.task files were present in apps/web/dist-oss during this review; the only emitted WASM was wlipsync.",
+    "notCovered": [
+      "A definitive upstream source commit for npm 1.0.1 (gitHead/repository not published).",
+      "Redistribution of additional MediaPipe WASM binaries, native dependencies, or ML model assets; audit their exact artifacts before adding them.",
+      "Application code ownership or license selection."
+    ]
+  }
+}

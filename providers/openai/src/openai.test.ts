@@ -87,6 +87,123 @@ class FakePeerConnection {
 const config: SessionConfig = { systemPrompt: "あなたは友達です。", mode: "free_talk", language: "ja-JP", voice: "marin", privacyMode: "default", providerOptions: { opening: "やあ！" } };
 
 describe("OpenAIRealtimeProvider", () => {
+  it.each(["broker", "broker body", "SDP", "SDP body", "channel"])("bounds the entire setup when %s stalls, even when fetch ignores abort", async (stage) => {
+    vi.useFakeTimers();
+    const pc = new FakePeerConnection();
+    if (stage === "channel") pc.setRemoteDescription = async () => {};
+    const createPeerConnection = vi.fn(() => pc as unknown as RTCPeerConnection);
+    const signals: AbortSignal[] = [];
+    const forever = () => new Promise<Response>(() => {});
+    const p = new OpenAIRealtimeProvider({
+      brokerUrl: "http://b", connectTimeoutMs: 100, createPeerConnection,
+      fetch: (async (url: string, init?: RequestInit) => {
+        signals.push(init!.signal as AbortSignal);
+        if (url.endsWith("/api/token/openai")) {
+          if (stage === "broker") return forever();
+          if (stage === "broker body") return { ok: true, json: forever } as unknown as Response;
+          return new Response(JSON.stringify({ clientSecret: "ephemeral", model: "gpt-realtime", baseUrl: "https://api.openai.com/v1/realtime" }));
+        }
+        if (stage === "SDP") return forever();
+        if (stage === "SDP body") return { ok: true, text: forever } as unknown as Response;
+        return new Response("answer");
+      }) as typeof fetch,
+    });
+    const events: ConversationEvent[] = [];
+    p.onEvent(e => events.push(e));
+    try {
+      const rejected = expect(p.connect(config)).rejects.toThrow("connection setup timed out");
+      await vi.advanceTimersByTimeAsync(100);
+      await rejected;
+      expect(signals.length).toBeGreaterThan(0);
+      expect(signals.every(signal => signal.aborted)).toBe(true);
+      expect(events).toEqual([]);
+      if (stage.startsWith("broker")) expect(createPeerConnection).not.toHaveBeenCalled();
+      else {
+        expect(pc.closed).toBe(true);
+        expect(pc.dc.readyState).toBe("closed");
+      }
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      await p.disconnect();
+      vi.useRealTimers();
+    }
+  });
+
+  it("cancels a pending broker request immediately and ignores its late token", async () => {
+    vi.useFakeTimers();
+    let release!: (response: Response) => void;
+    let signal!: AbortSignal;
+    const createPeerConnection = vi.fn(() => new FakePeerConnection() as unknown as RTCPeerConnection);
+    const p = new OpenAIRealtimeProvider({
+      brokerUrl: "http://b", createPeerConnection,
+      fetch: (async (_url: string, init?: RequestInit) => {
+        signal = init!.signal as AbortSignal;
+        return new Promise<Response>(resolve => { release = resolve; });
+      }) as typeof fetch,
+    });
+    try {
+      const rejected = expect(p.connect(config)).rejects.toThrow("connection cancelled");
+      await vi.advanceTimersByTimeAsync(0);
+      await p.disconnect();
+      await rejected;
+      expect(signal.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      release(new Response(JSON.stringify({ clientSecret: "late", model: "gpt-realtime", baseUrl: "https://api.openai.com/v1/realtime" })));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(createPeerConnection).not.toHaveBeenCalled();
+    } finally {
+      await p.disconnect();
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a replacement connection alive when the old SDP and callbacks arrive late", async () => {
+    vi.useFakeTimers();
+    const pcs: FakePeerConnection[] = [];
+    const events: ConversationEvent[] = [];
+    let release!: (response: Response) => void;
+    let sdpCalls = 0;
+    const good = okFetch();
+    const p = new OpenAIRealtimeProvider({
+      brokerUrl: "http://b",
+      createPeerConnection: () => {
+        const pc = new FakePeerConnection();
+        pcs.push(pc);
+        return pc as unknown as RTCPeerConnection;
+      },
+      fetch: (async (url: string, init?: RequestInit) => {
+        if (!url.endsWith("/api/token/openai") && ++sdpCalls === 1) return new Promise<Response>(resolve => { release = resolve; });
+        return good.impl(url, init);
+      }) as typeof fetch,
+    });
+    p.onEvent(e => events.push(e));
+    try {
+      const rejected = expect(p.connect(config)).rejects.toThrow("connection cancelled");
+      await vi.advanceTimersByTimeAsync(0);
+      const oldTrack = pcs[0]!.ontrack!;
+      const oldMessage = pcs[0]!.dc.onmessage!;
+      const replacement = p.connect(config);
+      await vi.advanceTimersByTimeAsync(5);
+      await rejected;
+      await replacement;
+      const output = p.getOutputStream();
+      release(new Response("late answer"));
+      oldTrack({ streams: [{ id: "stale" }], track: {} });
+      oldMessage({ data: JSON.stringify({ type: "input_audio_buffer.speech_started" }) } as MessageEvent<string>);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(pcs[0]!.closed).toBe(true);
+      expect(pcs[0]!.remote).toBeNull();
+      expect(pcs[1]!.closed).toBe(false);
+      expect(p.getOutputStream()).toBe(output);
+      expect(events).toEqual([{ type: "session_ready", providerId: "openai" }]);
+      await p.sendText("replacement works");
+      expect(pcs[1]!.dc.sent.at(-1)?.type).toBe("response.create");
+    } finally {
+      await p.disconnect();
+      vi.useRealTimers();
+    }
+  });
+
   it("closes the peer and clears the channel timeout when the SDP request is rejected", async () => {
     vi.useFakeTimers();
     const pc = new FakePeerConnection();
@@ -223,6 +340,36 @@ function okFetch(fail: { token?: boolean } = {}) {
 }
 
 describe("OpenAIRealtimeProvider reconnection", () => {
+  it("does not let an old reconnect backoff replace a newly started session", async () => {
+    vi.useFakeTimers();
+    const pcs: ReconnectPeerConnection[] = [];
+    const p = new OpenAIRealtimeProvider({
+      brokerUrl: "http://b", fetch: okFetch().impl, reconnectBackoffMs: 100,
+      createPeerConnection: () => {
+        const pc = new ReconnectPeerConnection();
+        pcs.push(pc);
+        return pc as unknown as RTCPeerConnection;
+      },
+    });
+    try {
+      const initial = p.connect(config);
+      await vi.advanceTimersByTimeAsync(5);
+      await initial;
+      pcs[0]!.setState("failed");
+      const replacement = p.connect(config);
+      await vi.advanceTimersByTimeAsync(5);
+      await replacement;
+      await vi.advanceTimersByTimeAsync(150);
+      expect(pcs).toHaveLength(2);
+      expect(pcs[1]!.closed).toBe(false);
+      expect(p.diagnostics.reconnects).toBe(0);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      await p.disconnect();
+      vi.useRealTimers();
+    }
+  });
+
   it("re-establishes the call after a failed connection state and keeps one output stream", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {

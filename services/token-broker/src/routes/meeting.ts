@@ -133,20 +133,23 @@ export function streamingTranscript(language: string): Record<string, unknown> {
 }
 
 export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetchImpl: typeof fetch, deps: MeetingDeps): Promise<RouteResult<Record<string, unknown>>> {
+  // Clipboard pastes often include a trailing newline. Normalize once at the broker boundary so the
+  // platform check, duplicate detection, vendor payload and durable record all use the same URL.
+  const meetingUrl = typeof body.meetingUrl === "string" ? body.meetingUrl.trim() : "";
   if (body.botPageQuery?.persona === "companion_ja" && !modeAvailable("companion", releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "MODE_NOT_RELEASED" } };
-  if (body.meetingUrl && !platformAvailable(body.meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
+  if (!meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
+  if (!platformAvailable(meetingUrl, releaseChannel(env.RCAI_RELEASE_CHANNEL))) return { status: 403, body: { error: "PLATFORM_NOT_RELEASED", detail: "このプラットフォームは現在の公開範囲では利用できません。" } };
   if (!env.RECALL_API_KEY) return { status: 503, body: { error: "BLOCKED_BY_RECALL_KEY" } };
-  if (!body.meetingUrl) return { status: 400, body: { error: "meetingUrl required" } };
   const mode = body.mode ?? "output_media";
   const publicUrl = env.RECALL_PUBLIC_URL;
   if (!publicUrl) return { status: 503, body: { error: "BLOCKED_BY_RECALL_PUBLIC_URL", detail: "Set RECALL_PUBLIC_URL to the public https URL of this broker (e.g. an ngrok/cloudflared tunnel) so Recall can reach the realtime relay websocket." } };
   if (mode === "output_media" && !env.RECALL_BOT_PAGE_URL) return { status: 503, body: { error: "BLOCKED_BY_RECALL_PUBLIC_URL", detail: "Set RECALL_BOT_PAGE_URL to the public URL of the web app (the bot streams that page as its camera/audio)." } };
 
   const { sessions, relay } = deps;
-  const dup = sessions.findActiveByMeetingUrl(body.meetingUrl);
+  const dup = sessions.findActiveByMeetingUrl(meetingUrl);
   if (dup && !body.force) return { status: 409, body: { error: "DUPLICATE_JOIN", sessionId: dup.id, botId: dup.botId, detail: "A live session for this meeting already exists; leave it or pass force:true." } };
 
-  const session = sessions.create({ meetingUrl: body.meetingUrl, botName: body.botName ?? "Yui", mode, botPageQuery: body.botPageQuery });
+  const session = sessions.create({ meetingUrl, botName: body.botName ?? "Yui", mode, botPageQuery: body.botPageQuery });
 
   /**
    * Guide step 5: persist the scheduling intent BEFORE the Create Bot request, so an ambiguous
@@ -154,9 +157,9 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
    * meeting URL is closed out first (its bot, if one exists, is found by the webhook metadata).
    */
   const store = deps.store;
-  for (const stale of store?.unreconciled(body.meetingUrl) ?? []) store!.update(stale.id, { status: "create_failed" }, "reconciled_stale_intent");
+  for (const stale of store?.unreconciled(meetingUrl) ?? []) store!.update(stale.id, { status: "create_failed" }, "reconciled_stale_intent");
   const record = store?.createIntent({
-    meetingUrl: body.meetingUrl,
+    meetingUrl,
     botName: body.botName ?? "Yui",
     source: body.calendarEventId ? "calendar" : "url",
     calendarEventId: body.calendarEventId,
@@ -169,7 +172,7 @@ export async function createRecallBot(env: BrokerEnv, body: CreateBotBody, fetch
   const wsUrl = `${publicWsBase(publicUrl)}/api/meeting/recall/relay/${encodeURIComponent(relayToken)}/`;
   const language = (body.language ?? "ja").split("-")[0]!;
   const payload: Record<string, unknown> = {
-    meeting_url: body.meetingUrl,
+    meeting_url: meetingUrl,
     bot_name: body.botName ?? "Yui",
     recording_config: {
       audio_mixed_raw: {},

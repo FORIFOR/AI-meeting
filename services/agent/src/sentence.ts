@@ -9,6 +9,7 @@
  *   and wait for the 60-char break, 43 characters of synthesis before the first sound (sim 33:
  *   first audio 2.27 s after the text). The longer clause is always the earlier one.
  * - Later chunks are whole sentences (。！？ / .!? / newline); very long clauses break at 、.
+ *   A period waits for following whitespace so a token boundary cannot split a decimal or URL.
  */
 export class SentenceChunker {
   private buffer = "";
@@ -20,17 +21,11 @@ export class SentenceChunker {
     this.buffer += delta;
     const out: string[] = [];
     for (;;) {
-      const m = this.buffer.match(/^([\s\S]*?[。！？!?]+[」』）)]*|[\s\S]*?\n)/);
-      if (m && m[1]!.trim()) {
-        out.push(m[1]!.trim());
-        this.buffer = this.buffer.slice(m[1]!.length);
-        continue;
-      }
-      if (m && !m[1]!.trim()) {
-        this.buffer = this.buffer.slice(m[1]!.length);
-        continue;
-      }
-      break;
+      const end = sentenceBoundary(this.buffer);
+      if (end < 0) break;
+      const sentence = this.buffer.slice(0, end).trim();
+      if (sentence) out.push(sentence);
+      this.buffer = this.buffer.slice(end);
     }
     // First phrase of the reply: release at the first clause comma so TTS starts early.
     if (this.emitted === 0 && out.length === 0) {
@@ -60,6 +55,28 @@ export class SentenceChunker {
   }
 }
 
+/** The end of the first complete sentence, retaining punctuation and closing quotation marks. */
+function sentenceBoundary(text: string): number {
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (ch === "\n") return i + 1;
+    if (!/[。！？!?.]/.test(ch)) continue;
+    let end = i + 1;
+    if (ch !== ".") while (end < text.length && /[。！？!?]/.test(text[end]!)) end++;
+    while (end < text.length && /[」』）)'"”’]/.test(text[end]!)) end++;
+    if (ch === ".") {
+      // A delta ending in "3." or "example." is ambiguous until the next token arrives.
+      if (end === text.length || !/\s/.test(text[end]!)) continue;
+      if (text[i - 1] === "." || text[i + 1] === ".") continue;
+      const word = /[A-Za-z.]+$/.exec(text.slice(0, i))?.[0] ?? "";
+      if (/^(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|vs|etc|e\.g|i\.e|a\.m|p\.m)$/i.test(word)) continue;
+      if (/^[A-Z]$/.test(word) || /^(?:[A-Za-z]\.)+[A-Za-z]$/.test(word)) continue;
+    }
+    return end;
+  }
+  return -1;
+}
+
 /**
  * Index of the first Japanese clause comma (、 or ，) at or after `from` that is not inside
  * digits/Latin text; -1 if none. `from` matters: looking only at the very first comma meant a
@@ -82,7 +99,7 @@ function firstClauseBoundary(text: string, from = 0): number {
 
 /** True when a chunk ends a sentence (used for sentence counting in metrics). */
 export function endsSentence(chunk: string): boolean {
-  return /[。！？!?][」』）)]*$/.test(chunk.trim());
+  return /[。！？!?.][」』）)'"”’]*$/.test(chunk.trim());
 }
 
 /** Remove markdown decorations that TTS would read aloud. */

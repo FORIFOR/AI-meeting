@@ -666,6 +666,58 @@ describe("the call must not howl", () => {
 });
 });
 
+it("does not promote cancelled transcript fragments into a new runtime generation", async () => {
+  const { ConversationRuntime } = await import("@rcai/conversation-core");
+  const provider = new GeminiLiveProvider({ brokerUrl: "http://localhost:8787/", fetchImpl: tokenFetch, wsFactory: (url) => new FakeWS(url) });
+  const runtime = new ConversationRuntime({ localVad: false });
+  const events: ConversationEvent[] = [];
+  runtime.on((event) => events.push(event));
+  await runtime.start(provider, config);
+  const ws = FakeWS.instances.at(-1)!;
+  const audio = { inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 200)) } };
+  ws.receive({ serverContent: { modelTurn: { parts: [audio] }, outputTranscription: { text: "接続できました。" } } });
+  await ws.flush();
+  await runtime.interrupt();
+  const afterInterrupt = events.length;
+
+  // Production reproduction: output transcriptions arrive in packets without modelTurn/audio.
+  ws.receive({ serverContent: { outputTranscription: { text: "いつでも" } } });
+  ws.receive({ serverContent: { interrupted: true } });
+  ws.receive({ serverContent: { outputTranscription: { text: "お声かけくださいね。" } } });
+  ws.receive({ serverContent: { outputTranscription: { text: "旧末尾" }, turnComplete: true } });
+  await ws.flush();
+  vi.advanceTimersByTime(500);
+  expect(events.slice(afterInterrupt).filter((event) => event.type.startsWith("assistant_"))).toEqual([]);
+  expect(runtime.getRecord().turns.filter((turn) => turn.role === "assistant").map((turn) => turn.text)).toEqual(["接続できました。"]);
+
+  await runtime.sendText("次の質問です。");
+  ws.receive({ serverContent: { outputTranscription: { text: "新しい返答です。" }, modelTurn: { parts: [audio] }, turnComplete: true } });
+  await ws.flush();
+  vi.advanceTimersByTime(500);
+  expect(events.flatMap((event) => event.type === "assistant_transcript" && event.final ? [event.text] : [])).toEqual(["新しい返答です。"]);
+  expect(events.filter((event) => event.type === "assistant_audio").map((event) => event.gen?.generationId)).toEqual([1, 2]);
+  await runtime.stop();
+});
+
+it("consumes the cancelled turn boundary even when its final packet still contains audio and text", async () => {
+  const { p, ws, events } = await connected();
+  const audio = { inlineData: { mimeType: "audio/pcm;rate=24000", data: float32ToBase64Pcm16(sine(24000, 200)) } };
+  ws.receive({ serverContent: { modelTurn: { parts: [audio] } } });
+  await ws.flush();
+  await p.interrupt();
+  const afterInterrupt = events.length;
+  ws.receive({ serverContent: { modelTurn: { parts: [audio, { text: "旧本文" }] }, outputTranscription: { text: "旧字幕" }, turnComplete: true } });
+  await ws.flush();
+  expect(events.slice(afterInterrupt).filter((event) => event.type.startsWith("assistant_"))).toEqual([]);
+
+  // The completed cancellation must not keep the next genuine model turn gated shut.
+  ws.receive({ serverContent: { modelTurn: { parts: [audio] }, outputTranscription: { text: "次の返答" }, turnComplete: true } });
+  await ws.flush();
+  expect(events.filter((event) => event.type === "assistant_audio").map((event) => event.gen?.generationId)).toEqual([1, 2]);
+  expect(events.flatMap((event) => event.type === "assistant_transcript" && event.final ? [event.text] : [])).toEqual(["次の返答"]);
+  await p.disconnect();
+});
+
 it('delivers a tool-first reply after interruption while dropping cancelled tool calls',async()=>{
  const {ConversationRuntime}=await import('@rcai/conversation-core');
  const p=new GeminiLiveProvider({brokerUrl:'http://localhost:8787/',fetchImpl:tokenFetch,wsFactory:u=>new FakeWS(u)});

@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.12.2",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "dev": "concurrently -n web,broker,agent \"pnpm --filter @rcai/web dev\" \"pnpm --filter @rcai/token-broker dev\" \"pnpm --filter @rcai/agent dev\"",
@@ -44,7 +44,11 @@
     "budget:check": "node scripts/cloud/budget-check.mjs",
     "cloud:hosted:preflight": "node scripts/cloud/hosted-preflight.mjs",
     "cloud:gcp:preflight": "node scripts/cloud/gcp-preflight.mjs",
-    "cloud:gcp:deploy:broker": "node scripts/cloud/gcp-deploy-broker.mjs"
+    "cloud:gcp:deploy:broker": "node scripts/cloud/gcp-deploy-broker.mjs",
+    "ux-gate": "node scripts/ux/gate.mjs",
+    "dev:oss": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/web exec vite --mode oss",
+    "build:oss": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/web exec vite build --mode oss && node scripts/audit-oss-build.mjs",
+    "demo:vrm": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/avatar-vrm demo"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
@@ -58,5 +62,6 @@
     "overrides": {
       "onnxruntime-node": "1.29.0"
     }
-  }
+  },
+  "license": "Apache-2.0"
 }

@@ -6,6 +6,8 @@ dist/
 *.log
 .DS_Store
 coverage/
+apps/web/public-oss/
+apps/web/dist-oss/
 apps/desktop/src-tauri/target/
 characters/*/model/*.moc3
 characters/*/model/*.model3.json
@@ -28,3 +30,5 @@ apps/web/public/mediapipe
 vendor/smart-turn
 vendor/supertonic
 .firebase/
+
+apps/desktop/src-tauri/resources/local-runtime/

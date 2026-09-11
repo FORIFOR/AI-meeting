@@ -3,6 +3,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
+  /** Public demo launch: stop new billed provider work while retaining local demos and cleanup. */
+  RCAI_PUBLIC_DEMO_ONLY?: string;
   /** Zoom user authorization, backed by a server-only Firestore database. */
   ZOOM_OAUTH_CLIENT_ID?: string;
   ZOOM_OAUTH_CALLBACK_URL?: string;
@@ -36,6 +38,12 @@ export interface BrokerEnv {
   TAVUS_API_KEY?: string;
   TAVUS_REPLICA_ID?: string;
   TAVUS_PERSONA_ID?: string;
+  /** Anam credentials stay in the broker; browsers receive session tokens only. */
+  ANAM_API_KEY?: string;
+  /** Avatar generation model; defaults to cara-4. */
+  ANAM_AVATAR_MODEL?: string;
+  /** JSON object mapping existing character IDs to their provisioned Anam avatar UUIDs. */
+  ANAM_AVATAR_IDS?: string;
   /** Recall.ai meeting bots (P0-1). */
   RECALL_API_KEY?: string;
   RECALL_REGION?: string;

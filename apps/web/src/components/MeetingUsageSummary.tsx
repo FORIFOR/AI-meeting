@@ -14,12 +14,11 @@ export function MeetingUsageSummary({ receipt, aiUsage }: { receipt: MeetingUsag
     <p>会議Botの消費クレジット（概算）</p>
     <p className="meeting-usage-amount">{receipt.credits === null ? "消費量を確認できませんでした" : <><strong>{receipt.credits.toFixed(2)}</strong> クレジット</>}</p>
     <p>利用時間：{minutes}分{seconds}秒</p>
-    <p className="hint">会議Bot 1体の利用分です。AI音声・サーバー料金は別です。</p>
+    <p className="hint">会議Bot 1体の利用分です。料金の具体額は表示していません。</p>
     <details>
-      <summary>料金の内訳と計算方法</summary>
-      {receipt.credits !== null && <p>会議Bot料金の目安：${(receipt.credits * .5).toFixed(3)}</p>}
+      <summary>利用量の詳細</summary>
       <p className="hint">1クレジットはBot 1体で約60分。Bot作成から終了確認までをこの画面で計測し、0.01クレジット単位で切り上げています。待機時間を含みます。後処理などにより実際の差引額と異なる場合があります。</p>
-      {aiUsage ? <LiveCostSummary counters={aiUsage} /> : <p className="hint">今回のAI音声料金は未取得です。0円という意味ではありません。</p>}
+      {aiUsage ? <LiveCostSummary counters={aiUsage} /> : <p className="hint">今回のAI利用量は未取得です。</p>}
     </details>
   </section>;
 }

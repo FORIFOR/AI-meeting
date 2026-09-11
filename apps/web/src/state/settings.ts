@@ -2,6 +2,7 @@ import type { PrivacyMode, ProviderId } from "@rcai/conversation-core";
 import { resolveRouting, type AutoPolicy, type EngineSelection, type Role, type RouterConfig, type RoutingDecision } from "@rcai/provider-core";
 
 export interface Settings {
+  openaiVoiceModel?: "realtime" | "gpt-live-1";
   brokerUrl: string;
   agentUrl: string;
   engine: EngineSelection;
@@ -10,6 +11,8 @@ export interface Settings {
   privacyMode: PrivacyMode;
   showHud: boolean;
   characterId: string;
+  /** Explicit display preference per character; natural permits sending AI reply audio to Anam. */
+  avatarQuality?: Record<string, "lightweight" | "natural">;
   cameraOn: boolean;
   /** Optional explicit audio devices (acoustic gate / multi-device setups). */
   inputDeviceId?: string;
@@ -30,28 +33,32 @@ export interface Settings {
   expressive: boolean;
 }
 
+const OSS_PROFILE = import.meta.env.VITE_RCAI_OSS === "true";
+
 export const DEFAULT_SETTINGS: Settings = {
   brokerUrl: import.meta.env.VITE_RCAI_CLOUD === "true" ? (import.meta.env.VITE_RCAI_BROKER_URL ?? window.location.origin) : "http://localhost:8787",
   agentUrl: import.meta.env.VITE_RCAI_CLOUD === "true" ? (import.meta.env.VITE_RCAI_AGENT_URL ?? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/agent`) : "ws://localhost:8788",
-  engine: import.meta.env.VITE_RCAI_CLOUD === "true" ? "google" : "auto",
-  autoPolicy: "quality_first",
+  engine: OSS_PROFILE ? "local" : import.meta.env.VITE_RCAI_CLOUD === "true" ? "google" : "auto",
+  autoPolicy: OSS_PROFILE ? "offline" : "quality_first",
   advanced: {},
-  privacyMode: "default",
+  privacyMode: OSS_PROFILE ? "strict_local" : "default",
   showHud: false,
-  characterId: "",
+  characterId: OSS_PROFILE ? "vrm-sample" : "",
   cameraOn: false,
-  captionsOn: true,
+  captionsOn: false,
   voices: {},
   expressive: false,
 };
 
 export type SettingsAction =
+  | { type: "openaiVoiceModel"; model: "realtime" | "gpt-live-1" }
   | { type: "engine"; engine: EngineSelection }
   | { type: "autoPolicy"; policy: AutoPolicy }
   | { type: "advanced"; role: Role; provider: ProviderId | undefined }
   | { type: "privacy"; mode: PrivacyMode }
   | { type: "hud"; on: boolean }
   | { type: "character"; id: string }
+  | { type: "avatarQuality"; characterId: string; quality: "lightweight" | "natural" }
   | { type: "urls"; brokerUrl?: string; agentUrl?: string }
   | { type: "camera"; on: boolean }
   | { type: "captions"; on: boolean }
@@ -62,6 +69,7 @@ export type SettingsAction =
 /** strict_local (spec §6) forces the local engine and clears cloud overrides. */
 export function settingsReducer(s: Settings, a: SettingsAction): Settings {
   switch (a.type) {
+    case "openaiVoiceModel": return { ...s, openaiVoiceModel: a.model };
     case "engine":
       if (s.privacyMode === "strict_local" && a.engine !== "local") return s;
       return { ...s, engine: a.engine };
@@ -81,6 +89,9 @@ export function settingsReducer(s: Settings, a: SettingsAction): Settings {
       return { ...s, showHud: a.on };
     case "character":
       return { ...s, characterId: a.id };
+    case "avatarQuality":
+      if ((OSS_PROFILE || s.privacyMode === "strict_local") && a.quality === "natural") return s;
+      return { ...s, avatarQuality: { ...s.avatarQuality, [a.characterId]: a.quality } };
     case "urls":
       return { ...s, brokerUrl: a.brokerUrl ?? s.brokerUrl, agentUrl: a.agentUrl ?? s.agentUrl };
     case "camera":
@@ -108,6 +119,12 @@ export function voiceKey(characterId: string, providerId: ProviderId): string {
 export function chosenVoice(s: Settings, characterId: string | undefined, providerId: ProviderId): string | undefined {
   if (!characterId) return undefined;
   return s.voices?.[voiceKey(characterId, providerId)];
+}
+
+/** Broker readiness never opts a character into external rendering; only an explicit choice can. */
+export function chosenAvatarQuality(s: Settings, characterId: string | undefined): "lightweight" | "natural" {
+  if (OSS_PROFILE || s.privacyMode === "strict_local" || !characterId) return "lightweight";
+  return s.avatarQuality?.[characterId] === "natural" ? "natural" : "lightweight";
 }
 
 /**
@@ -146,9 +163,14 @@ export function decide(s: Settings, avail?: Availability): RoutingDecision {
   return resolveRouting(routerConfigFor(s, avail));
 }
 
-const KEY = "rcai.settings.v1";
+const KEY = OSS_PROFILE ? "rcai.settings.oss.v1" : "rcai.settings.v1";
 /** Keys that must never be persisted (spec §26: no secrets in the client). */
 const FORBIDDEN = /key|secret|token/i;
+
+function validAvatarQuality(value: unknown): Settings["avatarQuality"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return Object.fromEntries(Object.entries(value).filter(([id, quality]) => id && (quality === "lightweight" || quality === "natural")));
+}
 
 export function loadSettings(storage: Pick<Storage, "getItem"> | null = typeof localStorage !== "undefined" ? localStorage : null): Settings {
   if (!storage) return { ...DEFAULT_SETTINGS };
@@ -158,7 +180,7 @@ export function loadSettings(storage: Pick<Storage, "getItem"> | null = typeof l
     const parsed = JSON.parse(raw) as Partial<Settings>;
     const clean: Partial<Settings> = {};
     for (const [k, v] of Object.entries(parsed)) if (!FORBIDDEN.test(k)) (clean as Record<string, unknown>)[k] = v;
-    return { ...DEFAULT_SETTINGS, ...clean, advanced: { ...(clean.advanced ?? {}) }, voices: { ...(clean.voices ?? {}) } };
+    return { ...DEFAULT_SETTINGS, ...clean, advanced: { ...(clean.advanced ?? {}) }, voices: { ...(clean.voices ?? {}) }, avatarQuality: validAvatarQuality(clean.avatarQuality) };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

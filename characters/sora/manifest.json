@@ -1,0 +1,13 @@
+{
+  "id": "sora",
+  "name": "Sora",
+  "renderer": "human-glb",
+  "defaultPersona": "friendly",
+  "supportedLanguages": [
+    "ja-JP",
+    "en-US"
+  ],
+  "motionProfile": "expressive_v1",
+  "voiceProfiles": [],
+  "license": "MPFB sample by met4citizen \u2014 CC0-1.0"
+}

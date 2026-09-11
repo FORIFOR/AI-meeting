@@ -11,6 +11,7 @@ import englishPronunciation from "../english/english_pronunciation.json";
 import englishBeginner from "../english/english_beginner.json";
 import salesCustomerJa from "../sales/sales_customer_ja.json";
 import tutorJa from "../tutor/tutor_ja.json";
+import thinkingJa from "../free_talk/thinking_ja.json";
 import friendJa from "../free_talk/friend_ja.json";
 import careerCoachJa from "../career/career_coach_ja.json";
 import companionJa from "../companion/companion_ja.json";
@@ -21,7 +22,7 @@ import { MEETING_PERSONA_ID } from "@rcai/meeting-core";
 const RAW: unknown[] = [
   interviewerJa, interviewerEn,
   englishFreeTalk, englishTravel, englishBusiness, englishInterview, englishDaily, englishPronunciation, englishBeginner,
-  salesCustomerJa, tutorJa, friendJa, careerCoachJa, companionJa, taskOrganizerJa, meetingColleagueJa,
+  salesCustomerJa, tutorJa, friendJa, thinkingJa, careerCoachJa, companionJa, taskOrganizerJa, meetingColleagueJa,
 ];
 
 /** All bundled personas, validated at module load (spec §18: Character ≠ Personality). */

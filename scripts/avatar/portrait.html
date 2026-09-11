@@ -1,0 +1,40 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>キャラクター画像の書き出し</title>
+<style>body{font:16px system-ui;margin:24px;background:#f5f3f8;color:#292333}button{padding:12px;margin:0 8px 8px 0}#stage{position:absolute;left:-3000px;width:1152px;height:1152px}#preview{display:block;width:min(650px,90vw);height:auto}#status{white-space:pre-wrap}</style>
+<h1>現在のキャラクターから画像を作成</h1><p>1152pxの正方形PNGをローカルに保存します。外部サービスには送信しません。</p>
+<button data-id="yui">Yuiを書き出す</button><button data-id="haru">Haruを書き出す</button><button data-id="kei">Keiを書き出す</button><button data-id="reina">Reinaを書き出す</button>
+<p id="status" role="status">キャラクターを選択してください。</p><img id="preview" alt="書き出したキャラクター" hidden><div id="stage"></div>
+<script type="module">
+import { Live2DAvatarProvider } from '/@fs__REPO_ROOT__/avatar-providers/live2d/src/live2dAvatar.ts';
+import { loadCharacter, neutralParams } from '/@fs__REPO_ROOT__/packages/avatar-core/src/index.ts';
+const stage = document.querySelector('#stage'), status = document.querySelector('#status'), preview = document.querySelector('#preview');
+let previewUrl;
+for (const button of document.querySelectorAll('button[data-id]')) button.onclick = async () => {
+  const id = button.dataset.id;
+  for (const b of document.querySelectorAll('button')) b.disabled = true;
+  status.textContent = `${id}の実モデルを読み込んでいます…`;
+  const avatar = new Live2DAvatarProvider({ container: stage, framing: 'default', lipSyncEngine: 'analyzer', allowCdn: false });
+  try {
+    const original = await loadCharacter(`/@fs__REPO_ROOT__/characters/${id}`);
+    const character = { ...original, view: { ...original.view, ...original.view?.meeting,
+      ...(id === 'kei' ? { scale: 0.78, x: 0, y: 0 } : {}),
+    } };
+    await avatar.prepare(character);
+    // Authoring only: freeze procedural motion and render neutral model parameters once.
+    avatar.app.ticker.stop();
+    avatar.applyParams(neutralParams());
+    avatar.app.renderer.render(avatar.app.stage);
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1152;
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#f0edf4'; ctx.fillRect(0, 0, 1152, 1152);
+    ctx.drawImage(avatar.app.view, 0, 0, 1152, 1152);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('画像を書き出せませんでした');
+    const response = await fetch(`/__portrait/save/${id}`, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
+    if (!response.ok) throw new Error(`保存できませんでした (${response.status})`);
+    const result = await response.json();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(blob); preview.src = previewUrl; preview.hidden = false;
+    status.textContent = `${result.saved} 保存済み · ${result.width}×${result.width}px · ${result.bytes} bytes`;
+  } catch (error) { status.textContent = String(error); }
+  finally { await avatar.stop(); for (const b of document.querySelectorAll('button')) b.disabled = false; }
+};
+</script></html>

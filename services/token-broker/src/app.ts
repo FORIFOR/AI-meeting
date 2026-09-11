@@ -1,3 +1,5 @@
+import { createOpenAILiveSession } from "./routes/openaiLive.js";
+import { publicDemoOnly, startsProviderWork, PUBLIC_DEMO_ONLY_MESSAGE } from "./public-access.js";
 import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
 import { FirestoreZoomStore } from "./zoom/store.js";
 import { registerZoomRoutes, bearer } from "./zoom/routes.js";
@@ -14,6 +16,7 @@ import { createGeminiEphemeralToken } from "./routes/gemini.js";
 import { createLiveKitToken } from "./routes/livekit.js";
 import { createHeyGenSession, stopHeyGenSession } from "./routes/heygen.js";
 import { createTavusConversation } from "./routes/tavus.js";
+import { anamAvailability, createAnamSession } from "./routes/anam.js";
 import { planWithOpenAI } from "./routes/plan.js";
 import { recordFeedback, type FeedbackEntry } from "./routes/feedback.js";
 import { recordIncident, type IncidentBody } from "./routes/incidents.js";
@@ -63,6 +66,7 @@ export interface AppDeps {
 
 export function createApp(deps: AppDeps): Hono {
   const env = deps.env;
+  const demoOnly = publicDemoOnly(env);
   const vertex = deps.vertex ?? new VertexLiveRelay(env);
   const fetchImpl = deps.fetch ?? fetch;
   const now = deps.now ?? Date.now;
@@ -118,7 +122,7 @@ export function createApp(deps: AppDeps): Hono {
     // `calendar.*` webhooks drive scheduling; everything else is the bot/recording/transcript lifecycle.
     queue.start((job) =>
       isCalendarEvent(job.event)
-        ? handleCalendarWebhook(job.payload as { event?: string; data?: { calendar_id?: string; last_updated_ts?: string } }, calendarSync(), { client: calendarClient(), calendarStore, log: calendarLog })
+        ? demoOnly ? Promise.resolve() : handleCalendarWebhook(job.payload as { event?: string; data?: { calendar_id?: string; last_updated_ts?: string } }, calendarSync(), { client: calendarClient(), calendarStore, log: calendarLog })
         : handleWebhookJob(job, webhookDeps()),
     );
     /**
@@ -127,7 +131,7 @@ export function createApp(deps: AppDeps): Hono {
      * (`armedAt`), so a missed tick is harmless and a restart simply re-checks.
      */
     const armEvery = Number(env.RECALL_CALENDAR_ARM_INTERVAL_MS ?? 60_000);
-    armTimer = setInterval(() => {
+    if (!demoOnly) armTimer = setInterval(() => {
       void calendarSync()
         .armDueEvents()
         .then((armed) => {
@@ -135,7 +139,7 @@ export function createApp(deps: AppDeps): Hono {
         })
         .catch((e: unknown) => calendarLog({ at: "arm_failed", error: e instanceof Error ? e.message : "unknown" }));
     }, armEvery);
-    armTimer.unref?.();
+    armTimer?.unref?.();
   }
 
   /**
@@ -155,21 +159,30 @@ export function createApp(deps: AppDeps): Hono {
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   }));
+  app.use("*", async (c, next) => {
+    if (demoOnly && startsProviderWork(c.req.method, c.req.path)) {
+      c.header("Cache-Control", "no-store");
+      return c.json({ error: "PUBLIC_DEMO_ONLY", message: PUBLIC_DEMO_ONLY_MESSAGE }, 403);
+    }
+    await next();
+  });
 
   app.get("/health", (c) =>
     c.json({
       ok: true,
+      publicAccess: demoOnly ? { mode: "demo_only", reason: "PUBLIC_DEMO_ONLY" } : { mode: "full" },
       providers: {
-        openai: Boolean(env.OPENAI_API_KEY),
-        google: Boolean(env.GEMINI_BACKEND === "vertex" ? env.GOOGLE_CLOUD_PROJECT : env.GEMINI_API_KEY),
-        livekit: Boolean(env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET),
-        heygen: Boolean(env.HEYGEN_API_KEY),
-        tavus: Boolean(env.TAVUS_API_KEY),
-        recall: Boolean(env.RECALL_API_KEY),
+        openai: !demoOnly && Boolean(env.OPENAI_API_KEY),
+        google: !demoOnly && Boolean(env.GEMINI_BACKEND === "vertex" ? env.GOOGLE_CLOUD_PROJECT : env.GEMINI_API_KEY),
+        livekit: !demoOnly && Boolean(env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET),
+        heygen: !demoOnly && Boolean(env.HEYGEN_API_KEY),
+        tavus: !demoOnly && Boolean(env.TAVUS_API_KEY),
+        recall: !demoOnly && Boolean(env.RECALL_API_KEY),
       },
+      avatars: { anam: demoOnly ? { configured: false, characterIds: [] } : anamAvailability(env) },
       meeting: {
-        attendee: Boolean(env.ATTENDEE_API_KEY),
-        recall: Boolean(env.RECALL_API_KEY),
+        attendee: !demoOnly && Boolean(env.ATTENDEE_API_KEY),
+        recall: !demoOnly && Boolean(env.RECALL_API_KEY),
         // Operational, not diagnostic: an empty Recall account looks like an outage from the outside.
         creditRefusedAt: lastCreditRefusalAt,
         recallPublicUrl: Boolean(env.RECALL_PUBLIC_URL),
@@ -194,6 +207,11 @@ export function createApp(deps: AppDeps): Hono {
     if (!req) return c.json({ error: "kind must be news or weather" }, 400);
     const result = await lookupLiveInfo(req, fetchImpl);
     return c.json(result.body, 200);
+  });
+
+  app.post("/api/session/openai-live", async (c) => {
+    const r = await createOpenAILiveSession(env, await json(c), fetchImpl);
+    return c.json(r.body, r.status as 200);
   });
 
   app.post("/api/token/openai", async (c) => {
@@ -276,6 +294,12 @@ export function createApp(deps: AppDeps): Hono {
 
   app.post("/api/avatar/heygen/stop", async (c) => {
     const r = await stopHeyGenSession(env, await json<Parameters<typeof stopHeyGenSession>[1]>(c), fetchImpl);
+    return c.json(r.body, r.status as 200);
+  });
+
+  app.post("/api/avatar/anam/session", async (c) => {
+    c.header("Cache-Control", "no-store");
+    const r = await createAnamSession(env, await json(c), fetchImpl);
     return c.json(r.body, r.status as 200);
   });
 
@@ -436,7 +460,7 @@ export function createApp(deps: AppDeps): Hono {
     const fresh = queue.enqueue(webhookId, body.event ?? "unknown", body);
     console.log("[recall] webhook", JSON.stringify({ verified: true, event: body.event, webhookId, enqueued: fresh }));
     // Drain immediately when the worker is off (tests/smoke) so the effect is observable.
-    if (deps.startWorker === false && fresh) await queue.drain((job) => handleWebhookJob(job, webhookDeps()));
+    if (deps.startWorker === false && fresh) await queue.drain((job) => demoOnly && isCalendarEvent(job.event) ? Promise.resolve() : handleWebhookJob(job, webhookDeps()));
     return c.json({ ok: true, duplicate: !fresh });
   });
 

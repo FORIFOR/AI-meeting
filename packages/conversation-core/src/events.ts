@@ -70,7 +70,7 @@ export type ConversationEvent =
   | { type: "session_closed"; reason?: string }
   | { type: "user_speech_started"; at?: number }
   | { type: "user_speech_ended"; at?: number }
-  | { type: "user_transcript"; text: string; final?: boolean; id?: number }
+  | { type: "user_transcript"; text: string; final?: boolean; id?: number; delta?: boolean }
   /**
    * A better reading of an utterance already delivered as a final `user_transcript` (`id` matches).
    * Context only: it replaces the text a later turn will see, and never earns a turn of its own — the

@@ -1,4 +1,5 @@
 import { zoomToken } from "../api/zoom.js";
+import { LocalAvatarFallback } from "./localAvatarFallback.js";
 /**
  * The ONLY file that touches sibling integration packages. Everything is loaded lazily and
  * typed against the @rcai/*-core contracts, so the app typechecks/builds even while a sibling
@@ -6,7 +7,7 @@ import { zoomToken } from "../api/zoom.js";
  */
 import type { PrivacyMode, ProviderId } from "@rcai/conversation-core";
 import type { EvaluationProvider, RealtimeAIProvider } from "@rcai/provider-core";
-import type { AvatarProvider, CharacterManifest } from "@rcai/avatar-core";
+import { DualRenderer, type AvatarProvider, type CharacterManifest } from "@rcai/avatar-core";
 import type { Persona } from "@rcai/persona-core";
 import { agentHttpUrl } from "../api/health.js";
 
@@ -32,6 +33,7 @@ export interface ProviderFactoryOptions {
   agentUrl: string;
   privacyMode: PrivacyMode;
   model?: string;
+  openaiVoiceModel?: "realtime" | "gpt-live-1";
   /**
    * Prefer a model that reacts to how something was said, and may choose to say nothing, over the
    * fastest one. Only Gemini's native-audio family has either; everywhere else it is ignored.
@@ -46,6 +48,7 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
   switch (id) {
     case "openai": {
       const mod = await import("@rcai/provider-openai");
+      if (o.openaiVoiceModel === "gpt-live-1") return new mod.OpenAILiveProvider({ brokerUrl: o.brokerUrl });
       const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; turnDetection?: "server_vad" | "semantic_vad" }>>(mod, "OpenAIRealtimeProvider", "BLOCKED_BY_PROVIDER_OPENAI");
       /**
        * Semantic VAD estimates whether an utterance *finished*, rather than whether sound stopped —
@@ -118,57 +121,135 @@ export async function createHeuristicEvaluator(): Promise<EvaluationProvider> {
 export type Renderer = CharacterManifest["renderer"];
 
 export interface AvatarFactoryOptions {
+  /** Local VRM import/demo override. Never forwarded to a cloud avatar. */
+  modelUrl?: string;
+  quality?: "lightweight" | "natural";
+  onFallback?: (reason: string) => void;
   container: HTMLElement;
   brokerUrl: string;
+  /** Character metadata used to make a renderer fallback identifiable in a meeting tile. */
+  characterId?: string;
+  characterName?: string;
+  /** Use the character's real preview artwork when a bot browser cannot render Live2D/WebGL. */
+  staticPreview?: boolean;
   privacyMode?: "default" | "strict_local";
   /** "meeting": the page is a camera tile, not an operator's screen (see Live2DAvatarOptions.framing). */
-  framing?: "default" | "meeting";
+  framing?: "default" | "meeting" | "preview";
   /** Cap on the avatar's render frame rate (see Live2DAvatarOptions.maxFps). */
   maxFps?: number;
+  /**
+   * Use the software renderer even when WebGL exists. Attendee's webpage streamer captures a
+   * camera tile from a separate, GPU-limited browser; Canvas keeps the first frame deterministic
+   * and avoids a WebGL surface that can be omitted from the captured track.
+   */
+  preferCanvas?: boolean;
 }
 
 /** Renderers that cannot draw anything without a WebGL context. */
-const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm"];
+const NEEDS_WEBGL: Renderer[] = ["live2d", "vrm", "human-glb"];
 
-/**
- * Is there a WebGL context to be had in this browser?
- *
- * Not a theoretical question: a meeting vendor runs our page in its own Chrome, and Attendee's webpage
- * streamer launches it with `--disable-gpu` and no `--enable-unsafe-swiftshader`, which in current
- * Chrome means no WebGL at all — measured, both flag sets, in `docs/commercial-gate.md`. Without this
- * check the failure is a blank camera tile and a session that looks fine from every log we keep.
- */
-export function webglAvailable(): boolean {
-  if (typeof document === "undefined") return true;
-  try {
-    const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") ?? c.getContext("webgl"));
-  } catch {
-    return false;
+/** Probe actual capabilities, never infer them from the meeting vendor or browser flags. */
+export function avatarCapabilities(): { webgl: boolean; api: "webgl2" | "webgl" | "none" | "unknown" } {
+  if (typeof document === "undefined") return { webgl: true, api: "unknown" };
+  for (const api of ["webgl2", "webgl"] as const) {
+    try {
+      // Separate canvases: a canvas cannot change its context type once one is created.
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext(api) as WebGLRenderingContext | null;
+      if (!gl || gl.isContextLost?.()) continue;
+      // Release the probe so repeated character changes do not exhaust GPU contexts.
+      gl.getExtension?.("WEBGL_lose_context")?.loseContext();
+      return { webgl: true, api };
+    } catch { /* Some containers reject WebGL2 but still support WebGL1. */ }
   }
+  return { webgl: false, api: "none" };
+}
+
+export function webglAvailable(): boolean {
+  return avatarCapabilities().webgl;
 }
 
 export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryOptions): Promise<AvatarProvider> {
+  const oss = import.meta.env.VITE_RCAI_OSS === "true";
+  if (oss && !["vrm", "canvas"].includes(renderer)) throw new Error("BLOCKED_BY_OSS_RENDERER: enable licensed extensions in a regular build");
+  // Preview and strict-local never import or connect a billed external renderer.
+  if (!oss && o.quality === "natural" && o.privacyMode !== "strict_local" && o.framing !== "preview" &&
+      ["live2d", "canvas", "vrm", "human-glb"].includes(renderer)) {
+    const localContainer = document.createElement("div");
+    const naturalContainer = document.createElement("div");
+    for (const layer of [localContainer, naturalContainer]) {
+      layer.style.cssText = "position:absolute;inset:0;width:100%;height:100%";
+      o.container.appendChild(layer);
+    }
+    let local: AvatarProvider | undefined;
+    try {
+      local = await createAvatarProvider(renderer, { ...o, container: localContainer, quality: "lightweight" });
+      const { AnamAvatarProvider } = await import("@rcai/avatar-anam");
+      const natural = new AnamAvatarProvider({ container: naturalContainer, brokerUrl: o.brokerUrl, privacyMode: o.privacyMode });
+      return new DualRenderer({ local, natural, localContainer, naturalContainer, onFallback: o.onFallback });
+    } catch (error) {
+      if (local) {
+        naturalContainer.remove();
+        const stop = local.stop.bind(local);
+        local.stop = async () => { try { await stop(); } finally { localContainer.remove(); } };
+        o.onFallback?.("renderer_unavailable");
+        return local;
+      }
+      localContainer.remove(); naturalContainer.remove();
+      throw error;
+    }
+  }
   const strict = o.privacyMode === "strict_local";
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
+  if (renderer === "vrm") {
+    const fallback = async () => {
+      const { CanvasAvatarProvider } = await import("@rcai/avatar-canvas");
+      return new CanvasAvatarProvider({ container: o.container, framing: o.framing, label: `${o.characterName ?? "VRM"} · 簡易表示` });
+    };
+    if (!webglAvailable()) { o.onFallback?.("vrm_webgl_unavailable"); return fallback(); }
+    try {
+      const { VRMAvatarProvider } = await import("@rcai/avatar-vrm");
+      return new LocalAvatarFallback(new VRMAvatarProvider({ container: o.container, modelUrl: o.modelUrl, privacyMode: o.privacyMode }), fallback, o.onFallback);
+    } catch {
+      o.onFallback?.("vrm_renderer_unavailable");
+      return fallback();
+    }
+  }
+  if (renderer === "live2d" && o.preferCanvas) {
+    const mod = await import("@rcai/avatar-canvas");
+    const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+    const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
+    return new C({ container: o.container, framing: o.framing, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
+  }
   if (NEEDS_WEBGL.includes(renderer) && !webglAvailable()) {
+    /**
+     * Attendee and similar meeting page browsers may disable GPU/WebGL. A hard failure here leaves
+     * the bot audible but invisible in the participant tile. Live2D has a canonical 2D renderer
+     * that uses the same motion parameters, so keep the tile useful and identifiable in that case.
+     * VRM remains an explicit error until a 2D equivalent is available for it.
+     */
+    if (renderer === "live2d") {
+      const mod = await import("@rcai/avatar-canvas");
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      const accents: Record<string, string> = { yui: "#7c6de6", haru: "#5ca8d8", kei: "#d178b0", reina: "#9c7abf" };
+      return new C({ container: o.container, framing: o.framing, accent: (o.characterId && accents[o.characterId]) ?? "#5b5bd6", ...(o.characterId ? { characterId: o.characterId } : {}), ...(o.characterName ? { label: o.characterName } : {}), ...(o.staticPreview ? { staticPreview: true } : {}) });
+    }
     throw new Error(`BLOCKED_BY_NO_WEBGL: ${renderer} needs a WebGL context and this browser has none (a meeting vendor's page browser may run with --disable-gpu)`);
   }
   switch (renderer) {
     case "live2d": {
       const mod = await import("@rcai/avatar-live2d");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; allowCdn?: boolean; framing?: "default" | "meeting"; maxFps?: number }>>(mod, "Live2DAvatarProvider", "BLOCKED_BY_AVATAR_LIVE2D");
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; allowCdn?: boolean; framing?: "default" | "meeting" | "preview"; maxFps?: number }>>(mod, "Live2DAvatarProvider", "BLOCKED_BY_AVATAR_LIVE2D");
       return new C({ container: o.container, allowCdn: !strict, framing: o.framing ?? "default", ...(o.maxFps ? { maxFps: o.maxFps } : {}) });
     }
     case "canvas": {
       const mod = await import("@rcai/avatar-canvas");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
-      return new C({ container: o.container });
+      const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
+      return new C({ container: o.container, framing: o.framing, characterId: o.characterId, staticPreview: o.staticPreview, label: o.characterName });
     }
-    case "vrm": {
-      const mod = await import("@rcai/avatar-vrm");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement }>>(mod, "VRMAvatarProvider", "BLOCKED_BY_AVATAR_VRM");
-      return new C({ container: o.container });
+    case "human-glb": {
+      const { HumanGLBAvatarProvider } = await import("@rcai/avatar-vrm");
+      return new HumanGLBAvatarProvider({ container: o.container });
     }
     case "liveavatar": {
       const mod = await import("@rcai/avatar-liveavatar");
@@ -202,7 +283,7 @@ export async function loadCharacterEntries(): Promise<{ entries: CharacterEntry[
   try {
     const mod = await import("@rcai/characters");
     const list = pick<CharacterEntry[]>(mod, "characters", "BLOCKED_BY_CHARACTERS_PKG");
-    return { entries: list };
+    return { entries: import.meta.env.VITE_RCAI_OSS === "true" ? list.filter((entry) => entry.renderer === "vrm") : list };
   } catch (e) {
     return { entries: [], error: e instanceof Error ? e.message : String(e) };
   }

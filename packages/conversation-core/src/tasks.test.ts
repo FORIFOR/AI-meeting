@@ -52,3 +52,18 @@ it('cancels proposals and refuses stale or invalid changes',()=>{
  expect(s.propose({operations:[{action:'update',id:'missing',quote:'完了'}]}).error).toBeDefined();
  expect(s.propose({operations:[{action:'add',title:'買う',quote:'買う',due:'明日'}]}).error).toBeDefined();
 });
+it('accepts repaired real-provider arguments without weakening quote or update-id validation',()=>{
+ const s=new TaskLedger();
+ const source='タスク 名 は 資料 確認 と メール 返信 です 。 どちら も 期限 は 今日 です 。';
+ expect(s.apply({operations:[{action:'add',title:'資料確認',due:'今日',quote:'資料確認'}]},source).error).toBe('due must be quoted, not inferred');
+ expect(s.snapshot()).toEqual([]);
+ const quote='タスク名は資料確認とメール返信です。どちらも期限は今日です。';
+ const added=s.apply({operations:['資料確認','メール返信'].map(title=>({action:'add',title,due:'今日',quote}))},source);
+ expect(added.error).toBeUndefined();
+ const update='資料確認は完了しました。メール返信は明日に延期してください。';
+ expect(s.apply({operations:[{action:'update',title:'資料確認',status:'done',quote:update}]},update).error).toBe('unknown task id');
+ expect(s.snapshot().every(t=>t.status==='pending')).toBe(true);
+ const result=s.apply({operations:[{action:'update',id:added.tasks[0]!.id,status:'done',quote:update},{action:'update',id:added.tasks[1]!.id,status:'deferred',due:'明日',quote:update}]},update);
+ expect(result.error).toBeUndefined();
+ expect(result.tasks.map(({title,status,due})=>({title,status,due}))).toEqual([{title:'資料確認',status:'done',due:'今日'},{title:'メール返信',status:'deferred',due:'明日'}]);
+});

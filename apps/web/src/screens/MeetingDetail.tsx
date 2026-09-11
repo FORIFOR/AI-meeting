@@ -20,6 +20,16 @@ export interface MeetingDetailProps {
 
 /** The persisted output: what was said, readable, with the failure (if any) said in one sentence. */
 export function MeetingDetail(p: MeetingDetailProps) {
+  if (p.settings.privacyMode === "strict_local") return (
+    <div className="page"><h1 className="page__title">会議の記録</h1>
+      <p className="notice" role="status">会議の記録を確認するには、設定でクラウドの利用を有効にしてください。</p>
+      <button type="button" className="btn btn--ghost" onClick={p.onBack}>戻る</button>
+    </div>
+  );
+  return <CloudMeetingDetail {...p} />;
+}
+
+function CloudMeetingDetail(p: MeetingDetailProps) {
   const [loading, setLoading] = useState(true);
   const [meeting, setMeeting] = useState<MeetingRecord | null>(null);
   const [blocks, setBlocks] = useState<DialogueBlock[]>([]);

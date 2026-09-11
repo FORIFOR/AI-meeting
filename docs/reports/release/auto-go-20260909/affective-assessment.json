@@ -1,9 +1,0 @@
-{
-  "samplesPerSetting": 5,
-  "medianMs": {
-    "on": 1454,
-    "off": 1404
-  },
-  "productionChanged": false,
-  "conclusion": "The five paired samples do not establish a meaningful improvement or meet the 700 ms median target; retain current setting."
-}

@@ -3,6 +3,7 @@ import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 import { GoogleAuth } from "google-auth-library";
 import { WebSocket } from "ws";
 import type { BrokerEnv } from "./env.js";
+import { publicDemoOnly } from "./public-access.js";
 
 /** OAuth credentials stay on the broker. Clients receive a two-minute, model-bound relay ticket. */
 export class VertexLiveRelay {
@@ -26,6 +27,7 @@ export class VertexLiveRelay {
   }
   private sign(payload: string) { return createHmac("sha256", this.secret).update(payload).digest("base64url"); }
   consume(token: string): string | null {
+    if (publicDemoOnly(this.env)) return null;
     try {
       for (const [key, expires] of this.used) if (expires <= Date.now()) this.used.delete(key);
       const [payload, signature] = token.split(".");

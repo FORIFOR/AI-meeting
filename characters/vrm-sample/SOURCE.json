@@ -1,0 +1,12 @@
+{
+  "repository": "vrm-c/vrm-specification",
+  "commit": "821c11b250d8c70d5804ee13431e42bee56ea9c0",
+  "url": "https://raw.githubusercontent.com/vrm-c/vrm-specification/821c11b250d8c70d5804ee13431e42bee56ea9c0/samples/VRM1_Constraint_Twist_Sample/vrm/VRM1_Constraint_Twist_Sample.vrm",
+  "sha256": "12c2b97e95e700783a6a550dc0eee2d7880aeedccef9ae67bc4c5a2f0f2631a2",
+  "name": "VRM1_Constraint_Twist_Sample",
+  "author": "pixiv Inc.",
+  "copyright": "(c) 2022 pixiv Inc.",
+  "license": "VRM Public License 1.0 + embedded VRMC_vrm.meta permissions",
+  "licenseUrl": "https://vrm.dev/licenses/1.0/",
+  "purpose": "Unmodified integration sample, not an original AI Meeting character"
+}

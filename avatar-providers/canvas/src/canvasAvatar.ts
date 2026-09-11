@@ -1,15 +1,22 @@
-import { MotionStackAvatarBase, type AvatarParams, type CharacterDefinition, type MotionStackAvatarOptions } from "@rcai/avatar-core";
+import { MotionStackAvatarBase, neutralParams, type AvatarParams, type CharacterDefinition, type MotionStackAvatarOptions } from "@rcai/avatar-core";
 
 export interface CanvasAvatarOptions extends MotionStackAvatarOptions {
   container: HTMLElement;
   /** Accent colour for hair/clothes. */
   accent?: string;
+  /** Optional caption for environments where the video tile has no surrounding UI. */
+  label?: string;
+  /** Character id used to locate a bundled preview image in a GPU-limited bot browser. */
+  characterId?: string;
+  /** Prefer the bundled character artwork over the generic diagnostic face. */
+  staticPreview?: boolean;
+  framing?: "default" | "meeting" | "preview";
 }
 
 /**
- * DEV / DEBUG renderer. Draws a stylised 2D face from the same canonical AvatarParams the
- * Live2D/VRM providers consume, so behaviour, lip sync and state logic can be inspected
- * without a licensed model. It is NOT a product avatar and never counts as Gate 2 evidence.
+ * Lightweight 2D renderer. Draws a stylised face from the same canonical AvatarParams the
+ * Live2D/VRM providers consume. It is used as a visible fallback when a meeting page cannot
+ * initialise WebGL, and also remains useful for local renderer diagnostics.
  */
 export class CanvasAvatarProvider extends MotionStackAvatarBase {
   readonly id = "canvas";
@@ -17,16 +24,26 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
   private ctx: CanvasRenderingContext2D | null = null;
   private accent: string;
   private name = "";
+  private label = "";
   private background = "#f3f0ea";
+  private readonly characterId?: string;
+  private readonly staticPreview: boolean;
+  private previewImage: HTMLImageElement | null = null;
+  private animationVideos: HTMLVideoElement[] = [];
+  private disposed = false;
   private resizeObserver: ResizeObserver | null = null;
 
   constructor(private readonly opts: CanvasAvatarOptions) {
     super(opts);
     this.accent = opts.accent ?? "#6b5b95";
+    this.characterId = opts.characterId;
+    this.staticPreview = opts.staticPreview === true;
   }
 
   protected async loadModel(character: CharacterDefinition): Promise<void> {
+    this.disposed = false;
     this.name = character.manifest.name;
+    this.label = this.opts.label ?? this.name;
     this.background = character.view?.background ?? this.background;
     const canvas = document.createElement("canvas");
     canvas.style.width = "100%";
@@ -36,6 +53,39 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.resize();
+    if (this.staticPreview) {
+      const image = new Image();
+      image.onload = () => {
+        this.previewImage = image;
+        this.resize();
+        this.applyParams(neutralParams());
+      };
+      image.src = `/avatar-fallbacks/${encodeURIComponent(this.characterId ?? character.manifest.id)}.png`;
+      if ((this.characterId ?? character.manifest.id) === "yui" && this.opts.framing === "meeting") {
+        for (const pose of ["idle", "speaking"]) {
+          const video = document.createElement("video");
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.src = `/avatar-fallbacks/yui-${pose}.webm`;
+          this.animationVideos.push(video);
+        }
+        // Start both loops from the same clock after decoding. No audio or network AI calls.
+        void Promise.all(this.animationVideos.map(video => new Promise<void>(resolve => {
+          video.oncanplay = () => resolve(); video.onerror = () => resolve();
+          video.load();
+        }))).then(async () => {
+          if (this.disposed) return;
+          for (const video of this.animationVideos) video.currentTime = 0;
+          await Promise.all(this.animationVideos.map(video => video.play().catch(() => {})));
+        });
+      }
+    }
+    // Paint immediately after the canvas is attached. Attendee's webpage streamer may capture
+    // its first frame before requestAnimationFrame runs, so waiting for the motion loop can yield
+    // an apparently blank bot camera even though the provider is ready.
+    this.applyParams(neutralParams());
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => this.resize());
       this.resizeObserver.observe(this.opts.container);
@@ -56,7 +106,29 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     const ctx = this.ctx;
     const canvas = this.canvas;
     if (!ctx || !canvas) return;
-    drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, state: this.state });
+    if (this.staticPreview) {
+      const [idle, speaking] = this.animationVideos;
+      if (idle && idle.readyState >= 2 && !idle.paused) {
+        const w = canvas.clientWidth || canvas.width;
+        const h = canvas.clientHeight || canvas.height;
+        const scale = Math.min(w / 640, h / 360);
+        const x = (w - 640 * scale) / 2, y = (h - 360 * scale) / 2;
+        ctx.fillStyle = "#f6f1ea";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(idle, x, y, 640 * scale, 360 * scale);
+        if (speaking && speaking.readyState >= 2 && !speaking.paused) {
+          // Correct decode drift while keeping matching head/eye poses across both layers.
+          if (Math.abs(idle.currentTime - speaking.currentTime) > 0.08) speaking.currentTime = idle.currentTime;
+          ctx.globalAlpha = this.state === "SPEAKING" ? Math.max(0, Math.min(1, p.mouthOpenY / 0.8)) : 0;
+          ctx.drawImage(speaking, x, y, 640 * scale, 360 * scale);
+          ctx.globalAlpha = 1;
+        }
+        return;
+      }
+      drawPreview(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, this.previewImage, this.name, this.label, this.opts.framing === "meeting", this.characterId);
+      return;
+    }
+    drawFace(ctx, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, p, { accent: this.accent, background: this.background, name: this.name, label: this.label, state: this.state });
   }
 
   protected async disposeModel(): Promise<void> {
@@ -65,13 +137,46 @@ export class CanvasAvatarProvider extends MotionStackAvatarBase {
     this.canvas?.remove();
     this.canvas = null;
     this.ctx = null;
+    this.disposed = true;
+    for (const video of this.animationVideos) {
+      video.pause(); video.oncanplay = null; video.onerror = null;
+      video.removeAttribute("src"); video.load();
+    }
+    this.animationVideos = [];
   }
+}
+
+/** Draws a bundled preview without ever flashing the generic diagnostic face in a meeting tile. */
+function drawPreview(ctx: CanvasRenderingContext2D, w: number, h: number, image: HTMLImageElement | null, name: string, label: string, meeting = false, characterId?: string): void {
+  if (!image) return;
+  ctx.save();
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#f3f0ea";
+  ctx.fillRect(0, 0, w, h);
+  const crop = previewCrop(image.naturalWidth, image.naturalHeight, meeting, characterId);
+  const scale = Math.min(w / crop.width, h / crop.height);
+  const dw = crop.width * scale;
+  const dh = crop.height * scale;
+  ctx.drawImage(image, 0, crop.top, crop.width, crop.height, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  ctx.fillStyle = "rgba(0,0,0,0.58)";
+  ctx.font = "16px system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`${label || name} · AIミーティング`, 16, h - 16);
+  ctx.restore();
+}
+
+/** The bundled Yui portrait includes blank space above the head; meeting tiles show a bust. */
+export function previewCrop(width: number, height: number, meeting: boolean, characterId?: string) {
+  return meeting && characterId === "yui"
+    ? { width, top: height * 0.30, height: height * 0.60 }
+    : { width, top: 0, height };
 }
 
 export interface DrawStyle {
   accent: string;
   background: string;
   name: string;
+  label?: string;
   state: string;
 }
 
@@ -196,6 +301,6 @@ export function drawFace(ctx: CanvasRenderingContext2D, w: number, h: number, p:
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.font = "12px system-ui, sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText(`DEBUG RENDERER (canvas) — ${style.name} — ${style.state}`, 10, h - 10);
+  ctx.fillText(`${style.label ?? style.name} · AIミーティング`, 10, h - 10);
   ctx.restore();
 }

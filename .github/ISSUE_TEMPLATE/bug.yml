@@ -1,0 +1,53 @@
+name: Bug report / 不具合
+description: Report a reproducible problem with setup, conversation, or avatar playback.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English and Japanese reports are welcome. Use synthetic data and remove secrets and private conversations from logs or screenshots.
+        For vulnerabilities, follow [SECURITY.md](https://github.com/FORIFOR/AI-meeting/blob/main/SECURITY.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / 何が起きましたか？
+      description: Include what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / 再現手順
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Start/stop ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 動作環境
+      description: Browser/version, operating system, release or commit, and hosted app or local setup.
+      placeholder: "Chrome ..., macOS/Windows/Linux ..., commit ..., local OSS demo"
+    validations:
+      required: true
+  - type: dropdown
+    id: path
+    attributes:
+      label: Affected path / 対象
+      multiple: true
+      options:
+        - Avatar/audio demo
+        - Local AI conversation
+        - OpenAI connection
+        - Gemini connection
+        - Optional cloud avatar
+        - Meeting connector
+        - Installation or build
+        - Other / その他
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant evidence / 確認できた情報
+      description: A short, redacted error or screenshot. For avatar issues, include requested/actual renderer if available. For speed issues, explain what was timed.

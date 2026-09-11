@@ -241,14 +241,14 @@ describe("greeting on arrival", () => {
   });
 
 describe("how forward the character is by default", () => {
-  it("opens up for one-to-one and keeps a meeting to its name", () => {
+  it("allows natural conversation by default, including meetings", () => {
     // The ordinary case: someone talks to the character. Waiting to be called by name is a summons.
     expect(defaultProactivityFor({ mode: "free_talk" })).toBe("open");
     expect(defaultProactivityFor({ personaId: "friend_ja", mode: "companion" })).toBe("open");
     expect(defaultProactivityFor({})).toBe("open");
-    // A meeting is several people talking to each other: answering everything said is the failure.
-    expect(defaultProactivityFor({ personaId: MEETING_PERSONA_ID })).toBe("addressed_only");
-    expect(defaultProactivityFor({ mode: "meeting" })).toBe("addressed_only");
+    // Quiet participation remains an explicit operator choice.
+    expect(defaultProactivityFor({ personaId: MEETING_PERSONA_ID })).toBe("open");
+    expect(defaultProactivityFor({ mode: "meeting" })).toBe("open");
   });
 });
 });
@@ -341,4 +341,18 @@ describe("a turn taken before the words arrive", () => {
     expect(p.acceptSelfTurn(t + 1200)).toBe(true);
     expect(p.addressedBy?.text).toBe("今日は雨がひどかったですね");
   });
+});
+
+
+it("native audio turns continue across exchanges without a transcript, but require fresh speech", () => {
+  const policy = new ParticipationPolicy({ names: ["Yui"], proactivity: "addressed_only" });
+  expect(policy.acceptSelfTurn(1000, true)).toBe(false);
+  for (let i = 1; i <= 5; i++) {
+    const now = i * 10000;
+    policy.onSpeechActivity(true, now);
+    expect(policy.acceptSelfTurn(now + 1000, true)).toBe(true);
+    policy.markResponding(now + 1000);
+    policy.onAssistantDone(now + 2000);
+    expect(policy.acceptSelfTurn(now + 3000, true)).toBe(false);
+  }
 });

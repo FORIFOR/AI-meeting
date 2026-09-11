@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VRM ローカル検証</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#203347;background:#edf2f5}body{margin:0;padding:24px;max-width:1100px;margin:auto}h1{font-size:26px;margin:0 0 8px}p{line-height:1.6}button{font:inherit;padding:11px 16px;border:1px solid #8394a6;border-radius:8px;background:white;cursor:pointer}button:disabled{opacity:.45;cursor:default}#stop{background:#fff0ee}nav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.grid{display:grid;grid-template-columns:430px 1fr;gap:24px}#stage{height:510px;position:relative;background:#fff;border-radius:16px;overflow:hidden}#status{font-weight:700;white-space:pre-line}#caption{min-height:52px;font-size:20px}#log{white-space:pre-wrap;background:#102534;color:#cce5f5;border-radius:10px;padding:16px;max-height:440px;overflow:auto;font:12px/1.55 ui-monospace,monospace}.note{font-size:13px;color:#526477}progress{width:100%;height:18px}@media(max-width:760px){body{padding:14px}.grid{grid-template-columns:1fr}#stage{height:380px}}
+</style></head><body>
+<h1>VRM ローカル検証</h1><p>日本語の合成音声を実際の再生経路に流し、口パク・割り込み・描画を確認します。マイク・音声AI・外部APIは使いません。</p>
+<nav><button id="suite" disabled>50発話・20割込・速度比較</button><button id="soak" disabled>機能チェック込み・60分検証</button><button id="stop" disabled>停止</button></nav>
+<div class="grid"><div><div id="stage" aria-label="検証アバター"></div><p id="caption" aria-live="polite"></p></div><div><p id="status" role="status">音声素材を確認中…</p><progress id="progress" max="1" value="0"></progress><p class="note">速度比較は同じ音声の投入からSpeakerOutputの初音までのローカル処理時間です。音声AIの応答速度や会議配信遅延ではありません。口形の自然さ・映像同期の目視評価は別に必要です。60分検証中はこのタブを表示したままにしてください。</p><pre id="log"></pre></div></div>
+<script type="module">
+import { SpeakerOutput, createFrame } from '/@fs/__REPO_ROOT__/packages/audio-core/src/index.ts';
+import { AvatarRuntime, loadCharacter } from '/@fs/__REPO_ROOT__/packages/avatar-core/src/index.ts';
+import { ConversationRuntime, GenerationCounter } from '/@fs/__REPO_ROOT__/packages/conversation-core/src/index.ts';
+import { BehaviorEngine, HeuristicSemanticPlanner } from '/@fs/__REPO_ROOT__/packages/behavior-engine/src/index.ts';
+import { createAvatarProvider } from '/@fs/__REPO_ROOT__/apps/web/src/integrations/registry.ts';
+const $ = id => document.getElementById(id), stage = $('stage'), status = $('status');
+let active = null, config = null;
+const logs = [];
+function log(value) { logs.push(typeof value === 'string' ? value : JSON.stringify(value)); if (logs.length > 70)
+    logs.shift(); $('log').textContent = logs.join('\n'); $('log').scrollTop = $('log').scrollHeight; }
+function ensure(run) { if (run.abort.signal.aborted)
+    throw new DOMException('検証を停止しました', 'AbortError'); }
+function wait(ms, run) { ensure(run); return new Promise((resolve, reject) => { const cancelled = () => { clearTimeout(timer); reject(new DOMException('検証を停止しました', 'AbortError')); }; const timer = setTimeout(() => { run.abort.signal.removeEventListener('abort', cancelled); resolve(); }, ms); run.abort.signal.addEventListener('abort', cancelled, { once: true }); }); }
+async function bounded(task, ms, run) { let timer, abort; try {
+    return await Promise.race([task, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('段階の制限時間を超えました')), ms); abort = () => reject(new DOMException('検証を停止しました', 'AbortError')); run.abort.signal.addEventListener('abort', abort, { once: true }); if (run.abort.signal.aborted)
+            abort(); })]);
+}
+finally {
+    clearTimeout(timer);
+    run.abort.signal.removeEventListener('abort', abort);
+} }
+const percentile = (values, p) => values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : null;
+async function evidence(run, kind, data) { const row = { runId: run.id, kind, elapsedMs: Math.round(performance.now() - run.started), ...data }; log(row); const response = await fetch('/validation/evidence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(row), signal: AbortSignal.timeout(8000) }); if (!response.ok)
+    throw new Error('検証記録を保存できませんでした'); }
+const errors = [];
+const originalConsoleError = console.error.bind(console);
+console.error = (...args) => { originalConsoleError(...args); const message = args.map(value => value instanceof Error ? value.message : String(value)).join(' ').slice(0, 400); errors.push(message); log('CONSOLE ERROR: ' + message); };
+addEventListener('error', e => { errors.push(String(e.message).slice(0, 240)); log('ERROR: ' + e.message); });
+addEventListener('unhandledrejection', e => { errors.push(String(e.reason).slice(0, 240)); log('REJECTION: ' + e.reason); });
+addEventListener('securitypolicyviolation', e => { errors.push('CSP blocked resource: ' + e.blockedURI); });
+class FixtureProvider {
+    id = 'fixture';
+    counter = new GenerationCounter();
+    listener = () => { };
+    onEvent(listener) { this.listener = listener; }
+    async connect() { this.listener({ type: 'session_ready', providerId: 'fixture' }); }
+    pushAudio() { }
+    async sendText() { }
+    async updateContext() { }
+    async interrupt() { }
+    async disconnect() { }
+    emit(type, rest = {}, gen) { this.listener({ type, ...rest, at: performance.now(), ...(gen ? { gen } : {}) }); }
+    begin(text) { this.counter.nextGeneration(); this.emit('assistant_speech_started', {}, this.counter.stamp()); this.emit('assistant_transcript', { text, final: true }, this.counter.stamp()); return this.counter.current(); }
+}
+async function closeSession(run) { if (run.closeTask)
+    return run.closeTask; const s = run.session; if (!s)
+    return run.lastCleanup; run.session = null; s.closed = true; run.closeTask = (async () => { s.behavior?.stop(); s.untap?.(); await s.runtime?.stop().catch(() => { }); await s.avatar?.stop().catch(() => { }); await s.speaker?.close().catch(() => { }); stage.replaceChildren(); const cleanup = { audioContext: s.speaker?.context.state ?? null, canvases: stage.querySelectorAll('canvas').length, mediaElements: document.querySelectorAll('audio,video').length }; run.cleanups.push(cleanup); run.lastCleanup = cleanup; return cleanup; })(); try {
+    return await run.closeTask;
+}
+finally {
+    run.closeTask = null;
+} }
+async function session(run, renderer) {
+    await closeSession(run);
+    ensure(run);
+    status.textContent = renderer + ' を準備中…';
+    const s = { closed: false, renderer, actions: [], observed: [], actionCount: 0, eventCount: 0, measure: null, peak: 0, mouth: 0, frames: 0, contextLost: false };
+    run.session = s;
+    s.speaker = new SpeakerOutput({ leadSeconds: .03, tapBatchMs: 10 });
+    await bounded(s.speaker.resume(), 5000, run);
+    await bounded(s.speaker.whenReady(), 8000, run);
+    const characterId = renderer === 'vrm' ? 'vrm-sample' : 'yui';
+    const definition = await bounded(loadCharacter('/characters/' + characterId), 15000, run);
+    ensure(run);
+    s.avatar = await bounded(createAvatarProvider(renderer, { container: stage, brokerUrl: location.origin, privacyMode: 'strict_local', quality: 'lightweight', characterId, characterName: definition.manifest.name, onFallback: reason => { s.fallback = reason; } }).then(async (avatar) => { if (s.closed || run.abort.signal.aborted) {
+        await avatar.stop();
+        throw new DOMException('検証を停止しました', 'AbortError');
+    } return avatar; }), 15000, run);
+    ensure(run);
+    await bounded(s.avatar.prepare(definition), 25000, run);
+    ensure(run);
+    await bounded(s.avatar.start(), 15000, run);
+    ensure(run);
+    if (s.avatar.id !== renderer)
+        throw new Error('BLOCKED: ' + renderer + ' が ' + s.avatar.id + ' へ切り替わりました (' + s.fallback + ')');
+    for (const name of ['performGesture', 'playMotion']) {
+        const original = s.avatar[name]?.bind(s.avatar);
+        if (original)
+            s.avatar[name] = (...args) => { s.actionCount++; s.actions.push({ at: performance.now(), name, args }); if (s.actions.length > 100)
+                s.actions.shift(); return original(...args); };
+    }
+    s.avatarRuntime = new AvatarRuntime(s.avatar);
+    s.provider = new FixtureProvider();
+    s.runtime = new ConversationRuntime({ sink: s.speaker, localVad: false });
+    const localPlanner = new HeuristicSemanticPlanner();
+    s.behavior = new BehaviorEngine(s.avatarRuntime, { seed: 473, planner: { async plan(input) { const plan = await localPlanner.plan(input); await new Promise(r => setTimeout(r, 250)); return plan; } } });
+    s.behavior.start();
+    s.runtime.on(event => { s.eventCount++; s.observed.push(event.type); if (s.observed.length > 100)
+        s.observed.shift(); s.avatarRuntime.handleEvent(event); s.behavior.handleEvent(event); if (event.type === 'assistant_transcript')
+        $('caption').textContent = event.text; });
+    s.untap = s.speaker.tap.subscribe(frame => { if (s.closed)
+        return; s.avatarRuntime.pushAudio(frame); let peak = 0; for (let i = 0; i < frame.data.length; i += 4)
+        peak = Math.max(peak, Math.abs(frame.data[i])); const mouth = s.avatar.getParams?.().mouthOpenY ?? 0; if(s.measure && peak > .005) s.measure.lipModes.add(s.avatar.getLipSyncDiagnostics?.().actual ?? 'unreported'); s.frames++; s.peak = Math.max(s.peak, peak); s.mouth = Math.max(s.mouth, mouth); if (s.measure && peak > .005 && s.measure.first === null)
+        s.measure.first = performance.now() - s.measure.from; if (s.measure && s.measure.cancelledAt && performance.now() - s.measure.cancelledAt > 35) {
+        s.measure.afterPeak = Math.max(s.measure.afterPeak, peak);
+        s.measure.afterMouth = Math.max(s.measure.afterMouth, mouth);
+    } });
+    await s.runtime.start(s.provider, { systemPrompt: 'Local avatar fixture validation', mode: 'free_talk', language: 'ja-JP', privacyMode: 'strict_local' });
+    for (const canvas of stage.querySelectorAll('canvas'))
+        canvas.addEventListener('webglcontextlost', () => { s.contextLost = true; });
+    await wait(500, run);
+    await evidence(run, 'renderer_ready', { requested: renderer, actual: s.avatar.id, lipsync: s.avatar.getLipSyncDiagnostics?.() ?? null, render: s.avatar.getRenderDiagnostics?.() ?? null });
+    return s;
+}
+async function decode(s, row, run) { const response = await bounded(fetch(row.wav), 8000, run); if (!response.ok)
+    throw new Error('音声素材がありません: ' + row.wav); const buffer = await bounded(s.speaker.context.decodeAudioData(await response.arrayBuffer()), 8000, run); return { data: buffer.getChannelData(0).slice(), rate: buffer.sampleRate, duration: buffer.duration }; }
+function submit(s, audio, gen) { const step = Math.round(audio.rate * .02); for (let offset = 0; offset < audio.data.length; offset += step)
+    s.provider.emit('assistant_audio', { frame: createFrame(audio.data.slice(offset, offset + step), audio.rate) }, s.provider.counter.stamp()); }
+async function utterance(s, row, run, { interrupt = false, trimSeconds = null } = {}) {
+    ensure(run);
+    const audio = await decode(s, row, run);
+    if (trimSeconds) {
+        audio.data = audio.data.slice(0, Math.round(audio.rate * trimSeconds));
+        audio.duration = audio.data.length / audio.rate;
+    }
+    s.measure = { from: performance.now(), first: null, cancelledAt: null, afterPeak: 0, afterMouth: 0, lipModes: new Set() };
+    s.mouth = 0;
+    s.peak = 0;
+    const startFrames = s.frames;
+    const gen = s.provider.begin(row.text);
+    submit(s, audio, gen);
+    if (interrupt) {
+        const deadline = performance.now() + 2500;
+        while (s.measure.first === null && performance.now() < deadline)
+            await wait(20, run);
+        if (s.measure.first === null)
+            throw new Error('割込対象の再生音声を確認できません');
+        await wait(80, run);
+        const from = performance.now();
+        await s.runtime.interrupt();
+        const localStopMs = performance.now() - from;
+        s.measure.cancelledAt = performance.now();
+        const closedNow = s.avatar.getParams?.().mouthOpenY ?? null, observed = s.eventCount, actions = s.actionCount;
+        const staleBefore = s.runtime.stats.staleDrops;
+        for (let i = 0; i < 10; i++) {
+            s.provider.emit('assistant_audio', { frame: createFrame(audio.data.slice(0, 960), audio.rate) }, { ...gen, sequence: 100 + i });
+            s.provider.emit('assistant_transcript', { text: 'おめでとうございます！', final: true }, { ...gen, sequence: 200 + i });
+        }
+        s.provider.emit('assistant_speech_started', {}, { ...gen, sequence: 301 });
+        s.provider.emit('assistant_speech_ended', {}, { ...gen, sequence: 302 });
+        const immediateGestures = s.actionCount - actions, immediateEvents = s.eventCount - observed;
+        const speakerRejected = s.speaker.play(createFrame(audio.data.slice(0, 960), audio.rate), { generationId: gen.generationId }) === false;
+        await wait(400, run);
+        const staleSemantic = s.behavior.getLog().filter(x => x.at >= s.measure.cancelledAt && x.what.startsWith('semantic:')).length;
+        const result = { id: row.id, localStopMs, closedNow, afterPeak: s.measure.afterPeak, afterMouth: s.measure.afterMouth, immediateGestures, immediateEvents, staleSemantic, staleDropped: s.runtime.stats.staleDrops - staleBefore, speakerRejected };
+        result.pass = localStopMs < 100 && closedNow !== null && closedNow <= .01 && result.afterPeak <= .001 && result.afterMouth <= .01 && immediateGestures === 0 && immediateEvents === 0 && staleSemantic === 0 && result.staleDropped === 22 && speakerRejected;
+        s.measure = null;
+        return result;
+    }
+    await wait(audio.duration * 1000 + 180, run);
+    s.provider.emit('assistant_speech_ended', {}, s.provider.counter.stamp());
+    await wait(180, run);
+    const result = { id: row.id, text: row.text, durationMs: audio.duration * 1000, firstPcmMs: s.measure.first, peak: s.peak, mouthMax: s.mouth, mouthAfter: s.avatar.getParams?.().mouthOpenY ?? null, tapFrames: s.frames - startFrames, lipModes: [...s.measure.lipModes], lipsync: s.avatar.getLipSyncDiagnostics?.() ?? null };
+    result.pass = result.firstPcmMs !== null && result.peak > .005 && result.mouthMax > .01 && result.mouthAfter !== null && result.mouthAfter <= .01 && !s.contextLost && (s.renderer !== 'vrm' || result.lipModes.includes('wlipsync'));
+    s.measure = null;
+    return result;
+}
+async function latencyBlock(s, run, results) {
+    status.textContent = s.renderer + ' のローカル初音比較';
+    await utterance(s, config.fixtures[0], run, { trimSeconds: .6 });
+    for (let i = 0; i < 20; i++) {
+        const result = await utterance(s, config.fixtures[i], run, { trimSeconds: .7 });
+        results.latency[s.renderer].push(result.firstPcmMs);
+        await evidence(run, 'latency_sample', { renderer: s.renderer, ...result });
+    }
+}
+async function suite(run, { onVrmReady } = {}) {
+    const results = { speech: [], interruptions: [], latency: { vrm: [], live2d: [] }, perceptualQuality: 'NOT_AUTOMATICALLY_VERIFIED', meetingOutput: 'NOT_TESTED' };
+    let s = await session(run, 'live2d');
+    await latencyBlock(s, run, results);
+    s = await session(run, 'vrm');
+    await onVrmReady?.(s);
+    await latencyBlock(s, run, results);
+    for (const row of config.fixtures) {
+        status.textContent = '日本語発話 ' + row.id + '/50';
+        $('progress').value = row.id / 90;
+        const result = await utterance(s, row, run);
+        results.speech.push(result);
+        await evidence(run, 'japanese_utterance', result);
+    }
+    for (let i = 0; i < 20; i++) {
+        status.textContent = '割り込み ' + (i + 1) + '/20';
+        $('progress').value = (51 + i) / 90;
+        const result = await utterance(s, config.fixtures[i], run, { interrupt: true });
+        results.interruptions.push(result);
+        await evidence(run, 'interrupt', result);
+    }
+    const complete = results.latency.vrm.length === 20 && results.latency.live2d.length === 20 && results.latency.vrm.every(Number.isFinite) && results.latency.live2d.every(Number.isFinite);
+    const added = complete ? results.latency.vrm.map((value, i) => value - results.latency.live2d[i]) : [];
+    results.localRenderAdditionalP95Ms = percentile(added, .95);
+    results.latencyMeasurement = 'Same local WAV first 700ms, same SpeakerOutput settings, 20 samples per renderer; Live2D block then VRM block, not API latency';
+    results.automatedPass = results.speech.length === 50 && results.speech.every(x => x.pass) && results.interruptions.length === 20 && results.interruptions.every(x => x.pass) && complete && results.localRenderAdditionalP95Ms <= 100 && errors.length === run.errorsAt;
+    await evidence(run, 'suite_result', results);
+    return results;
+}
+function resourceSample(s, run) { return { atMs: Math.round(performance.now() - run.started), visibility: document.visibilityState, heapBytes: performance.memory?.usedJSHeapSize ?? null, render: s.avatar.getRenderDiagnostics?.() ?? null, lip: s.avatar.getLipSyncDiagnostics?.() ?? null, tapFrames: s.frames, context: s.speaker.context.state, contextLost: s.contextLost, canvases: stage.querySelectorAll('canvas').length }; }
+async function soak(run) {
+    let s, started, startedAt, sampleTimer;
+    const samples = [], speech = [], sampleWrites = [];
+    let functional;
+    try {
+        functional = await suite(run, { async onVrmReady(ready) {
+            s = ready; started = performance.now(); startedAt = new Date().toISOString();
+            await evidence(run, 'soak_started', { startedAt, plannedEndAt: new Date(Date.now() + 3_600_000).toISOString(), durationMs: 3_600_000, rendererRetainedThroughFunctionalChecks: true });
+            const sample = () => { const row = resourceSample(s, run); samples.push(row); sampleWrites.push(evidence(run, 'soak_sample', row).catch(error => { errors.push(String(error)); })); };
+            sample(); sampleTimer = setInterval(sample, 60_000); run.sampleTimer = sampleTimer;
+        } });
+        let nextSpeech = performance.now(), index = 0;
+        while (performance.now() - started < 3_600_000) {
+            ensure(run);
+            const now = performance.now(), elapsed = now - started;
+            status.textContent = '連続検証 ' + Math.floor(elapsed / 60000) + ' / 60分（機能チェック済み）';
+            $('progress').value = elapsed / 3_600_000;
+            if (now >= nextSpeech) {
+                const result = await utterance(s, config.fixtures[index++ % 50], run);
+                speech.push(result); await evidence(run, 'soak_utterance', result);
+                nextSpeech = performance.now() + 25_000;
+            } else await wait(Math.max(1, Math.min(1000, 3_600_000 - elapsed)), run);
+        }
+    } finally { clearInterval(sampleTimer); run.sampleTimer = null; }
+    await Promise.all(sampleWrites);
+    const finalSample = resourceSample(s, run);
+    if (finalSample.atMs - samples.at(-1).atMs < 1000) samples[samples.length - 1] = finalSample; else samples.push(finalSample);
+    const renderKnown = samples.every(x => x.render && Number.isFinite(x.render.renderedFrames)), heapKnown = samples.every(x => Number.isFinite(x.heapBytes));
+    const visible = samples.every(x => x.visibility === 'visible');
+    const renderProgress = renderKnown && samples.slice(1).every((x, i) => x.render.renderedFrames > samples[i].render.renderedFrames && !x.render.contextLost && x.render.running);
+    const warm = samples.slice(5), geometries = warm.map(x => x.render?.geometries).filter(Number.isFinite), textures = warm.map(x => x.render?.textures).filter(Number.isFinite), programs = warm.map(x => x.render?.programs).filter(Number.isFinite);
+    const range = values => values.length ? Math.max(...values) - Math.min(...values) : null;
+    const resourcesStable = renderKnown && range(geometries) === 0 && range(textures) === 0 && range(programs) === 0;
+    const heaps = warm.map(x => x.heapBytes).filter(Number.isFinite), third = Math.max(1, Math.floor(heaps.length / 3));
+    const heapFloorGrowthBytes = heapKnown ? Math.min(...heaps.slice(-third)) - Math.min(...heaps.slice(0, third)) : null;
+    const result = { startedAt, endedAt: new Date().toISOString(), durationMs: performance.now() - started, functional, speechCount: speech.length, speechFailures: speech.filter(x => !x.pass).length, visible, renderKnown, renderProgress, resourcesStable, heapKnown, heapFloorGrowthBytes, heapThresholdBytes: 32 * 1024 * 1024, samples, perceptualQuality: 'REQUIRES_HUMAN_REVIEW', meetingOutput: 'NOT_TESTED' };
+    result.automatedPass = result.durationMs >= 3_600_000 && functional.automatedPass && visible && renderProgress && resourcesStable && heapKnown && heapFloorGrowthBytes <= 32 * 1024 * 1024 && result.speechFailures === 0 && errors.length === run.errorsAt;
+    result.measurementStatus = !renderKnown || !heapKnown ? 'INCOMPLETE_DIAGNOSTICS' : !visible ? 'INCOMPLETE_BACKGROUND_TAB' : result.automatedPass ? 'PASS_AUTOMATED_ONLY' : 'FAIL';
+    await evidence(run, 'soak_result', result);
+    return result;
+}
+async function start(kind) { if (active)
+    return; const run = { id: crypto.randomUUID(), started: performance.now(), abort: new AbortController(), session: null, cleanups: [], errorsAt: errors.length }; active = run; $('suite').disabled = $('soak').disabled = true; $('stop').disabled = false; const timer = setTimeout(() => run.abort.abort(), kind === 'soak' ? 3_720_000 : 900_000); let outcome = 'UNKNOWN'; try {
+    await evidence(run, 'start', { kind, fixtures: 50, privacyMode: 'strict_local', browser: navigator.userAgent, cloudRequestsExpected: 0, model: '/characters/vrm-sample/model.vrm' });
+    const result = await (kind === 'soak' ? soak(run) : suite(run));
+    outcome = result.automatedPass ? 'PASS_AUTOMATED_ONLY' : 'REVIEW_REQUIRED';
+    status.textContent = outcome + '\n自然さと実会議への送出は別途確認が必要です。';
+    $('progress').value = 1;
+}
+catch (error) {
+    outcome = error.name === 'AbortError' ? 'STOPPED' : 'FAILED';
+    status.textContent = outcome + ': ' + error.message;
+    await evidence(run, 'failure', { message: String(error), outcome }).catch(log);
+}
+finally {
+    clearTimeout(timer);
+    const cleanup = await closeSession(run);
+    if (cleanup && (cleanup.audioContext !== 'closed' || cleanup.canvases !== 0 || cleanup.mediaElements !== 0)) {
+        outcome = 'FAIL_CLEANUP';
+        status.textContent = outcome;
+    }
+    await evidence(run, 'finished', { outcome, cleanup, cleanups: run.cleanups, errors: errors.slice(run.errorsAt) }).catch(log);
+    active = null;
+    $('stop').disabled = true;
+    $('suite').disabled = $('soak').disabled = config?.available !== 50;
+} }
+$('suite').onclick = () => void start('suite');
+$('soak').onclick = () => void start('soak');
+$('stop').onclick = () => { if (active) {
+    active.abort.abort();
+    void closeSession(active);
+} };
+addEventListener('pagehide', () => { if (active) {
+    active.abort.abort();
+    void closeSession(active);
+} });
+try {
+    config = await fetch('/validation/config').then(r => r.json());
+    status.textContent = config.available === 50 ? '準備完了。音声を再生する検証を選んでください。' : `素材 ${config.available}/50。サーバーを --prepare-fixtures 付きで起動してください。`;
+    $('suite').disabled = $('soak').disabled = config.available !== 50;
+    log({ fixtures: config.available, evidence: config.output });
+}
+catch (error) {
+    status.textContent = '準備できません: ' + error.message;
+}
+</script></body></html>

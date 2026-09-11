@@ -44,9 +44,23 @@ export interface GazeTarget {
   y?: number;
 }
 
+/** External video renderers consume source audio and return a synchronized media stream. */
+export interface SynchronizedAvatarAudio {
+  /** Source PCM before playback; never feed SpeakerOutput.tap back into this method. */
+  pushSourceAudio(frame: PCMFrame): void;
+  /** Normal completion flushes the current input sequence, without cancelling it. */
+  endSourceTurn(): void;
+  getOutputStream(): MediaStream | null;
+  onFailure(listener: (error: Error) => void): () => void;
+}
+
 /** Spec §8 */
 export interface AvatarProvider {
-  readonly id: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas" | string;
+  readonly id: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas" | string;
+  /** Present only while external synchronized audio rendering is ready and selected. */
+  readonly synchronizedAudio?: SynchronizedAvatarAudio;
+  /** Return to the same character's local renderer; never replay previously submitted speech. */
+  useLocalFallback?(reason: string): void;
   prepare(character: CharacterDefinition): Promise<void>;
   start(): Promise<void>;
   /** The PCM actually being played (from SpeakerOutput.tap) — the lip sync source of truth. */
@@ -159,7 +173,7 @@ export interface VoiceProfile {
 export interface CharacterManifest {
   id: string;
   name: string;
-  renderer: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas";
+  renderer: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas";
   defaultPersona: string;
   supportedLanguages: string[];
   motionProfile: string;

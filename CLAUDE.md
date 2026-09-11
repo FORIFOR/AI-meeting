@@ -1,7 +1,7 @@
 # Realtime Character AI Platform — repository rules
 
 Read `docs/source-manifest.md`, `docs/architecture.md` and `docs/acceptance-gates.md` before changing architecture.
-The spec is `docs/spec-v1.md`; the execution pack is `claude_code_avatar_implementation_pack.md`.
+The spec is `docs/spec-v1.md`; release measurements and limits are in `docs/validation.md`.
 
 ## Absolute rules
 1. UI code never binds directly to OpenAI, Gemini, llama.cpp, Live2D or an avatar vendor. Only `@rcai/*` contracts.

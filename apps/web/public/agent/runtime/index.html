@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>AIミーティングを読み込んでいます…</title>
+    <script>
+      // Older meeting bots may still have the former /agent/runtime URL. Keep
+      // that URL compatible with the SPA entry point while preserving the
+      // signed bot-page query string.
+      const target = new URL("/", window.location.origin);
+      target.search = window.location.search;
+      target.hash = window.location.hash;
+      window.location.replace(target.href);
+    </script>
+  </head>
+  <body>AIミーティングを読み込んでいます…</body>
+</html>

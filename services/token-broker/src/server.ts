@@ -1,4 +1,5 @@
 import { VertexLiveRelay } from "./vertex-live.js";
+import { publicDemoOnly } from "./public-access.js";
 import { createServer } from "node:http";
 import { serve } from "@hono/node-server";
 import { WebSocketServer, type WebSocket } from "ws";
@@ -43,6 +44,8 @@ const wss = new WebSocketServer({ noServer: true, maxPayload: 1_000_000 });
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   if (url.pathname === "/api/live/vertex" && env.GEMINI_BACKEND === "vertex") {
+    // A ticket issued before the launch setting changed must not start a new billed relay.
+    if (publicDemoOnly(env)) { socket.write("HTTP/1.1 403 Forbidden\r\nX-Reason: PUBLIC_DEMO_ONLY\r\n\r\n"); socket.destroy(); return; }
     const model = vertex.consume(url.searchParams.get("ticket") ?? "");
     if (!model) { socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n"); socket.destroy(); return; }
     wss.handleUpgrade(req, socket, head, (ws) => { void vertex.connect(ws, model); });

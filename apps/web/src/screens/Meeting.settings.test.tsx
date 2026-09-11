@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
-import { Meeting } from "./Meeting.js";
+import { Meeting, normalizeMeetingUrlInput, resolveMeetingProvider } from "./Meeting.js";
 import { DEFAULT_SETTINGS } from "../state/settings.js";
 const capture = vi.hoisted(() => ({ init: null as any }));
 vi.mock("../session/MeetingSessionController.js", () => ({ MeetingSessionController: class {
@@ -29,6 +29,24 @@ it("starts Hosted meeting with the selected character, purpose and voice", async
     const join=[...host.querySelectorAll("button")].find(b=>b.textContent==="参加する")!;
     expect(join.disabled).toBe(false);
     await act(async () => join.click());
-    expect(capture.init).toMatchObject({character:{id:"haru"},persona:{id:"lesson"},voiceId:"Aoede",meetingProvider:"attendee",connectorMode:"output_media"});
+    expect(capture.init).toMatchObject({character:{id:"haru"},persona:{id:"lesson"},voiceId:"Aoede",meetingProvider:"attendee",connectorMode:"relay"});
+  } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); }
+});
+
+it("normalizes pasted links and waits for the broker before enabling join", async () => {
+  expect(normalizeMeetingUrlInput("  https://meet.google.com/abc-defg-hij\n")).toBe("https://meet.google.com/abc-defg-hij");
+  expect(resolveMeetingProvider(null)).toBeNull();
+  expect(resolveMeetingProvider({ attendee: true, recall: false, recallPublicUrl: true, recallBotPageUrl: true })).toBe("attendee");
+
+  vi.stubGlobal("fetch", vi.fn(async () => new Response("{}")));
+  const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+  try {
+    await act(async () => root.render(<Meeting settings={{...DEFAULT_SETTINGS, engine:"google", characterId:"yui"}} availability={{google:true,openai:false,local:false}}
+      characters={[{id:"yui",name:"Yui"}] as any}
+      personas={[{id:"friend",name:"雑談",mode:"free_talk",language:"ja-JP"}] as any}
+      brokerMeeting={null} onBack={() => {}} />));
+    const join=[...host.querySelectorAll("button")].find(b=>b.textContent==="参加する")!;
+    expect(join.disabled).toBe(true);
+    expect(host.textContent).toContain("会議サービスを確認しています");
   } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); }
 });

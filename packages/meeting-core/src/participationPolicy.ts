@@ -42,18 +42,9 @@ export interface Engagement {
  */
 export type Proactivity = "addressed_only" | "invited" | "active" | "open";
 
-/**
- * How forward the character is by default, decided by what the conversation is.
- *
- * One person talking to the character is the ordinary case: they look at it and speak, and waiting to
- * be called by name each time is not conversation, it is a summons. A meeting is the exception —
- * several people talking to each other, where answering everything said in the room is the failure
- * mode — so the meeting persona keeps `addressed_only` and everything else opens up. An operator or a
- * bot page may still pass its own; this is only the default when none is given.
- */
-export function defaultProactivityFor(input: { personaId?: string | null; mode?: string | null }): Proactivity {
-  const meeting = input.personaId === MEETING_PERSONA_ID || input.mode === "meeting";
-  return meeting ? "addressed_only" : "open";
+/** Natural conversation is the default; operators can explicitly choose addressed_only. */
+export function defaultProactivityFor(_input: { personaId?: string | null; mode?: string | null }): Proactivity {
+  return "open";
 }
 
 export interface ParticipationPolicyOptions {
@@ -571,8 +562,10 @@ export class ParticipationPolicy {
    * it said it since the character last finished, and the character has not already run past the
    * consecutive cap. In every other tier the character still speaks only when it is spoken to.
    */
-  acceptSelfTurn(now: number): boolean {
-    if (this.opts.proactivity !== "open") return false;
+  acceptSelfTurn(now: number, providerDecides = false): boolean {
+    // Native audio models already receive the participation rules in their system prompt.
+    // They can hear an address even when their optional transcription misses it.
+    if (!providerDecides && this.opts.proactivity !== "open") return false;
     if (this._state === "RESPONDING" || this._state === "ADDRESSED") return false;
     /**
      * What the room said, if the recogniser has delivered it yet — and if it has not, the fact that
@@ -586,6 +579,8 @@ export class ParticipationPolicy {
         ? { text: "", at: this.lastSpeechAt, key: this.engagement?.participantId ?? null, speakerName: null }
         : null;
     if (!heard) return false;
+    // Fresh native-audio input starts a new exchange even if no text was produced to reset the cap.
+    if (providerDecides) this.consecutive = 0;
     if (this.consecutive >= this.opts.maxConsecutiveResponses) return false;
     this.pendingQuestion = null;
     this.heldFollowUp = null;

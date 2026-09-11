@@ -24,6 +24,36 @@ export interface VisualPerceptionOptions {
   onCue?(cue: VisualCue): void;
 }
 
+/**
+ * Browser resource loads sometimes reject with a DOM Event rather than an Error.
+ * Stringifying that event produces the unhelpful "[object Event]" shown to users.
+ * Keep the diagnostic useful without exposing implementation details in the UI.
+ */
+export function mediaPipeErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === "object") {
+    const event = err as {
+      message?: unknown;
+      type?: unknown;
+      target?: { status?: unknown; statusText?: unknown } | null;
+    };
+    if (typeof event.message === "string" && event.message.trim()) return event.message;
+    const status = typeof event.target?.status === "number" && event.target.status > 0
+      ? `HTTP ${event.target.status}`
+      : "";
+    const statusText = typeof event.target?.statusText === "string" && event.target.statusText.trim()
+      ? event.target.statusText.trim()
+      : "";
+    const type = typeof event.type === "string" && event.type.trim() ? event.type.trim() : "";
+    // `error`/`load` without a response status is not actionable to a user; use the
+    // stable fallback below instead of leaking a one-word browser event type.
+    const detail = [status, statusText].filter(Boolean).join(" · ");
+    if (detail) return detail;
+    if (type && type !== "error" && type !== "load") return type;
+  }
+  return "モデルまたはWASMの読み込みに失敗しました";
+}
+
 export class VisualPerceptionService {
   private landmarker: unknown = null;
   private perception = new VisualPerception();
@@ -59,7 +89,7 @@ export class VisualPerceptionService {
       this._blocked = null;
     } catch (err) {
       // Missing model file, no WebGL/WASM, a vendor browser that blocks it — all end here, named.
-      this._blocked = `BLOCKED_BY_MEDIAPIPE: ${err instanceof Error ? err.message : String(err)}`;
+      this._blocked = `BLOCKED_BY_MEDIAPIPE: ${mediaPipeErrorMessage(err)}`;
       this._ready = false;
     }
   }

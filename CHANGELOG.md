@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project are documented here. Evidence for every gate lives in `docs/acceptance-gates.md` and `docs/reports/`.
+All notable changes to this project are documented here. Current release measurements and limits are summarized in [docs/validation.md](docs/validation.md); older entries below are historical development notes.
 
 ## [Unreleased]
 ### Changed

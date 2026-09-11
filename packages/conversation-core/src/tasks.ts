@@ -5,14 +5,14 @@ export const TASK_TOOL = {
   name: 'session_tasks',
   description: 'ユーザーが明示したタスクを記録・更新・一覧確認する。推測で追加せず、quoteには今回のユーザー発話の原文を入れる。完了・延期しても他のタスクを消さない。一覧だけならoperationsを空にする。',
   parameters: { type: 'object', properties: { operations: { type: 'array', items: { type: 'object', properties: {
-    action: { type: 'string', enum: ['add','update'] }, id: { type: 'string' },
-    title: { type: 'string', description: '追加する行動。quote内の連続した原文を使う。' },
-    due: { type: 'string', description: '明示された期限の原文。推測・日時変換をしない。' },
+    action: { type: 'string', enum: ['add','update'] }, id: { type: 'string', description: 'updateでは必須。ツールが返した既存タスクのidを使う。不明なら先にoperations=[]で一覧を読む。' },
+    title: { type: 'string', description: 'addだけで指定する行動。quote内の連続した原文を使い、言い換えない。updateでは送らない。' },
+    due: { type: 'string', description: '明示された期限の原文。dueの文字列自体をquoteにも含める。推測・日時変換をしない。延期先が明示されたupdateは新しいdueも必ず送る。変更しない期限はupdateで送らない。' },
     status: { type: 'string', enum: ['pending','done','deferred'] },
-    quote: { type: 'string', description: '今回のユーザー発話からの原文引用。' },
+    quote: { type: 'string', description: '今回のユーザー発話からの連続した原文引用。titleだけでなく、dueを送るならその期限も含む範囲を引用する。複数文を含めてよい。' },
   }, required: ['action','quote'] } } }, required: ['operations'] },
 };
-export const TASK_INSTRUCTIONS = '\nタスク整理にはsession_tasksツールを使う。タスクや状態の変更を聞いたら、返答前に原文引用を添えて記録する。記録は追加・更新のみで、前提作業の追加は元のタスクを置き換えない。残件や期限の要約・次の一歩を求められたら、まずoperations=[]で最新の記録を読み、pendingの行動とdueを省かず答える。既に記録された期限を聞き直さない。記録にない行動・期限を作らない。ツールの結果を待ってから変更の成功を伝える。needs_user_confirmationなら未反映なので画面での確認を案内し、完了・記録済みとは言わない。同じ変更を再送しない。';
+export const TASK_INSTRUCTIONS = '\nタスク整理にはsession_tasksツールを使う。タスクや状態の変更を聞いたら、返答前に原文引用を添えて記録する。記録は追加・更新のみで、前提作業の追加は元のタスクを置き換えない。\n引数の規則: addのtitleは原文どおり。dueを指定する場合、quoteは行動名と期限の両方を含む連続した原文にする。行動名だけのquoteに、別の箇所で聞いたdueを付けると拒否される。複数文で期限を話した場合は、その複数文全体を引用してよい。updateは返された既存idを必ず指定し、titleは送らない。idが不明ならoperations=[]で一覧を読んでから更新する。\n残件や期限の要約・次の一歩を求められたら、まずoperations=[]で最新の記録を読み、pendingの行動とdueを省かず答える。既に記録された期限を聞き直さない。記録にない行動・期限を作らない。ツールの結果を待ってから変更の成功を伝える。\n形式エラーの扱い: due must be quoted, not inferredなら、発話に明示された期限も含むquoteへ直す。title must be quotedなら原文の行動名に戻す。unknown task idなら一覧を読み、実在するidで更新する。updates must preserve the task titleならupdateからtitleを除く。根拠が既にある形式エラーはユーザーに同じ内容を言わせず、自分の引数を修正して一度だけ再試行する。推測で根拠を補わない。needs_user_confirmationなら未反映なので画面での確認を案内し、完了・記録済みとは言わない。同じ変更を再送しない。';
 const normalized = (text: string) => text.normalize("NFKC").replace(/\s+/gu, "");
 export class TaskLedger {
   private tasks: ConversationTask[] = [];

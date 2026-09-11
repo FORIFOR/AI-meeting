@@ -1,6 +1,26 @@
 # Source manifest (single source of truth for external references)
 
-Updated: 2026-08-30
+Updated: 2026-09-12
+
+## VRM local audio rendering and distribution
+
+| Item | URL | Pinned use |
+|---|---|---|
+| three-vrm | https://github.com/pixiv/three-vrm | `@pixiv/three-vrm@3.5.5`, `three@0.185.1`, MIT |
+| wLipSync | https://github.com/mrxz/wLipSync | `wlipsync@1.3.1`, source commit `73d0170f500c2845a62a8fe4384a4729499e8426`, MIT. WASM in a local Worker; calibration profile copied with its MIT notice. No extra audio playback or avatar API |
+| Official VRM 1.0 sample | https://github.com/vrm-c/vrm-specification/tree/821c11b250d8c70d5804ee13431e42bee56ea9c0/samples/VRM1_Constraint_Twist_Sample | Unmodified file in `characters/vrm-sample`, SHA-256/source/embedded metadata preserved. VRM Public License 1.0 and model permissions, separate from code license |
+| AvatarSample_A | https://hub.vroid.com/characters/2843975675147313744/models/5644550979324015604 | Official current distribution is VRM 0.0; not silently relabeled as VRM 1.0 or bundled from an unverified mirror. Local import supported |
+
+Distribution/source audit: [application license and component exceptions](../NOTICE). Local Anam portrait experiments are not an authorization to upload Live2D sample-derived images to an external renderer.
+
+## Anam optional synchronized renderer
+
+| Item | URL | Status in this repo |
+|---|---|---|
+| Audio Passthrough | https://anam.ai/docs/javascript-sdk/examples/custom-tts | `@anam-ai/js-sdk@4.27.0`, external PCM only, server-only API key; real account validation blocked by missing key/avatar mapping |
+| Session token | https://anam.ai/docs/api-reference/sessions/create-session-token | `/api/avatar/anam/session`, Cara-4, replay disabled, validated server character→avatar mapping |
+| Events | https://anam.ai/docs/javascript-sdk/reference/events | No guaranteed passthrough returned-AV EOF; same-session cancellation resumption is not implemented |
+| Custom avatar image | https://anam.ai/docs/personas/avatars/custom-avatar-best-practices | Square 1152px minimum, <=4.5MB. Local portrait authoring tool; no external image registration performed |
 
 ## Live2D (proprietary parts must be supplied by a human)
 | Item | URL | Status in this repo |

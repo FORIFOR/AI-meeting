@@ -5,6 +5,7 @@ import type { SessionRecord, TranscriptTurn } from "./record.js";
 
 /** Minimal structural interface the runtime needs (provider-core's RealtimeAIProvider satisfies it). */
 export interface ConversationSource {
+  readonly fullDuplex?: boolean;
   id: string;
   connect(config: SessionConfig): Promise<void>;
   pushAudio(frame: PCMFrame): void;
@@ -191,8 +192,9 @@ export class ConversationRuntime {
     this.latency.mark("interrupt_requested");
     const cancelled = this.cancelGeneration();
     this.latency.mark("audio_stopped");
-    await this.provider?.interrupt();
+    // Avatar and turn state must stop locally even when the network cancel hangs.
     this.handleProviderEvent({ type: "interrupted", at: this.clock(), gen: cancelled ?? undefined });
+    void this.provider?.interrupt().catch(() => {});
   }
 
   /**
@@ -276,8 +278,9 @@ export class ConversationRuntime {
           this.record.timing.userSilencesMs.push(Math.max(0, at - this.lastAssistantEnd));
           this.lastAssistantEnd = null;
         }
+        if (this.provider?.fullDuplex && this.currentUser?.text) this.record.turns.push({role:"user",text:this.currentUser.text,startedAt:this.currentUser.startedAt,endedAt:at});
         this.currentUser = { text: "", startedAt: at };
-        if (this._state === "speaking") {
+        if (this._state === "speaking" && !this.provider?.fullDuplex) {
           // Interruption fast path: cancel the generation and stop local audio before the provider confirms.
           this.latency.mark("interrupt_requested", at);
           const cancelled = this.cancelGeneration();
@@ -291,7 +294,13 @@ export class ConversationRuntime {
           this.setState("interrupted");
           this.emit({ type: "interrupted", at, gen: cancelled ?? undefined });
         }
-        this.setState("listening");
+        if (!(this.provider?.fullDuplex && this._state === "speaking")) this.setState("listening");
+        if (!this.provider?.fullDuplex && this.opts.sink?.beginUserTurn?.()) {
+          // The source may have ended while an external renderer still holds its output.
+          // Invalidate that generation as well as its media, without rewriting the completed turn.
+          const cancelled = this.cancelGeneration();
+          this.emit({ type: "interrupted", at, gen: cancelled ?? undefined });
+        }
         break;
       }
       case "user_speech_ended": {
@@ -302,7 +311,7 @@ export class ConversationRuntime {
         if (this.currentUser) {
           this.record.timing.userSpeechDurationsMs.push(at - this.currentUser.startedAt);
         }
-        this.setState("thinking");
+        if (!(this.provider?.fullDuplex && this._state === "speaking")) this.setState("thinking");
         break;
       }
       case "user_transcript": {
@@ -311,7 +320,7 @@ export class ConversationRuntime {
           return; // control text echoed by the provider: not recorded, not emitted
         }
         if (!this.currentUser) this.currentUser = { text: "", startedAt: this.lastUserEnd ?? at };
-        if (e.final === false) this.currentUser.text = e.text;
+        if (e.final === false) this.currentUser.text = e.delta ? this.currentUser.text + e.text : e.text;
         else {
           this.currentUser.text = e.text;
           this.record.turns.push({ role: "user", text: e.text, startedAt: this.currentUser.startedAt, endedAt: this.lastUserEnd ?? at });
@@ -346,6 +355,7 @@ export class ConversationRuntime {
       }
       case "assistant_speech_ended": {
         if (this._state !== "speaking" && !this.currentAssistant) return;
+        this.opts.sink?.endTurn?.();
         this.finishAssistant(at, false);
         this.lastAssistantEnd = at;
         this.setState(this.userSpeechFlag ? "listening" : "idle");

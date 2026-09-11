@@ -1,55 +1,68 @@
-# Realtime Character AI Platform
+# AI-meeting
 
-Provider-independent realtime character conversation platform: **OpenAI Realtime / Google Gemini Live / fully Local** ⇄ **Live2D (primary) / VRM / realistic cloud avatars**, for interview practice, English conversation, sales roleplay, tutoring and free talk.
+**Think out loud with an AI character.**
 
-- Spec: `docs/spec-v1.md` · Execution pack: `claude_code_avatar_implementation_pack.md`
-- Architecture: `docs/architecture.md` · Contracts: `docs/integration-contracts.md`
-- External sources: `docs/source-manifest.md` · Gate evidence: `docs/acceptance-gates.md` · Reports: `docs/reports/`
+Organize a plan, rehearse an interview, or speak a new language. Talk at your own pace, interrupt to change direction, and choose the character and AI connection that fit your setup.
 
-## Quick start
-```bash
-pnpm install
-scripts/fetch-sample-character.sh          # copies Live2D sample models (Free Material License) into characters/*/model
-scripts/fetch-live2d-core.sh               # self-hosts Cubism Core (required for strict_local; otherwise the official CDN is used)
-cp services/token-broker/.env.example services/token-broker/.env   # add OPENAI_API_KEY / GEMINI_API_KEY (optional)
-scripts/local-stack.sh start               # optional: llama-server (+ builds tools/tts-daemon, the resident AVSpeech streaming TTS) for the Local provider
-pnpm dev                                   # web (5173) + token-broker (8787) + agent (8788)
+[Try the avatar demo](https://ai-meeting.web.app/vrm-demo) · [Website](https://ai-meeting.forifor.chatgpt.site) · [日本語](README.ja.md)
+
+The **avatar/audio demo needs no API key**. It plays a test sound or your local audio file through a VRM character in your browser. Actual AI conversation requires a configured local AI runtime or a cloud provider.
+
+[![Watch the 46-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/sKWc8K2VHV4)
+
+**[Watch the 46-second demo](https://youtu.be/sKWc8K2VHV4):** add tasks, interrupt, and confirm an update. The recording uses synthetic Japanese input (macOS Kyoko), real Gemini responses, and a VRM avatar in a dedicated recording layout. A script confirms proposals that exactly match the demo inputs; see [the recording method and validation](docs/validation.md).
+
+## What you can do
+
+- **Practice out loud.** Start from interview, English conversation, sales, tutoring, or free-talk scenarios.
+- **Organize tasks by voice.** Add tasks, keep their deadlines in view, and confirm proposed changes when speech recognition needs a check.
+- **Keep control of the conversation.** Stop playback and interrupt without bringing back the previous reply's captions or gestures.
+- **Bring your character.** Open your own permitted VRM 0.0/1.0 model and audio locally. The demo does not upload those files.
+- **Choose your AI.** The app has OpenAI Realtime, Gemini Live, and local provider adapters. The OSS build starts with local settings and blocks cloud connections in `strict_local` mode.
+
+The public demo uses a separately licensed official pixiv VRM sample. The existing Live2D adapter and Yui configuration are retained as optional integrations. The hosted launch is an avatar/audio demo; connect your own AI provider in a self-hosted installation.
+
+## Run the demo
+
+Use **Node.js 22** and Corepack; the minimum supported Node version is **20.19.0**. The project pins **pnpm 10.12.2**.
+
+```sh
+git clone https://github.com/FORIFOR/AI-meeting.git
+cd AI-meeting
+corepack enable
+corepack prepare pnpm@10.12.2 --activate
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev:oss
 ```
-Open http://localhost:5173.
 
-## Gates
-`pnpm gate` = typecheck + tests + web build. See `docs/acceptance-gates.md` for what has real evidence and what is `BLOCKED_BY_*`.
+Open **http://localhost:5173/vrm-demo.html**, play a test sound, or choose a local audio file. `pnpm build:oss` creates the distributable site in `apps/web/dist-oss` and checks its bundled assets and license notices.
 
-One-command Reality Gates (exit 2 + `BLOCKED_BY_*` when a credential is missing — never a faked PASS):
-```bash
-pnpm reality:local     # 10-min fully local soak (strict_local) — runnable now
-pnpm reality:openai    # 30-min real OpenAI Realtime soak   (needs OPENAI_API_KEY)
-pnpm reality:gemini    # 30-min real Gemini Live soak       (needs GEMINI_API_KEY)
-pnpm reality:meet      # join a real Google Meet via Recall (needs RECALL_API_KEY, RECALL_PUBLIC_URL, RECALL_BOT_PAGE_URL, MEET_URL)
-pnpm reality:zoom      # same for Zoom (ZOOM_URL)
-pnpm reality:human     # starts the stack + opens the app for the 10-minute human gate
-```
+## Connect an AI provider
 
-Evidence runners (real Chrome, headless):
-- Live2D character + lip sync: `pnpm --filter @rcai/avatar-live2d demo` then `node avatar-providers/live2d/demo/verify.mjs`
-- Local agent E2E (strict_local, VAD→STT→LLM→TTS, barge-in, egress check): `scripts/local-stack.sh start && pnpm --filter @rcai/agent start`, then `cd services/agent && pnpm exec tsx scripts/e2e-local.ts`
-- Full web app with a fake microphone WAV: `node apps/web/scripts/e2e-browser.mjs <mic.wav>` (stack + `pnpm dev` running)
-- 30-minute soak per engine (real credentials for cloud): `node apps/web/scripts/soak-browser.mjs --engine local|openai|google --minutes 30`
-- Real-device acoustic gate (BlackHole loopback or a real mic): `node apps/web/scripts/acoustic-gate.mjs <utter1.wav> <utter2.wav>`
-- Local latency breakdown (VAD / STT / LLM TTFT / first phrase / TTS TTFA): `cd services/agent && pnpm exec tsx scripts/e2e-local.ts`
-- Lip-sync corpus A/B (analyzer vs MotionSync): `tools/lipsync-corpus/build.sh && node avatar-providers/live2d/demo/ab-run.mjs --engine analyzer`
-- Google Meet / Zoom participation (Recall): `MEET_URL=… pnpm --filter @rcai/connector-recall e2e:meet` (needs `RECALL_API_KEY` + public tunnel URLs)
-- Human 10-minute gate: `docs/human-gate.md` (one-tap observation panel inside the session)
-- Contrast audit (DADS tokens, WCAG): `pnpm contrast`
-- License audit: `pnpm licenses` → `licenses.json`, `THIRD_PARTY_NOTICES.md` (curated exceptions in `NOTICE.md`)
+| Setup | What you need |
+| --- | --- |
+| Local conversation | A running local LLM, speech recognition, and speech synthesis. Model weights are separate downloads. The [local stack script](scripts/local-stack.sh) and [agent configuration](services/agent/src/config.ts) define the supported paths and environment variables; the provided native voice helper is for macOS. |
+| OpenAI Realtime | Your own provider account and API key configured in the token broker. |
+| Gemini Live | Your own Gemini API key with `GEMINI_BACKEND=developer`, or a separately configured Vertex AI project. |
 
-## Layout
-```
-apps/web            React UI (never imports vendor SDKs)
-packages/*          contracts & engines (audio, conversation, provider, avatar, behavior, persona)
-providers/*         openai · gemini · local  → RealtimeAIProvider
-avatar-providers/*  live2d · vrm · canvas(debug) · liveavatar · tavus → AvatarProvider
-services/*          token-broker · agent (local bus) · evaluation (sidecar)
-characters/*        yui · reina · haru packs        personas/*   interview · english · sales · tutor · free_talk · career
-reference/*         read-only study repos (git-ignored)   vendor/live2d  human-supplied SDK files
-```
+For cloud adapters, copy [the broker environment example](services/token-broker/.env.example) to `services/token-broker/.env`, configure your chosen provider, and run `pnpm dev`. Select the VRM sample for the supplied avatar, then choose the provider in the app. Cloud services have their own availability, billing, and data-processing terms. Keep keys on the broker and out of frontend code and commits.
+
+Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentials, and service terms are separate from the default VRM distribution.
+
+## Status and validation
+
+**Beta.** On September 12, 2026, 1,025 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Local avatar checks passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime.
+
+For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
+
+## License
+
+Application-specific code is licensed under [Apache-2.0](LICENSE), subject to the exceptions in [NOTICE](NOTICE). Third-party code, model weights, artwork, and services retain their own terms. The bundled [VRM sample](characters/vrm-sample/LICENSE.md) has separate model permissions. Live2D components and assets are separately licensed; Attendee-derived material remains under Elastic License 2.0. The app license does not grant rights to those components or hosted services.
+
+## Contribute or try it with your team
+
+Try a scenario, report a reproducible problem, or improve a provider, language, or character integration. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+Have a use case for a classroom, coaching program, or sales team? [Start a public pilot discussion](https://github.com/FORIFOR/AI-meeting/issues/new?template=team-pilot.yml) with non-confidential requirements. This is an early product; hosted support and commercial terms can be discussed for the actual use case.
+
+If the project is useful, a GitHub star helps you find it again and makes it easier for others to discover.

@@ -1,1 +1,0 @@
-Human Reality Gate observations land here as `<date>.jsonl` (one JSON object per line, written by `POST /api/feedback`). The `.jsonl` files are git-ignored; keep summaries in `docs/acceptance-gates.md`.

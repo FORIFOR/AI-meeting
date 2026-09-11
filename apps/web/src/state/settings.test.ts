@@ -1,5 +1,37 @@
-import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS, chosenVoice, decide, loadSettings, saveSettings, settingsForBotPage, settingsReducer } from "./settings.js";
+import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_SETTINGS, chosenAvatarQuality, chosenVoice, decide, loadSettings, saveSettings, settingsForBotPage, settingsReducer } from "./settings.js";
+
+describe("OSS profile", () => {
+  it("starts offline with VRM and isolates saved settings from the hosted app", async () => {
+    vi.stubEnv("VITE_RCAI_OSS", "true");
+    vi.resetModules();
+    try {
+      const oss = await import("./settings.js");
+      expect(oss.DEFAULT_SETTINGS).toMatchObject({ privacyMode: "strict_local", engine: "local", autoPolicy: "offline", characterId: "vrm-sample" });
+      const normalSaved = JSON.stringify({ engine: "google", privacyMode: "default", characterId: "yui", avatarQuality: { yui: "natural" } });
+      const entries = new Map<string, string>([["rcai.settings.v1", normalSaved]]);
+      const storage = { getItem: (key: string) => entries.get(key) ?? null, setItem: (key: string, value: string) => { entries.set(key, value); } };
+      const loaded = oss.loadSettings(storage);
+      expect(loaded).toEqual(oss.DEFAULT_SETTINGS);
+      oss.saveSettings(loaded, storage);
+      expect(entries.get("rcai.settings.v1")).toBe(normalSaved);
+      expect(JSON.parse(entries.get("rcai.settings.oss.v1")!)).toEqual(oss.DEFAULT_SETTINGS);
+      const savedNatural = { ...loaded, privacyMode: "default" as const, avatarQuality: { "vrm-sample": "natural" as const } };
+      expect(oss.chosenAvatarQuality(savedNatural, "vrm-sample")).toBe("lightweight");
+      expect(oss.settingsReducer(savedNatural, { type: "avatarQuality", characterId: "vrm-sample", quality: "natural" })).toBe(savedNatural);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
+  it("preserves the ordinary app's defaults and settings namespace", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ privacyMode: "default", autoPolicy: "quality_first", characterId: "" });
+    const storage = { setItem: vi.fn() };
+    saveSettings(DEFAULT_SETTINGS, storage);
+    expect(storage.setItem).toHaveBeenCalledWith("rcai.settings.v1", expect.any(String));
+  });
+});
 
 describe("a page running inside a meeting bot", () => {
   it("routes with the engine the bot was created with, not its own empty settings", () => {
@@ -29,6 +61,48 @@ describe("voice choice", () => {
     let s = settingsReducer(DEFAULT_SETTINGS, { type: "voice", characterId: "yui", providerId: "openai", voiceId: "cedar" });
     s = settingsReducer(s, { type: "voice", characterId: "yui", providerId: "openai", voiceId: undefined });
     expect(chosenVoice(s, "yui", "openai")).toBeUndefined();
+  });
+});
+
+describe("avatar display quality", () => {
+  it("defaults existing settings and unconfigured characters to lightweight", () => {
+    expect(chosenAvatarQuality(DEFAULT_SETTINGS, "yui")).toBe("lightweight");
+    expect(chosenAvatarQuality(DEFAULT_SETTINGS, undefined)).toBe("lightweight");
+  });
+
+  it("stores a choice per character without changing voice or conversation routing", () => {
+    const before = settingsReducer(DEFAULT_SETTINGS, { type: "voice", characterId: "yui", providerId: "google", voiceId: "Aoede" });
+    let settings = settingsReducer(before, { type: "avatarQuality", characterId: "yui", quality: "natural" });
+    settings = settingsReducer(settings, { type: "avatarQuality", characterId: "haru", quality: "lightweight" });
+    expect(chosenAvatarQuality(settings, "yui")).toBe("natural");
+    expect(chosenAvatarQuality(settings, "haru")).toBe("lightweight");
+    expect(chosenAvatarQuality(settings, "kei")).toBe("lightweight");
+    expect(settings.voices).toBe(before.voices);
+    expect(chosenVoice(settings, "yui", "google")).toBe("Aoede");
+    expect(decide(settings)).toEqual(decide(before));
+  });
+
+  it("forces lightweight in strict local mode while retaining the previous preference", () => {
+    const natural = settingsReducer(DEFAULT_SETTINGS, { type: "avatarQuality", characterId: "yui", quality: "natural" });
+    const strict = settingsReducer(natural, { type: "privacy", mode: "strict_local" });
+    expect(chosenAvatarQuality(strict, "yui")).toBe("lightweight");
+    expect(settingsReducer(strict, { type: "avatarQuality", characterId: "haru", quality: "natural" })).toBe(strict);
+    expect(chosenAvatarQuality(settingsReducer(strict, { type: "privacy", mode: "default" }), "yui")).toBe("natural");
+  });
+
+  it("persists valid display choices and drops unknown stored values", () => {
+    let saved = "";
+    const storage = { getItem: () => saved, setItem: (_key: string, value: string) => { saved = value; } };
+    saveSettings(settingsReducer(DEFAULT_SETTINGS, { type: "avatarQuality", characterId: "yui", quality: "natural" }), storage);
+    expect(chosenAvatarQuality(loadSettings(storage), "yui")).toBe("natural");
+    saved = JSON.stringify({ avatarQuality: { yui: "natural", haru: "lightweight", kei: "cinematic", sora: true, broken: { quality: "natural" }, "": "natural" } });
+    expect(loadSettings(storage).avatarQuality).toEqual({ yui: "natural", haru: "lightweight" });
+  });
+
+  it.each([null, "natural", 1, ["natural"]])("ignores malformed display preferences: %j", (avatarQuality) => {
+    const settings = loadSettings({ getItem: () => JSON.stringify({ avatarQuality }) });
+    expect(settings.avatarQuality).toBeUndefined();
+    expect(chosenAvatarQuality(settings, "yui")).toBe("lightweight");
   });
 });
 

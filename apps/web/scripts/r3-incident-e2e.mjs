@@ -1,6 +1,11 @@
 import puppeteer from "puppeteer-core";
-import { writeFileSync } from "node:fs";
-const wav = "/private/tmp/claude-501/-Users-horioshuuhei-Projects-AI-meeting/df9b95fd-bd60-4532-b151-5ddfd28ebb5e/scratchpad/forkR/mic.wav";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+const wav = process.env.AUDIO;
+if (!wav || !existsSync(wav)) throw new Error("Set AUDIO to a local WAV fixture before running this verification.");
+const output = process.env.OUTPUT_DIR ?? fileURLToPath(new URL("../../../docs/reports/img/", import.meta.url));
+mkdirSync(output, { recursive: true });
 const base = "http://localhost:5178";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const browser = await puppeteer.launch({
@@ -47,7 +52,7 @@ await page.click(".gate__incident");
 await sleep(600); await poll();
 const panelHead = await page.$eval(".gate__head", (e) => e.textContent);
 for (let i = 0; i < 70; i++) { await poll(); await sleep(100); } // +7 s: window completes and POSTs
-await page.screenshot({ path: "/Users/horioshuuhei/Projects/AI-meeting/docs/reports/img/r3-gate6-incident.png" });
+await page.screenshot({ path: join(output, "r3-gate6-incident.png") });
 await page.click(".ctl--end");
 await page.waitForSelector(".result", { timeout: 60000 });
 await sleep(1500);
@@ -56,8 +61,8 @@ log.result = await page.evaluate(() => {
   const rep = sections.find((s) => s.textContent?.includes("セッションレポート"));
   return { report: rep?.innerText?.slice(0, 1500) ?? null, incidentsListed: rep ? rep.querySelectorAll(".gate__entry").length : 0 };
 });
-await page.screenshot({ path: "/Users/horioshuuhei/Projects/AI-meeting/docs/reports/img/r3-gate7-report.png", fullPage: true });
+await page.screenshot({ path: join(output, "r3-gate7-report.png"), fullPage: true });
 await browser.close();
 log.meta = { optChecked, sawSpeakingAfterUser, tCapture, panelHead };
-writeFileSync("/Users/horioshuuhei/Projects/AI-meeting/docs/reports/img/r3-gate6-7-e2e.json", JSON.stringify(log, null, 2));
+writeFileSync(join(output, "r3-gate6-7-e2e.json"), JSON.stringify(log, null, 2));
 console.log(JSON.stringify(log, null, 2));

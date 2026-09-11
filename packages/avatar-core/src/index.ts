@@ -8,3 +8,5 @@ export * from "./lipsync.js";
 export * from "./character.js";
 export * from "./avatarRuntime.js";
 export * from "./motionStackAvatar.js";
+export * from "./dualRenderer.js";
+export * from "./synchronizedAudioSink.js";

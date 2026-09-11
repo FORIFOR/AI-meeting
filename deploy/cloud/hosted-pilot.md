@@ -1,6 +1,6 @@
 # Hosted試験運用 — 採用方針と残作業
 
-合意済み: 通常月5,000円、ハード上限月10,000円、20〜30実会議時間/月。Attendee Hosted + Gemini 3.1 Flash Live + Renderを第一候補にする。最安比較・Attendeeセルフホスト移行は行わない。Attendee時間は「AIを会議の参加者として入れる」場合だけ発生し、1対1のTalk with AIでは発生させない。詳細は[セッションモードの設計](../architecture/session-modes.md)。
+合意済み: 通常月5,000円、ハード上限月10,000円、20〜30実会議時間/月。Attendee Hosted + Gemini 3.1 Flash Live + Renderを第一候補にする。最安比較・Attendeeセルフホスト移行は行わない。Attendee時間は「AIを会議の参加者として入れる」場合だけ発生し、1対1のTalk with AIでは発生させない。詳細は[セッションモードの設計](../../docs/architecture/session-modes.md)。
 
 ## 今回追加したもの
 

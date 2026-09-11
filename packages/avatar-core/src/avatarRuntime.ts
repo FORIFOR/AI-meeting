@@ -74,6 +74,9 @@ export class AvatarRuntime {
     switch (event.type) {
       case "user_speech_started": {
         const wasSpeaking = this.machine.state === "SPEAKING";
+        // Full-duplex acknowledgements are not necessarily an interruption. The conversation
+        // runtime emits `interrupted` when cancellation is intended.
+        if (wasSpeaking && this.provider.synchronizedAudio) break;
         this.machine.dispatch("userSpeechStarted", at);
         if (wasSpeaking) {
           // Mouth closes right now; speaking motion cut (spec §10: ≤100 ms).
@@ -101,8 +104,11 @@ export class AvatarRuntime {
         this.lastTranscript = event.text;
         break;
       case "assistant_speech_ended":
-        this.provider.interrupt(); // guarantees the mouth is shut even if a frame is in flight
-        this.opts.latency?.mark("avatar_mouth_closed");
+        // External media may still be rendering/playing after source generation ends.
+        if (!this.provider.synchronizedAudio) {
+          this.provider.interrupt();
+          this.opts.latency?.mark("avatar_mouth_closed");
+        }
         this.machine.dispatch("assistantSpeechEnded", at);
         break;
       case "interrupted":

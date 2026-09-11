@@ -4,6 +4,7 @@ import type { CharacterEntry } from "../integrations/registry.js";
 /** Renderer names as a person would say them (never shown in the conversation screen). */
 export const RENDERER_JA: Record<CharacterEntry["renderer"], string> = {
   live2d: "アニメ 2D",
+  "human-glb": "3D人物",
   vrm: "アニメ 3D",
   canvas: "デバッグ表示",
   liveavatar: "実写",
@@ -16,13 +17,14 @@ export const PLATE: Record<string, string> = { yui: "結", haru: "春", reina: "
 /** UI wording for a BLOCKED_BY_* code; the code itself stays in the tooltip and the reports. */
 export const BLOCKED_JA: Record<string, string> = {
   BLOCKED_BY_STRICT_LOCAL: "完全ローカル中は使えません",
-  BLOCKED_BY_HEYGEN_KEY: "APIキーが未設定です",
-  BLOCKED_BY_TAVUS_KEY: "APIキーが未設定です",
+  BLOCKED_BY_HEYGEN_KEY: "To be continued",
+  BLOCKED_BY_TAVUS_KEY: "To be continued",
   NO_CHARACTER: "キャラクターがありません",
 };
 
 /** Realistic avatars sit beside the anime ones (spec §17), even before a key exists. */
 export function withRealistic(entries: CharacterEntry[]): CharacterEntry[] {
+  if (import.meta.env.VITE_RCAI_OSS === "true") return entries;
   const out = [...entries];
   if (!out.some((e) => e.renderer === "liveavatar")) out.push({ id: "heygen", name: "HeyGen LiveAvatar", renderer: "liveavatar", baseUrl: "/characters/heygen", license: "HeyGen cloud" });
   if (!out.some((e) => e.renderer === "tavus")) out.push({ id: "tavus", name: "Tavus", renderer: "tavus", baseUrl: "/characters/tavus", license: "Tavus cloud" });

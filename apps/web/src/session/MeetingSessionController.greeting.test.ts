@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 const sendText = vi.fn(async () => {});
 const connect = vi.fn(async (_config: unknown) => {});
+const outboundAudio = vi.fn();
+const transcriptShown = vi.fn();
 const providerInterrupt = vi.fn(async () => {});
 /** What the page sent back for a `tool_call`. */
 const toolResponses: { id?: string; name: string; response: Record<string, unknown> }[][] = [];
@@ -44,7 +46,7 @@ vi.mock("../integrations/registry.js", () => ({
   // The bot page is attached to Attendee and never creates a connector; the operator page joins through one.
   createMeetingConnector: async () => ({
     async join() {
-      return { id: "bot_test", status: () => "in_call", onEvent(cb: (e: unknown) => void) { meetingListeners.push(cb); }, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+      return { id: "bot_test", status: () => "in_call", onEvent(cb: (e: unknown) => void) { meetingListeners.push(cb); }, pushOutboundAudio: outboundAudio, async endOutboundUtterance() {}, async leave() {}, close() {} };
     },
   }),
 }));
@@ -52,7 +54,7 @@ vi.mock("../integrations/registry.js", () => ({
 vi.mock("@rcai/connector-attendee", () => ({
   AttendeeConnector: class {
     attach() {
-      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio() {}, async endOutboundUtterance() {}, async leave() {}, close() {} };
+      return { id: "bot_test", status: () => "in_call", onEvent() {}, pushOutboundAudio: outboundAudio, async endOutboundUtterance() {}, async leave() {}, close() {} };
     }
   },
 }));
@@ -64,7 +66,7 @@ vi.mock("@rcai/avatar-core", async (importOriginal) => {
 
 import { MeetingSessionController } from "./MeetingSessionController.js";
 
-function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local", observer?: "captions") {
+function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only" | "open" = "addressed_only", engine: "local" | "google" = "local", observer?: "captions", meetingProvider?: "attendee" | "recall") {
   return new MeetingSessionController({
     observer,
     settings: { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine, autoPolicy: "offline", advanced: {}, privacyMode: "default", showHud: false, characterId: "yui", cameraOn: false, captionsOn: true, voices: {}, expressive: false },
@@ -75,11 +77,12 @@ function botPage(role: "bot" | "operator" = "bot", proactivity: "addressed_only"
     displayName: "Yui",
     proactivity,
     role,
+    meetingProvider,
     connectorMode: "relay",
     stage: null as unknown as HTMLElement,
     botActivation: { sessionId: "s", botId: "bot_test", clientToken: "ct" },
     attendeeAttach: { botId: "bot_test", clientWsUrl: "ws://localhost:1/relay" },
-    handlers: { onStatus() {}, onTranscript() {}, onPolicy() {}, onError() {} },
+    handlers: { onStatus() {}, onTranscript: transcriptShown, onPolicy() {}, onError() {} },
   });
 }
 
@@ -88,8 +91,58 @@ const frame = () => ({ data: new Float32Array(480), sampleRate: 48000, channels:
 const loud = () => ({ data: Float32Array.from({ length: 480 }, (_, i) => (i % 2 ? 0.3 : -0.3)), sampleRate: 48000, channels: 1 as const, timestamp: Date.now() });
 
 describe("greeting on arrival", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
+
+  it("Attendee operator greets once and forwards a named reply, hiding unsanctioned drafts", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_ended" });
+    c.onMeetingAudio(frame());
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(sendText).toHaveBeenCalledTimes(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_transcript", text: "uninvited draft", final: true });
+    expect(transcriptShown.mock.calls.some(([line]) => line.text === "uninvited draft")).toBe(false);
+    c.onMeetingTranscript("Yui、聞こえますか？", true, "Tester", "p1");
+    await vi.advanceTimersByTimeAsync(1);
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(2);
+    await c.leave();
+  });
+
+  it("shows the assistant transcript once and ignores the platform echo of Yui", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_transcript", text: "本日はよろしくお願いします。", final: true });
+    meetingEmit({ type: "transcript", text: "本日は よろしくお願いします", final: true, speakerName: "Yui", participantId: "bot" });
+    meetingEmit({ type: "transcript", text: "今日のニュースを教えて。", final: true, speakerName: "shuhei horio", participantId: "host" });
+    expect(transcriptShown.mock.calls.map(([line]) => line.text)).toEqual(["本日はよろしくお願いします。", "今日のニュースを教えて。"]);
+    await c.leave();
+  });
+
+  it("prefers platform captions without stopping ordinary Live audio", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "transcript", text: "資料の提出は金曜日です。", final: true, speakerName: "田中", participantId: "p1" });
+    emit({ type: "user_transcript", text: "Arriba", final: true, id: 1 });
+    emit({ type: "user_transcript_revised", text: "car", id: 1 });
+    expect(transcriptShown.mock.calls.map(([line]) => line.text)).toEqual(["資料の提出は金曜日です。"]);
+    c.onMeetingAudio(frame());
+    expect(c.isForwarding).toBe(true);
+    await c.leave();
+  });
 
   it("the caption observer wakes Live only on an address and supplies an older task quote", async () => {
     const c = botPage("bot", "addressed_only", "google", "captions");
@@ -297,6 +350,24 @@ describe("greeting on arrival", () => {
     await c.leave();
   });
 
+  it("Attendee operator page: the provider VAD owns interruptions for the mixed room stream", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined", at: Date.now() });
+    const later = Date.now() + 5000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => later);
+    c.onMeetingTranscript("Yui、今どう思う？", true, "Tester", "p-1");
+    expect(c.policy.state).toBe("ADDRESSED");
+    emit({ type: "assistant_speech_started", at: Date.now() });
+    expect(c.policy.state).toBe("RESPONDING");
+    // The mixed Attendee stream contains the character's return audio and room noise. It must not
+    // trigger the operator page's duplicate local VAD while the provider is speaking.
+    for (let i = 0; i < 60; i++) c.onMeetingAudio(loud());
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    clock.mockRestore();
+    await c.leave();
+  });
+
   it("bot page asks the agent to confirm a barge-in; the operator page keeps the instant cut", async () => {
     await botPage("bot").start();
     const bot = connect.mock.calls.at(-1)![0] as { providerOptions?: Record<string, unknown> };
@@ -315,7 +386,7 @@ describe("greeting on arrival", () => {
  * answered none of them — every reply it began was cut for being unsanctioned.
  */
 describe("an answer the provider decided to give", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => vi.useRealTimers());
 
   it("is spoken in a one-to-one, and not asked for a second time", async () => {
@@ -329,6 +400,39 @@ describe("an answer the provider decided to give", () => {
     expect(sendText).not.toHaveBeenCalled(); // the answer is already being spoken
     emit({ type: "assistant_speech_ended", at: Date.now() });
     expect(c.policy.state).toBe("OBSERVING");
+    await c.leave();
+  });
+
+  it("delivers a native Gemini answer without any transcription or duplicate text turn", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    // Real room speech was detected, but no caption / Gemini transcription arrived.
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
+    expect(providerInterrupt).not.toHaveBeenCalled();
+    expect(sendText).not.toHaveBeenCalled();
+    emit({ type: "assistant_speech_ended" });
+    c.reportHostMute(true);
+    outboundAudio.mockClear();
+    c.policy.onSpeechActivity(true, Date.now());
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(outboundAudio).not.toHaveBeenCalled();
+    await c.leave();
+  });
+
+  it("does not send a second text request when captions address continuous Gemini", async () => {
+    const c = botPage("operator", "addressed_only", "google", undefined, "attendee");
+    await c.start();
+    meetingEmit({ type: "joined" });
+    meetingEmit({ type: "transcript", text: "Yui、聞こえますか？", final: true, speakerName: "田中", participantId: "p1" });
+    emit({ type: "assistant_speech_started" });
+    emit({ type: "assistant_audio", frame: frame() });
+    expect(sendText).not.toHaveBeenCalled();
+    expect(outboundAudio).toHaveBeenCalledTimes(1);
     await c.leave();
   });
 
@@ -361,7 +465,7 @@ describe("an answer the provider decided to give", () => {
  * page runs it against the broker and hands back only what came back.
  */
 describe("the character looking up what is true right now", () => {
-  beforeEach(() => { sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; toolResponses.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
+  beforeEach(() => { outboundAudio.mockClear(); transcriptShown.mockClear(); sendText.mockClear(); connect.mockClear(); providerInterrupt.mockClear(); listeners.length = 0; meetingListeners.length = 0; toolResponses.length = 0; vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] }); });
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   it("runs the lookup and answers the model with the facts", async () => {

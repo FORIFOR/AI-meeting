@@ -1,25 +1,41 @@
+import { memoryContext, readConversationMemory } from "./state/conversationMemory.js";
 import { ZoomReturn } from "./components/ZoomConnection.js";
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { lazy, useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { ScreenBoundary } from "./components/ScreenBoundary.js";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import { probe, shouldProbeLocalAgent, type AgentHealth, type BrokerHealth } from "./api/health.js";
 import { withRealistic } from "./components/characters.js";
 import { FALLBACK_PERSONAS } from "./content/fallbackPersonas.js";
 import { loadCharacterEntries, loadPersonas, type CharacterEntry } from "./integrations/registry.js";
-import { CharacterSelect } from "./screens/CharacterSelect.jsx";
 import { Home } from "./screens/Home.jsx";
-import { Result } from "./screens/Result.jsx";
-import { Session } from "./screens/Session.jsx";
-import { SettingsScreen } from "./screens/SettingsScreen.jsx";
-import { Meeting } from "./screens/Meeting.jsx";
-import { MeetingDetail } from "./screens/MeetingDetail.jsx";
-import { Meetings } from "./screens/Meetings.jsx";
-import { Setup } from "./screens/Setup.jsx";
 import type { SessionOutcome } from "./session/SessionController.js";
 import { loadSettings, saveSettings, settingsReducer, type Availability } from "./state/settings.js";
 import { loadRecent, saveRecent, type Recent } from "./state/recent.js";
 import { disposeActiveSession } from "./session/activeSession.js";
 import { availableMode } from "./content/release.js";
+
+// Keep meeting/session engines out of the first home render. Preloading only downloads
+// code: microphone, camera and provider connections still start when their screen mounts.
+const loadMeeting = () => import("./screens/Meeting.js").then((m) => ({ default: m.Meeting }));
+const loadMeetings = () => import("./screens/Meetings.js").then((m) => ({ default: m.Meetings }));
+const loadSettingsScreen = () => import("./screens/SettingsScreen.js").then((m) => ({ default: m.SettingsScreen }));
+const loadSession = () => import("./screens/Session.js").then((m) => ({ default: m.Session }));
+const Meeting = lazy(loadMeeting);
+const Meetings = lazy(loadMeetings);
+const SettingsScreen = lazy(loadSettingsScreen);
+const Session = lazy(loadSession);
+const CharacterSelect = lazy(() => import("./screens/CharacterSelect.js").then((m) => ({ default: m.CharacterSelect })));
+const MeetingDetail = lazy(() => import("./screens/MeetingDetail.js").then((m) => ({ default: m.MeetingDetail })));
+const Setup = lazy(() => import("./screens/Setup.js").then((m) => ({ default: m.Setup })));
+const Result = lazy(() => import("./screens/Result.js").then((m) => ({ default: m.Result })));
+const ThinkingResult = lazy(() => import("./screens/ThinkingResult.js").then((m) => ({ default: m.ThinkingResult })));
+
+function preload(load: () => Promise<unknown>) {
+  // A failed speculative request must not produce an unhandled rejection. The actual
+  // navigation has a visible error boundary and can reload after a deployment/network failure.
+  void load().catch(() => {});
+}
 
 type Screen =
   | { name: "home" }
@@ -119,6 +135,10 @@ export function App() {
     if (!settings.characterId && characters[0]) dispatch({ type: "character", id: characters[0].id });
   }, [characters, settings.characterId]);
 
+  useEffect(() => {
+    if (screen.name === "setup") preload(loadSession);
+  }, [screen.name]);
+
   const personasByMode = useMemo(() => {
     const m = new Map<ConversationMode, Persona[]>();
     for (const p of personas) m.set(p.mode, [...(m.get(p.mode) ?? []), p]);
@@ -140,28 +160,34 @@ export function App() {
 
   const onContinue = useCallback(
     (mode: ConversationMode) => {
-      const list = personasByMode.get(mode) ?? [];
-      const single = list.length === 1 ? list[0] : undefined;
-      if (single && !(single.params?.length)) startSession(single, {});
-      else setScreen({ name: "setup", mode });
+      // Always show the setup screen first, even for a mode with one default persona.
+      // This keeps a visible "戻る" action after a purpose has been selected.
+      setScreen({ name: "setup", mode });
     },
-    [personasByMode, startSession],
+    [],
   );
 
   const inSession = screen.name === "session" || (screen.name === "meeting" && !!botParams);
   const brokerMeeting = broker?.meeting ?? null;
+  const [meetingDraft, setMeetingDraft] = useState("");
   return (
     <div className="app">
-      <ZoomReturn onDone={() => setScreen({ name: "meeting" })} />
+      <ZoomReturn privacyMode={settings.privacyMode} onDone={() => setScreen({ name: "meeting" })} />
       {!inSession && (
         <header className="topbar">
           <a className="brand" href="#" onClick={(e) => { e.preventDefault(); setScreen({ name: "home" }); }}>
-            <span className="brand__mark">稽古場</span>
-            <span className="brand__sub">Stage</span>
+            <span className="brand__mark">AIミーティング</span>
+            <span className="brand__sub">Realtime Character AI</span>
           </a>
-
+          <nav className="workspace-nav" aria-label="メインメニュー">
+            <button aria-current={screen.name === "home" ? "page" : undefined} onClick={() => setScreen({ name: "home" })}>ホーム</button>
+            <button aria-current={screen.name === "meeting" ? "page" : undefined} onPointerEnter={() => preload(loadMeeting)} onFocus={() => preload(loadMeeting)} onClick={() => setScreen({ name: "meeting" })}>会議</button>
+            <button aria-current={screen.name === "meetings" ? "page" : undefined} onPointerEnter={() => preload(loadMeetings)} onFocus={() => preload(loadMeetings)} onClick={() => setScreen({ name: "meetings" })}>会議の履歴</button>
+            <button aria-current={screen.name === "settings" ? "page" : undefined} onPointerEnter={() => preload(loadSettingsScreen)} onFocus={() => preload(loadSettingsScreen)} onClick={() => setScreen({ name: "settings" })}>設定</button>
+          </nav>
         </header>
       )}
+      <ScreenBoundary key={screen.name} onHome={() => setScreen({ name: "home" })}>
       {screen.name === "home" && (
         <Home
           settings={settings}
@@ -173,9 +199,11 @@ export function App() {
           contentNote={contentNote}
           recent={recent}
           onContinue={onContinue}
+          onResume={() => { const memory = readConversationMemory(selectedCharacter?.id ?? "yui"); const persona = personas.find(p => p.id === "thinking_ja"); if (memory && persona) startSession(persona, { previousMemory: memoryContext(memory) }); }}
+          onTalk={personas.some(p => p.id === "thinking_ja") ? () => startSession(personas.find(p => p.id === "thinking_ja")!, {}) : undefined}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
           onSettings={() => setScreen({ name: "settings" })}
-          onMeeting={() => setScreen({ name: "meeting" })}
+          onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
         />
       )}
       {screen.name === "settings" && (
@@ -199,7 +227,7 @@ export function App() {
         />
       )}
       {screen.name === "meeting" && (
-        <Meeting settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen(botParams ? { name: "home" } : { name: "meetings" })} />
+        <Meeting initialUrl={meetingDraft} settings={settings} availability={availability} personas={personas} characters={characters} botParams={botParams} broker={broker} brokerMeeting={brokerMeeting} onBack={() => setScreen({ name: "home" })} />
       )}
       {screen.name === "meetings" && (
         <Meetings
@@ -239,7 +267,8 @@ export function App() {
           onAbort={() => setScreen({ name: "home" })}
         />
       )}
-      {screen.name === "result" && <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />}
+      {screen.name === "result" && (screen.last.persona.id === "thinking_ja" ? <ThinkingResult outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} /> : <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />)}
+      </ScreenBoundary>
     </div>
   );
 }

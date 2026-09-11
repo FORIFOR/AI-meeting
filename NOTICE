@@ -1,0 +1,24 @@
+AI Meeting
+Copyright 2026 AI Meeting contributors
+
+Application-specific source code and documentation are licensed under the Apache
+License, Version 2.0. Third-party code and media retain their original licenses.
+
+The root license does not replace the following separate conditions:
+- characters/vrm-sample/model.vrm: VRM Public License 1.0 and embedded model
+  permissions; (c) 2022 pixiv Inc. See its adjacent LICENSE.md and SOURCE.json.
+- characters/sora/model.glb: CC0-1.0 as recorded in its LICENSE.md and SOURCE.json.
+- avatar-providers/vrm/src/wlipsync-profile.json: MIT; retain the adjacent
+  wlipsync-profile.LICENSE notice.
+- Live2D Core, original sample models and derived image/video previews: the
+  applicable Live2D terms. These are excluded from the standard OSS build.
+- scripts/reality/attendee-selfhost/local-patches.diff: includes upstream Attendee
+  source context under Elastic License 2.0. The upstream license and modification
+  notice accompany this patch; it is not relicensed under Apache-2.0.
+- npm dependencies and vendored license supplements: their respective upstream
+  licenses. See NOTICE.md and THIRD_PARTY_NOTICES.md.
+
+Optional API adapters do not grant rights to third-party hosted services, model
+outputs, credentials, trademarks or customer recordings. The application license
+permits commercial use of the covered code; optional services and character
+assets may have additional conditions.

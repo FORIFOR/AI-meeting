@@ -133,6 +133,19 @@ describe("AttendeeConnector", () => {
     expect(heard).toBe(0);
   });
 
+  it("confirms a closed meeting from the broker status before cleaning up", async () => {
+    const ws = fakeWs();
+    const { session, calls } = await join(ws);
+    const statuses: string[] = [];
+    session.onEvent((e) => { if (e.type === "status") statuses.push(e.status); });
+    ws.onmessage?.({ data: JSON.stringify({ relay: { botId: "att_1" }, message: { event: "bot.status_change", data: { data: { code: "call_ended" } } } }) });
+    expect(statuses).toEqual(["ended"]);
+    await session.leave();
+    // The provider already confirmed the call ended, so cleanup closes the socket without issuing
+    // another paid leave request.
+    expect(calls.some((call) => call.url.endsWith("/leave"))).toBe(false);
+  });
+
   it("surfaces a broker refusal instead of returning a dead session", async () => {
     const connector = new AttendeeConnector({
       brokerUrl: "http://broker",

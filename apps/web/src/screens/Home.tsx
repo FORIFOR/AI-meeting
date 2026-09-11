@@ -1,13 +1,14 @@
+import { readConversationMemory, forgetConversationMemory } from "../state/conversationMemory.js";
+import { useState } from "react";
 import { CreditBalance } from "../components/CreditBalance.js";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
 import type { BrokerHealth, AgentHealth } from "../api/health.js";
-import { blockedReason } from "../components/characters.js";
+import { blockedReason, RENDERER_JA } from "../components/characters.js";
 import type { CharacterEntry } from "../integrations/registry.js";
 import type { Settings, SettingsAction } from "../state/settings.js";
+import { decide } from "../state/settings.js";
 import { whenLabel, type Recent } from "../state/recent.js";
-import { RELEASE_POLICY, RELEASE_LABEL, stageAvailable } from "@rcai/conversation-core";
-import { RELEASE_CHANNEL } from "../content/release.js";
 
 export const PRODUCTS: { mode: ConversationMode; kana: string; name: string; desc: string }[] = [
   { mode: "interview", kana: "Interview Practice", name: "面接練習", desc: "職種・企業のスタイル・難易度を決めて、本番と同じ形式で。" },
@@ -32,9 +33,11 @@ export interface HomeProps {
   contentNote?: string;
   recent: Recent | null;
   onContinue: (mode: ConversationMode) => void;
+  onResume?: () => void;
+  onTalk?: () => void;
   onCharacter: () => void;
   onSettings: () => void;
-  onMeeting?: () => void;
+  onMeeting?: (url?: string) => void;
 }
 
 function greeting(d = new Date()): string {
@@ -48,78 +51,51 @@ function greeting(d = new Date()): string {
 /** Level 1 only: one question, a few answers, one continuation. */
 export function Home(p: HomeProps) {
   const strict = p.settings.privacyMode === "strict_local";
+  const demoOnly = p.broker?.publicAccess?.mode === "demo_only";
+  const localReady = p.agent?.ok && decide(p.settings, { openai: false, google: false, local: true }).conversation === "local";
   const character = p.characters.find((c) => c.id === p.settings.characterId) ?? p.characters[0];
-  const blocked = character ? blockedReason(character, p.broker, strict) : "NO_CHARACTER";
+  const blocked = demoOnly && !localReady ? "PUBLIC_DEMO_ONLY" : character ? blockedReason(character, p.broker, strict) : "NO_CHARACTER";
   const available = new Set(p.personas.map((x) => x.mode));
   const items = PRODUCTS.filter((x) => available.has(x.mode));
   const offline = !p.broker && !p.agent;
-  const desktop = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+  const [memoryVersion, setMemoryVersion] = useState(0);
+  const memory = readConversationMemory(character?.id ?? "yui");
+  const [meetingUrl, setMeetingUrl] = useState("");
+  const portrait = character && ["yui", "haru", "reina", "sora"].includes(character.id) ? `/avatar-fallbacks/${character.id}.png` : null;
   return (
-    <div className="home">
-      <p className="home__greet">{greeting()}</p>
-      <h1 className="home__ask">今日は、何を話しますか？</h1>
-      <CreditBalance enabled={!strict} />
-      <div className="field">
-        <label htmlFor="home-character">1. 話す相手</label>
-        <select id="home-character" className="select" value={character?.id ?? ""} onChange={e => p.dispatch({ type: "character", id: e.target.value })}>
-          {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker, strict)}>{c.name}</option>)}
-        </select>
-        <button type="button" className="btn btn--ghost" onClick={p.onCharacter}>見た目を見て選ぶ</button>
+    <main className="home workspace-home">
+      <section className="workspace-welcome">
+        <div><p className="home__greet">{greeting()}</p><h1>今日は、誰と話しますか？</h1><p>まとまっていなくても大丈夫。話しながら、一緒に考えましょう。</p></div>
+        <span className="workspace-badge">THINKING MEETING</span>
+      </section>
+      <div className="workspace-grid">
+        <section className="thinking-launch" aria-labelledby="launch-title">
+          <span className="workspace-label">A LITTLE SPACE TO THINK</span>
+          <h2 id="launch-title">話すうちに、<br />次の一歩が見えてくる。</h2>
+          <p>{character?.name ?? "AI"}と、アイデアも、迷っていることも。<br />会議URLは必要ありません。</p>
+          {demoOnly && !localReady ? <a className="btn btn--primary btn--lg" href="/vrm-demo.html">音声とアバターのデモを試す <span aria-hidden="true">↗</span></a> : <button className="btn btn--primary btn--lg" disabled={!!blocked || !p.onTalk} onClick={p.onTalk}>{character?.name ?? "AI"}と話す <span aria-hidden="true">↗</span></button>}
+          <p className="thinking-launch__hint">{demoOnly ? "公開デモはAPIキー不要です。AIとの会話には、ご自身の環境で接続先を設定してください。" : "マイクを許可して、そのまま話しかけてください。"}</p>
+          {import.meta.env.VITE_RCAI_OSS === "true" && <p className="notice">まずは<a href="/vrm-demo.html">音声と3D表示を試す</a>。APIキーは不要です。AIとの会話にはローカル音声AIの起動が必要です。</p>}
+          {memory && <div className="thinking-memory" key={memoryVersion}><p>前回のメモ：{memory.conclusion || memory.nextStep}</p><button className="btn" disabled={!!blocked} onClick={p.onResume}>続きから話す</button><button className="btn btn--ghost" onClick={() => { forgetConversationMemory(memory.characterId); setMemoryVersion(v=>v+1); }}>メモを削除</button></div>}
+          <div className="thinking-prompts"><span>「このアイデア、どう思う？」</span><span>「今日やることを整理したい」</span><span>「まだうまく言えないけれど…」</span></div>
+        </section>
+        <aside className="companion-feature" aria-label="選択中の相手">
+          <div className="companion-feature__heading"><span className="workspace-label">YOUR PARTNER</span><span className="companion-feature__tag">{character ? RENDERER_JA[character.renderer] : "準備中"}</span></div>
+          <div className="companion-feature__portrait">{portrait ? <img src={portrait} alt={`${character?.name}の外見`} /> : <span className="companion-feature__placeholder">プレビューで外見を確認</span>}</div>
+          <div className="companion-feature__bottom"><div><h2>{character?.name ?? "相手を選択"}</h2><p>{blocked ? "利用状況は選択画面で確認" : "あなたの会議パートナー"}</p></div><button className="btn" onClick={p.onCharacter}>相手を選ぶ ↗</button></div>
+        </aside>
       </div>
-      <p className="group__title">2. やりたいこと</p>
-      <p className="hint">選んだあとに、声や話し方を変えられます。</p>
-      <div className="acts">
-        {items.map((x) => (
-          <button key={x.mode} type="button" className="act" disabled={!!blocked} onClick={() => p.onContinue(x.mode)}>
-            {x.name}
-            <small className="act__note">{x.desc}</small>
-            <span className="act__note">{RELEASE_LABEL[RELEASE_POLICY.modes[x.mode]]}</span>
-          </button>
-        ))}
-        {p.onMeeting && stageAvailable(RELEASE_POLICY.meeting, RELEASE_CHANNEL) && (
-          <button type="button" className="act" disabled={!!blocked || strict} onClick={p.onMeeting}>
-            会議
-            <span className="act__note">Google Meet · Zoom ベータ · Teams 未対応</span>
-          </button>
-        )}
+      <div className="workspace-support">
+        <CreditBalance enabled={!strict && !!p.broker && !demoOnly} />
+        <section className="workspace-guide"><span className="workspace-label">INVITE YOUR PARTNER</span><h2>いつもの会議にも。</h2><p>{demoOnly ? "会議Botは、ご自身の環境で接続先を設定して利用できます。" : `Google Meet・Zoomに、${character?.name ?? "AI"}を招待できます。`}</p><form onSubmit={e => { e.preventDefault(); if (!demoOnly) p.onMeeting?.(meetingUrl.trim()); }}><label htmlFor="home-meeting-url">会議の招待リンク</label><input className="input" id="home-meeting-url" type="url" value={meetingUrl} onChange={e => setMeetingUrl(e.target.value)} placeholder="https://meet.google.com/…" /><button className="btn btn--ghost" disabled={strict || demoOnly || !p.onMeeting} type="submit">会議に呼ぶ →</button></form></section>
       </div>
-
+      <details className="workspace-modes"><summary>英会話・面接練習など、目的を決めて話す</summary><section aria-labelledby="modes-title"><div className="workspace-section-head"><div><span className="workspace-label">MORE WAYS TO TALK</span><h2 id="modes-title">目的に合わせて。</h2></div><p>練習も、考えの整理も。あなたのペースで。</p></div>
+        <div className="acts">{items.map((x) => <button key={x.mode} type="button" className="act" disabled={!!blocked} onClick={() => p.onContinue(x.mode)}><span className="act__icon" aria-hidden="true">{({ interview: "◎", english_lesson: "Aa", free_talk: "◌", sales_roleplay: "↗", tutor: "◇", career: "⌁", companion: "♡", task_planning: "☑" }[x.mode])}</span><span className="act__name">{x.name}</span><small className="act__note">{x.desc}</small></button>)}</div>
+      </section>
+      </details>
       {p.contentNote && <p className="notice">{p.contentNote}</p>}
-      {offline && (
-        <p className="notice" role="status">
-          {import.meta.env.VITE_RCAI_CLOUD === "true" ? (
-            <span>サービスへの接続を確認しています。しばらく待っても接続できない場合は、ページを再読み込みしてください。</span>
-          ) : (<>
-          <b>ローカルサービスが起動していません。</b>
-          {desktop ? "デスクトップ版はサービスを同梱していません（beta）。" : ""}
-          <br />
-          <code>scripts/local-stack.sh start &amp;&amp; pnpm dev</code>
-          </>)}
-        </p>
-      )}
-
-      <hr className="home__rule" />
-      {p.recent && available.has(p.recent.mode) ? (
-        <button type="button" className="cont" onClick={() => p.onContinue(p.recent!.mode)}>
-          <span>
-            前回のつづき — <b>{p.recent.characterName}</b> · {MODE_NAME[p.recent.mode] ?? p.recent.mode} · {whenLabel(p.recent.at)}
-          </span>
-          <span className="row__chev">›</span>
-        </button>
-      ) : (
-        <p className="cont cont--empty">
-          <span>話しかければ、聞いている顔をする。</span>
-        </p>
-      )}
-
-      <div className="home__foot">
-        <button type="button" className="btn btn--ghost" onClick={p.onCharacter}>
-          相手 · {character?.name ?? "—"}
-        </button>
-        <button type="button" className="btn btn--ghost" onClick={p.onSettings}>
-          設定
-        </button>
-      </div>
-    </div>
+      {offline && <p className="notice" role="status">サービスへの接続を確認しています。接続できない場合は設定をご確認ください。</p>}
+      <footer className="workspace-footer">{p.recent && available.has(p.recent.mode) ? <button className="btn btn--ghost" disabled={!!blocked} onClick={() => p.onContinue(p.recent!.mode)}>もう一度話す · {p.recent.characterName} · {whenLabel(p.recent.at)} →</button> : <span>あなたの会話から、次の一歩へ。</span>}<button className="btn btn--ghost" onClick={p.onSettings}>音声・接続の設定</button></footer>
+    </main>
   );
 }

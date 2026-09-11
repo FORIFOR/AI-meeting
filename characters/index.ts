@@ -5,7 +5,7 @@
 export interface CharacterEntry {
   id: string;
   name: string;
-  renderer: "live2d" | "vrm" | "liveavatar" | "tavus" | "canvas";
+  renderer: "live2d" | "vrm" | "human-glb" | "liveavatar" | "tavus" | "canvas";
   /** Served by the web app as a static directory (apps/web/public/characters → ../../characters). */
   baseUrl: string;
   license: string;
@@ -67,6 +67,17 @@ export const characters: CharacterEntry[] = [
     defaultPersona: "interviewer",
     description: "冷静でフォーマル。面接官・キャリア相談向け。",
   },
+  {
+    id: "sora", name: "Sora", renderer: "human-glb", baseUrl: "/characters/sora",
+    aliases: ["そら", "ソラ"], license: "MPFB sample by met4citizen — CC0-1.0",
+    defaultPersona: "friendly", description: "3Dの会話パートナー。試験提供。",
+  },
+  {
+    id: "vrm-sample", name: "VRMサンプル", renderer: "vrm", baseUrl: "/characters/vrm-sample",
+    aliases: ["サンプル"], license: "VRM1_Constraint_Twist_Sample © 2022 pixiv Inc. — VRM Public License 1.0",
+    defaultPersona: "friendly", description: "外部アバターAPI不要の3Dサンプル。原作者の利用条件が適用されます。",
+  },
+
 ];
 
 export function getCharacter(id: string): CharacterEntry | undefined {

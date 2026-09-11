@@ -1,0 +1,39 @@
+name: Team pilot / チームでの試用相談
+description: Start a public, non-binding discussion about a classroom, coaching, or team use case.
+title: "[Pilot] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Describe the use case with non-confidential information only.
+        この相談は公開されます。顧客名、個人情報、秘密の台本、認証情報を含めないでください。
+        This is an early product; availability and commercial terms depend on the proposed work.
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case / 利用したい場面
+      description: For example, interview practice, a language class, or sales roleplay. What outcome would make a pilot useful?
+    validations:
+      required: true
+  - type: input
+    id: scale
+    attributes:
+      label: Approximate scale / おおよその規模
+      placeholder: "e.g. a small class, 5 coaches, or a 20-person team"
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup and constraints / 希望する環境・条件
+      description: Local or hosted preference, languages, devices, accessibility, and whether you have permission to use the planned character assets.
+  - type: textarea
+    id: support
+    attributes:
+      label: Help needed / 必要な支援
+      description: Setup, scenario design, integration, hosting, or another specific need. Continue in this issue for public details; arrange a private channel before sharing anything confidential.
+  - type: checkboxes
+    id: public_notice
+    attributes:
+      label: Public discussion / 公開相談
+      options:
+        - label: I understand this issue is public and have removed confidential information. / 公開されることを理解し、機密情報を除きました。
+          required: true

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="AIミーティング">
+  <defs>
+    <linearGradient id="bg" x1="84" y1="40" x2="932" y2="984" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2138D0"/>
+      <stop offset="1" stop-color="#09155F"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="230" y1="230" x2="760" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8EEFF"/>
+    </linearGradient>
+    <linearGradient id="face" x1="400" y1="328" x2="598" y2="548" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8D76"/>
+      <stop offset="1" stop-color="#F15D70"/>
+    </linearGradient>
+    <filter id="shadow" x="128" y="170" width="770" height="670" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#050C47" flood-opacity=".34"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <circle cx="166" cy="210" r="10" fill="#8DEBFF" opacity=".9"/>
+  <circle cx="204" cy="168" r="5" fill="#8DEBFF" opacity=".65"/>
+  <path d="M158 350h46M181 327v46" stroke="#8DEBFF" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+  <g fill="none" stroke="#65E3F4" stroke-linecap="round" stroke-width="18" opacity=".95">
+    <path d="M775 374c35 35 35 101 0 136"/>
+    <path d="M833 326c62 63 62 195 0 258"/>
+    <path d="M892 277c90 92 90 291 0 383"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M193 336c0-77 62-139 139-139h337c77 0 139 62 139 139v253c0 77-62 139-139 139H498l-129 101c-20 16-49 2-49-24v-77c-73-6-127-66-127-139V336Z" fill="url(#bubble)"/>
+    <circle cx="493" cy="452" r="137" fill="url(#face)"/>
+    <path d="M429 432c18-25 49-25 67 0M490 432c18-25 49-25 67 0" fill="none" stroke="#17205E" stroke-width="18" stroke-linecap="round"/>
+    <circle cx="456" cy="426" r="7" fill="#fff"/>
+    <circle cx="517" cy="426" r="7" fill="#fff"/>
+    <path d="M448 498c28 27 70 27 98 0" fill="none" stroke="#17205E" stroke-width="18" stroke-linecap="round"/>
+    <path d="M393 538c63 38 137 38 200 0" fill="none" stroke="#FFB29D" stroke-width="12" stroke-linecap="round" opacity=".8"/>
+  </g>
+</svg>

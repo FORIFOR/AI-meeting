@@ -1,8 +1,0 @@
-{
-  "command": "pnpm test",
-  "sourceCommit": "6c10110",
-  "testFilesPassed": 71,
-  "testsPassed": 718,
-  "result": "PASS",
-  "scope": "Automated repository tests, not human or physical meeting evaluation"
-}

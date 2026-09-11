@@ -1,0 +1,45 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>GPT-Live official SDK smoke</title>
+<style>body{font:16px system-ui;max-width:1000px;margin:40px auto;padding:0 20px}button{padding:12px;margin:8px}pre{white-space:pre-wrap;background:#f4f5f7;padding:20px}audio{display:block}</style>
+<h1>GPT-Live 1 公式SDK疎通確認</h1>
+<p>アプリのコードから独立した検証です。端末で生成した短い日本語音声を送ります。</p>
+<button data-variant="responses">公式SDK・Terra委譲あり</button><button data-variant="minimal">公式SDK・最小構成</button>
+<p id="browser"></p><label><input id="rawPair" type="checkbox">SDKが500なら、同じSDPでraw接続を1回比較する</label><audio id="outputAudio" autoplay controls></audio><pre id="log">Ready</pre>
+<script type="module">
+const log=document.querySelector('#log'),audio=document.querySelector('#outputAudio');
+document.querySelector('#browser').textContent=navigator.userAgent;
+for(const button of document.querySelectorAll('button'))button.onclick=async()=>{
+ const variant=button.dataset.variant,t0=performance.now(),events=[];
+ const note=(type,details={})=>{const entry={type,ms:Math.round(performance.now()-t0),...details};events.push(entry);log.textContent+='\n'+JSON.stringify(entry);};
+ for(const b of document.querySelectorAll('button'))b.disabled=true;
+ let pc,dc,ctx,stream,source,analyser,poll,hardStop,startTimer,closeTimer,started=false,finalized=false,stopped=false,peak=0;
+ let resolveStarted,rejectStarted,resolveClosed;
+ const ready=new Promise((r,j)=>{resolveStarted=r;rejectStarted=j;});ready.catch(()=>{});
+ const closed=new Promise(r=>resolveClosed=r);
+ const cleanup=async()=>{if(stopped)return;stopped=true;clearTimeout(hardStop);clearTimeout(startTimer);clearTimeout(closeTimer);clearInterval(poll);try{source?.stop();}catch{}stream?.getTracks().forEach(t=>t.stop());if(dc)dc.onclose=null;dc?.close();pc?.close();audio.srcObject=null;if(ctx&&ctx.state!=='closed')await ctx.close();};
+ try{
+  note('start',{variant,browser:navigator.userAgent});ctx=new AudioContext();await ctx.resume();
+  const buffer=await ctx.decodeAudioData(await(await fetch('/hello.wav')).arrayBuffer());
+  const dest=ctx.createMediaStreamDestination();stream=dest.stream;source=ctx.createBufferSource();source.buffer=buffer;source.connect(dest);
+  pc=new RTCPeerConnection();
+  pc.onconnectionstatechange=()=>note('peer_state',{state:pc.connectionState});
+  pc.ontrack=e=>{note('audio_track');audio.srcObject=new MediaStream([e.track]);void audio.play().catch(err=>note('playback_blocked',{message:err.message}));analyser=ctx.createAnalyser();ctx.createMediaStreamSource(new MediaStream([e.track])).connect(analyser);const samples=new Float32Array(analyser.fftSize);poll=setInterval(()=>{analyser.getFloatTimeDomainData(samples);for(const x of samples)peak=Math.max(peak,Math.abs(x));},20);};
+  for(const track of stream.getAudioTracks())pc.addTrack(track,stream);
+  dc=pc.createDataChannel('oai-events');
+  dc.onmessage=({data})=>{try{const e=JSON.parse(data);note('server_event',{event:e.type,...(e.delta?{delta:e.delta}:{}),...(e.error?{error:e.error}:{}),...(e.usage?{usage:e.usage}:{})});if(e.type==='session.started'){started=true;resolveStarted();}if(e.type==='session.closed'){finalized=true;resolveClosed();}if(e.type==='error'&&!started)rejectStarted(new Error(e.error?.message??'Live error'));}catch(err){note('event_parse_failed',{message:err.message});}};
+  dc.onclose=()=>{if(!started)rejectStarted(new Error('Data channel closed before session.started'));};
+  hardStop=setTimeout(()=>{note('hard_deadline');rejectStarted(new Error('Overall deadline'));void cleanup();},45000);
+  await pc.setLocalDescription(await pc.createOffer());
+  if(pc.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{const check=()=>{if(pc.iceGatheringState==='complete'){clearTimeout(timer);pc.removeEventListener('icegatheringstatechange',check);resolve();}};const timer=setTimeout(()=>{pc.removeEventListener('icegatheringstatechange',check);reject(new Error('ICE timeout'));},10000);pc.addEventListener('icegatheringstatechange',check);check();});
+  note('offer_ready',{bytes:pc.localDescription.sdp.length});
+  let response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({variant,sdp:pc.localDescription.sdp}),signal:AbortSignal.timeout(25000)});
+  let result=await response.json();note('http_response',{status:response.status,...(!response.ok?{error:result.error}:{hasAnswer:!!result.transport?.sdp})});if(response.status===500&&document.querySelector('#rawPair').checked){note('same_sdp_raw_comparison');response=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({variant,transport:'raw',sdp:pc.localDescription.sdp}),signal:AbortSignal.timeout(25000)});result=await response.json();note('raw_http_response',{status:response.status,...(!response.ok?{error:result.error}:{hasAnswer:!!result.transport?.sdp})});}if(!response.ok)throw new Error('Session creation failed');
+  await pc.setRemoteDescription({type:'answer',sdp:result.transport.sdp});
+  startTimer=setTimeout(()=>rejectStarted(new Error('session.started timeout')),10000);await ready;clearTimeout(startTimer);
+  note('session_ready');source.start();note('test_audio_started',{durationSeconds:buffer.duration});
+  await new Promise(resolve=>setTimeout(resolve,Math.ceil(buffer.duration*1000)+8000));
+  note('audio_observation',{peak,nonSilentAudio:peak>0.008});
+  if(dc.readyState==='open'){dc.send(JSON.stringify({type:'session.close'}));note('close_sent');await Promise.race([closed,new Promise(r=>closeTimer=setTimeout(r,15000))]);}
+ }catch(e){note('failed',{message:e.message});}
+ finally{await cleanup();note('finished',{sessionStarted:started,finalized,nonSilentAudio:peak>0.008});await fetch('/evidence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({variant,events})});for(const b of document.querySelectorAll('button'))b.disabled=false;}
+};
+</script></html>

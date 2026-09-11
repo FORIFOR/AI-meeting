@@ -45,6 +45,28 @@ describe("SentenceChunker", () => {
     expect(out.length).toBeGreaterThanOrEqual(1);
     expect(out[0]!.endsWith("、")).toBe(true);
   });
+  it("releases an English sentence while the model is still producing the reply", () => {
+    const c = new SentenceChunker();
+    expect(c.push("I can help.")).toEqual([]);
+    expect(c.push(" Let's start with")).toEqual(["I can help."]);
+    expect(c.push(" the first step. Then")).toEqual(["Let's start with the first step."]);
+    expect(c.flush()).toBe("Then");
+    expect(endsSentence("I can help.")).toBe(true);
+  });
+  it("keeps decimals, URLs, initials, abbreviations and ellipses intact across deltas", () => {
+    const c = new SentenceChunker();
+    expect(c.push("Dr. A. Smith measured 3.")).toEqual([]);
+    expect(c.push("14 units at example.")).toEqual([]);
+    expect(c.push("com in the U.S. and paused... ")).toEqual([]);
+    expect(c.push("Then finished. Next")).toEqual(["Dr. A. Smith measured 3.14 units at example.com in the U.S. and paused... Then finished."]);
+    expect(c.flush()).toBe("Next");
+  });
+  it("retains English closing quotes and handles mixed Japanese and English in order", () => {
+    const c = new SentenceChunker();
+    expect(c.push('She said “Hello.” 了解です。Next. ')).toEqual(['She said “Hello.”', "了解です。", "Next."]);
+    expect(c.flush()).toBeNull();
+    expect(endsSentence('She said “Hello.”')).toBe(true);
+  });
   it("strips markdown and emoji", () => {
     expect(stripMarkdown("**すごい**！ `code` 😊\n- item")).toBe("すごい！ code\nitem");
   });
