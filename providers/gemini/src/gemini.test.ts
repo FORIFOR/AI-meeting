@@ -230,10 +230,11 @@ describe("GeminiLiveProvider", () => {
 
     // goAway → reconnect with a fresh token / socket
     ws.receive({ goAway: { timeLeft: "10s" } });
-    await ws.flush();
-    await ws.flush();
-    expect(FakeWS.instances.length).toBe(2);
-    expect(events.filter((e) => e.type === "session_ready").length).toBe(2);
+    // Wait for setup completion, whose async depth can differ between Node versions.
+    await vi.waitFor(() => {
+      expect(FakeWS.instances.length).toBe(2);
+      expect(events.filter((e) => e.type === "session_ready").length).toBe(2);
+    });
     await p.disconnect();
   });
 
