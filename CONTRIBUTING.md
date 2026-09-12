@@ -2,8 +2,6 @@
 
 Contributions are welcome in English or Japanese. A clear bug report, a better setup explanation, a translation, or a reproducible browser test can be as useful as a new feature.
 
-**No-code contribution:** follow the [3-minute test guide](TESTING.md) ([日本語](TESTING.ja.md)) and leave one observation in the [beta feedback form](https://github.com/FORIFOR/AI-meeting/issues/new?template=beta-feedback.yml). You can help without installing the project.
-
 ## Start with a working demo
 
 Use Node.js 22 (minimum 20.19.0) and pnpm 10.12.2, pinned in `package.json`:

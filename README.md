@@ -7,14 +7,6 @@ Organize a plan, rehearse an interview, or speak a new language. Talk at your ow
 
 [Try the avatar demo](https://ai-meeting.web.app/vrm-demo) · [Website](https://ai-meeting.forifor.chatgpt.site) · [日本語](README.ja.md)
 
-### Looking for beta testers — try it in 3 minutes
-
-Help us collect the first **10 independent experience reports**. Try the voice, stop/restart playback, and three expressions, then tell us one thing to improve. No coding or API key needed. Safari/iPhone, Android, Firefox, and your own VRM models are especially useful test cases.
-
-**[3-minute test guide](TESTING.md) · [Send quick feedback](https://github.com/FORIFOR/AI-meeting/issues/new?template=beta-feedback.yml)**
-
-The preview is free and needs no registration; posting feedback needs GitHub sign-in. Stars are optional.
-
 The **avatar/audio demo needs no API key**. It plays a test sound or your local audio file through a VRM character in your browser. Actual AI conversation requires a configured local AI runtime or a cloud provider.
 
 [![Watch the 45-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
