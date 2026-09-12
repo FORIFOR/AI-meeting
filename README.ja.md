@@ -7,6 +7,14 @@
 
 [音声とアバターを試す](https://ai-meeting.web.app/vrm-demo) · [紹介サイト](https://ai-meeting.forifor.chatgpt.site) · [English](README.md)
 
+### 3分テスター募集中
+
+まずは**10件の実際の利用レポート**を集めています。声の再生・停止・再開と、3つの表情を試し、一番気になったことを教えてください。開発経験やAPIキーは不要です。Safari・iPhone、Android、Firefox、自分のVRMモデルでの報告も歓迎します。
+
+**[3分で試す手順](TESTING.ja.md) · [感想を送る](https://github.com/FORIFOR/AI-meeting/issues/new?template=beta-feedback.yml)**
+
+プレビューは無料・登録不要です。感想の投稿にはGitHubへのログインが必要です。スターは参加条件ではありません。
+
 **音声・アバターのデモはAPIキー不要です。** テスト音や手元の音声ファイルをブラウザーで再生し、VRMキャラクターの口を動かします。AIとの会話には、ローカルAIの起動またはクラウドサービスの設定が必要です。
 
 [![45秒の実録を見る：VRMアバター、Geminiの実応答、会話から記録したタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)

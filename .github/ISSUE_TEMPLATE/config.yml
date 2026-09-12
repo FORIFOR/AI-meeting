@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "Try it in 3 minutes / 3分で試す"
+    url: https://github.com/FORIFOR/AI-meeting/blob/main/TESTING.ja.md
+    about: "A free browser test without registration, an API key, or microphone access. English guide linked at the top."
+  - name: "Security report / セキュリティの報告"
+    url: https://github.com/FORIFOR/AI-meeting/blob/main/SECURITY.md
+    about: "Use the documented security reporting route for vulnerabilities."
