@@ -60,10 +60,10 @@ For 20 paired audio samples, the p95 of VRM's additional local playback delay re
 
 Application-specific code is licensed under [Apache-2.0](LICENSE), subject to the exceptions in [NOTICE](NOTICE). Third-party code, model weights, artwork, and services retain their own terms. The bundled [VRM sample](characters/vroid-b/LICENSE.md) has separate model permissions. Live2D components and assets are separately licensed; Attendee-derived material remains under Elastic License 2.0. The app license does not grant rights to those components or hosted services.
 
-## Contribute or try it with your team
+## Business inquiries and contributions
 
 Try a scenario, report a reproducible problem, or improve a provider, language, or character integration. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-Have a use case for a classroom, coaching program, or sales team? [Start a public pilot discussion](https://github.com/FORIFOR/AI-meeting/issues/new?template=team-pilot.yml) with non-confidential requirements. This is an early product; hosted support and commercial terms can be discussed for the actual use case.
+For **paid setup, customization, or operational support**, [start a business inquiry](https://github.com/FORIFOR/AI-meeting/issues/new?template=team-pilot.yml). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Keep public inquiries non-confidential.
 
 If the project is useful, a GitHub star helps you find it again and makes it easier for others to discover.

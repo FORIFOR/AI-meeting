@@ -1,18 +1,19 @@
-name: Team pilot / チームでの試用相談
-description: Start a public, non-binding discussion about a classroom, coaching, or team use case.
-title: "[Pilot] "
+name: Business inquiry / 導入・開発の相談
+description: Discuss paid setup, customization, or operational support for a specific use case.
+title: "[Business] "
 body:
   - type: markdown
     attributes:
       value: |
         This issue is public. Describe the use case with non-confidential information only.
         この相談は公開されます。顧客名、個人情報、秘密の台本、認証情報を含めないでください。
-        This is an early product; availability and commercial terms depend on the proposed work.
+        This is a consultation about paid work. Scope, feasibility, delivery timing, and fees are agreed separately before work begins.
+        有料の導入・開発・運用支援に関する相談です。対応可否・作業範囲・納期・費用は着手前に個別に確認します。
   - type: textarea
     id: use_case
     attributes:
       label: Use case / 利用したい場面
-      description: For example, interview practice, a language class, or sales roleplay. What outcome would make a pilot useful?
+      description: For example, interview practice, a language class, or sales roleplay. What outcome would make this useful for your work?
     validations:
       required: true
   - type: input
