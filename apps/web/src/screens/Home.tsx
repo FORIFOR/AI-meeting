@@ -33,6 +33,8 @@ export interface HomeProps {
   contentNote?: string;
   recent: Recent | null;
   onContinue: (mode: ConversationMode) => void;
+  onTasks?: () => void;
+  hostedReady?: boolean;
   onResume?: () => void;
   onTalk?: () => void;
   onCharacter: () => void;
@@ -54,7 +56,7 @@ export function Home(p: HomeProps) {
   const demoOnly = p.broker?.publicAccess?.mode === "demo_only";
   const localReady = p.agent?.ok && decide(p.settings, { openai: false, google: false, local: true }).conversation === "local";
   const character = p.characters.find((c) => c.id === p.settings.characterId) ?? p.characters[0];
-  const blocked = demoOnly && !localReady ? "PUBLIC_DEMO_ONLY" : character ? blockedReason(character, p.broker, strict) : "NO_CHARACTER";
+  const blocked = demoOnly && !localReady && !p.hostedReady ? "PUBLIC_DEMO_ONLY" : character ? blockedReason(character, p.hostedReady && p.broker ? { ...p.broker, providers: { ...p.broker.providers, google: true } } : p.broker, strict) : "NO_CHARACTER";
   const available = new Set(p.personas.map((x) => x.mode));
   const items = PRODUCTS.filter((x) => available.has(x.mode));
   const offline = !p.broker && !p.agent;
@@ -71,10 +73,11 @@ export function Home(p: HomeProps) {
       <div className="workspace-grid">
         <section className="thinking-launch" aria-labelledby="launch-title">
           <span className="workspace-label">A LITTLE SPACE TO THINK</span>
-          <h2 id="launch-title">話すうちに、<br />次の一歩が見えてくる。</h2>
+          <h2 id="launch-title">今日の一歩を決めて、<br />明日も続きから。</h2>
+          {p.onTasks && <><p>やることを整理して、このブラウザーに保存。<br />会話で決めたタスクも、次回へ引き継げます。</p><button className="btn btn--primary btn--lg" onClick={p.onTasks}>タスクを開く <span aria-hidden="true">↗</span></button><p className="thinking-launch__hint">入力によるタスク管理は、登録・APIキー不要です。</p></>}
           <p>{character?.name ?? "AI"}と、アイデアも、迷っていることも。<br />会議URLは必要ありません。</p>
-          {demoOnly && !localReady ? <a className="btn btn--primary btn--lg" href="/vrm-demo.html">音声とアバターのデモを試す <span aria-hidden="true">↗</span></a> : <button className="btn btn--primary btn--lg" disabled={!!blocked || !p.onTalk} onClick={p.onTalk}>{character?.name ?? "AI"}と話す <span aria-hidden="true">↗</span></button>}
-          <p className="thinking-launch__hint">{demoOnly ? "公開デモはAPIキー不要です。AIとの会話には、ご自身の環境で接続先を設定してください。" : "マイクを許可して、そのまま話しかけてください。"}</p>
+          {demoOnly && !localReady && !p.hostedReady ? <a className="btn btn--lg" href="/vrm-demo.html">音声とアバターのデモを試す <span aria-hidden="true">↗</span></a> : <button className="btn btn--lg" disabled={!!blocked || !p.onTalk} onClick={p.onTalk}>{character?.name ?? "AI"}と話す <span aria-hidden="true">↗</span></button>}
+          <p className="thinking-launch__hint">{p.hostedReady ? "ログイン済みです。マイクを許可すると音声体験が始まります。" : p.broker?.hostedAccess?.enabled ? "ログインしてメール確認を完了すると、短時間の音声体験も使えます。" : demoOnly ? "公開デモはAPIキー不要です。AIとの会話には、ご自身の環境で接続先を設定してください。" : "マイクを許可して、そのまま話しかけてください。"}</p>
           {import.meta.env.VITE_RCAI_OSS === "true" && <p className="notice">まずは<a href="/vrm-demo.html">音声と3D表示を試す</a>。APIキーは不要です。AIとの会話にはローカル音声AIの起動が必要です。</p>}
           {memory && <div className="thinking-memory" key={memoryVersion}><p>前回のメモ：{memory.conclusion || memory.nextStep}</p><button className="btn" disabled={!!blocked} onClick={p.onResume}>続きから話す</button><button className="btn btn--ghost" onClick={() => { forgetConversationMemory(memory.characterId); setMemoryVersion(v=>v+1); }}>メモを削除</button></div>}
           <div className="thinking-prompts"><span>「このアイデア、どう思う？」</span><span>「今日やることを整理したい」</span><span>「まだうまく言えないけれど…」</span></div>

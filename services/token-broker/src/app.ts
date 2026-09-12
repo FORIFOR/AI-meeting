@@ -1,5 +1,6 @@
 import { createOpenAILiveSession } from "./routes/openaiLive.js";
 import { publicDemoOnly, startsProviderWork, PUBLIC_DEMO_ONLY_MESSAGE } from "./public-access.js";
+import { HostedAccess, HostedAccessError } from "./hosted-access.js";
 import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
 import { FirestoreZoomStore } from "./zoom/store.js";
 import { registerZoomRoutes, bearer } from "./zoom/routes.js";
@@ -37,6 +38,7 @@ import { calendarBotConfig } from "./recall/calendarBotConfig.js";
 import { calendarEvents, calendarStatus, forwardCalendarCallback, getRule, putRule, setEventOverride } from "./routes/calendar.js";
 
 export interface AppDeps {
+  hosted?: HostedAccess;
   env: BrokerEnv;
   zoom?: ZoomConnections;
   vertex?: VertexLiveRelay;
@@ -67,6 +69,7 @@ export interface AppDeps {
 export function createApp(deps: AppDeps): Hono {
   const env = deps.env;
   const demoOnly = publicDemoOnly(env);
+  const hosted = deps.hosted ?? new HostedAccess(env);
   const vertex = deps.vertex ?? new VertexLiveRelay(env);
   const fetchImpl = deps.fetch ?? fetch;
   const now = deps.now ?? Date.now;
@@ -170,6 +173,7 @@ export function createApp(deps: AppDeps): Hono {
   app.get("/health", (c) =>
     c.json({
       ok: true,
+      hostedAccess: { enabled: hosted.policy.enabled, sessionSeconds: hosted.policy.seconds, dailySessions: hosted.policy.daily },
       publicAccess: demoOnly ? { mode: "demo_only", reason: "PUBLIC_DEMO_ONLY" } : { mode: "full" },
       providers: {
         openai: !demoOnly && Boolean(env.OPENAI_API_KEY),
@@ -200,6 +204,15 @@ export function createApp(deps: AppDeps): Hono {
       return {} as T;
     }
   };
+
+  app.post("/api/hosted/session", async (c) => {
+    c.header("Cache-Control", "no-store");
+    try { return c.json(await hosted.reserve(c.req.header("authorization"))); }
+    catch (error) {
+      if (error instanceof HostedAccessError) return c.json({ error: error.code, message: error.message }, error.status);
+      return c.json({ error: "HOSTED_UNAVAILABLE", message: "音声体験に接続できませんでした。" }, 503);
+    }
+  });
 
   // Fixed public news/weather sources only; no arbitrary URL fetching or credentials.
   app.post("/api/lookup", async (c) => {

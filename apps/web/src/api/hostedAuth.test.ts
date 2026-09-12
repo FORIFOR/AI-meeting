@@ -1,0 +1,24 @@
+import { afterEach, expect, it, vi } from 'vitest';
+const state = vi.hoisted(() => ({ auth: { languageCode: '', authStateReady: async () => {}, currentUser: { emailVerified: true, getIdToken: vi.fn(async () => 'synthetic-id-token') } } }));
+vi.mock('firebase/app', () => ({ getApps: () => [], initializeApp: () => ({}) }));
+vi.mock('firebase/auth', () => ({ getAuth: () => state.auth, setPersistence: async () => {}, browserSessionPersistence: {} }));
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.resetModules(); });
+it('sends identity only to the configured broker session route, with redirects disabled', async () => {
+  vi.stubEnv('VITE_RCAI_BROKER_URL', 'https://broker.example');
+  const request = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ apiKey: 'public-test-key', projectId: 'test', authDomain: 'test.example' })));
+  vi.stubGlobal('fetch', request);
+  const { hostedAuth, hostedTokenFetch } = await import('./hostedAuth.js');
+  await hostedAuth(); request.mockClear();
+  const send = hostedTokenFetch('https://broker.example');
+  await send('https://broker.example/api/token/gemini', { method: 'POST' });
+  expect(request.mock.calls[0]![0]).toBe('https://broker.example/api/hosted/session');
+  const init = request.mock.calls[0]![1] as RequestInit;
+  expect(new Headers(init.headers).get('Authorization')).toBe('Bearer synthetic-id-token');
+  expect(init.redirect).toBe('error');
+  request.mockClear();
+  await hostedTokenFetch('https://untrusted.example')('https://untrusted.example/api/token/gemini', { method: 'POST' });
+  expect(new Headers((request.mock.calls[0]![1] as RequestInit).headers).has('Authorization')).toBe(false);
+  request.mockClear();
+  await send('https://broker.example/api/evaluate', { method: 'POST' });
+  expect(new Headers((request.mock.calls[0]![1] as RequestInit).headers).has('Authorization')).toBe(false);
+});

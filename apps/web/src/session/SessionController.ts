@@ -1,4 +1,5 @@
 import { configureSessionTools, TaskTranscript } from "./sessionTools.js";
+import { PersistentTaskLedger } from "../state/taskWorkspace.js";
 import { TASK_TOOL, USER_CONTEXT_TOOL, TaskLedger, type ConversationTask, type TaskProposal } from "@rcai/conversation-core";
 import { LIVE_LOOKUP_TOOL, currentNewsOnly, parseLookupArguments, renderLookup, type LiveLookupResult } from "@rcai/meeting-core";
 import { MicCapture, SpeakerOutput, dbfs, rms, type LatencyTracker } from "@rcai/audio-core";
@@ -66,7 +67,8 @@ export interface SessionOutcome {
  * { SpeakerOutput, AvatarRuntime, BehaviorEngine, EvaluationSidecar }. The UI only sees events.
  */
 export class SessionController {
-  private tasks = new TaskLedger();
+  private tasks: TaskLedger | PersistentTaskLedger = new TaskLedger();
+  private taskQueue: Promise<void> = Promise.resolve();
   private taskSource = new TaskTranscript();
   private speaker: SpeakerOutput | null = null;
   private avatarSink: SynchronizedAvatarSink | null = null;
@@ -89,6 +91,7 @@ export class SessionController {
   private disposing: Promise<void> | null = null;
 
   constructor(private readonly init: SessionInit) {
+    if (init.persona.mode === "task_planning") this.tasks = new PersistentTaskLedger();
     this.decision = decide(init.settings, init.availability);
     this._providerId = this.decision.conversation;
   }
@@ -144,6 +147,12 @@ export class SessionController {
 
   private async build(): Promise<void> {
     const { settings, persona, character, stage, handlers, params } = this.init;
+
+    // Refuse to start a task conversation if its existing workspace cannot be read.
+    if (this.tasks instanceof PersistentTaskLedger) {
+      handlers.onTasks?.(await this.tasks.read());
+      this.checkpoint();
+    }
 
     // 1. Audio output first: the user gesture that started the session unlocks the AudioContext.
     const speaker = new SpeakerOutput();
@@ -257,11 +266,18 @@ export class SessionController {
       if (e.type === "interrupted" || e.type === "assistant_speech_ended") this.syncLatencyNotes();
       // A provider that says "rotating, reconnecting" is doing its job; only a failure the user can act
       // on becomes a toast. Non-fatal notices stay in the incident record, which is where they belong.
-      if (e.type === "error" && e.fatal !== false) handlers.onError(e.error.message, "PROVIDER");
+      if (e.type === "error" && e.fatal !== false) {
+        handlers.onError(e.error.message, "PROVIDER");
+        // A fatal provider failure must also release capture and playback.
+        void this.dispose();
+      }
       if (e.type === "user_speech_started") this.taskSource.start();
       if (e.type === "user_transcript") this.taskSource.update(e.text, e.final);
       if (persona.mode === "task_planning" && e.type === "tool_call" && e.call.name === TASK_TOOL.name) {
-        void this.recordTaskCall(e.call);
+        this.taskQueue = this.taskQueue.then(() => this.recordTaskCall(e.call)).catch(() => {
+          handlers.onError("タスクを保存できませんでした。タスク画面で保存状態を確認してください。", "TASK_STORAGE");
+          runtime.sendToolResponse([{ id: e.call.id, name: e.call.name, response: { error: "storage_unavailable", instruction: "保存は確認できていません。記録済みと伝えず、タスク画面で内容と保存状態を確認するよう案内してください。" } }]);
+        });
       }
       if ((persona.mode === "career" || persona.mode === "interview") && e.type === "tool_call" && e.call.name === USER_CONTEXT_TOOL.name) {
         const statements = runtime.getRecord().turns.filter(t=>t.role === "user").slice(-20).map(t=>t.text);
@@ -304,16 +320,17 @@ export class SessionController {
   private async recordTaskCall(call: {id?:string;name:string;arguments:Record<string,unknown>}): Promise<void> {
     // Live audio may deliver the tool call before its transcription has caught up.
     // Never relax quote validation; briefly wait for the actual user transcript instead.
-    let result = this.tasks.apply(call.arguments, this.taskSource.text());
+    if (this.disposed) return;
+    let result = await this.tasks.apply(call.arguments, this.taskSource.text());
     const deadline = Date.now() + 1200;
     while (result.error === "quote must occur in the latest user statement" && Date.now() < deadline && !this.disposed) {
       await new Promise(resolve => setTimeout(resolve, 50));
       if (this.disposed) return;
-      result = this.tasks.apply(call.arguments, this.taskSource.text());
+      result = await this.tasks.apply(call.arguments, this.taskSource.text());
     }
     if (this.disposed) return;
     if (result.error === "quote must occur in the latest user statement") {
-      const pending = this.tasks.propose(call.arguments);
+      const pending = await this.tasks.propose(call.arguments);
       if (pending.proposal) {
         this.init.handlers.onTaskProposals?.(this.tasks.pending());
         this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更案を画面に用意しましたが、まだ反映していません。ユーザー発話の引用を照合できなかったため、画面で内容を確認してもらう必要があります。「変更案を用意したよ。内容が合っていたら『この変更を反映』を押してね」のように短く案内してください。確認待ちの状態であり、システムの故障や処理失敗とは説明しないでください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
@@ -325,9 +342,9 @@ export class SessionController {
     this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:result}]);
   }
 
-  resolveTaskProposal(id: string, accept: boolean): void {
+  async resolveTaskProposal(id: string, accept: boolean): Promise<void> {
     if (this.disposed) return;
-    const result=this.tasks.resolve(id,accept);
+    const result=await this.tasks.resolve(id,accept);
     this.init.handlers.onTaskProposals?.(this.tasks.pending());
     this.init.handlers.onTasks?.(result.tasks);
     if(result.error) { this.init.handlers.onError("タスクの状態が変わりました。変更をもう一度伝えてください。", "TASK_RECORD"); return; }

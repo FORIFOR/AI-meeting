@@ -1,10 +1,22 @@
 # Validation and known limits
 
-Release review: **September 12, 2026**. AI-meeting is a beta. The public entry point is an avatar/audio demo; real AI conversation requires a configured provider in a self-hosted installation.
+Release review: **September 13, 2026**. AI-meeting is a beta. The public app now offers browser-local task management and a limited real voice experience after verified sign-in. Longer conversations and meeting integrations require separately configured providers. There is no subscription checkout or automatic cross-device task sync.
+
+## Persistent tasks and hosted voice
+
+The September 13 changes passed **1,051 tests across 117 test files**, all workspace type checks, and the OSS distribution audit. A headless Chrome check exercised task-link navigation, adding, completing, deferring, reload/restore, desktop and 390-pixel layouts, backup download, confirmed deletion, backup import, and a second tab reading the saved tasks. No page errors or horizontal overflow were observed.
+
+A real Vertex relay check used synthetic PCM input and a disposable email-verified Firebase Auth account. It received 155,114 bytes of assistant audio and closed with `HOSTED_SESSION_LIMIT` after 180,195 ms. Unauthenticated access returned 401, an unverified account returned 403, a second same-day reservation returned 429, and replay of a consumed ticket returned 401. The disposable account was deleted. This checks one live run, not provider-wide reliability.
+
+The browser microphone graph was separately exercised with a synthetic WebAudio stream: 63 PCM frames were captured, the stream tracks ended on stop, and the owned AudioContext closed. Chrome's fake audio-file input was silent in earlier attempts; those attempts do not establish a physical microphone fault. Physical microphones and human conversational naturalness still need their own validation.
+
+The normal application screen also passed verified login, synthetic Japanese speech through the real MicCapture graph, Gemini task creation, return to the task list, and persistence after a full reload. The authored task `資料確認`, due `9月15日`, was restored. This run needed no pending-proposal confirmation; separate unit tests cover that path. See [browser evidence](validation-assets/hosted-browser.json).
+
+See [hosted access and reproduction](hosted-access.md), [task checks](validation-assets/task-workspace.json), and [real relay evidence](validation-assets/hosted-access.json).
 
 ## Source checks
 
-The avatar refinement verification passed **1,028 tests across 114 test files** and all workspace type checks. A later confirmation-prompt wording adjustment passed 34 focused tests and a production build. The complete suite was run before that wording adjustment.
+The earlier September 12 avatar refinement verification passed **1,028 tests across 114 test files** and all workspace type checks. A later confirmation-prompt wording adjustment passed 34 focused tests and a production build. The September 13 suite above supersedes that source-check count; the historical avatar measurements below retain their original scope.
 
 ```sh
 pnpm install --frozen-lockfile

@@ -2,6 +2,7 @@ import type { Availability, Settings } from "../state/settings.js";
 
 export interface BrokerHealth {
   ok: boolean;
+  hostedAccess?: { enabled: boolean; sessionSeconds: number; dailySessions: number };
   publicAccess?: { mode: "full" | "demo_only"; reason?: string };
   providers: { openai: boolean; google: boolean; livekit: boolean; heygen: boolean; tavus: boolean };
   /** Character-specific natural display availability; it does not affect AI or voice routing. */

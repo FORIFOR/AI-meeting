@@ -1,0 +1,73 @@
+{
+  "input": "Synthetic Kyoko voice through a WebAudio microphone MediaStream; no physical microphone",
+  "errors": [],
+  "transcripts": [
+    {
+      "kind": "outputTranscription",
+      "text": "おつかれ！やること、"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "まず、"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "頭"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "にある"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "やつ"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "を思い"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "つく"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "順に"
+    },
+    {
+      "kind": "outputTranscription",
+      "text": "言ってみて。"
+    },
+    {
+      "kind": "inputTranscription",
+      "text": "新しい タスク 名 は 資料 確認 です 。 期限 は 9 月 15 日 です 。 1 点 追加 し て ください 。"
+    }
+  ],
+  "toolCalls": [
+    {
+      "functionCalls": [
+        {
+          "name": "session_tasks",
+          "args": {
+            "operations": [
+              {
+                "action": "add",
+                "quote": "資料確認です。期限は9月15日です。",
+                "due": "9月15日",
+                "title": "資料確認"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "signedIn": true,
+  "sessionStarted": true,
+  "notesOpened": false,
+  "restoredTasks": [
+    "資料確認"
+  ],
+  "passed": true,
+  "syntheticAccountDeleted": true
+}

@@ -1,5 +1,21 @@
-/** Session-local task state. Only explicitly quoted user statements may change it. */
-export interface ConversationTask { id: string; title: string; due?: string; status: 'pending' | 'done' | 'deferred'; }
+/** Only explicitly quoted user statements or reviewed UI actions may change task state. */
+export interface ConversationTask { id: string; title: string; due?: string; dueRecordedAt?: string; status: 'pending' | 'done' | 'deferred'; }
+/** Validate durable/imported data before it can become model context or replace a ledger. */
+export function validateTasks(value: unknown): ConversationTask[] {
+  if (!Array.isArray(value) || value.length > 100) throw new Error('タスクは100件まで保存できます。');
+  const ids = new Set<string>();
+  return value.map(item => {
+    if (!item || typeof item !== 'object' || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(item.id)
+      || ids.has(item.id) || typeof item.title !== 'string' || !item.title.trim() || item.title.length > 160
+      || !['pending','done','deferred'].includes(item.status)
+      || (item.due !== undefined && (typeof item.due !== 'string' || !item.due.trim() || item.due.length > 80))
+      || (item.dueRecordedAt !== undefined && (typeof item.dueRecordedAt !== 'string' || !Number.isFinite(Date.parse(item.dueRecordedAt))))) {
+      throw new Error('タスクの保存形式が正しくありません。元のデータは変更していません。');
+    }
+    ids.add(item.id);
+    return { id: item.id, title: item.title, status: item.status, ...(item.due ? { due: item.due } : {}), ...(item.dueRecordedAt ? { dueRecordedAt: item.dueRecordedAt } : {}) };
+  });
+}
 export interface TaskProposal { id: string; changes: ConversationTask[]; }
 export const TASK_TOOL = {
   name: 'session_tasks',
@@ -18,6 +34,9 @@ export class TaskLedger {
   private tasks: ConversationTask[] = [];
   private proposals = new Map<string, { args: Record<string,unknown>; source: string; before: ConversationTask[]; changes: ConversationTask[] }>();
   private proposalSeq = 0;
+  constructor(initial: ConversationTask[] = []) { this.rebase(initial); }
+  /** Refresh persisted tasks without approving or discarding pending proposals. */
+  rebase(current: ConversationTask[]): void { this.tasks = validateTasks(current); }
   pending(): TaskProposal[] { return [...this.proposals].map(([id,p])=>({id,changes:p.changes.map(t=>({...t}))})); }
   propose(args: Record<string,unknown>): { proposal?: TaskProposal; error?: string } {
     if (!Array.isArray(args.operations)) return {error:'invalid operations'};
@@ -65,7 +84,9 @@ export class TaskLedger {
         const prefix=normalized(quote).split(normalized(op.title))[0] ?? "";
         const spokenDue=prefix.match(/([0-9]{1,2}時(?:[0-9]{1,2}分)?まで(?:に)?)[^、。,.]{0,12}$/)?.[1];
         const due=op.due ? String(op.due) : spokenDue;
-        next.push({id:`task-${next.length+1}`,title:op.title,status:status as ConversationTask['status'],...(due?{due}:{})});
+        let sequence = next.length + 1;
+        while (next.some(t => t.id === `task-${sequence}`)) sequence++;
+        next.push({id:`task-${sequence}`,title:op.title,status:status as ConversationTask['status'],...(due?{due}:{})});
       } else if(op.action==='update') {
         const task=next.find(t=>t.id===op.id);
         if(!task)return fail('unknown task id');

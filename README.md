@@ -5,9 +5,11 @@
 
 Organize a plan, rehearse an interview, or speak a new language. Talk at your own pace, interrupt to change direction, and choose the character and AI connection that fit your setup.
 
-[Try the avatar demo](https://ai-meeting.web.app/vrm-demo) · [Website](https://ai-meeting.forifor.chatgpt.site) · [日本語](README.ja.md)
+[Open your tasks](https://ai-meeting.web.app/#tasks) · [Try the avatar demo](https://ai-meeting.web.app/vrm-demo) · [Website](https://ai-meeting.forifor.chatgpt.site) · [日本語](README.ja.md)
 
-The **avatar/audio demo needs no API key**. It plays a test sound or your local audio file through a VRM character in your browser. Actual AI conversation requires a configured local AI runtime or a cloud provider.
+**Task management is free and needs no registration.** Add, edit, complete, or defer tasks; they are saved in this browser and restored in the next conversation. Export and restore a JSON backup. There is no automatic sync between devices.
+
+The hosted voice experience requires a verified email account: up to 3 minutes per session, once per UTC day, subject to a shared capacity limit. There is no automatic billing. Longer conversations and meeting integrations require your own configured installation.
 
 [![Watch the 45-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
@@ -16,12 +18,12 @@ The **avatar/audio demo needs no API key**. It plays a test sound or your local 
 ## What you can do
 
 - **Practice out loud.** Start from interview, English conversation, sales, tutoring, or free-talk scenarios.
-- **Organize tasks by voice.** Add tasks, keep their deadlines in view, and confirm proposed changes when speech recognition needs a check.
+- **Organize tasks by voice.** Add tasks, keep their deadlines in view, and continue from the saved ledger next time. Confirm proposed changes when speech recognition needs a check; unconfirmed proposals are not persisted.
 - **Keep control of the conversation.** Stop playback and interrupt without bringing back the previous reply's captions or gestures.
 - **Bring your character.** Open your own permitted VRM 0.0/1.0 model and audio locally. The demo does not upload those files.
 - **Choose your AI.** The app has OpenAI Realtime, Gemini Live, and local provider adapters. The OSS build starts with local settings and blocks cloud connections in `strict_local` mode.
 
-The public demo uses a separately licensed official pixiv VRM sample. The existing Live2D adapter and Yui configuration are retained as optional integrations. The hosted launch is an avatar/audio demo; connect your own AI provider in a self-hosted installation.
+The public demo uses a separately licensed official pixiv VRM sample. The existing Live2D adapter and Yui configuration are retained as optional integrations. The hosted app offers browser-local tasks, an avatar/audio preview, and a limited voice experience after verified sign-in.
 
 ## Run the demo
 
@@ -52,7 +54,7 @@ Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentia
 
 ## Status and validation
 
-**Beta.** On September 12, 2026, 1,028 automated tests across 114 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
+**Beta.** On September 13, 2026, 1,051 automated tests across 117 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
 
 For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
 

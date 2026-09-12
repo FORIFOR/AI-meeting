@@ -25,8 +25,9 @@ describe("OSS profile", () => {
     }
   });
 
-  it("preserves the ordinary app's defaults and settings namespace", () => {
-    expect(DEFAULT_SETTINGS).toMatchObject({ privacyMode: "default", autoPolicy: "quality_first", characterId: "" });
+  it("starts new users with VRM and preserves the ordinary settings namespace and saved character", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ privacyMode: "default", autoPolicy: "quality_first", characterId: "vroid-b" });
+    expect(loadSettings({ getItem: () => JSON.stringify({ ...DEFAULT_SETTINGS, characterId: "yui" }) }).characterId).toBe("yui");
     const storage = { setItem: vi.fn() };
     saveSettings(DEFAULT_SETTINGS, storage);
     expect(storage.setItem).toHaveBeenCalledWith("rcai.settings.v1", expect.any(String));

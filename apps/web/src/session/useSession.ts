@@ -57,6 +57,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   }, []);
 
   const onEvent = useCallback((e: ConversationEvent) => {
+    if (e.type === "error" && e.fatal !== false) setStatus("error");
     const g = genRef.current;
     const eventGen = "gen" in e && e.gen ? e.gen.generationId : undefined;
     if (e.type === "interrupted") {
@@ -201,7 +202,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   );
 
   const resolveTaskProposal = useCallback((id:string,accept:boolean)=>{
-    controller.current?.resolveTaskProposal(id,accept);
-  },[]);
+    void controller.current?.resolveTaskProposal(id,accept).catch(() => toast("タスクを保存できませんでした。タスク画面で保存状態を確認してください。", "TASK_STORAGE"));
+  },[toast]);
   return { tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
 }

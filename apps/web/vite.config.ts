@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
       }
       notices.push(`wLipSync profile\n\n${await readFile(path.join(repoRoot, "avatar-providers/vrm/src/wlipsync-profile.LICENSE"), "utf8")}`);
       this.emitFile({ type: "asset", fileName: "VRM-THIRD-PARTY-NOTICES.txt", source: notices.join("\n\n---\n\n") });
+      if (!oss) this.emitFile({ type: "asset", fileName: "FIREBASE-THIRD-PARTY-NOTICES.txt", source: `Firebase JavaScript SDK (firebase, @firebase/app, @firebase/auth, @firebase/component, @firebase/logger, @firebase/util).\nCopyright Google LLC. Licensed under Apache-2.0.\n\n${await readFile(path.join(repoRoot, 'vendor/licenses/firebase-js-sdk-LICENSE.txt'), 'utf8')}` });
     },
   }, ...(oss ? [{ name: "oss-local-document", transformIndexHtml(html: string) {
     return html.replace(/<link\b[^>]*href="https:\/\/fonts\.[\s\S]*?>/g, "");

@@ -55,7 +55,7 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
       ) : (
         <p className="err" style={{ marginTop: 16 }}>評価を取得できませんでした: {outcome.evaluationError ?? "unknown"}</p>
       )}
-      {record.mode === "task_planning" && <TaskList tasks={outcome.tasks ?? []} />}
+      {record.mode === "task_planning" && <><TaskList tasks={outcome.tasks ?? []} /><p>反映したタスクは、このブラウザーに保存されています。</p><a className="btn btn--primary" href="#tasks">保存したタスクを開く</a></>}
       {evaluation && (outcome.fallbackUsed || outcome.evaluationError) && (
         <p className="empty" >評価モデルに接続できなかったため、手元のヒューリスティック評価です。</p>
       )}

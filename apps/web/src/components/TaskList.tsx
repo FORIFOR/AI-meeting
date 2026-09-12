@@ -4,7 +4,7 @@ export function TaskList({tasks,proposals=[],onResolve}:{tasks:ConversationTask[
     <h2>記録したタスク</h2>
     {tasks.length ? <ul>{tasks.map(t=><li key={t.id}>
       <span>{t.status==='done'?'完了':t.status==='deferred'?'延期':'未完了'} · {t.title}</span>
-      {t.due&&<small>期限: {t.due}</small>}
+      {t.due&&<small>期限: {t.due}{t.dueRecordedAt && `（${new Date(t.dueRecordedAt).toLocaleDateString('ja-JP')}に記録）`}</small>}
     </li>)}</ul> : <p>記録されたタスクはありません。会話の記録も確認してください。</p>}
     {proposals.map(p=><div className="task-review" key={p.id}>
       <h3>聞き取りの確認</h3><p>まだ反映していません。この内容でよいですか？</p>

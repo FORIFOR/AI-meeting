@@ -9,6 +9,7 @@ const micSetup = vi.fn(async () => { await new Promise((r) => setTimeout(r, 5));
 const avatarFactory = vi.fn(async () => {});
 const avatarPrepare = vi.fn(async () => {});
 const providerConnect = vi.fn(async () => { await new Promise((r) => setTimeout(r, 5)); });
+const providerListeners = new Set<(event: any) => void>();
 const evaluate = vi.fn(async () => ({ overall: 0, clarity: 0, specificity: 0, structure: 0, relevance: 0, fluency: 0, feedback: [], improvedAnswer: "" }));
 
 vi.mock("@rcai/audio-core", async (importOriginal) => {
@@ -70,7 +71,7 @@ vi.mock("../integrations/registry.js", () => ({
     async interrupt() {},
     async updateContext() {},
     disconnect: providerDisconnect,
-    onEvent() {},
+    onEvent(listener: (event: any) => void) { providerListeners.add(listener); return () => providerListeners.delete(listener); },
   }),
 }));
 
@@ -98,6 +99,7 @@ describe("SessionController lifecycle", () => {
   afterEach(() => { vi.unstubAllGlobals(); });
   beforeEach(() => {
     vi.clearAllMocks();
+    providerListeners.clear();
     micSetup.mockImplementation(async () => { await new Promise((r) => setTimeout(r, 5)); });
     avatarFactory.mockImplementation(async () => {});
     avatarPrepare.mockImplementation(async () => {});
@@ -134,6 +136,15 @@ describe("SessionController lifecycle", () => {
     expect(getActiveSession()).toBeNull();
     await c.dispose();
     expect(closeCtx).toHaveBeenCalledTimes(1);
+  });
+
+  it("retains capture during recovery notices but stops it on a fatal provider failure", async () => {
+    const c = makeController(); await c.start();
+    for (const notify of providerListeners) notify({ type: "error", error: new Error("reconnecting"), fatal: false });
+    expect(c.isDisposed).toBe(false); expect(stopTrack).not.toHaveBeenCalled();
+    for (const notify of [...providerListeners]) notify({ type: "error", error: new Error("connection exhausted"), fatal: true });
+    await vi.waitFor(() => expect(closeCtx).toHaveBeenCalledOnce());
+    expect(stopTrack).toHaveBeenCalledOnce(); expect(c.isDisposed).toBe(true);
   });
 
   it("loads the avatar while microphone permission is pending and waits for both before connecting", async () => {

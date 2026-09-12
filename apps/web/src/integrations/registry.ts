@@ -1,4 +1,5 @@
 import { zoomToken } from "../api/zoom.js";
+import { hostedTokenFetch } from "../api/hostedAuth.js";
 import { LocalAvatarFallback } from "./localAvatarFallback.js";
 /**
  * The ONLY file that touches sibling integration packages. Everything is loaded lazily and
@@ -60,7 +61,7 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
     }
     case "google": {
       const mod = await import("@rcai/provider-gemini");
-      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; proactiveAudio?: boolean; enableAffectiveDialog?: boolean }>>(mod, "GeminiLiveProvider", "BLOCKED_BY_PROVIDER_GEMINI");
+      const C = pick<Ctor<RealtimeAIProvider, { brokerUrl: string; model?: string; proactiveAudio?: boolean; enableAffectiveDialog?: boolean; fetchImpl?: typeof fetch }>>(mod, "GeminiLiveProvider", "BLOCKED_BY_PROVIDER_GEMINI");
       /**
        * Two live families, one real trade-off. The flash-live models answer faster; only the
        * native-audio ones take affective dialog (responding to *how* something was said) and proactive
@@ -77,7 +78,7 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
        * Proactive audio stays opt-in: a model deciding not to answer is a behaviour change, not a
        * quality setting.
        */
-      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective ? true : undefined });
+      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective ? true : undefined, fetchImpl: import.meta.env.VITE_RCAI_OSS === "true" ? undefined : hostedTokenFetch(o.brokerUrl) });
     }
     case "local": {
       const mod = await import("@rcai/provider-local");

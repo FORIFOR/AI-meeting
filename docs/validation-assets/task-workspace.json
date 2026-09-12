@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "steps": [
+    "navigate to tasks by hash",
+    "add three tasks",
+    "complete",
+    "defer",
+    "reload and restore",
+    "desktop/mobile layout",
+    "download backup",
+    "delete with confirmation",
+    "restore backup",
+    "second tab reads current tasks"
+  ],
+  "pageErrors": [],
+  "horizontalOverflow": false
+}

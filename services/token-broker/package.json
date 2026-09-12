@@ -23,6 +23,7 @@
     "@rcai/meeting-core": "workspace:*",
     "@rcai/observability": "workspace:*",
     "@rcai/provider-core": "workspace:*",
+    "firebase-admin": "^14.4.0",
     "google-auth-library": "^11.0.2",
     "hono": "4.13.5",
     "livekit-server-sdk": "latest",

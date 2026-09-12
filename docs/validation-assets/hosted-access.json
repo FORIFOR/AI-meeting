@@ -1,0 +1,18 @@
+{
+  "input": "synthetic PCM16k",
+  "unauthenticatedStatus": 401,
+  "unverifiedStatus": 403,
+  "verifiedStatus": 200,
+  "dailyLimitStatus": 429,
+  "live": {
+    "ready": true,
+    "audioBytes": 155114,
+    "transcriptCharacters": 24,
+    "closeCode": 1008,
+    "closeReason": "HOSTED_SESSION_LIMIT",
+    "elapsedMs": 180195
+  },
+  "replayStatus": 401,
+  "passed": true,
+  "syntheticAccountDeleted": true
+}

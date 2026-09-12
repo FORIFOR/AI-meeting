@@ -27,6 +27,7 @@ export class MicCapture {
   private stream: MediaStream | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private tap: PcmTapNode | null = null;
+  private captureSink: GainNode | null = null;
   private muted = false;
   private stopped = false;
   private starting: Promise<MediaStream> | null = null;
@@ -93,7 +94,13 @@ export class MicCapture {
     }
     this.tap = tap;
     this.source.connect(tap.node);
-    // Do not connect to destination (would echo the mic).
+    // Browsers may stop pulling an unconnected worklet graph. Keep capture connected
+    // to an output through a zero-gain sink, so PCM is processed without audible echo.
+    const sink = this.context.createGain();
+    sink.gain.value = 0;
+    this.captureSink = sink;
+    tap.node.connect(sink);
+    sink.connect(this.context.destination);
     tap.onChunk((chunk) => {
       if (this.muted || this.stopped) return;
       this.normalizer.push({ data: chunk, sampleRate: this.context.sampleRate, channels: 1 });
@@ -109,6 +116,8 @@ export class MicCapture {
     this.stream = null;
     this.tap?.dispose();
     this.tap = null;
+    this.captureSink?.disconnect();
+    this.captureSink = null;
     try {
       this.source?.disconnect();
     } catch {

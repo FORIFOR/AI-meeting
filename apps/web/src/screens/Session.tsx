@@ -70,7 +70,7 @@ export function Session(p: SessionProps) {
         {s.status === "error" && (
           <div className="stage__loading">
             <div style={{ textAlign: "center" }}>
-              <p className="err" style={{ marginBottom: 18 }}>セッションを開始できませんでした。</p>
+              <p className="err" style={{ marginBottom: 18 }}>会話は停止しています。保存済みのタスクは、タスク画面で確認できます。</p>
               <button type="button" className="btn" onClick={(e) => { e.stopPropagation(); p.onAbort(); }}>戻る</button>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function Session(p: SessionProps) {
         <Subtitle items={s.captions} on={p.settings.captionsOn} />
         {notes && <TranscriptLog items={s.captions} />}
         {notes && s.lookup && <LookupSources result={s.lookup} />}
-        {notes && (s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
+        {(notes || s.taskProposals.length > 0) && (s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
         <SelfCamera enabled={p.settings.cameraOn} />
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
 

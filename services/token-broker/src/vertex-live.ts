@@ -4,6 +4,7 @@ import { GoogleAuth } from "google-auth-library";
 import { WebSocket } from "ws";
 import type { BrokerEnv } from "./env.js";
 import { publicDemoOnly } from "./public-access.js";
+import { HostedLiveLimits } from "./hosted-live-limits.js";
 
 /** OAuth credentials stay on the broker. Clients receive a two-minute, model-bound relay ticket. */
 export class VertexLiveRelay {
@@ -41,7 +42,8 @@ export class VertexLiveRelay {
       return data.model;
     } catch { return null; }
   }
-  async connect(client: WebSocket, model: string) {
+  async connect(client: WebSocket, model: string, hostedSeconds?: number) {
+    const limits = hostedSeconds ? new HostedLiveLimits(hostedSeconds) : undefined;
     const usage = new VertexUsage(model);
     const observationId = randomBytes(12).toString("hex");
     const startedAt = Date.now();
@@ -59,12 +61,16 @@ export class VertexLiveRelay {
     let bytes = 0;
     let setup = false;
     const finish = () => { if (upstream?.readyState === WebSocket.CONNECTING) upstream.terminate(); else upstream?.close(); };
+    const limitTimer = hostedSeconds ? setTimeout(() => { client.close(1008, "HOSTED_SESSION_LIMIT"); finish(); }, hostedSeconds * 1000) : undefined;
+    limitTimer?.unref();
+    client.once("close", () => clearTimeout(limitTimer));
     client.on("error", finish);
     client.on("close", finish);
     client.on("message", (raw) => {
       try {
         const text = raw.toString();
         const msg = JSON.parse(text);
+        limits?.check(msg);
         if (!setup) {
           if (!msg.setup) throw new Error("setup required");
           msg.setup.model = `projects/${this.env.GOOGLE_CLOUD_PROJECT}/locations/${this.env.GOOGLE_CLOUD_LOCATION ?? "us-central1"}/publishers/google/models/${model}`;
@@ -79,7 +85,7 @@ export class VertexLiveRelay {
           if (bytes > 1_000_000) throw new Error("buffer limit");
           pending.push(data);
         }
-      } catch { client.close(1008, "Invalid Vertex Live message"); }
+      } catch { client.close(1008, limits ? "HOSTED_INPUT_LIMIT" : "Invalid Vertex Live message"); finish(); }
     });
     const timer = setTimeout(() => { client.close(1011, "Vertex Live setup timed out"); finish(); }, 20_000);
     client.once("close", () => clearTimeout(timer));
@@ -93,7 +99,11 @@ export class VertexLiveRelay {
       upstream.on("message", (data) => {
         if (client.readyState !== WebSocket.OPEN) return;
         if (client.bufferedAmount > 4_000_000) { client.close(1008, "Slow client"); return; }
-        try { const message = JSON.parse(data.toString()); usage.inbound(message); if (message.setupComplete) clearTimeout(timer); } catch { /* provider handles decoding */ }
+        try {
+          const message = JSON.parse(data.toString()); usage.inbound(message); if (message.setupComplete) clearTimeout(timer);
+          const used = usage.snapshot();
+          if (limits && (used.completedTurns >= 30 || used.receivedAudioSeconds > hostedSeconds! || (used.latestProviderUsage.totalTokenCount ?? 0) > 16_000)) { client.close(1008, "HOSTED_SESSION_LIMIT"); finish(); return; }
+        } catch { /* provider handles decoding */ }
         client.send(data.toString());
       });
       upstream.on("close", (code, reason) => { clearTimeout(timer); client.close(code === 1006 || code === 1005 ? 1011 : code, reason.toString().slice(0, 100)); });

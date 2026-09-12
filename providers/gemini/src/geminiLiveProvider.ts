@@ -46,6 +46,7 @@ export interface WebSocketLike {
 }
 
 export interface GeminiTokenResponse {
+  sessionSeconds?: number;
   backend?: "developer" | "vertex";
   websocketPath?: string;
   token: string;
@@ -348,8 +349,8 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     if (!res.ok) {
       let detail = "";
       try {
-        const j = (await res.json()) as { error?: string };
-        detail = j.error ?? "";
+        const j = (await res.json()) as { error?: string; message?: string };
+        detail = j.message ?? j.error ?? "";
       } catch {
         /* ignore */
       }
@@ -357,6 +358,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
     }
     const json = (await res.json()) as GeminiTokenResponse;
     if (!json.token) throw new Error("token broker returned no token");
+    if (json.sessionSeconds) this.searchWanted = false;
     return json;
   }
 
@@ -412,7 +414,7 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       ws.onerror = () => {
         if (!ownsSocket()) return;
         done(new Error("Gemini Live websocket error"));
-        if (this.setupDone) this.emit({ type: "error", error: new Error("Gemini Live websocket error") });
+        if (this.setupDone) this.emit({ type: "error", error: new Error("Gemini Live websocket error"), fatal: false });
       };
       ws.onclose = (ev) => {
         const from = this.connectionStarts.get(ws);
@@ -421,6 +423,11 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
         if (!ownsSocket()) return;
         this.ws = null;
         if (this.closing || !this.setupDone || this.reconnecting) return;
+        if (ev?.code === 1008 && ev.reason?.startsWith("HOSTED_")) {
+          this.emit({ type: "error", error: new Error("音声体験の利用上限に達しました。タスクは保存されています。入力で整理を続けられます。"), fatal: true });
+          this.emit({ type: "session_closed", reason: ev.reason });
+          return;
+        }
         if (ev?.code === 1000) {
           this.emit({ type: "session_closed", reason: ev?.reason || "closed" });
           return;

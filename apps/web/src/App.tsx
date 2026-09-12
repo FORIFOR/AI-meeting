@@ -1,6 +1,7 @@
 import { memoryContext, readConversationMemory } from "./state/conversationMemory.js";
 import { ZoomReturn } from "./components/ZoomConnection.js";
-import { lazy, useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { hostedBrokerAllowed } from "./api/hostedAuth.js";
 import { ScreenBoundary } from "./components/ScreenBoundary.js";
 import type { ConversationMode } from "@rcai/conversation-core";
 import type { Persona } from "@rcai/persona-core";
@@ -30,6 +31,8 @@ const MeetingDetail = lazy(() => import("./screens/MeetingDetail.js").then((m) =
 const Setup = lazy(() => import("./screens/Setup.js").then((m) => ({ default: m.Setup })));
 const Result = lazy(() => import("./screens/Result.js").then((m) => ({ default: m.Result })));
 const ThinkingResult = lazy(() => import("./screens/ThinkingResult.js").then((m) => ({ default: m.ThinkingResult })));
+const Tasks = lazy(() => import("./screens/Tasks.js").then((m) => ({ default: m.Tasks })));
+const HostedAccount = import.meta.env.VITE_RCAI_OSS === "true" ? () => null : lazy(() => import("./components/HostedAccount.js").then(m => ({ default: m.HostedAccount })));
 
 function preload(load: () => Promise<unknown>) {
   // A failed speculative request must not produce an unhandled rejection. The actual
@@ -39,6 +42,7 @@ function preload(load: () => Promise<unknown>) {
 
 type Screen =
   | { name: "home" }
+  | { name: "tasks" }
   | { name: "settings" }
   | { name: "character"; back: "home" | "settings" | "setup"; mode?: ConversationMode }
   | { name: "meeting" }
@@ -77,16 +81,30 @@ function readBotParams(): { token: string; brokerUrl?: string; botId?: string; c
 export function App() {
   const [settings, dispatch] = useReducer(settingsReducer, undefined, () => loadSettings());
   const botParams = useMemo(() => readBotParams(), []);
-  const [screen, setScreen] = useState<Screen>(botParams ? { name: "meeting" } : { name: "home" });
+  const [screen, setScreen] = useState<Screen>(() => botParams ? { name: "meeting" } : typeof location !== "undefined" && location.hash === "#tasks" ? { name: "tasks" } : { name: "home" });
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [characters, setCharacters] = useState<CharacterEntry[]>([]);
   const [contentNote, setContentNote] = useState<string | undefined>();
   const [broker, setBroker] = useState<BrokerHealth | null>(null);
   const [agent, setAgent] = useState<AgentHealth | null>(null);
-  const [availability, setAvailability] = useState<Availability | null>(null);
+  const [baseAvailability, setAvailability] = useState<Availability | null>(null);
+  const [hostedVerified, setHostedVerified] = useState(false);
+  const hostedEnabled = import.meta.env.VITE_RCAI_OSS !== "true" && !!broker?.hostedAccess?.enabled && hostedBrokerAllowed(settings.brokerUrl) && settings.privacyMode !== "strict_local";
+  const hostedReady = hostedEnabled && hostedVerified;
+  const availability = useMemo(() => hostedReady ? { openai: false, google: true, local: false } : baseAvailability, [hostedReady, baseAvailability]);
   const [recent, setRecent] = useState<Recent | null>(() => loadRecent());
 
   useEffect(() => saveSettings(settings), [settings]);
+  useEffect(() => {
+    if (screen.name === "tasks") history.replaceState(null, "", `${location.pathname}${location.search}#tasks`);
+    else if (location.hash === "#tasks") history.replaceState(null, "", `${location.pathname}${location.search}`);
+  }, [screen.name]);
+  useEffect(() => {
+    if (botParams) return;
+    const navigate = () => { if (location.hash === "#tasks") setScreen({ name: "tasks" }); };
+    window.addEventListener("hashchange", navigate);
+    return () => window.removeEventListener("hashchange", navigate);
+  }, [botParams]);
 
   // Any route change away from a live screen (and App unmount) releases the session's audio
   // resources even if the screen's own cleanup did not run (docs/audio-lifecycle.md).
@@ -181,12 +199,14 @@ export function App() {
           </a>
           <nav className="workspace-nav" aria-label="メインメニュー">
             <button aria-current={screen.name === "home" ? "page" : undefined} onClick={() => setScreen({ name: "home" })}>ホーム</button>
+            <button aria-current={screen.name === "tasks" ? "page" : undefined} onClick={() => setScreen({ name: "tasks" })}>タスク</button>
             <button aria-current={screen.name === "meeting" ? "page" : undefined} onPointerEnter={() => preload(loadMeeting)} onFocus={() => preload(loadMeeting)} onClick={() => setScreen({ name: "meeting" })}>会議</button>
             <button aria-current={screen.name === "meetings" ? "page" : undefined} onPointerEnter={() => preload(loadMeetings)} onFocus={() => preload(loadMeetings)} onClick={() => setScreen({ name: "meetings" })}>会議の履歴</button>
             <button aria-current={screen.name === "settings" ? "page" : undefined} onPointerEnter={() => preload(loadSettingsScreen)} onFocus={() => preload(loadSettingsScreen)} onClick={() => setScreen({ name: "settings" })}>設定</button>
           </nav>
         </header>
       )}
+      {hostedEnabled && <div hidden={inSession}><Suspense fallback={null}><HostedAccount seconds={broker!.hostedAccess!.sessionSeconds} daily={broker!.hostedAccess!.dailySessions} onChange={setHostedVerified} /></Suspense></div>}
       <ScreenBoundary key={screen.name} onHome={() => setScreen({ name: "home" })}>
       {screen.name === "home" && (
         <Home
@@ -199,6 +219,8 @@ export function App() {
           contentNote={contentNote}
           recent={recent}
           onContinue={onContinue}
+          onTasks={() => setScreen({ name: "tasks" })}
+          hostedReady={hostedReady}
           onResume={() => { const memory = readConversationMemory(selectedCharacter?.id ?? "yui"); const persona = personas.find(p => p.id === "thinking_ja"); if (memory && persona) startSession(persona, { previousMemory: memoryContext(memory) }); }}
           onTalk={personas.some(p => p.id === "thinking_ja") ? () => startSession(personas.find(p => p.id === "thinking_ja")!, {}) : undefined}
           onCharacter={() => setScreen({ name: "character", back: "home" })}
@@ -206,6 +228,11 @@ export function App() {
           onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
         />
       )}
+      {screen.name === "tasks" && <Tasks
+        onBack={() => setScreen({ name: "home" })}
+        onTalk={personas.some(p => p.mode === "task_planning") && availability && (availability.openai || availability.google || availability.local) ? () => onContinue("task_planning") : undefined}
+        voiceHint={hostedReady ? `保存したタスクを引き継ぎ、${Math.floor(broker!.hostedAccess!.sessionSeconds / 60)}分間、声で整理できます。` : hostedEnabled ? "上のログイン・登録からメール確認を完了すると、音声体験を始められます。" : broker?.publicAccess?.mode === "demo_only" ? "現在の公開版では、入力によるタスク管理が使えます。音声AIは接続設定後に利用できます。" : !availability || !(availability.openai || availability.google || availability.local) ? "音声AIへの接続を確認してください。入力によるタスク管理はこのまま使えます。" : undefined}
+      />}
       {screen.name === "settings" && (
         <SettingsScreen
           settings={settings}
@@ -248,7 +275,7 @@ export function App() {
           mode={screen.mode}
           personas={personasByMode.get(screen.mode) ?? []}
           characters={characters}
-          settings={settings}
+          settings={hostedReady ? { ...settings, engine: "google", advanced: {} } : settings}
           dispatch={dispatch}
           onBack={() => setScreen({ name: "home" })}
           onCharacter={() => setScreen({ name: "character", back: "setup", mode: screen.mode })}
@@ -257,7 +284,7 @@ export function App() {
       )}
       {screen.name === "session" && (
         <Session
-          settings={settings}
+          settings={hostedReady ? { ...settings, engine: "google", advanced: {} } : settings}
           dispatch={dispatch}
           availability={screen.availability}
           persona={screen.persona}

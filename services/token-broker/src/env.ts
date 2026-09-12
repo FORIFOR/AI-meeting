@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 export interface BrokerEnv {
   /** Public demo launch: stop new billed provider work while retaining local demos and cleanup. */
   RCAI_PUBLIC_DEMO_ONLY?: string;
+  /** Verified-account, server-timed Vertex experience. Defaults to disabled / zero capacity. */
+  RCAI_HOSTED_ACCESS?: string;
+  RCAI_HOSTED_FIRESTORE_DATABASE?: string;
+  RCAI_HOSTED_SESSION_SECONDS?: string;
+  RCAI_HOSTED_USER_DAILY_SESSIONS?: string;
+  RCAI_HOSTED_MONTHLY_SESSIONS?: string;
   /** Zoom user authorization, backed by a server-only Firestore database. */
   ZOOM_OAUTH_CLIENT_ID?: string;
   ZOOM_OAUTH_CALLBACK_URL?: string;
