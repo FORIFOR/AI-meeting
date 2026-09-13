@@ -1,4 +1,5 @@
 import type { ConversationEvent } from "@rcai/conversation-core";
+import type { PCMFrame } from "@rcai/audio-core";
 import { histogram, Samples } from "./stats.js";
 import type { SessionReport, Summary } from "./types.js";
 
@@ -25,6 +26,15 @@ export class SessionObserver {
   private turnsAssistant = 0;
   private interruptedAssistant = 0;
   private response = new Samples();
+  private subtitleArrival = new Samples();
+  private playbackSignal = new Samples();
+  private interruptionSilence = new Samples();
+  private subtitleFrom: number | null = null;
+  private playbackFrom: number | null = null;
+  private playbackArmed = false;
+  private stopFrom: number | null = null;
+  private quietMs = 0;
+  private lastSignalAt = -Infinity;
   private interruptStop = new Samples();
   private listeningReact = new Samples();
   private stt = new Samples();
@@ -70,6 +80,12 @@ export class SessionObserver {
         if (e.providerId) this.provider = e.providerId;
         break;
       case "user_speech_started":
+        // A new user turn supersedes an unanswered one. Never pair a late response with it.
+        this.subtitleFrom = this.playbackFrom = null;
+        this.lastUserEnd = null;
+        this.playbackArmed = false;
+        this.stopFrom = at - this.lastSignalAt >= 0 && at - this.lastSignalAt <= 100 ? at : null;
+        this.quietMs = 0;
         this.lastUserStart = at;
         if (this.speaking) {
           this.interruptionsByUser++;
@@ -78,15 +94,17 @@ export class SessionObserver {
         break;
       case "user_speech_ended":
         this.lastUserEnd = at;
+        this.subtitleFrom = this.playbackFrom = at;
         break;
       case "user_transcript":
         if (e.final !== false && e.text.trim()) this.turnsUser++;
         break;
       case "assistant_speech_started":
         if (this.lastUserEnd !== null) {
-          this.response.push(at - this.lastUserEnd);
+          if (at >= this.lastUserEnd) this.response.push(at - this.lastUserEnd);
           this.lastUserEnd = null;
         }
+        this.playbackArmed = true;
         this.speaking = true;
         this.assistantOpen = true;
         break;
@@ -94,12 +112,20 @@ export class SessionObserver {
         this.speaking = true;
         this.assistantOpen = true;
         break;
+      case "assistant_transcript":
+        if (e.text.trim() && this.subtitleFrom !== null && at >= this.subtitleFrom) {
+          this.subtitleArrival.push(at - this.subtitleFrom);
+          this.subtitleFrom = null;
+        }
+        break;
       case "assistant_speech_ended":
         if (this.assistantOpen) this.turnsAssistant++;
         this.assistantOpen = false;
         this.speaking = false;
         break;
       case "interrupted":
+        this.subtitleFrom = this.playbackFrom = null;
+        this.playbackArmed = false;
         if (this.assistantOpen) {
           this.turnsAssistant++;
           this.interruptedAssistant++;
@@ -130,6 +156,29 @@ export class SessionObserver {
         break;
       default:
         break;
+    }
+  }
+
+  /** Post-gain AudioWorklet PCM observed on the main thread; includes tap delivery delay.
+   * Silence = peak <= 0.001 for >= 30 ms. Does not include speaker/Bluetooth hardware latency.
+   */
+  notePlaybackFrame(frame: PCMFrame, at = this.clock()): void {
+    if (this.endedAt !== null || !frame.data.length || !Number.isFinite(at) || frame.sampleRate <= 0) return;
+    let peak = 0;
+    for (const sample of frame.data) peak = Math.max(peak, Math.abs(sample));
+    if (peak > 0.001) {
+      this.lastSignalAt = at;
+      this.quietMs = 0;
+      if (this.playbackArmed && this.playbackFrom !== null && at >= this.playbackFrom) {
+        this.playbackSignal.push(at - this.playbackFrom);
+        this.playbackFrom = null;
+      }
+    } else if (this.stopFrom !== null) {
+      this.quietMs += frame.data.length / frame.sampleRate * 1000;
+      if (this.quietMs >= 30 && at >= this.stopFrom) {
+        this.interruptionSilence.push(at - this.stopFrom);
+        this.stopFrom = null;
+      }
     }
   }
 
@@ -188,6 +237,14 @@ export class SessionObserver {
       durationMs: Math.max(0, now - this.startedAt),
       turns: { user: this.turnsUser, assistant: this.turnsAssistant, interruptedAssistant: this.interruptedAssistant },
       responseLatency: { ...this.response.summary(), histogram: histogram(response) },
+      browserTiming: {
+        schema: "rcai.browser-timing.v1",
+        subtitleArrival: this.subtitleArrival.summary(),
+        playbackSignal: this.playbackSignal.summary(),
+        interruptionSilence: this.interruptionSilence.summary(),
+        samples: { subtitleArrival: this.subtitleArrival.all(), playbackSignal: this.playbackSignal.all(), interruptionSilence: this.interruptionSilence.all() },
+        dropped: { subtitleArrival: this.subtitleArrival.dropped, playbackSignal: this.playbackSignal.dropped, interruptionSilence: this.interruptionSilence.dropped },
+      },
       interruptStop: this.interruptStop.summary(),
       listeningReact: this.listeningReact.summary(),
       reconnects: this.reconnects,
@@ -216,7 +273,7 @@ export class SessionObserver {
 }
 
 function row(label: string, s: Summary, unit = "ms"): string {
-  return `| ${label} | ${fmt(s.p50)} | ${fmt(s.p95)} | ${fmt(s.max)} ${unit} | ${s.count} |`;
+  return `| ${label} | ${fmt(s.p50)} | ${fmt(s.p95)} | ${fmt(s.p99)} | ${fmt(s.max)} ${unit} | ${s.count} |`;
 }
 
 export function reportToMarkdown(r: SessionReport): string {
@@ -227,10 +284,13 @@ export function reportToMarkdown(r: SessionReport): string {
     `turns: user ${r.turns.user} / assistant ${r.turns.assistant} (interrupted ${r.turns.interruptedAssistant}) · reconnects: ${r.reconnects} · barge-ins: ${r.interruptions.byUser} · stale drops: ${r.staleDrops} · errors: ${r.errors.count} (fatal ${r.errors.fatal})`,
     r.meeting ? `meeting: ${r.meeting.connector} · ${r.meeting.state}${r.meeting.botId ? ` · bot ${r.meeting.botId}` : ""}` : "",
     ``,
-    `| metric | p50 | p95 | max | n |`,
-    `|---|---|---|---|---|`,
+    `| metric | p50 | p95 | p99 | max | n |`,
+    `|---|---|---|---|---|---|`,
     row("response (user end → assistant start)", r.responseLatency),
-    row("barge-in audio stop", r.interruptStop),
+    row("speech end → subtitle event (not display paint)", r.browserTiming.subtitleArrival),
+    row("speech end → output PCM signal (not hardware)", r.browserTiming.playbackSignal),
+    row("interruption → output PCM silence (30 ms confirmation)", r.browserTiming.interruptionSilence),
+    row("barge-in stop command (not observed silence)", r.interruptStop),
     row("→ listening", r.listeningReact),
     row("STT", r.stt),
     row("LLM TTFT", r.llmTtft),

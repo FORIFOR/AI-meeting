@@ -18,7 +18,7 @@ export function Tasks({ onTalk, onBack, voiceHint, store = workspace }: {
   const [editTitle, setEditTitle] = useState(''), [editDue, setEditDue] = useState('');
   const [removing, setRemoving] = useState<ConversationTask | null>(null);
   const [backup, setBackup] = useState<TaskBackup | null>(null);
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : 'タスクを読み込めませんでした。');
+  const fail = (e: unknown) => { setMessage(''); setError(e instanceof Error ? e.message : 'タスクを読み込めませんでした。'); };
   const refresh = useCallback(async () => { const next = await store.read(); setTasks(next); setReady(true); }, [store]);
   useEffect(() => {
     const load = () => { void refresh().catch(fail); };

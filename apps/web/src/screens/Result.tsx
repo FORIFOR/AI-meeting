@@ -219,6 +219,18 @@ export function Result({ outcome, onHome, onAgain }: { outcome: SessionOutcome; 
 function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
   const r = outcome.report!;
   const [msg, setMsg] = useState<string | null>(null);
+  const downloadTiming = () => {
+    const blob = new Blob([JSON.stringify({
+      schema: "rcai.benchmark-observation.v1", sessionId: r.sessionId,
+      provider: r.provider, durationMs: r.durationMs, turns: r.turns,
+      browserTiming: r.browserTiming, errors: { count: r.errors.count, fatal: r.errors.fatal },
+      reconnects: r.reconnects, staleDrops: r.staleDrops,
+    }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "ai-meeting-timing.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setMsg("音声・字幕本文を含まない計測JSONを保存しました。人による会話かどうかは、このファイルだけでは判定できません。");
+  };
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(reportToMarkdown(r));
@@ -240,6 +252,12 @@ function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
   return (
     <div className="section">
       <h4>計測レポート<small>{r.provider ?? "—"} · telemetry {outcome.telemetry ?? "—"}</small></h4>
+      <p className="hint">ブラウザ内の参考計測です。音声は再生処理後の信号、字幕は受信時点を測ります。スピーカーから聞こえるまで・画面に描画されるまでの時間は含みません。n は計測できた回数です。</p>
+      <div style={{ overflowX: "auto" }}>
+        <table className="qtable"><thead><tr><th>計測（ms）</th><th>p50</th><th>p95</th><th>p99</th><th>n</th></tr></thead><tbody>
+          {([ ["発話終了 → 再生信号", r.browserTiming.playbackSignal], ["発話終了 → 字幕受信", r.browserTiming.subtitleArrival], ["割り込み → 無音確認", r.browserTiming.interruptionSilence] ] as const).map(([label, value]) => <tr key={label}><td>{label}</td><td>{ms(value.p50)}</td><td>{ms(value.p95)}</td><td>{ms(value.p99)}</td><td>{value.count}</td></tr>)}
+        </tbody></table>
+      </div>
       <div className="stats">
         <div className="stat"><b>{r.turns.user} / {r.turns.assistant}</b><span>turns you / AI</span></div>
         <div className="stat"><b>{ms(r.responseLatency.p50)} / {ms(r.responseLatency.p95)}</b><span>response p50 / p95 ms</span></div>
@@ -274,6 +292,7 @@ function SessionReportCard({ outcome }: { outcome: SessionOutcome }) {
       )}
       <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
         <button type="button" className="btn" onClick={() => void copy()}>レポートをコピー</button>
+        <button type="button" className="btn" onClick={downloadTiming}>計測JSONを保存</button>
         {outcome.incidents.length > 0 && <button type="button" className="btn btn--ghost" onClick={() => void copyIncidents()}>incidents JSON をコピー</button>}
         {msg && <span className="hint">{msg}</span>}
       </div>

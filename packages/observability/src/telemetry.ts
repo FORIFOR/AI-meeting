@@ -24,7 +24,9 @@ export function stripContent<T>(value: T): T {
  * belt-and-braces layer (also applies provider-core's `privacyGuard.sanitizeTelemetry`).
  */
 export function sanitizeForTelemetry(report: SessionReport, privacyMode: PrivacyMode): Partial<SessionReport> {
-  const stripped = stripContent(report) as unknown as Record<string, unknown>;
+  // Raw timing samples are for a deliberate local export, not automatic telemetry.
+  const { samples: _samples, ...browserTiming } = report.browserTiming;
+  const stripped = stripContent({ ...report, browserTiming }) as unknown as Record<string, unknown>;
   return privacyGuard.sanitizeTelemetry(privacyMode, stripped) as Partial<SessionReport>;
 }
 

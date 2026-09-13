@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { randomBytes } from 'node:crypto';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 const serverRequire = createRequire(new URL('../../services/token-broker/package.json', import.meta.url));
 const webRequire = createRequire(new URL('../../apps/web/package.json', import.meta.url));
@@ -18,6 +19,12 @@ try {
   await sdk.createUser({ uid, email, password, emailVerified: true }); created = true;
   browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage();
+  page.on('response', async response => {
+    if (response.url().includes('identitytoolkit.googleapis.com') && response.url().includes('signInWithPassword')) {
+      const result = await response.json().catch(() => ({}));
+      report.signIn = { status: response.status(), code: /^[A-Z_]+$/.test(result.error?.message ?? '') ? result.error.message : null };
+    }
+  });
   await page.evaluateOnNewDocument(() => {
     navigator.mediaDevices.getUserMedia = async () => {
       const context = new AudioContext();
@@ -29,9 +36,12 @@ try {
     };
   });
   const cdp = await page.createCDPSession(); await cdp.send('Network.enable');
+  const timingDirectory = resolve('artifacts/hosted-browser', `timing-${Date.now()}`);
+  await mkdir(timingDirectory, { recursive: true });
+  await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: timingDirectory });
   report.transcripts = []; report.toolCalls = [];
   cdp.on('Network.webSocketFrameReceived', event => {
-    try { const m = JSON.parse(event.response.payloadData); for (const k of ['inputTranscription','outputTranscription']) if (m.serverContent?.[k]?.text) report.transcripts.push({ kind: k, text: m.serverContent[k].text }); if (m.toolCall) report.toolCalls.push(m.toolCall); } catch {}
+    try { const m = JSON.parse(event.response.payloadData); for (const k of ['inputTranscription','outputTranscription']) if (m.serverContent?.[k]?.text) report.transcripts.push({ kind: k, text: m.serverContent[k].text }); if (m.toolCall) report.toolCalls.push(m.toolCall); if (report.toolCalls.length && m.serverContent?.modelTurn?.parts?.some(p => p.inlineData?.data)) report.audioAfterTask = true; } catch {}
   });
   page.on('pageerror', error => report.errors.push(error.message));
   await page.setViewport({ width: 1280, height: 900 });
@@ -67,8 +77,26 @@ try {
   report.notesOpened = notes;
   await page.waitForSelector('.task-ledger', { timeout: 20_000 });
   await page.screenshot({ path: 'artifacts/hosted-browser/session.png' });
+  // Saving a tool result can precede the spoken acknowledgement. Keep the session alive
+  // for an actual response; ending immediately cannot produce a response-latency sample.
+  const responseDeadline = Date.now() + 20_000;
+  while (!report.audioAfterTask && Date.now() < responseDeadline) await new Promise(r => setTimeout(r, 100));
+  if (report.audioAfterTask) await new Promise(r => setTimeout(r, 1000));
   await page.click('.ctl--end');
   await page.waitForSelector('.result', { timeout: 30_000 });
+  await page.evaluate(() => { for (const d of document.querySelectorAll('details')) if (d.querySelector('summary')?.textContent === '目視評価と計測') d.open = true; });
+  await page.evaluate(() => Array.from(document.querySelectorAll('button')).find(b => b.textContent === '計測JSONを保存')?.click());
+  let timing;
+  for (let i = 0; i < 30 && !timing; i++) {
+    try { timing = JSON.parse(await readFile(resolve(timingDirectory, 'ai-meeting-timing.json'), 'utf8')); }
+    catch { await new Promise(r => setTimeout(r, 100)); }
+  }
+  assert.ok(timing, 'explicit timing download');
+  report.timing = timing;
+  assert.ok(timing.browserTiming.samples.playbackSignal.length > 0, 'real output PCM observed');
+  assert.ok(timing.browserTiming.samples.subtitleArrival.length > 0, 'subtitle arrival observed');
+  assert.ok(!JSON.stringify(timing).includes('資料確認'), 'timing export contains no task text');
+  await page.screenshot({ path: 'artifacts/hosted-browser/timing.png', fullPage: true });
   await page.click('.result a[href="#tasks"]');
   await page.waitForSelector('.task-card', { timeout: 20_000 });
   await page.reload({ waitUntil: 'networkidle2' });

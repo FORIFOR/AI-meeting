@@ -8,7 +8,7 @@ export function percentile(sorted: number[], p: number): number {
 
 export function summarize(values: number[]): Summary {
   const sorted = values.filter((v) => Number.isFinite(v)).sort((a, b) => a - b);
-  return { count: sorted.length, p50: percentile(sorted, 50), p95: percentile(sorted, 95), max: sorted.length ? sorted[sorted.length - 1]! : NaN };
+  return { count: sorted.length, p50: percentile(sorted, 50), p95: percentile(sorted, 95), p99: percentile(sorted, 99), max: sorted.length ? sorted[sorted.length - 1]! : NaN };
 }
 
 /** Response-latency buckets (ms): 0-300, 300-500, 500-700, 700-1000, 1000-1500, 1500-2000, 2000-3000, 3000+ */
@@ -31,11 +31,15 @@ export function histogram(values: number[], edges: number[] = LATENCY_BUCKETS): 
 /** Bounded sample store so a 30-minute soak never grows unbounded. */
 export class Samples {
   private values: number[] = [];
+  dropped = 0;
   constructor(private readonly limit = 5000) {}
   push(v: number): void {
     if (!Number.isFinite(v)) return;
     this.values.push(v);
-    if (this.values.length > this.limit) this.values.splice(0, this.values.length - this.limit);
+    if (this.values.length > this.limit) {
+      this.dropped += this.values.length - this.limit;
+      this.values.splice(0, this.values.length - this.limit);
+    }
   }
   all(): number[] {
     return [...this.values];

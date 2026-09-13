@@ -254,6 +254,7 @@ export class SessionController {
 
     // 6. Fan-out of unified events + played audio.
     speaker.tap.subscribe((frame) => {
+      observer.notePlaybackFrame(frame);
       avatarRuntime.pushAudio(frame);
       recorder.recordAssistantFrame(frame);
     });

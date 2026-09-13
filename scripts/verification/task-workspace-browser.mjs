@@ -4,7 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const require = createRequire(new URL('../../apps/web/package.json', import.meta.url));
 const puppeteer = require('puppeteer-core');
-const output = path.resolve('artifacts/task-workspace');
+const output = path.resolve(process.env.TASK_QA_DIR ?? 'artifacts/task-workspace');
 await mkdir(output, { recursive: true });
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const errors = [];
@@ -53,6 +53,13 @@ try {
   await page.click('section[aria-label="削除の確認"] button');
   await page.waitForFunction(() => document.querySelectorAll('.task-card').length === 2);
   const input = await page.$('input[type=file]');
+  const invalid = path.join(output, 'invalid-backup.json');
+  await writeFile(invalid, JSON.stringify({ version: 999, tasks: [] }));
+  await input.uploadFile(invalid);
+  await page.waitForSelector('[role=alert]');
+  assert.equal(await page.$$eval('.task-card', es => es.length), 2);
+  assert.equal(await page.$eval('.tasks-status', e => e.textContent), '');
+  assert.equal(await page.$('.tasks-backup .task-review'), null);
   await input.uploadFile(path.join(output, filename));
   await page.waitForSelector('.tasks-backup .task-review');
   await page.click('.tasks-backup .task-review .btn--primary');
@@ -61,8 +68,20 @@ try {
   await other.goto(url, { waitUntil: 'networkidle2' });
   await other.waitForSelector('.task-card');
   assert.equal(await other.$$eval('.task-card', es => es.length), 2);
+  await other.evaluate(() => {
+    IDBObjectStore.prototype.put = function () { throw new DOMException('保存容量不足を模擬しています', 'QuotaExceededError'); };
+  });
+  await other.locator('.task-add label:first-child input').fill('保存できないタスク');
+  await other.click('.task-add button');
+  await other.waitForSelector('[role=alert]');
+  assert.equal(await other.$eval('.tasks-status', e => e.textContent), '');
+  assert.equal(await other.$$eval('.task-card', es => es.length), 2);
+  await other.screenshot({ path: path.join(output, 'storage-failure.png'), fullPage: true });
+  await other.reload({ waitUntil: 'networkidle2' });
+  await other.waitForSelector('.task-card');
+  assert.equal(await other.$$eval('.task-card', es => es.some(e => e.textContent.includes('保存できないタスク'))), false);
   assert.equal(errors.length, 0, errors.join('\n'));
-  const result = { passed: true, steps: ['navigate to tasks by hash', 'add three tasks', 'complete', 'defer', 'reload and restore', 'desktop/mobile layout', 'download backup', 'delete with confirmation', 'restore backup', 'second tab reads current tasks'], pageErrors: errors, horizontalOverflow: overflow };
+  const result = { passed: true, steps: ['navigate to tasks by hash', 'add three tasks', 'complete', 'defer', 'reload and restore', 'desktop/mobile layout', 'download backup', 'delete with confirmation', 'reject invalid backup without false success', 'restore backup', 'second tab reads current tasks', 'simulated storage failure shows error and creates no task after reload'], pageErrors: errors, horizontalOverflow: overflow };
   await writeFile(path.join(output, 'verification.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
 } finally { await browser.close(); }

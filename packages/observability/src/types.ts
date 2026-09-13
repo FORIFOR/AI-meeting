@@ -4,6 +4,7 @@ export interface Summary {
   count: number;
   p50: number;
   p95: number;
+  p99: number;
   max: number;
 }
 
@@ -27,6 +28,15 @@ export interface SessionReport {
   turns: { user: number; assistant: number; interruptedAssistant: number };
   /** user_speech_ended → assistant_speech_started */
   responseLatency: Summary & { histogram: HistogramBucket[] };
+  /** Local browser observations, not a measurement at a physical speaker/display. */
+  browserTiming: {
+    schema: "rcai.browser-timing.v1";
+    subtitleArrival: Summary;
+    playbackSignal: Summary;
+    interruptionSilence: Summary;
+    samples: Record<"subtitleArrival" | "playbackSignal" | "interruptionSilence", number[]>;
+    dropped: Record<"subtitleArrival" | "playbackSignal" | "interruptionSilence", number>;
+  };
   interruptStop: Summary;
   listeningReact: Summary;
   reconnects: number;
