@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { hostedAuth } from '../api/hostedAuth.js';
 
-export function HostedAccount({ seconds, daily, onChange }: { seconds: number; daily: number; onChange: (ready: boolean) => void }) {
+export function HostedAccount({ seconds, daily, onChange, taskOnlyAvailable = false }: { seconds: number; daily: number; onChange: (ready: boolean) => void; taskOnlyAvailable?: boolean }) {
   const [user, setUser] = useState<User | null>(null), [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false), [signup, setSignup] = useState(false);
   const [email, setEmail] = useState(''), [password, setPassword] = useState('');
@@ -24,7 +24,7 @@ export function HostedAccount({ seconds, daily, onChange }: { seconds: number; d
     } finally { setBusy(false); }
   };
   return <section className="hosted-account" aria-label="音声体験のアカウント" style={{ maxWidth: 984, margin: '16px auto', padding: '16px 24px', border: '1px solid #dce3d9', borderRadius: 16 }}>
-    <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between', flexWrap: 'wrap', alignItems: 'center' }}><div><strong>ログインして、声で整理する。</strong><p style={{ fontSize: 12, margin: '6px 0' }}>音声体験は1回{Math.floor(seconds / 60)}分・1日{daily}回まで（UTC日付で集計）。提供枠に限りがあります。自動課金はありません。</p></div><button className="btn" onClick={() => setOpen(!open)}>{user ? 'アカウント' : 'ログイン・登録'}</button></div>
+    <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between', flexWrap: 'wrap', alignItems: 'center' }}><div><strong>{taskOnlyAvailable ? 'タスクの追加・完了・延期は、登録なしで使えます。' : user?.emailVerified ? 'ログイン済み。声で整理できます。' : 'ログインして、声で整理する。'}</strong><p style={{ fontSize: 12, margin: '6px 0' }}>{!user?.emailVerified && '音声体験にはログイン・メール確認が必要です。'}音声体験は1回{Math.floor(seconds / 60)}分・1日{daily}回まで（UTC日付で集計）。提供枠に限りがあります。自動課金はありません。</p></div><button className="btn" onClick={() => setOpen(!open)}>{user ? 'アカウント' : 'ログイン・登録'}</button></div>
     {open && (user ? <div><p>{user.email}</p>{!user.emailVerified && <><p>確認メールのリンクを開いた後、確認状況を更新してください。</p><button className="btn" disabled={busy} onClick={() => void act(async () => { await user.reload(); await user.getIdToken(true); onChange(user.emailVerified); setUser(user); setMessage(user.emailVerified ? '確認できました。音声体験を始められます。' : 'メールの確認がまだ完了していません。'); })}>メールの確認状況を更新</button><button className="btn" disabled={busy} onClick={() => void act(async () => { const sdk = await import('firebase/auth'); await sdk.sendEmailVerification(user); setMessage('確認メールを送信しました。'); })}>確認メールを再送</button></>}
       <button className="btn btn--ghost" disabled={busy} onClick={() => void act(async () => { const sdk = await import('firebase/auth'); await sdk.signOut(await hostedAuth()); setOpen(false); })}>ログアウト</button>
       <button className="btn btn--ghost" disabled={busy} onClick={() => void act(async () => { if (!window.confirm('ログイン用のアカウントを削除しますか？個人用タスクとチームの共有データは残ります。チームを閉鎖する場合は先にチーム管理画面で操作してください。')) return; const sdk = await import('firebase/auth'); await sdk.deleteUser(user); setMessage('アカウントを削除しました。'); })}>アカウントを削除</button>

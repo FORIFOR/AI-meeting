@@ -6,8 +6,8 @@ import '../styles/tasks.css';
 const workspace = new TaskWorkspace();
 const label = { pending: '未完了', done: '完了', deferred: '延期' };
 
-export function Tasks({ onTalk, onBack, voiceHint, storageDescription, store = workspace }: {
-  onTalk?: () => void; onBack: () => void; voiceHint?: string; storageDescription?: string; store?: TaskWorkspace;
+export function Tasks({ onTalk, onBack, voiceHint, storageDescription, description, showResources = false, store = workspace }: {
+  onTalk?: () => void; onBack: () => void; voiceHint?: string; storageDescription?: string; description?: string; showResources?: boolean; store?: TaskWorkspace;
 }) {
   const [tasks, setTasks] = useState<ConversationTask[]>([]);
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false);
@@ -45,7 +45,7 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, store = w
   const remaining = tasks.filter(t => t.status !== 'done').length;
 
   return <main className="tasks-page">
-    <div className="tasks-heading"><div><p className="workspace-label">YOUR NEXT STEP</p><h1>今日の一歩を、ここに。</h1><p>会話で決めたことも、ふと思いついたことも。</p></div><button className="btn" onClick={onBack}>ホームへ</button></div>
+    <div className="tasks-heading"><div><p className="workspace-label">YOUR NEXT STEP</p><h1>今日の一歩を、ここに。</h1><p>{description ?? '会話で決めたことも、ふと思いついたことも。'}</p></div><button className="btn" onClick={onBack}>ホームへ</button></div>
     <section className="tasks-summary"><div><strong>{remaining}</strong><span>これからのタスク</span><small>{tasks.filter(t => t.status === 'done').length}件完了</small></div><div><button className="btn btn--primary" onClick={onTalk} disabled={!onTalk || !ready || busy}>声でタスクを整理する ↗</button><p>{voiceHint ?? '保存したタスクを引き継いで話せます。'}</p></div></section>
     <p className="tasks-storage">{storageDescription ?? 'このブラウザーに自動保存します。ほかの端末には同期されません。大切なタスクはバックアップできます。音声で整理を始めると、保存したタスクを選択中のAIに共有します。'}</p>
     {error && <div className="notice err" role="alert">{error} <button className="btn btn--ghost" onClick={() => { setError(''); void refresh().catch(fail); }}>読み直す</button></div>}
@@ -67,5 +67,14 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, store = w
     <details className="tasks-backup"><summary>バックアップと復元</summary><p>JSONファイルで保存します。復元は現在のタスクに追加し、異なる変更を上書きしません。ブラウザーのデータを消す前にバックアップしてください。</p><button className="btn" disabled={!ready || busy} onClick={() => void exportBackup()}>バックアップを保存</button><label className="task-import">バックアップを選択<input type="file" accept=".json,application/json" disabled={!ready || busy} onChange={async e => { const file = e.target.files?.[0]; e.target.value = ''; if (!file) return; setBackup(null); setError(''); try { if (file.size > 200_000) throw new Error('ファイルが大きすぎます。200KB以下のバックアップを選択してください。'); setBackup(parseTaskBackup(JSON.parse(await file.text()))); } catch (err) { fail(err); } }} /></label>
       {backup && <div className="task-review"><h3>{backup.tasks.length}件を復元</h3><ul>{backup.tasks.slice(0, 5).map(t => <li key={t.id}>{t.title}</li>)}</ul><button className="btn btn--primary" disabled={busy} onClick={() => void mutate(async () => { await store.import(backup); setBackup(null); }, 'バックアップから復元しました。')}>内容を確認して復元</button><button className="btn" onClick={() => setBackup(null)}>取り消す</button></div>}
     </details>
+    {showResources && <footer className="tasks-resources">
+      <h2>AI Meetingをもっと知る</h2>
+      <p>声で整理する流れを実演で確認できます。音声AIの実装に使いたい方は、GitHubからコードをご覧ください。</p>
+      <nav aria-label="AI Meetingの実演とソースコード">
+        <a href="https://youtu.be/qLenE6R7-nI" target="_blank" rel="noopener noreferrer" aria-label="45秒の操作デモ（YouTube、新しいタブ）">45秒の操作デモ ↗</a>
+        <a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noopener noreferrer" aria-label="GitHubでコードを見る（新しいタブ）">GitHubでコードを見る ↗</a>
+        <a href="https://ai-meeting.forifor.chatgpt.site/ja#business" target="_blank" rel="noopener noreferrer" aria-label="導入・カスタマイズの相談（新しいタブ）">導入・カスタマイズの相談 ↗</a>
+      </nav>
+    </footer>}
   </main>;
 }

@@ -210,7 +210,7 @@ export function App() {
           </nav>
         </header>
       )}
-      {hostedEnabled && <div hidden={inSession}><Suspense fallback={null}><HostedAccount seconds={broker!.hostedAccess!.sessionSeconds} daily={broker!.hostedAccess!.dailySessions} onChange={setHostedVerified} /></Suspense></div>}
+      {hostedEnabled && <div hidden={inSession}><Suspense fallback={null}><HostedAccount seconds={broker!.hostedAccess!.sessionSeconds} daily={broker!.hostedAccess!.dailySessions} onChange={setHostedVerified} taskOnlyAvailable={screen.name === "tasks"} /></Suspense></div>}
       <ScreenBoundary key={screen.name} onHome={() => setScreen({ name: "home" })}>
       {screen.name === "home" && (
         <Home
@@ -235,6 +235,8 @@ export function App() {
       {screen.name === "team" && <TeamWorkspace settings={settings} persona={personas.find(p => p.mode === "task_planning")} character={characters.find(c => c.id === "vroid-b") ?? characters.find(c => c.renderer === "vrm")} onBack={() => setScreen({ name: "home" })} />}
       {screen.name === "tasks" && <Tasks
         onBack={() => setScreen({ name: "home" })}
+        description="追加・完了・延期は無料・登録不要。同じブラウザーで続きから使えます。"
+        showResources
         onTalk={personas.some(p => p.mode === "task_planning") && availability && (availability.openai || availability.google || availability.local) ? () => onContinue("task_planning") : undefined}
         voiceHint={hostedReady ? `保存したタスクを引き継ぎ、${Math.floor(broker!.hostedAccess!.sessionSeconds / 60)}分間、声で整理できます。` : hostedEnabled ? "上のログイン・登録からメール確認を完了すると、音声体験を始められます。" : broker?.publicAccess?.mode === "demo_only" ? "現在の公開版では、入力によるタスク管理が使えます。音声AIは接続設定後に利用できます。" : !availability || !(availability.openai || availability.google || availability.local) ? "音声AIへの接続を確認してください。入力によるタスク管理はこのまま使えます。" : undefined}
       />}
