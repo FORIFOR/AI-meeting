@@ -1,8 +1,10 @@
+import { VoiceOrb } from "../components/VoiceOrb.js";
+import { SILENT_VOICE } from "../session/voiceActivity.js";
 import { MeetingUsageTracker, type MeetingUsageReceipt } from "../billing/meetingUsage.js";
 import { MeetingUsageSummary } from "../components/MeetingUsageSummary.js";
 import { LiveCostSummary } from "../components/LiveCostSummary.js";
 import { ZoomConnection } from "../components/ZoomConnection.js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VOICE_OPTIONS, type Persona } from "@rcai/persona-core";
 import { purposeLabel } from "../components/choiceLabels.js";
 import { blockedReason } from "../components/characters.js";
@@ -14,7 +16,6 @@ import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
 import { MeetingSessionController, validatedAvatarQuality, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
-import { pillFor } from "../session/pill.js";
 import { meetingPlatform } from "@rcai/conversation-core";
 
 export interface MeetingProps {
@@ -409,7 +410,8 @@ function CloudMeeting(p: MeetingProps) {
     } finally { setBusy(false); }
   };
 
-  const pill = pillFor(avatarState, false);
+  const readVoiceLevels = useCallback(() => ctrl.current?.readVoiceLevels() ?? SILENT_VOICE, []);
+  const orbAvatarState = avatarState === "THINKING" && policy === "OBSERVING" ? "IDLE" : avatarState;
   const terminal = status === "left" || status === "failed" || status === "denied" || status === "removed" || status === "ended";
   const joined = status !== null && !terminal;
   const showPolicy = status === "in_call" || status === "in_call_not_recording" || status === "waiting_room" || status === "reconnecting";
@@ -422,7 +424,7 @@ function CloudMeeting(p: MeetingProps) {
         <div className="stage" ref={stage}>
           <BotAvatarFallback name={displayName} characterId={character?.id} />
           <div className="stage__fallback stage__fallback--bot" aria-hidden="true"><strong>{displayName}</strong><span>音声で参加中</span></div>
-          <div className={`pill pill--${pill.key}`}><span className="pill__dot" /> {muted ? "ミュート中" : POLICY_JA[policy]} <span style={{ opacity: 0.5 }}>{pill.en}</span></div>
+          <VoiceOrb className="voice-orb--bot" avatarState={orbAvatarState} phase={error ? "error" : !activation ? "starting" : terminal ? "ended" : "live"} readLevels={readVoiceLevels} />
           {!activation && !error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12, opacity: 0.6 }}>接続中…</div>}
           {error && <div className="err" style={{ position: "absolute", bottom: 12, left: 12 }}>{error}</div>}
         </div>
@@ -519,6 +521,7 @@ function CloudMeeting(p: MeetingProps) {
       </div>
       <div className="meeting__side">
         <h3 className="meeting-status-title">会議パートナー <small>{status ? STATUS_JA[status] : "未参加"}{muted ? " · ミュート中" : ""}{showPolicy ? ` · ${POLICY_JA[policy]}` : ""}</small></h3>
+        {showRelayStage && <VoiceOrb className="voice-orb--meeting" avatarState={orbAvatarState} phase={error ? "error" : "live"} readLevels={readVoiceLevels} />}
         <div className="meeting__stage-wrap">
           <div className="stage stage--mini" ref={stage} style={{ display: meetingMode === "relay" ? "block" : "none", visibility: showRelayStage ? "visible" : "hidden" }} aria-hidden={!showRelayStage}>
             <div className="stage__fallback" aria-hidden="true"><strong>{displayName}</strong><span>参加中はここに表示されます</span></div>

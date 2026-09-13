@@ -1,3 +1,4 @@
+import { SILENT_VOICE } from "./voiceActivity.js";
 import type { ConversationTask, TaskProposal } from "@rcai/conversation-core";
 import type { LiveLookupResult } from "@rcai/meeting-core";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -162,6 +163,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
     }
   }, [onEnded, toast]);
 
+  const readVoiceLevels = useCallback(() => controller.current?.readVoiceLevels() ?? SILENT_VOICE, []);
   const interrupt = useCallback(() => void controller.current?.interrupt(), []);
   const captureIncident = useCallback((note?: string) => {
     const c = controller.current;
@@ -204,5 +206,5 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   const resolveTaskProposal = useCallback((id:string,accept:boolean)=>{
     void controller.current?.resolveTaskProposal(id,accept).catch(() => toast("タスクを保存できませんでした。タスク画面で保存状態を確認してください。", "TASK_STORAGE"));
   },[toast]);
-  return { tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
+  return { readVoiceLevels, tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
 }

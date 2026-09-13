@@ -6,6 +6,7 @@ import { Meeting, normalizeMeetingUrlInput, resolveMeetingProvider } from "./Mee
 import { DEFAULT_SETTINGS } from "../state/settings.js";
 const capture = vi.hoisted(() => ({ init: null as any }));
 vi.mock("../session/MeetingSessionController.js", () => ({ MeetingSessionController: class {
+  readVoiceLevels() { return { input: 0, output: 0, playing: false }; }
   constructor(init: unknown) { capture.init = init; }
   async start() {} async leave() {} stop() {} dispose() {}
 } }));

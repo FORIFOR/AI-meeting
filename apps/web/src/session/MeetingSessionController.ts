@@ -1,3 +1,4 @@
+import { VoiceActivity } from "./voiceActivity.js";
 import { EnergyVAD, MicCapture, SpeakerOutput, dbfs, rms, type AudioSink, type PCMFrame } from "@rcai/audio-core";
 import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@rcai/conversation-core";
 import { AvatarRuntime, SynchronizedAvatarSink, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
@@ -153,6 +154,8 @@ export function supportsSynchronizedPageOutput(init: Pick<MeetingInit, "role" | 
 }
 
 export class MeetingSessionController {
+  readonly voiceActivity = new VoiceActivity();
+  readVoiceLevels() { return this.voiceActivity.read(this.speaker?.isPlaying); }
   readonly policy: ParticipationPolicy;
   private session: MeetingSession | null = null;
   private runtime: ConversationRuntime | null = null;
@@ -557,6 +560,7 @@ export class MeetingSessionController {
     const agentUrl = this.init.botAgentUrl ?? settings.agentUrl;
     const speaker = new SpeakerOutput();
     this.speaker = speaker;
+    speaker.tap.subscribe(frame => { if (!this.disposed) this.voiceActivity.playback(frame); });
     // A meeting bot page is opened by Recall with no user gesture, so Chrome may hold the AudioContext
     // suspended — and then BOTH `resume()` and the AudioWorklet load stay pending forever. Awaiting them
     // unconditionally strands the whole pipeline before the avatar is ever mounted (observed in-call:
@@ -839,6 +843,8 @@ export class MeetingSessionController {
    * (`assistant_audio` below).
    */
   onMeetingAudio(frame: PCMFrame): void {
+    if (this.disposed) return;
+    this.voiceActivity.capture(frame);
     /**
      * Three separate live failures have come down to "did the character hear anything at all", and a
      * bot page has no operator to ask. One line, once, is cheap and has paid for itself.
@@ -1200,6 +1206,7 @@ export class MeetingSessionController {
 
   private onConversationEvent(e: ConversationEvent): void {
     if (this.disposed) return;
+    if (e.type === "interrupted" || e.type === "session_closed") this.voiceActivity.resetOutput();
     const now = Date.now();
     this.avatarRuntime?.handleEvent(e);
     this.behavior?.handleEvent(e);
@@ -1420,6 +1427,7 @@ export class MeetingSessionController {
 
   /** Stop whatever the character is saying, and tell the broker why (a bot's log is all we get from a room). */
   private cut(reason: string): void {
+    this.voiceActivity.resetOutput();
     this.cuts++;
     console.log("[rcai:bot] cut", JSON.stringify({ reason, state: this.policy.state, sanctioned: this.sanctioned, proactivity: this.init.proactivity }));
     if (this.init.role === "bot") {
@@ -1439,6 +1447,7 @@ export class MeetingSessionController {
   async leave(): Promise<void> {
     if (this.disposed) { await this.session?.leave(); return; }
     this.disposed = true;
+    this.voiceActivity.reset();
     this.avatarSink?.dispose();
     this.avatarSink = null;
     if (this.policyTimer) clearInterval(this.policyTimer);

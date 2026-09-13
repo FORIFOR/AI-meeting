@@ -1,3 +1,4 @@
+import { VoiceOrb } from "../components/VoiceOrb.js";
 import { TaskList } from "../components/TaskList.js";
 import { LookupSources } from "../components/LookupSources.js";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,7 +10,6 @@ import { SessionSheet } from "../components/SessionSheet.jsx";
 import { Toasts } from "../components/Toasts.jsx";
 import { HumanGatePanel } from "../components/HumanGatePanel.jsx";
 import type { CharacterEntry } from "../integrations/registry.js";
-import { pillFor } from "../session/pill.js";
 import type { SessionOutcome } from "../session/SessionController.js";
 import { useSession } from "../session/useSession.js";
 import type { Availability, Settings, SettingsAction } from "../state/settings.js";
@@ -41,7 +41,7 @@ const EndIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 13.5c4-4 11-4 15 0l-2 2-3-1.5V11a11 11 0 0 0-5 0v3l-3 1.5z" /></svg>
 );
 
-/** Level 1 only. The avatar carries the state; everything else waits behind ···. */
+/** The character and voice status remain visible; details wait behind ···. */
 export function Session(p: SessionProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const init = useMemo(
@@ -54,7 +54,6 @@ export function Session(p: SessionProps) {
   const [notes, setNotes] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [gate, setGate] = useState(false);
-  const pill = pillFor(s.avatarState, s.status === "starting");
 
   useEffect(() => {
     if (!sheet) return;
@@ -87,11 +86,7 @@ export function Session(p: SessionProps) {
           {!p.team && <button type="button" className={`more ${sheet ? "is-open" : ""}`} aria-label="セッション設定" aria-expanded={sheet} onClick={() => setSheet((v) => !v)}>···</button>}
         </div>
 
-        {/* The state whisper fades after a glance; the character does the talking. */}
-        <div style={{ visibility: pill.key === "thinking" && s.status === "live" ? "hidden" : undefined }} key={`${pill.key}-${s.captions.length}`} className={`pill pill--${pill.key}`}>
-          <span className="pill__dot" />
-          {pill.ja}
-        </div>
+        <VoiceOrb className="voice-orb--session" avatarState={s.avatarState} phase={s.status} muted={s.muted} readLevels={s.readVoiceLevels} />
 
         <Subtitle items={s.captions} on={p.settings.captionsOn} />
         {notes && <TranscriptLog items={s.captions} />}

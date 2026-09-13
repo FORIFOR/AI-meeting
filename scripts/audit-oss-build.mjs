@@ -105,6 +105,7 @@ const applicationLicense={
   scope:'Application-specific source code and documentation only; third-party rights and service contracts remain separate.',
 };
 const licenseExceptions=[
+  {path:'apps/web/src/components/voice-orb/vendor',license:'MIT; Copyright (c) 2026 LerSent001',notice:'ORB-THIRD-PARTY-NOTICES.txt'},
   {path:'characters/vroid-b/model.vrm',license:'VRM Public License 1.0 and VRoid sample model conditions',notice:'characters/vroid-b/LICENSE.md'},
   {path:'characters/vrm-sample/model.vrm',license:'VRM Public License 1.0 and embedded model permissions',notice:'characters/vrm-sample/LICENSE.md'},
   {path:'avatar-providers/vrm/src/wlipsync-profile.json',license:'MIT',notice:'avatar-providers/vrm/src/wlipsync-profile.LICENSE'},

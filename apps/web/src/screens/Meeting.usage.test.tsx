@@ -6,6 +6,7 @@ import { Meeting } from "./Meeting.js";
 import { DEFAULT_SETTINGS } from "../state/settings.js";
 const capture = vi.hoisted(() => ({ init: null as any, failLeave: false }));
 vi.mock("../session/MeetingSessionController.js", () => ({ MeetingSessionController: class {
+  readVoiceLevels() { return { input: 0, output: 0, playing: false }; }
   constructor(init: unknown) { capture.init = init; }
   async start() { capture.init.handlers.onStatus("joining", "bot created"); } async leave() { if (capture.failLeave) throw new Error("退出未確認"); } stop() {} dispose() {}
 } }));

@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
         const metadata = JSON.parse(await readFile(path.join(directory, "package.json"), "utf8"));
         notices.push(`${name}@${metadata.version}\n\n${await readFile(path.join(directory, "LICENSE"), "utf8")}`);
       }
+      this.emitFile({ type: "asset", fileName: "ORB-THIRD-PARTY-NOTICES.txt", source: `Liquid Orb rendering adapted from LerSent001/orb (047c58cc93587c21dac12183fc0fb1e4101c8e1a).\n\n${await readFile(path.join(__dirname, "src/components/voice-orb/vendor/LICENSE"), "utf8")}` });
       notices.push(`wLipSync profile\n\n${await readFile(path.join(repoRoot, "avatar-providers/vrm/src/wlipsync-profile.LICENSE"), "utf8")}`);
       this.emitFile({ type: "asset", fileName: "VRM-THIRD-PARTY-NOTICES.txt", source: notices.join("\n\n---\n\n") });
       if (!oss) this.emitFile({ type: "asset", fileName: "FIREBASE-THIRD-PARTY-NOTICES.txt", source: `Firebase JavaScript SDK (firebase, @firebase/app, @firebase/auth, @firebase/component, @firebase/logger, @firebase/util).\nCopyright Google LLC. Licensed under Apache-2.0.\n\n${await readFile(path.join(repoRoot, 'vendor/licenses/firebase-js-sdk-LICENSE.txt'), 'utf8')}` });
@@ -44,6 +45,13 @@ export default defineConfig(({ mode }) => {
     },
   },
   build: { outDir: oss ? "dist-oss" : "dist", target: "es2022", sourcemap: true, chunkSizeWarningLimit: 2000,
-    rollupOptions: { input: { main: path.resolve(__dirname, "index.html"), "vrm-demo": path.resolve(__dirname, "vrm-demo.html") } } },
+    rollupOptions: {
+      input: { main: path.resolve(__dirname, "index.html"), "orb-preview": path.resolve(__dirname, "orb-preview.html"), "vrm-demo": path.resolve(__dirname, "vrm-demo.html") },
+      // Keep Vite's generated helper with mapped runtime code, rather than emitting a
+      // helper-only chunk with an empty source map that cannot pass the OSS inventory.
+      output: { manualChunks(id: string) {
+        if (id.includes("vite/preload-helper") || id.includes("vite/modulepreload-polyfill") || /\/node_modules\/(react|react-dom|scheduler)\//.test(id)) return "react-runtime";
+      } },
+    } },
 };
 });

@@ -1,3 +1,4 @@
+import { VoiceActivity } from "./voiceActivity.js";
 import { configureSessionTools, TaskTranscript } from "./sessionTools.js";
 import { PersistentTaskLedger } from "../state/taskWorkspace.js";
 import { TASK_TOOL, USER_CONTEXT_TOOL, TaskLedger, type ConversationTask, type TaskProposal } from "@rcai/conversation-core";
@@ -69,6 +70,8 @@ export interface SessionOutcome {
  * { SpeakerOutput, AvatarRuntime, BehaviorEngine, EvaluationSidecar }. The UI only sees events.
  */
 export class SessionController {
+  readonly voiceActivity = new VoiceActivity();
+  readVoiceLevels() { return this.voiceActivity.read(this.speaker?.isPlaying); }
   private tasks: TaskLedger | PersistentTaskLedger = new TaskLedger();
   private taskQueue: Promise<void> = Promise.resolve();
   private taskSource = new TaskTranscript();
@@ -256,11 +259,14 @@ export class SessionController {
 
     // 6. Fan-out of unified events + played audio.
     speaker.tap.subscribe((frame) => {
+      if (this.disposed) return;
+      this.voiceActivity.playback(frame);
       observer.notePlaybackFrame(frame);
       avatarRuntime.pushAudio(frame);
       recorder.recordAssistantFrame(frame);
     });
     runtime.on((e) => {
+      if (e.type === "interrupted" || e.type === "session_closed") this.voiceActivity.resetOutput();
       avatarRuntime.handleEvent(e);
       behavior.handleEvent(e);
       sidecar.handleEvent(e);
@@ -297,6 +303,8 @@ export class SessionController {
     });
     this.checkpoint();
     mic.onFrame((frame) => {
+      if (this.disposed) return;
+      if (!mic.isMuted) this.voiceActivity.capture(frame);
       runtime.pushMicFrame(frame);
       recorder.recordMicFrame(frame);
       const db = dbfs(rms(frame.data));
@@ -451,6 +459,7 @@ export class SessionController {
 
   setMuted(muted: boolean): void {
     this.mic?.setMuted(muted);
+    if (muted) this.voiceActivity.resetInput();
   }
 
   get isMuted(): boolean {
@@ -504,6 +513,7 @@ export class SessionController {
   private async teardown(): Promise<void> {
     if (this.disposed) return;
     this.disposed = true;
+    this.voiceActivity.reset();
     this.abort.abort();
     this.avatarSink?.dispose();
     this.avatarSink = null;

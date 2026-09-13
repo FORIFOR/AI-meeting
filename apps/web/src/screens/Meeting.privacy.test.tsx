@@ -11,6 +11,7 @@ const capture = vi.hoisted(() => ({
 }));
 vi.mock("../session/MeetingSessionController.js", () => ({
   MeetingSessionController: class {
+  readVoiceLevels() { return { input: 0, output: 0, playing: false }; }
     constructor(init: unknown) { capture.construct(init); }
     start = capture.start;
     leave = capture.leave;

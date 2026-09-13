@@ -6,6 +6,7 @@ Reviewed 2026-09-12. Application-specific source code and documentation are lice
 
 | Component | Pinned version | License / attribution | Distribution note |
 |---|---|---|---|
+| Liquid Orb shader and Siri Wave preset | `047c58cc93587c21dac12183fc0fb1e4101c8e1a` | MIT; Copyright (c) 2026 LerSent001 | Preserve `apps/web/src/components/voice-orb/vendor/LICENSE`; deployed as `ORB-THIRD-PARTY-NOTICES.txt`. |
 | `@pixiv/three-vrm` and its modules | 3.5.5 | MIT; Copyright (c) 2019-2026 pixiv Inc. | Preserve the installed `LICENSE`; loaded models have separate licenses. |
 | `three` | 0.185.1 | MIT; Copyright © 2010-2026 three.js authors | Preserve the installed `LICENSE`. |
 | `wlipsync` | 1.3.1 | MIT; Copyright (c) 2021 hecomi; Copyright (c) 2024 Noeri Huisman | Preserve `LICENSE` with the JS/WASM. The copied sample calibration profile has an adjacent `wlipsync-profile.LICENSE`; it is not a Japanese-accuracy certification. |

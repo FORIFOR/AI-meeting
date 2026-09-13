@@ -10,6 +10,8 @@ The root license does not replace the following separate conditions:
 - characters/sora/model.glb: CC0-1.0 as recorded in its LICENSE.md and SOURCE.json.
 - avatar-providers/vrm/src/wlipsync-profile.json: MIT; retain the adjacent
   wlipsync-profile.LICENSE notice.
+- apps/web/src/components/voice-orb/vendor: MIT, Copyright (c) 2026 LerSent001.
+  Retain the adjacent LICENSE and the deployed ORB-THIRD-PARTY-NOTICES.txt.
 - Live2D Core, original sample models and derived image/video previews: the
   applicable Live2D terms. These are excluded from the standard OSS build.
 - scripts/reality/attendee-selfhost/local-patches.diff: includes upstream Attendee
