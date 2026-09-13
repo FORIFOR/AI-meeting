@@ -26,6 +26,20 @@ describe("browser timing boundaries", () => {
     o.notePlaybackFrame(frame(0), 110); o.notePlaybackFrame(frame(.1), 120);
     for (const t of [130, 140, 150, 160]) o.notePlaybackFrame(frame(0), t);
     expect(o.toReport().browserTiming.samples.interruptionSilence).toEqual([45]);
+    o.handleEvent({ type: "interrupted", at: 170 });
+    for (const t of [180, 190, 200]) o.notePlaybackFrame(frame(0), t);
+    expect(o.toReport().browserTiming.samples.interruptionSilence).toEqual([45]);
+    const natural = new SessionObserver({ sessionId: "natural", clock: () => 0 });
+    natural.notePlaybackFrame(frame(.1), 100);
+    natural.handleEvent({ type: "user_speech_started", at: 105 });
+    for (const t of [110, 120, 130]) natural.notePlaybackFrame(frame(0), t);
+    expect(natural.toReport().browserTiming.samples.interruptionSilence).toEqual([]);
+    const reordered = new SessionObserver({ sessionId: "reordered", clock: () => 0 });
+    reordered.notePlaybackFrame(frame(.1), 100);
+    reordered.handleEvent({ type: "interrupted", at: 105 });
+    reordered.handleEvent({ type: "user_speech_started", at: 105 });
+    for (const t of [110, 120, 130]) reordered.notePlaybackFrame(frame(0), t);
+    expect(reordered.toReport().browserTiming.samples.interruptionSilence).toEqual([25]);
   });
   it("does not invent a stop sample without prior playback or reuse a superseded turn", () => {
     let t = 0; const o = new SessionObserver({ sessionId: "test", clock: () => t });

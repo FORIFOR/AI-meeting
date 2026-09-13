@@ -35,6 +35,8 @@ export class SessionObserver {
   private stopFrom: number | null = null;
   private quietMs = 0;
   private lastSignalAt = -Infinity;
+  private stopCandidate: number | null = null;
+  private interruptionEventAt = -Infinity;
   private interruptStop = new Samples();
   private listeningReact = new Samples();
   private stt = new Samples();
@@ -84,7 +86,9 @@ export class SessionObserver {
         this.subtitleFrom = this.playbackFrom = null;
         this.lastUserEnd = null;
         this.playbackArmed = false;
-        this.stopFrom = at - this.lastSignalAt >= 0 && at - this.lastSignalAt <= 100 ? at : null;
+        this.stopCandidate = at - this.lastSignalAt >= 0 && at - this.lastSignalAt <= 100 ? at : null;
+        // The runtime can emit its interruption immediately before the matching speech-start.
+        this.stopFrom = this.interruptionEventAt === at ? this.stopCandidate : null;
         this.quietMs = 0;
         this.lastUserStart = at;
         if (this.speaking) {
@@ -100,6 +104,7 @@ export class SessionObserver {
         if (e.final !== false && e.text.trim()) this.turnsUser++;
         break;
       case "assistant_speech_started":
+        this.stopCandidate = this.stopFrom = null;
         if (this.lastUserEnd !== null) {
           if (at >= this.lastUserEnd) this.response.push(at - this.lastUserEnd);
           this.lastUserEnd = null;
@@ -124,6 +129,8 @@ export class SessionObserver {
         this.speaking = false;
         break;
       case "interrupted":
+        this.interruptionEventAt = at;
+        if (this.stopCandidate !== null && at >= this.stopCandidate) this.stopFrom = this.stopCandidate;
         this.subtitleFrom = this.playbackFrom = null;
         this.playbackArmed = false;
         if (this.assistantOpen) {
@@ -178,6 +185,7 @@ export class SessionObserver {
       if (this.quietMs >= 30 && at >= this.stopFrom) {
         this.interruptionSilence.push(at - this.stopFrom);
         this.stopFrom = null;
+        this.stopCandidate = null;
       }
     }
   }

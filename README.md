@@ -52,9 +52,11 @@ For cloud adapters, copy [the broker environment example](services/token-broker/
 
 Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentials, and service terms are separate from the default VRM distribution.
 
+**Enterprise evaluation:** the representative workflow is conversation → confirmed tasks → saved state → next session. Introduction demos, a paid pilot, and production have different acceptance conditions. [Readiness, cost assumptions and data flow](docs/enterprise-readiness.md) · [Conversation benchmark procedure](docs/conversation-benchmark.md). The 100-human-session milestone is not yet met.
+
 ## Status and validation
 
-**Beta.** On September 13, 2026, 1,051 automated tests across 117 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
+**Beta.** On September 13, 2026, 1,067 automated tests across 120 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
 
 For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
 

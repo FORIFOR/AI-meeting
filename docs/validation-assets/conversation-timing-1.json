@@ -1,0 +1,51 @@
+{
+  "schema": "rcai.benchmark-observation.v1",
+  "sessionId": "s_mtzo2fw7",
+  "provider": "google",
+  "durationMs": 23938.30000001192,
+  "turns": {
+    "user": 1,
+    "assistant": 1,
+    "interruptedAssistant": 0
+  },
+  "browserTiming": {
+    "schema": "rcai.browser-timing.v1",
+    "subtitleArrival": {
+      "count": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "playbackSignal": {
+      "count": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "interruptionSilence": {
+      "count": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "samples": {
+      "subtitleArrival": [],
+      "playbackSignal": [],
+      "interruptionSilence": []
+    },
+    "dropped": {
+      "subtitleArrival": 0,
+      "playbackSignal": 0,
+      "interruptionSilence": 0
+    }
+  },
+  "errors": {
+    "count": 0,
+    "fatal": 0
+  },
+  "reconnects": 0,
+  "staleDrops": 0
+}

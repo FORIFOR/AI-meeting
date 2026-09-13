@@ -79,6 +79,7 @@ describe("telemetry privacy", () => {
     const s = sanitizeForTelemetry(r, "default");
     expect(JSON.stringify(s)).not.toMatch(/こんにちは|transcript/);
     expect(s.turns?.user).toBe(2);
+    expect(s.browserTiming).not.toHaveProperty("samples");
     let calls = 0;
     const sender = createTelemetrySender({ brokerUrl: "http://localhost:8787", privacyMode: "strict_local", fetch: (async () => { calls++; return new Response("{}"); }) as unknown as typeof fetch });
     expect(await sender.send(r)).toBe("skipped-strict");

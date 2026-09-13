@@ -1,0 +1,222 @@
+{
+  "measuredAt": "2026-09-13T10:21:00.928Z",
+  "scope": "Ten independent headless Chrome profiles. Browser-local task UI only; no microphone, live AI, human conversation, or full voice-demo repeatability claim.",
+  "sourceCommit": "9d9121f022f16b53f29bc7751e6a8cc5d5378e31",
+  "sourceDirty": true,
+  "runs": [
+    {
+      "run": 1,
+      "passed": true,
+      "elapsedMs": 5929,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 2,
+      "passed": true,
+      "elapsedMs": 5499,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 3,
+      "passed": true,
+      "elapsedMs": 5037,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 4,
+      "passed": true,
+      "elapsedMs": 5495,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 5,
+      "passed": true,
+      "elapsedMs": 5033,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 6,
+      "passed": true,
+      "elapsedMs": 5637,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 7,
+      "passed": true,
+      "elapsedMs": 5503,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 8,
+      "passed": true,
+      "elapsedMs": 5014,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 9,
+      "passed": true,
+      "elapsedMs": 5017,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    {
+      "run": 10,
+      "passed": true,
+      "elapsedMs": 5089,
+      "steps": [
+        "navigate to tasks by hash",
+        "add three tasks",
+        "complete",
+        "defer",
+        "reload and restore",
+        "desktop/mobile layout",
+        "download backup",
+        "delete with confirmation",
+        "reject invalid backup without false success",
+        "restore backup",
+        "second tab reads current tasks",
+        "simulated storage failure shows error and creates no task after reload"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    }
+  ],
+  "passed": true,
+  "testedCodeCommittedAs": "495a1fa6bd2e21e80959ec3b2ce6e3028e50d203",
+  "builtIndexSha256": "d891a75ac4af8af02517b51d29c9642ae934fff7737dd67e0f45d747b21c6403",
+  "note": "Executed on the working tree then committed as testedCodeCommittedAs. sourceCommit is the pre-commit base. Test report excludes credentials and customer data."
+}

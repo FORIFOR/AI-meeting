@@ -1,0 +1,55 @@
+{
+  "schema": "rcai.conversation-benchmark.v1",
+  "sessions": [
+    {
+      "sourceCommit": "495a1fa6bd2e21e80959ec3b2ce6e3028e50d203",
+      "configurationId": "hosted-180s-20260913",
+      "provider": "google",
+      "model": "gemini-live-2.5-flash-native-audio",
+      "deviceClass": "chrome-macos-synthetic-stream",
+      "inputSource": "synthetic",
+      "mode": "task_planning",
+      "language": "ja",
+      "id": "verification-login-failed",
+      "measuredAt": "2026-09-13T10:23:53.507735+00:00",
+      "outcome": "failure",
+      "reviewRef": "verification-login-failed",
+      "report": null,
+      "phase": "authentication; response error code was not captured"
+    },
+    {
+      "sourceCommit": "495a1fa6bd2e21e80959ec3b2ce6e3028e50d203",
+      "configurationId": "hosted-180s-20260913",
+      "provider": "google",
+      "model": "gemini-live-2.5-flash-native-audio",
+      "deviceClass": "chrome-macos-synthetic-stream",
+      "inputSource": "synthetic",
+      "mode": "task_planning",
+      "language": "ja",
+      "id": "verification-voice-1",
+      "measuredAt": "2026-09-13T10:24:23.005948+00:00",
+      "outcome": "unreviewed",
+      "reviewRef": "ended-before-acknowledgement",
+      "report": "conversation-timing-1.json",
+      "sha256": "31a8eaa8247e3ef55276d56843fdf25ac11448582ba293854a5ffe27c3b87b60",
+      "reviewMethod": "automated synthetic fixture; no human participation"
+    },
+    {
+      "sourceCommit": "495a1fa6bd2e21e80959ec3b2ce6e3028e50d203",
+      "configurationId": "hosted-180s-20260913",
+      "provider": "google",
+      "model": "gemini-live-2.5-flash-native-audio",
+      "deviceClass": "chrome-macos-synthetic-stream",
+      "inputSource": "synthetic",
+      "mode": "task_planning",
+      "language": "ja",
+      "id": "verification-voice-2",
+      "measuredAt": "2026-09-13T10:26:25.805062+00:00",
+      "outcome": "success",
+      "reviewRef": "task-fixture-and-reload-verified",
+      "report": "conversation-timing-2.json",
+      "sha256": "b7a548b555d51b26724e4d1dd7193dc3f89c7e0528a99f164edca3402a88c1ec",
+      "reviewMethod": "automated synthetic fixture; no human participation"
+    }
+  ]
+}

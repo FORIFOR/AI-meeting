@@ -72,7 +72,7 @@ export class SpeakerOutput implements AudioSink {
     if (this.context.sampleRate !== INTERNAL_SAMPLE_RATE) {
       this.resampler = createResampler(INTERNAL_SAMPLE_RATE, this.context.sampleRate);
     }
-    this.ready = createPcmTapNode(this.context, opts.tapBatchMs ?? 10)
+    this.ready = createPcmTapNode(this.context, opts.tapBatchMs ?? 10, { observeSilence: true })
       .then((tap) => {
         if (this.closed) {
           // close() raced the worklet load (e.g. React StrictMode double-mount): release immediately.

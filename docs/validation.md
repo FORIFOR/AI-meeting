@@ -2,6 +2,18 @@
 
 Release review: **September 13, 2026**. AI-meeting is a beta. The public app now offers browser-local task management and a limited real voice experience after verified sign-in. Longer conversations and meeting integrations require separately configured providers. There is no subscription checkout or automatic cross-device task sync.
 
+## Enterprise evidence and browser timing
+
+The readiness update passed **1,067 tests across 120 files**, workspace type checking, a production build, and the OSS distribution audit. The [ten-run task workflow](validation-assets/task-repeatability.json) passed in ten independent headless Chrome profiles: add/complete/defer, reload, backup/restore, invalid-backup rejection, second-tab reads and injected IndexedDB write failure. No phantom saved task or false success message remained after the tested failures. These are browser task-interface repetitions, not ten voice-demo repetitions.
+
+A separate [real AudioWorklet check](validation-assets/browser-timing.json) passed ten tone-playback/interruption cycles after fixing silence observation when audio sources disconnect. Its speech events and tones are fixtures, not human or AI latency measurements.
+
+The result screen now offers p50/p95/p99 and explicit numeric-only JSON downloads for subtitle arrival, output-PCM signal onset, and output-silence confirmation after interruption. Browser marks do not measure physical speaker/Bluetooth output or DOM paint. The offline aggregator separates human, synthetic and fixture input; it rejects changed or duplicate reports and does not average session percentiles. Missing observations stay unavailable. The raw arrays are excluded from automatic telemetry.
+
+One additional synthetic-input Gemini run downloaded the numeric report and restored the requested task after reload. Its single observed speech-end-to-PCM signal was **2,192 ms** and subtitle arrival **2,025 ms**. One sample does not establish a population p95/p99 or the latency goal. Two earlier verification attempts are retained: an authentication failure whose cause was not captured, and a run ended by the harness after task creation but before the spoken acknowledgement. The corrected harness waits for acknowledgement. Their outcomes and missing observations remain visible in the [registered summary](validation-assets/conversation-benchmark.json); there is no reviewed all-attempt success-rate claim.
+
+See [enterprise readiness](enterprise-readiness.md) and [the benchmark protocol](conversation-benchmark.md). Verified human participation in the registered benchmark is **0 sessions**. Long live-AI sessions and hardware failure coverage remain open; existing local fixture and historical live evidence retain their original scope below.
+
 ## Persistent tasks and hosted voice
 
 The September 13 changes passed **1,051 tests across 117 test files**, all workspace type checks, and the OSS distribution audit. A headless Chrome check exercised task-link navigation, adding, completing, deferring, reload/restore, desktop and 390-pixel layouts, backup download, confirmed deletion, backup import, and a second tab reading the saved tasks. No page errors or horizontal overflow were observed.

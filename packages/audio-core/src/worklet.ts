@@ -19,14 +19,19 @@ class RcaiPcmTap extends AudioWorkletProcessor {
     this.batchLen = 0;
     this.target = (options && options.processorOptions && options.processorOptions.batchSamples) || 480;
     this.closed = false;
+    this.observeSilence = options?.processorOptions?.observeSilence === true;
     this.port.onmessage = (e) => { if (e.data === "close") { this.closed = true; this.port.close(); } };
   }
   process(inputs, outputs) {
     if (this.closed) return false;
     const input = inputs[0];
     const output = outputs[0];
-    if (input && input[0]) {
-      const ch = input[0];
+    const incoming = input && input[0];
+    // Output-only observers need the rendered silence after the last source disconnects.
+    // Microphone taps keep the default: absent input does not fabricate capture frames.
+    if (!incoming && this.observeSilence && output && output[0]) output[0].fill(0);
+    const ch = incoming || (this.observeSilence && output && output[0]);
+    if (ch) {
       if (output && output[0]) output[0].set(ch);
       this.batch.push(new Float32Array(ch));
       this.batchLen += ch.length;
@@ -109,7 +114,7 @@ export interface PcmTapNode {
   readonly disposed: boolean;
 }
 
-export async function createPcmTapNode(ctx: BaseAudioContext, batchMs = 10): Promise<PcmTapNode> {
+export async function createPcmTapNode(ctx: BaseAudioContext, batchMs = 10, options: { observeSilence?: boolean } = {}): Promise<PcmTapNode> {
   await ensurePcmTapWorklet(ctx);
   if (isClosed(ctx)) throw new WorkletUnavailableError("closed");
   const batchSamples = Math.max(128, Math.round((batchMs / 1000) * ctx.sampleRate));
@@ -117,7 +122,7 @@ export async function createPcmTapNode(ctx: BaseAudioContext, batchMs = 10): Pro
     numberOfInputs: 1,
     numberOfOutputs: 1,
     outputChannelCount: [1],
-    processorOptions: { batchSamples },
+    processorOptions: { batchSamples, observeSilence: options.observeSilence === true },
   });
   const listeners = new Set<(chunk: Float32Array) => void>();
   let disposed = false;
