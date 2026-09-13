@@ -20,3 +20,5 @@ tmp
 **/target/**
 **/.env
 **/.env.*
+
+artifacts/

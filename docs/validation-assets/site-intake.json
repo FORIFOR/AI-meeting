@@ -1,0 +1,22 @@
+{
+  "endpoint": {
+    "input": "Synthetic business inquiry; no email sent",
+    "status": 201,
+    "durablySaved": true,
+    "retentionDays": 90,
+    "idempotentRetry": true,
+    "invalidStatus": 400,
+    "foreignOriginStatus": 403,
+    "publicReadStatus": 405,
+    "unauthenticatedFirestoreStatus": 403,
+    "passed": true,
+    "syntheticRecordDeleted": true
+  },
+  "browser": {
+    "passed": true,
+    "receiptDisplayed": true,
+    "privateRecordVerified": true,
+    "formCleared": true,
+    "syntheticRecordDeleted": true
+  }
+}

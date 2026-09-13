@@ -66,6 +66,6 @@ Application-specific code is licensed under [Apache-2.0](LICENSE), subject to th
 
 Try a scenario, report a reproducible problem, or improve a provider, language, or character integration. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-For **paid setup, customization, or operational support**, [start a business inquiry](https://github.com/FORIFOR/AI-meeting/issues/new?template=team-pilot.yml). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Keep public inquiries non-confidential.
+For **paid setup, customization, or operational support**, [start a business inquiry](https://ai-meeting.forifor.chatgpt.site/#business). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Inquiries use a private form; do not include confidential material.
 
 If the project is useful, a GitHub star helps you find it again and makes it easier for others to discover.

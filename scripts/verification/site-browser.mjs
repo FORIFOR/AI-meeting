@@ -1,0 +1,26 @@
+import { createRequire } from 'node:module';
+import { mkdir, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+const require=createRequire(new URL('../../apps/web/package.json',import.meta.url));
+const browser=await require('puppeteer-core').launch({executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+const base=process.env.SITE_PREVIEW_URL||'http://127.0.0.1:5196';const out=process.env.SITE_QA_DIR||path.resolve('artifacts/site-design');
+await mkdir(out,{recursive:true});
+const report={checks:[],errors:[],requests:[],layouts:[]};
+try{
+ const page=await browser.newPage();await page.setViewport({width:1440,height:1000});
+ page.on('pageerror',e=>report.errors.push(e.message));page.on('request',r=>{if(/\.(m4a|mp4)(\?|$)/.test(r.url()))report.requests.push(r.url());});
+ await page.setRequestInterception(true);
+ page.on('request',r=>{if(r.url().includes('/api/site/events'))r.respond({status:204});else if(r.url().includes('/api/site/leads'))r.respond({status:503,contentType:'application/json',body:'{"error":"UNAVAILABLE"}'});else r.continue();});
+ await page.evaluateOnNewDocument(()=>{window.metrics={lcp:0,cls:0};new PerformanceObserver(list=>{window.metrics.lcp=list.getEntries().at(-1).startTime;}).observe({type:'largest-contentful-paint',buffered:true});new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.metrics.cls+=e.value;}).observe({type:'layout-shift',buffered:true});});
+ await page.goto(`${base}/ja.html`,{waitUntil:'networkidle2'});assert.equal(report.requests.length,0,'no media fetched before interaction');report.checks.push('no initial media requests');
+ await page.click('.hero-play');await page.waitForFunction(()=>!document.querySelector('audio').paused);await new Promise(r=>setTimeout(r,500));await page.click('#tab-interview');assert.equal(await page.$eval('audio',a=>a.paused),true);assert.match(await page.$eval('#sample-response',e=>e.textContent),/自己紹介/);report.checks.push('play and switch pauses');
+ await page.focus('#tab-interview');await page.keyboard.press('ArrowRight');await page.waitForFunction(()=>document.querySelector('#tab-english').getAttribute('aria-selected')==='true');assert.match(await page.$eval('#sample-response',e=>e.textContent),/Where do you like to walk/);report.checks.push('keyboard tabs update audio, captions and outcome');
+ await page.click('.round-play');await page.waitForFunction(()=>!document.querySelector('audio').paused);await page.waitForFunction(()=>Number.isFinite(document.querySelector('audio').duration));await page.evaluate(()=>{const a=document.querySelector('audio');a.currentTime=a.duration-.2;});await page.waitForFunction(()=>document.querySelector('audio').ended);report.checks.push('audio completes');
+ await page.click('.round-play');await page.waitForFunction(()=>!document.querySelector('audio').paused);await page.evaluate(()=>document.querySelector('video').play());await page.waitForFunction(()=>document.querySelector('audio').paused&&!document.querySelector('video').paused);await page.evaluate(()=>document.querySelector('video').pause());report.checks.push('video excludes simultaneous audio');
+ await page.goto(`${base}/ja.html?use=interview`,{waitUntil:'networkidle2'});await page.waitForFunction(()=>document.querySelector('#tab-interview').getAttribute('aria-selected')==='true');report.checks.push('scenario deep link');
+ for(const [width,height,lang]of [[1440,1000,'ja'],[390,844,'ja'],[320,760,'ja'],[390,844,'en']]){await page.setViewport({width,height});await page.goto(`${base}/${lang==='ja'?'ja.html':'index.html'}`,{waitUntil:'networkidle2'});const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,`${width} ${lang} overflow`);report.layouts.push({width,height,lang,overflow});await page.screenshot({path:`${out}/${lang}-${width}.png`,fullPage:true});}
+ await page.setViewport({width:390,height:844});await page.goto(`${base}/ja.html`,{waitUntil:'networkidle2'});await page.addStyleTag({content:'html{font-size:200%}'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);report.checks.push('200 percent base font without horizontal overflow');
+ await page.goto(`${base}/ja.html`,{waitUntil:'networkidle2'});await page.select('#lead-form select','training');await page.type('[name=name]','Synthetic QA');await page.type('[name=email]','qa@example.invalid');await page.type('[name=message]','Synthetic inquiry for browser validation only.');await page.click('[name=consent]');await page.click('#lead-form button');await page.waitForFunction(()=>document.querySelector('#lead-status').dataset.error==='true');assert.equal(await page.$eval('[name=message]',e=>e.value),'Synthetic inquiry for browser validation only.');report.checks.push('failed submit retains form and has no false success');
+ report.lab=await page.evaluate(()=>window.metrics);report.labScope='Local headless Chrome, warm local server, no CPU/network throttling; not field p75 or INP';assert.equal(report.errors.length,0);report.passed=true;
+}finally{await writeFile(`${out}/browser-verification.json`,JSON.stringify(report,null,2));await browser.close();console.log(JSON.stringify(report));}

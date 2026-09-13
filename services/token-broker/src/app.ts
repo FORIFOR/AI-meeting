@@ -1,6 +1,7 @@
 import { createOpenAILiveSession } from "./routes/openaiLive.js";
 import { publicDemoOnly, startsProviderWork, PUBLIC_DEMO_ONLY_MESSAGE } from "./public-access.js";
 import { HostedAccess, HostedAccessError } from "./hosted-access.js";
+import { createSiteIntake } from "./site-intake.js";
 import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
 import { FirestoreZoomStore } from "./zoom/store.js";
 import { registerZoomRoutes, bearer } from "./zoom/routes.js";
@@ -158,10 +159,11 @@ export function createApp(deps: AppDeps): Hono {
     }
   })();
   app.use("*", cors({
-    origin: (origin) => (!origin || localOrigins.includes(origin) || origin === botPageOrigin ? origin ?? localOrigins[0] : null),
+    origin: (origin, c) => (!origin || localOrigins.includes(origin) || origin === botPageOrigin || (c.req.path.startsWith('/api/site/') && [env.RCAI_MARKETING_ORIGIN, 'http://127.0.0.1:5196'].includes(origin)) ? origin ?? localOrigins[0] : null),
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   }));
+  app.route('/api/site', createSiteIntake(env));
   app.use("*", async (c, next) => {
     if (demoOnly && startsProviderWork(c.req.method, c.req.path)) {
       c.header("Cache-Control", "no-store");
