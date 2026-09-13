@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "product": "genie",
+      "cors": true,
+      "durableReceipt": true,
+      "idempotent": true,
+      "publicReadBlocked": true
+    },
+    {
+      "product": "launchloom",
+      "cors": true,
+      "durableReceipt": true,
+      "idempotent": true,
+      "publicReadBlocked": true
+    },
+    {
+      "product": "oathra",
+      "cors": true,
+      "durableReceipt": true,
+      "idempotent": true,
+      "publicReadBlocked": true
+    },
+    {
+      "product": "aisecure",
+      "cors": true,
+      "durableReceipt": true,
+      "idempotent": true,
+      "publicReadBlocked": true
+    },
+    {
+      "product": "agent-team",
+      "cors": true,
+      "durableReceipt": true,
+      "idempotent": true,
+      "publicReadBlocked": true
+    }
+  ],
+  "syntheticRecordsDeleted": true,
+  "noEmailSent": true
+}
