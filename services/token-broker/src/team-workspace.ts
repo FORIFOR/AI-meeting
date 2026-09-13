@@ -16,11 +16,12 @@ export interface TeamPolicy {
   usage: { day: string; operations: number; voice: number }; voiceReservations: number;
 }
 export interface TeamData { revision: string; tasks: ConversationTask[]; updatedAt: number; expiresAt: number }
-export interface TeamAudit { team: string; actor: string; action: string; at: number; count: number; expiresAt: number }
+export interface TeamAudit { team: string; actor: string; action: string; at: number; count: number; expiresAt: number; consentVersion?: string }
 export interface TeamState { policy: TeamPolicy | null; workspace: TeamData | null; audit: TeamAudit[] }
 export interface TeamStore {
   change<T>(team: string, fn: (s: TeamState) => T, create?: boolean): Promise<T>;
   audit(team: string): Promise<TeamAudit[]>;
+  ping?(): Promise<void>;
 }
 export class TeamError extends Error { constructor(readonly status: 400 | 403 | 409 | 413 | 429 | 503, readonly code: string, message: string) { super(message); } }
 const denied = () => new TeamError(403, 'TEAM_UNAVAILABLE', 'このチームを利用できません。招待・利用期限・アクセス権を確認してください。');
@@ -58,6 +59,7 @@ export class FirestoreTeamStore implements TeamStore {
       return result;
     }, { maxAttempts: 5 });
   }
+  async ping() { await this.db.collection(TEAM_COLLECTIONS.capacity).doc('launch').get(); }
   async audit(team: string) {
     const rows = await this.db.collection(TEAM_COLLECTIONS.audit).where('team', '==', team).orderBy('at', 'desc').limit(100).get();
     return rows.docs.map(d => ({ ...d.data(), expiresAt: d.data().expiresAt.toMillis() }) as TeamAudit);
@@ -70,6 +72,15 @@ export class TeamWorkspaceService {
   constructor(private readonly env: BrokerEnv, private readonly hosted: HostedAccess, private readonly deps: { store?: TeamStore; now?: () => number } = {}) {
     this.enabled = env.RCAI_TEAM_WORKSPACES === '1' && !!env.RCAI_TEAM_FIRESTORE_DATABASE && hosted.policy.enabled;
     this.store = deps.store ?? (this.enabled ? new FirestoreTeamStore(env.GOOGLE_CLOUD_PROJECT!, env.RCAI_TEAM_FIRESTORE_DATABASE!) : undefined);
+  }
+  private readinessCache?: { expiresAt: number; result: Promise<boolean> };
+  async ready(): Promise<boolean> {
+    if (!this.enabled || !this.store?.ping) return false;
+    if (!this.readinessCache || this.readinessCache.expiresAt <= this.now()) {
+      const result = this.store.ping().then(() => true, () => false);
+      this.readinessCache = { expiresAt: this.now() + 60000, result };
+    }
+    return this.readinessCache.result;
   }
   private now() { return (this.deps.now ?? Date.now)(); }
   private async transact<T>(team: string, fn: (s: TeamState) => T, create = false): Promise<T> {
@@ -90,7 +101,7 @@ export class TeamWorkspaceService {
     if (p.usage.operations >= 1000) throw new TeamError(429, 'TEAM_DAILY_LIMIT', '本日のチーム操作上限に達しました。');
     p.usage.operations++;
     // Read polling is counted but creates no permanent access-history amplification.
-    if (action !== 'read') s.audit.push({ team, actor, action, at: this.now(), count, expiresAt: this.now() + 90 * DAY });
+    if (action !== 'read') s.audit.push({ team, actor, action, at: this.now(), count, expiresAt: this.now() + 90 * DAY, ...(action === 'voice' ? { consentVersion: TEAM_CONSENT } : {}) });
   }
   async create(authorization: string | undefined, name: unknown) {
     const identity = await this.hosted.identity(authorization), actor = teamHash(identity.uid), team = `team-${actor.slice(0, 24)}`;
@@ -202,6 +213,7 @@ export function createTeamRoutes(env: BrokerEnv, service: TeamWorkspaceService) 
     try { const value = JSON.parse(Buffer.concat(chunks).toString('utf8')); if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(); return value; }
     catch { throw new TeamError(400, 'TEAM_BODY', '入力内容の形式を確認してください。'); }
   };
+  app.get('/status', async c => { const ready = await service.ready(); return c.json({ ready, profile: 'team-tasks-3m-v1' }, ready ? 200 : 503); });
   app.post('/create', async c => c.json(await service.create(c.req.header('authorization'), (await body(c.req.raw)).name)));
   app.post('/:team', async c => c.json(await service.request(c.req.param('team'), c.req.header('authorization'), await body(c.req.raw))));
   return app;

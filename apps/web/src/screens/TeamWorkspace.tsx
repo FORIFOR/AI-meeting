@@ -12,7 +12,6 @@ function initialLink() {
   const [path, query] = location.hash.slice(1).split('?');
   const team = path?.split('/')[1] ?? '';
   const invite = new URLSearchParams(query).get('invite') ?? '';
-  if (invite) history.replaceState(null, '', `${location.pathname}${location.search}#team/${team}`);
   return { team: /^team-[a-f0-9]{24}$/.test(team) ? team : '', invite };
 }
 export function TeamWorkspace({ settings, persona, character, onBack }: { settings: Settings; persona?: Persona; character?: CharacterEntry; onBack: () => void }) {
@@ -22,6 +21,7 @@ export function TeamWorkspace({ settings, persona, character, onBack }: { settin
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [consent, setConsent] = useState(false), [live, setLive] = useState(false);
   const [email, setEmail] = useState(''), [memberName, setMemberName] = useState(''), [invitation, setInvitation] = useState(''), [confirm, setConfirm] = useState<'erase' | 'close' | null>(null);
   const [notice, setNotice] = useState('');
+  useEffect(() => { if (link.invite) history.replaceState(null, '', `${location.pathname}${location.search}#team/${link.team}`); }, [link]);
   const identity = useRef(''), currentStore = useRef<TeamTaskWorkspace | null>(null);
   const reset = () => { currentStore.current?.close(); currentStore.current = null; setStore(null); setSnapshot(null); setLive(false); setConsent(false); setInvitation(''); setConfirm(null); void disposeActiveSession(); };
   useEffect(() => {
