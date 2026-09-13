@@ -20,7 +20,10 @@ const config = await (await fetch('https://ai-meeting.web.app/__/firebase/init.j
 const suffix = randomBytes(8).toString('hex');
 const accounts = ['owner', 'member', 'outsider'].map(role => ({ role, uid: `team-qa-${suffix}-${role}`, email: `team-qa-${suffix}-${role}@example.invalid`, password: randomBytes(24).toString('base64url'), token: '' }));
 const created: string[] = [], teams: string[] = [];
-const report: any = { schema: 'rcai.team-cloud-verification.v1', profile: 'team-tasks-3m-v1', sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), startedAt: new Date().toISOString(), broker, appUrl, inputSource: 'synthetic', checks: {}, liveRequested: live, success: false };
+const deployment = JSON.parse(execFileSync('gcloud', ['run', 'services', 'describe', 'ai-meeting-broker', '--region=asia-northeast1', `--project=${project}`, '--format=json'], { encoding: 'utf8' }));
+const backendRevision = deployment.status.traffic.find(t => t.url === broker)?.revisionName ?? deployment.status.traffic.find(t => t.percent === 100)?.revisionName;
+const deployedRevision = JSON.parse(execFileSync('gcloud', ['run', 'revisions', 'describe', backendRevision, '--region=asia-northeast1', `--project=${project}`, '--format=json'], { encoding: 'utf8' }));
+const report: any = { backendRevision, backendImageDigest: deployedRevision.status.imageDigest, schema: 'rcai.team-cloud-verification.v1', profile: 'team-tasks-3m-v1', sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), startedAt: new Date().toISOString(), broker, appUrl, inputSource: 'synthetic', checks: {}, liveRequested: live, success: false };
 let browser: any;
 await mkdir(directory, { recursive: true });
 async function api(team: string, body: any, account = accounts[0]!, expected = 200) {
@@ -102,7 +105,10 @@ try {
     await member.click('.team-consent input'); await member.click('.tasks-summary button'); await member.waitForSelector('.session');
     await member.waitForFunction(() => !document.querySelector('.stage__loading'), { timeout: 45000 });
     const deadline = Date.now() + 65000;
-    while (Date.now() < deadline) { if (toolCalls > 0 && audioMessages > 0 && (await api(team, { action: 'read' })).tasks.length > 1) break; await new Promise(r => setTimeout(r, 1000)); }
+    while (Date.now() < deadline) {
+      const proposal = await member.$('.task-review');
+      if (proposal) { const text = await proposal.evaluate(e => e.textContent); assert.ok(text.includes('資料確認') && /9.?月.?15.?日/.test(text), 'Only the authored fixture can be confirmed'); await member.click('.task-review button'); report.fixtureProposalConfirmed = true; }
+      if (toolCalls > 0 && audioMessages > 0 && (await api(team, { action: 'read' })).tasks.length > 1) break; await new Promise(r => setTimeout(r, 1000)); }
     assert.ok(toolCalls > 0 && audioMessages > 0, 'real Vertex tool call and audio response');
     assert.ok((await api(team, { action: 'read' })).tasks.length > 1, 'spoken task persisted in the team workspace');
     report.checks.realVoiceToTeamTask = true;
@@ -136,7 +142,7 @@ try {
   const documentUrl = `https://firestore.googleapis.com/v1/projects/${project}/databases/ai-meeting-teams/documents/ai_meeting_team_workspaces/${team}`;
   for (const headers of [{}, { Authorization: `Bearer ${accounts[0]!.token}` }]) { const denied = await fetch(documentUrl, { headers }); assert.ok([401, 403].includes(denied.status)); }
   report.checks.directDatabaseReadDenied = true;
-  await reopen(owner); await owner.screenshot({ path: `${directory}/desktop.png`, fullPage: true });
+  await reopen(owner); await owner.waitForFunction(() => document.querySelector<HTMLInputElement>('.task-add input')?.disabled === false); await owner.screenshot({ path: `${directory}/desktop.png`, fullPage: true });
   await owner.setViewport({ width: 390, height: 844 }); await owner.screenshot({ path: `${directory}/mobile.png`, fullPage: true });
   assert.equal(await owner.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false); report.checks.mobileNoOverflow = true;
   for (const [index, t] of teams.entries()) { const account = index === 0 ? accounts[0] : accounts[2]; const current = await api(t, { action: 'read' }, account); await api(t, { action: 'close', revision: current.revision }, account); await api(t, { action: 'read' }, account, 403); }
@@ -154,6 +160,8 @@ finally {
   }
   report.cleanup = { syntheticAccountsDeleted: cleanup.every(Boolean), syntheticTeamsDeleted: teams.length, capacityCountersPreserved: true };
   report.success &&= cleanup.every(Boolean); report.finishedAt = new Date().toISOString();
+  await mkdir(`${directory}/attempts`, { recursive: true });
+  await writeFile(`${directory}/attempts/${report.startedAt.replaceAll(':', '-')}.json`, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
   await writeFile(`${directory}/verification.json`, JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report)); await db.terminate();
 }

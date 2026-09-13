@@ -1,0 +1,22 @@
+{
+  "schema": "rcai.team-cloud-verification.v1",
+  "profile": "team-tasks-3m-v1",
+  "sourceCommit": "2876d1b605016dd7a8fb60c95902a73bfa83bf71",
+  "startedAt": "2026-09-13T11:36:56.832Z",
+  "broker": "https://team-check---ai-meeting-broker-pdygkns5gq-an.a.run.app",
+  "appUrl": "http://127.0.0.1:5180/",
+  "inputSource": "synthetic",
+  "checks": {
+    "browserSaveToCloud": true,
+    "crossTenantDenied": true
+  },
+  "liveRequested": true,
+  "success": false,
+  "failure": "Waiting for selector `.task-card` failed",
+  "cleanup": {
+    "syntheticAccountsDeleted": true,
+    "syntheticTeamsDeleted": 2,
+    "capacityCountersPreserved": true
+  },
+  "finishedAt": "2026-09-13T11:37:33.232Z"
+}

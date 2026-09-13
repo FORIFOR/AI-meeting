@@ -9,10 +9,12 @@ const ttls = gcloud(['firestore', 'fields', 'ttls', 'list', `--database=${databa
 const schedules = gcloud(['firestore', 'backups', 'schedules', 'list', `--database=${database}`]);
 const indexes = gcloud(['firestore', 'indexes', 'composite', 'list', `--database=${database}`]);
 const backups = gcloud(['firestore', 'backups', 'list', '--location=asia-northeast1']).filter(b => b.database === db.name);
+const status = await fetch(`${broker}/api/team/status`);
 const health = await (await fetch(`${broker}/health`)).json();
 const denied = await fetch(`${broker}/api/team/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"name":"unauthorized"}' });
 const evidence = JSON.parse(readFileSync(process.env.TEAM_EVIDENCE || 'artifacts/team-cloud/verification.json', 'utf8'));
 const checks = {
+  datastoreProbeHealthy: status.status === 200 && (await status.json()).ready === true,
   tokyoDedicatedDatabase: db.locationId === 'asia-northeast1',
   pointInTimeRecovery: db.pointInTimeRecoveryEnablement === 'POINT_IN_TIME_RECOVERY_ENABLED',
   accidentalDatabaseDeletionProtected: db.deleteProtectionState === 'DELETE_PROTECTION_ENABLED',

@@ -48,7 +48,8 @@
     "ux-gate": "node scripts/ux/gate.mjs",
     "dev:oss": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/web exec vite --mode oss",
     "build:oss": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/web exec vite build --mode oss && node scripts/audit-oss-build.mjs",
-    "demo:vrm": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/avatar-vrm demo"
+    "demo:vrm": "node scripts/prepare-oss.mjs && pnpm --filter @rcai/avatar-vrm demo",
+    "release:team": "node scripts/cloud/verify-team-release.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

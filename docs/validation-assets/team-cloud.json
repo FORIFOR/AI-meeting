@@ -1,0 +1,43 @@
+{
+  "backendRevision": "ai-meeting-broker-00034-wir",
+  "backendImageDigest": "asia-northeast1-docker.pkg.dev/gen-lang-client-0307428960/ai-meeting/ai-meeting-broker@sha256:2766fb1ed77c8c4555a035d45e3b2a56bc4c5d98e7e8fa1a782377db7d5644eb",
+  "schema": "rcai.team-cloud-verification.v1",
+  "profile": "team-tasks-3m-v1",
+  "sourceCommit": "b1c62c259f191c1141a0fd513e6296f27f12ca8c",
+  "startedAt": "2026-09-13T11:45:19.867Z",
+  "broker": "https://team-check---ai-meeting-broker-pdygkns5gq-an.a.run.app",
+  "appUrl": "http://127.0.0.1:5180/",
+  "inputSource": "synthetic",
+  "checks": {
+    "browserSaveToCloud": true,
+    "crossTenantDenied": true,
+    "emailBoundInvitation": true,
+    "crossAccountSync": true,
+    "noFalseSaveOnTransportFailure": true,
+    "realVoiceToTeamTask": true,
+    "activeVoiceRevoked": true,
+    "revokedMemberDenied": true,
+    "concurrentWriteConflict": true,
+    "historicalReadAndRestore": true,
+    "metadataOnlyAudit": true,
+    "directDatabaseReadDenied": true,
+    "mobileNoOverflow": true,
+    "teamClosure": true
+  },
+  "liveRequested": true,
+  "success": true,
+  "live": {
+    "inputSource": "synthetic",
+    "audioMessages": 42,
+    "toolCalls": 1,
+    "terminal": "HOSTED_TEAM_REVOKED",
+    "revokeToDisconnectMs": 5113,
+    "microphoneReleased": true
+  },
+  "cleanup": {
+    "syntheticAccountsDeleted": true,
+    "syntheticTeamsDeleted": 2,
+    "capacityCountersPreserved": true
+  },
+  "finishedAt": "2026-09-13T11:46:23.604Z"
+}

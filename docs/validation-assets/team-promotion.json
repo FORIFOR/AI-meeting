@@ -1,0 +1,9 @@
+{
+  "profile": "team-tasks-3m-v1",
+  "promotedAt": "2026-09-13T11:48:32.959Z",
+  "revision": "ai-meeting-broker-00034-wir",
+  "previousRevision": "ai-meeting-broker-00027-ffv",
+  "image": "asia-northeast1-docker.pkg.dev/gen-lang-client-0307428960/ai-meeting/ai-meeting-broker@sha256:2766fb1ed77c8c4555a035d45e3b2a56bc4c5d98e7e8fa1a782377db7d5644eb",
+  "productionSmokePassed": true,
+  "automaticRollbackOnFailure": true
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "rcai.team-readiness.v1",
+  "profile": "team-tasks-3m-v1",
+  "checkedAt": "2026-09-13T11:48:27.136Z",
+  "sourceCommit": "b1c62c259f191c1141a0fd513e6296f27f12ca8c",
+  "ready": true,
+  "checks": {
+    "datastoreProbeHealthy": true,
+    "tokyoDedicatedDatabase": true,
+    "pointInTimeRecovery": true,
+    "accidentalDatabaseDeletionProtected": true,
+    "taskAndPolicyAndAuditTTL": true,
+    "dailyBackupScheduledFor7Days": true,
+    "auditIndexReady": true,
+    "publicPaidRoutesClosed": true,
+    "teamProfileEnabled": true,
+    "boundedVoice": true,
+    "authenticationEnforced": true,
+    "cloudAcceptancePassed": true,
+    "realVoiceAndRevocationPassed": true,
+    "evidenceFresh": true,
+    "syntheticAccountsRemoved": true
+  },
+  "completedBackups": 0,
+  "notes": [
+    "Technical acceptance for five-member, 30-day, 3-minute voice/task teams only.",
+    "No claim of human conversation quality, enterprise SSO, SLA or unrestricted production readiness.",
+    "The backup schedule starts future daily backups; historical-read restore is separately tested."
+  ]
+}

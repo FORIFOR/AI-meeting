@@ -1,6 +1,16 @@
 # Validation and known limits
 
-Release review: **September 13, 2026**. AI-meeting is a beta. The public app now offers browser-local task management and a limited real voice experience after verified sign-in. Longer conversations and meeting integrations require separately configured providers. There is no subscription checkout or automatic cross-device task sync.
+Release review: **September 13, 2026**. AI-meeting is a beta. The public app now offers browser-local task management and a limited real voice experience after verified sign-in. Longer conversations and meeting integrations require separately configured providers. There is no subscription checkout. Personal tasks do not sync; the separate team profile uses authenticated cloud storage.
+
+## Limited team deployment — September 13, 2026
+
+The team profile passed **1,087 tests across 122 files**, type checking, the production build and OSS audit. A [real-cloud workflow](validation-assets/team-cloud.json) passed 14 checks: browser save, tenant isolation, email-bound invitation, cross-account synchronization, no false success after an injected transport failure, actual Vertex voice to shared task, active-session revocation, revoked reads, concurrent-write conflict, historical recovery, metadata-only audit, denied direct DB access, mobile overflow and team closure.
+
+The voice input and accounts were synthetic. In this one live run, access revocation closed the connection after **5,113 ms** and the microphone tracks ended. This is an observed sample, not a percentile or provider reliability claim. The first UI attempt found an invitation token lost during React's repeated initialization; the initializer is now pure. The [failed attempt](validation-assets/team-cloud-first-attempt.json) remains recorded. Both attempts removed their synthetic accounts and team data and preserved capacity counters.
+
+The [automated readiness result](validation-assets/team-readiness.json) covers the dedicated Tokyo database, access checks, TTL, protected database deletion, PITR, a daily backup schedule with seven-day retention, audit index, bounded voice and successful cloud acceptance. At initial acceptance **zero daily backups had completed**. Recovery was independently verified by deleting a synthetic task document, reading its earlier database state and restoring it through the version-checked API. [Promotion evidence](validation-assets/team-promotion.json) records the deployed image and successful production smoke check.
+
+These checks apply to **five members, thirty days, three-minute voice and non-confidential task planning**. They do not satisfy the earlier human 100-conversation milestone, customer SSO, an SLA, meeting integrations, multi-region recovery, or a negotiated paid agreement. [Deployment and failure handling](team-deployment.md).
 
 ## Enterprise evidence and browser timing
 

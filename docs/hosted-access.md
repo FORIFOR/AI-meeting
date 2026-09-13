@@ -1,6 +1,6 @@
 # Hosted voice and durable tasks
 
-The public app supports task management without registration. Tasks are stored in IndexedDB in the current browser, including the recording date of a deadline. A JSON backup can be exported and merged back after confirmation. Clearing browser data removes local tasks. Signing in does not upload or synchronize them between devices.
+The public app supports personal task management without registration. The separate [team workspace](team-deployment.md) uses authenticated server storage; signing in alone never moves personal tasks into it. Tasks are stored in IndexedDB in the current browser, including the recording date of a deadline. A JSON backup can be exported and merged back after confirmation. Clearing browser data removes local tasks. Signing in does not upload or synchronize them between devices.
 
 Voice task changes use the same store. Transactions serialize changes across tabs; stale edits and conflicting backups fail visibly instead of silently overwriting newer data. Proposals needing clarification stay in memory until confirmed. Only applied task changes are persisted; the task store contains no audio or conversation transcripts.
 

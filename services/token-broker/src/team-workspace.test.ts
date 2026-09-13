@@ -13,6 +13,7 @@ class Store implements TeamStore {
       this.rows.push(...s.audit); s.audit = []; this.data.set(team, s); return result;
     }); this.queue = result; return result;
   }
+  async ping() { if (this.offline) throw new Error('offline'); }
   async audit(team: string) { if (this.offline) throw new Error('offline'); return this.rows.filter(r => r.team === team).reverse().slice(0, 100); }
 }
 class Usage implements HostedStore {
@@ -141,6 +142,13 @@ describe('team-tasks-3m-v1 isolation and lifecycle', () => {
     f.store.data.get(team)!.policy!.usage.operations = 1000;
     await expect(f.request(team, { action: 'read' })).rejects.toMatchObject({ code: 'TEAM_DAILY_LIMIT' });
     expect(f.usage.data.grants).toHaveLength(0);
+  });
+  it('checks actual storage readiness and expires its short shared cache', async () => {
+    const f = fixture(); expect(await f.service.ready()).toBe(true);
+    f.store.offline = true; expect(await f.service.ready()).toBe(true);
+    f.advance(60001); expect(await f.service.ready()).toBe(false);
+    const disabled = new TeamWorkspaceService({ ...env, RCAI_TEAM_WORKSPACES: '0' }, f.hosted, { store: f.store });
+    expect(await disabled.ready()).toBe(false);
   });
   it('limits automatic provisioning to ten lifetime launch slots', async () => {
     const f = fixture(); for (let i = 0; i < 10; i++) await f.service.create(auth(`u${i}`), 'A');
