@@ -4,8 +4,12 @@ import { Hono } from 'hono';
 import type { BrokerEnv } from './env.js';
 
 export const SITE_EVENTS = ['demo_start','demo_complete','artifact_open','artifact_download','github_outbound','quickstart_open'] as const;
-const scenarios = ['tasks','interview','english','walkthrough'];
-const uses = ['interview','training','language','tasks','custom'];
+const products = ['genie','launchloom','oathra','aisecure','agent-team'];
+const scenarios = ['tasks','interview','english','walkthrough',...products];
+const uses = ['interview','training','language','tasks','custom',...products];
+// Public marketing origins only. This route can create private inquiries and
+// anonymous counters, never read them or grant access to the product APIs.
+export const portfolioOrigins = ['https://astra-forifor.forifor.chatgpt.site','https://forifor.github.io'];
 export interface SiteEvent { event: typeof SITE_EVENTS[number]; scenario: string; language: 'ja'|'en' }
 export interface SiteLead { requestId: string; name: string; email: string; organization: string; useCase: string; message: string; consent: true; website: ''; language: 'ja'|'en' }
 export class IntakeError extends Error { constructor(readonly status: 400|409|429|503, readonly code: string) { super(code); } }
@@ -70,7 +74,7 @@ export function createSiteIntake(env:BrokerEnv,override?:SiteStore){
   app.use('*',async(c,next)=>{
     c.header('Cache-Control','no-store');
     const origin=c.req.header('Origin');
-    if(!origin||![env.RCAI_MARKETING_ORIGIN,'http://127.0.0.1:5196'].includes(origin))return c.json({error:'ORIGIN'},403);
+    if(!origin||![env.RCAI_MARKETING_ORIGIN,'http://127.0.0.1:5196',...portfolioOrigins].includes(origin))return c.json({error:'ORIGIN'},403);
     if(!store)return c.json({error:'UNAVAILABLE'},503);
     if(c.req.method==='GET')return c.json({error:'METHOD'},405);
     if(!c.req.header('Content-Type')?.startsWith('application/json'))return c.json({error:'CONTENT_TYPE'},415);

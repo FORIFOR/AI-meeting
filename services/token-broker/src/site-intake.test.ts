@@ -10,6 +10,17 @@ const input={requestId:'ba0236d4-9f1b-41fb-bfbc-8c15f889af13',name:'Demo User',e
 const request=(path:string,body:any,extra={})=>new Request(`http://localhost${path}`,{method:'POST',headers:{origin,'content-type':'application/json',...extra},body:JSON.stringify(body)});
 const memory:SiteStore={lead:vi.fn(async()=>({receipt:'AM-EXAMPLE'})),event:vi.fn(async()=>{})};
 describe('private site intake',()=>{
+ it('accepts portfolio inquiries without exposing a public inbox or arbitrary telemetry',async()=>{
+  const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},memory);
+  for(const product of ['genie','launchloom','oathra','aisecure','agent-team']){
+   const r=await app.fetch(request('/leads',{...input,useCase:product},{origin:'https://forifor.github.io'}));
+   expect(r.status).toBe(201);
+   expect(parseSiteEvent({event:'artifact_open',scenario:product,language:'ja'}).scenario).toBe(product);
+  }
+  expect((await app.fetch(new Request('http://localhost/leads',{headers:{origin:'https://forifor.github.io'}}))).status).toBe(405);
+  expect((await app.fetch(request('/leads',input,{origin:'https://forifor.github.io.attacker.test'}))).status).toBe(403);
+  expect(()=>parseSiteLead({...input,useCase:'private customer name'})).toThrow();
+ });
  it('accepts only consented inquiries and returns a receipt after storage',async()=>{const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},memory);const r=await app.fetch(request('/leads',input));expect(r.status).toBe(201);expect(await r.json()).toEqual({receipt:'AM-EXAMPLE'});expect((await app.fetch(request('/leads',{...input,consent:false}))).status).toBe(400);expect((await app.fetch(request('/leads',{...input,website:'spam'}))).status).toBe(400);});
  it('blocks foreign origins, reading records, oversized bodies and unknown fields',async()=>{const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},memory);expect((await app.fetch(request('/leads',input,{origin:'https://foreign.test'}))).status).toBe(403);expect((await app.fetch(new Request('http://localhost/leads',{headers:{origin}}))).status).toBe(405);expect((await app.fetch(request('/leads',{...input,message:'x'.repeat(9000)},{'content-length':'1'}))).status).toBe(413);expect((await app.fetch(request('/leads',{...input,recording:'private'}))).status).toBe(400);});
  it('never reports successful receipt when persistence fails',async()=>{const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},{...memory,lead:async()=>{throw Error('storage unavailable');}});const r=await app.fetch(request('/leads',input));expect(r.status).toBe(503);expect(await r.json()).toEqual({error:'UNAVAILABLE'});});
