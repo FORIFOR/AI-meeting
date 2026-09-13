@@ -30,6 +30,7 @@ function pick<T>(mod: unknown, name: string, code: string): T {
 // ---- conversation providers ------------------------------------------------
 
 export interface ProviderFactoryOptions {
+  team?: import("../api/hostedAuth.js").TeamVoiceAccess;
   brokerUrl: string;
   agentUrl: string;
   privacyMode: PrivacyMode;
@@ -78,7 +79,7 @@ export async function createConversationProvider(id: ProviderId, o: ProviderFact
        * Proactive audio stays opt-in: a model deciding not to answer is a behaviour change, not a
        * quality setting.
        */
-      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective ? true : undefined, fetchImpl: import.meta.env.VITE_RCAI_OSS === "true" ? undefined : hostedTokenFetch(o.brokerUrl) });
+      return new C({ brokerUrl: o.brokerUrl, model, proactiveAudio: affective, enableAffectiveDialog: affective ? true : undefined, fetchImpl: import.meta.env.VITE_RCAI_OSS === "true" ? undefined : hostedTokenFetch(o.brokerUrl, o.team) });
     }
     case "local": {
       const mod = await import("@rcai/provider-local");

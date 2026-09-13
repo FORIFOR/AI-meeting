@@ -36,6 +36,8 @@ export interface SessionHandlers {
 }
 
 export interface SessionInit {
+  taskWorkspace?: import("../state/taskWorkspace.js").TaskWorkspace;
+  team?: import("../api/hostedAuth.js").TeamVoiceAccess;
   settings: Settings;
   availability: Availability;
   persona: Persona;
@@ -91,7 +93,7 @@ export class SessionController {
   private disposing: Promise<void> | null = null;
 
   constructor(private readonly init: SessionInit) {
-    if (init.persona.mode === "task_planning") this.tasks = new PersistentTaskLedger();
+    if (init.persona.mode === "task_planning") this.tasks = new PersistentTaskLedger(init.taskWorkspace);
     this.decision = decide(init.settings, init.availability);
     this._providerId = this.decision.conversation;
   }
@@ -110,7 +112,7 @@ export class SessionController {
 
   private get factoryOptions() {
     const { settings } = this.init;
-    return { brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode, openaiVoiceModel: settings.openaiVoiceModel };
+    return { team: this.init.team, brokerUrl: settings.brokerUrl, agentUrl: settings.agentUrl, privacyMode: settings.privacyMode, openaiVoiceModel: settings.openaiVoiceModel };
   }
 
   get signal(): AbortSignal {
@@ -203,7 +205,7 @@ export class SessionController {
     const rawAvatar = await createAvatarProvider(character.renderer, {
       container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
       characterId: character.id, characterName: character.name,
-      quality: chosenAvatarQuality(settings, character.id),
+      quality: this.init.team ? "lightweight" : chosenAvatarQuality(settings, character.id),
       onFallback: (reason) => handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"),
     });
     if (this.signal.aborted) {
@@ -394,6 +396,7 @@ export class SessionController {
   /** 「不自然だった瞬間」: freeze ±5 s of presence context into one incident (media only when opted in). */
   captureIncident(reason = "不自然だった瞬間", note?: string): PresenceIncident | null {
     const rec = this.recorder;
+    if (this.init.team) return null;
     if (!rec) return null;
     const incident = rec.capture(reason, note);
     // Complete the +5 s half of the window, then persist/submit (never under strict_local).
@@ -408,7 +411,7 @@ export class SessionController {
   }
 
   setIncidentOptIn(next: Partial<IncidentOptIn>): void {
-    this.recorder?.setOptIn(next);
+    if (!this.init.team) this.recorder?.setOptIn(next);
   }
 
   get incidentOptIn(): IncidentOptIn {
@@ -469,11 +472,11 @@ export class SessionController {
     this.observer?.end();
     const report = this.observer?.toReport() ?? null;
     const incidents = [...(this.recorder?.incidents ?? [])];
-    saveIncidentMeta(incidents);
+    if (!this.init.team) saveIncidentMeta(incidents);
     await this.teardown();
     // Telemetry: numbers only; a strict_local session never touches the network here.
     // Delivery and evaluation are independent; neither needs to wait for the other to begin.
-    const telemetryPending = report
+    const telemetryPending = report && !this.init.team
       ? createTelemetrySender({ brokerUrl: this.init.settings.brokerUrl, privacyMode: this.init.settings.privacyMode }).send(report)
       : Promise.resolve(undefined);
 

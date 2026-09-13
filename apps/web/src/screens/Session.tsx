@@ -16,6 +16,8 @@ import type { Availability, Settings, SettingsAction } from "../state/settings.j
 import { MODE_NAME } from "./Home.jsx";
 
 export interface SessionProps {
+  taskWorkspace?: import("../state/taskWorkspace.js").TaskWorkspace;
+  team?: import("../api/hostedAuth.js").TeamVoiceAccess;
   settings: Settings;
   dispatch: (a: SettingsAction) => void;
   availability: Availability;
@@ -43,7 +45,7 @@ const EndIcon = () => (
 export function Session(p: SessionProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const init = useMemo(
-    () => ({ settings: p.settings, availability: p.availability, persona: p.persona, character: p.character, params: p.params }),
+    () => ({ taskWorkspace: p.taskWorkspace, team: p.team, settings: p.settings, availability: p.availability, persona: p.persona, character: p.character, params: p.params }),
     // Session identity is fixed at mount; changes mid-session go through the sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [p.persona.id, p.character.id],
@@ -82,7 +84,7 @@ export function Session(p: SessionProps) {
             <span className="session__mode">{MODE_NAME[p.persona.mode] ?? p.persona.mode}</span>
           </span>
           <button type="button" className="more" aria-pressed={notes} onClick={() => setNotes(v=>!v)}>{notes ? "会話へ" : "ノート"}</button>
-          <button type="button" className={`more ${sheet ? "is-open" : ""}`} aria-label="セッション設定" aria-expanded={sheet} onClick={() => setSheet((v) => !v)}>···</button>
+          {!p.team && <button type="button" className={`more ${sheet ? "is-open" : ""}`} aria-label="セッション設定" aria-expanded={sheet} onClick={() => setSheet((v) => !v)}>···</button>}
         </div>
 
         {/* The state whisper fades after a glance; the character does the talking. */}
@@ -95,10 +97,10 @@ export function Session(p: SessionProps) {
         {notes && <TranscriptLog items={s.captions} />}
         {notes && s.lookup && <LookupSources result={s.lookup} />}
         {(notes || s.taskProposals.length > 0) && (s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
-        <SelfCamera enabled={p.settings.cameraOn} />
+        <SelfCamera enabled={!p.team && p.settings.cameraOn} />
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
 
-        {sheet && (
+        {sheet && !p.team && (
           <div onClick={(e) => e.stopPropagation()}>
             <SessionSheet
               settings={p.settings}
@@ -114,7 +116,7 @@ export function Session(p: SessionProps) {
             />
           </div>
         )}
-        {gate && !sheet && (
+        {gate && !sheet && !p.team && (
           <div onClick={(e) => e.stopPropagation()}>
             <HumanGatePanel
               avatarState={s.avatarState}
@@ -133,7 +135,7 @@ export function Session(p: SessionProps) {
             <span className="ctl__ring">{s.muted ? <MicOffIcon /> : <MicIcon />}</span>
             <span className="ctl__label">{s.muted ? "ミュート中" : "マイク"}</span>
           </button>
-          {p.persona.id !== "thinking_ja" && <button type="button" className={`ctl ${p.settings.cameraOn ? "is-active" : ""}`} onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })} aria-pressed={p.settings.cameraOn}>
+          {!p.team && p.persona.id !== "thinking_ja" && <button type="button" className={`ctl ${p.settings.cameraOn ? "is-active" : ""}`} onClick={() => p.dispatch({ type: "camera", on: !p.settings.cameraOn })} aria-pressed={p.settings.cameraOn}>
             <span className="ctl__ring"><CameraIcon /></span>
             <span className="ctl__label">カメラ</span>
           </button>}

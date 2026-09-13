@@ -42,7 +42,7 @@ export class VertexLiveRelay {
       return data.model;
     } catch { return null; }
   }
-  async connect(client: WebSocket, model: string, hostedSeconds?: number) {
+  async connect(client: WebSocket, model: string, hostedSeconds?: number, accessGuard?: () => Promise<boolean>) {
     const limits = hostedSeconds ? new HostedLiveLimits(hostedSeconds) : undefined;
     const usage = new VertexUsage(model);
     const observationId = randomBytes(12).toString("hex");
@@ -61,6 +61,17 @@ export class VertexLiveRelay {
     let bytes = 0;
     let setup = false;
     const finish = () => { if (upstream?.readyState === WebSocket.CONNECTING) upstream.terminate(); else upstream?.close(); };
+    let checkingAccess = false;
+    const guardTimer = accessGuard ? setInterval(() => {
+      if (checkingAccess) return;
+      checkingAccess = true;
+      const deadline = setTimeout(() => { client.close(1008, "HOSTED_TEAM_REVOKED"); finish(); }, 5000);
+      void accessGuard().then(allowed => { if (!allowed) { client.close(1008, "HOSTED_TEAM_REVOKED"); finish(); } })
+        .catch(() => { client.close(1008, "HOSTED_TEAM_REVOKED"); finish(); })
+        .finally(() => { clearTimeout(deadline); checkingAccess = false; });
+    }, 15000) : undefined;
+    guardTimer?.unref();
+    client.once("close", () => clearInterval(guardTimer));
     const limitTimer = hostedSeconds ? setTimeout(() => { client.close(1008, "HOSTED_SESSION_LIMIT"); finish(); }, hostedSeconds * 1000) : undefined;
     limitTimer?.unref();
     client.once("close", () => clearTimeout(limitTimer));

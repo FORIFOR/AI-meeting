@@ -1,5 +1,6 @@
 import { createOpenAILiveSession } from "./routes/openaiLive.js";
 import { publicDemoOnly, startsProviderWork, PUBLIC_DEMO_ONLY_MESSAGE } from "./public-access.js";
+import { TeamWorkspaceService, createTeamRoutes } from "./team-workspace.js";
 import { HostedAccess, HostedAccessError } from "./hosted-access.js";
 import { createSiteIntake, portfolioOrigins } from "./site-intake.js";
 import { ZoomConnections, ZoomAuthError } from "./zoom/connection.js";
@@ -40,6 +41,7 @@ import { calendarEvents, calendarStatus, forwardCalendarCallback, getRule, putRu
 
 export interface AppDeps {
   hosted?: HostedAccess;
+  teams?: TeamWorkspaceService;
   env: BrokerEnv;
   zoom?: ZoomConnections;
   vertex?: VertexLiveRelay;
@@ -71,6 +73,7 @@ export function createApp(deps: AppDeps): Hono {
   const env = deps.env;
   const demoOnly = publicDemoOnly(env);
   const hosted = deps.hosted ?? new HostedAccess(env);
+  const teams = deps.teams ?? new TeamWorkspaceService(env, hosted);
   const vertex = deps.vertex ?? new VertexLiveRelay(env);
   const fetchImpl = deps.fetch ?? fetch;
   const now = deps.now ?? Date.now;
@@ -163,6 +166,7 @@ export function createApp(deps: AppDeps): Hono {
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   }));
+  app.route('/api/team', createTeamRoutes(env, teams));
   app.route('/api/site', createSiteIntake(env));
   app.use("*", async (c, next) => {
     if (demoOnly && startsProviderWork(c.req.method, c.req.path)) {
@@ -175,6 +179,7 @@ export function createApp(deps: AppDeps): Hono {
   app.get("/health", (c) =>
     c.json({
       ok: true,
+      teamWorkspaces: { enabled: teams.enabled, profile: "team-tasks-3m-v1", retentionDays: 30, maxMembers: 5 },
       hostedAccess: { enabled: hosted.policy.enabled, sessionSeconds: hosted.policy.seconds, dailySessions: hosted.policy.daily },
       publicAccess: demoOnly ? { mode: "demo_only", reason: "PUBLIC_DEMO_ONLY" } : { mode: "full" },
       providers: {

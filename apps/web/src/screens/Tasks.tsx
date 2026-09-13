@@ -6,8 +6,8 @@ import '../styles/tasks.css';
 const workspace = new TaskWorkspace();
 const label = { pending: '未完了', done: '完了', deferred: '延期' };
 
-export function Tasks({ onTalk, onBack, voiceHint, store = workspace }: {
-  onTalk?: () => void; onBack: () => void; voiceHint?: string; store?: TaskWorkspace;
+export function Tasks({ onTalk, onBack, voiceHint, storageDescription, store = workspace }: {
+  onTalk?: () => void; onBack: () => void; voiceHint?: string; storageDescription?: string; store?: TaskWorkspace;
 }) {
   const [tasks, setTasks] = useState<ConversationTask[]>([]);
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false);
@@ -47,7 +47,7 @@ export function Tasks({ onTalk, onBack, voiceHint, store = workspace }: {
   return <main className="tasks-page">
     <div className="tasks-heading"><div><p className="workspace-label">YOUR NEXT STEP</p><h1>今日の一歩を、ここに。</h1><p>会話で決めたことも、ふと思いついたことも。</p></div><button className="btn" onClick={onBack}>ホームへ</button></div>
     <section className="tasks-summary"><div><strong>{remaining}</strong><span>これからのタスク</span><small>{tasks.filter(t => t.status === 'done').length}件完了</small></div><div><button className="btn btn--primary" onClick={onTalk} disabled={!onTalk || !ready || busy}>声でタスクを整理する ↗</button><p>{voiceHint ?? '保存したタスクを引き継いで話せます。'}</p></div></section>
-    <p className="tasks-storage">このブラウザーに自動保存します。ほかの端末には同期されません。大切なタスクはバックアップできます。音声で整理を始めると、保存したタスクを選択中のAIに共有します。</p>
+    <p className="tasks-storage">{storageDescription ?? 'このブラウザーに自動保存します。ほかの端末には同期されません。大切なタスクはバックアップできます。音声で整理を始めると、保存したタスクを選択中のAIに共有します。'}</p>
     {error && <div className="notice err" role="alert">{error} <button className="btn btn--ghost" onClick={() => { setError(''); void refresh().catch(fail); }}>読み直す</button></div>}
     <p className="tasks-status" role="status">{message || (!ready && !error ? 'タスクを読み込んでいます…' : '')}</p>
     <form className="task-add" onSubmit={e => { e.preventDefault(); void mutate(async () => { await store.add(title, due); setTitle(''); setDue(''); }, 'タスクを保存しました。'); }}>

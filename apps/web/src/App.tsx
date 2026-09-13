@@ -32,6 +32,7 @@ const Setup = lazy(() => import("./screens/Setup.js").then((m) => ({ default: m.
 const Result = lazy(() => import("./screens/Result.js").then((m) => ({ default: m.Result })));
 const ThinkingResult = lazy(() => import("./screens/ThinkingResult.js").then((m) => ({ default: m.ThinkingResult })));
 const Tasks = lazy(() => import("./screens/Tasks.js").then((m) => ({ default: m.Tasks })));
+const TeamWorkspace = import.meta.env.VITE_RCAI_OSS === "true" ? () => null : lazy(() => import("./screens/TeamWorkspace.js").then(m => ({ default: m.TeamWorkspace })));
 const HostedAccount = import.meta.env.VITE_RCAI_OSS === "true" ? () => null : lazy(() => import("./components/HostedAccount.js").then(m => ({ default: m.HostedAccount })));
 
 function preload(load: () => Promise<unknown>) {
@@ -43,6 +44,7 @@ function preload(load: () => Promise<unknown>) {
 type Screen =
   | { name: "home" }
   | { name: "tasks" }
+  | { name: "team" }
   | { name: "settings" }
   | { name: "character"; back: "home" | "settings" | "setup"; mode?: ConversationMode }
   | { name: "meeting" }
@@ -81,7 +83,7 @@ function readBotParams(): { token: string; brokerUrl?: string; botId?: string; c
 export function App() {
   const [settings, dispatch] = useReducer(settingsReducer, undefined, () => loadSettings());
   const botParams = useMemo(() => readBotParams(), []);
-  const [screen, setScreen] = useState<Screen>(() => botParams ? { name: "meeting" } : typeof location !== "undefined" && location.hash === "#tasks" ? { name: "tasks" } : { name: "home" });
+  const [screen, setScreen] = useState<Screen>(() => botParams ? { name: "meeting" } : typeof location !== "undefined" && location.hash.startsWith("#team") ? { name: "team" } : typeof location !== "undefined" && location.hash === "#tasks" ? { name: "tasks" } : { name: "home" });
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [characters, setCharacters] = useState<CharacterEntry[]>([]);
   const [contentNote, setContentNote] = useState<string | undefined>();
@@ -97,11 +99,12 @@ export function App() {
   useEffect(() => saveSettings(settings), [settings]);
   useEffect(() => {
     if (screen.name === "tasks") history.replaceState(null, "", `${location.pathname}${location.search}#tasks`);
-    else if (location.hash === "#tasks") history.replaceState(null, "", `${location.pathname}${location.search}`);
+    else if (screen.name === "team") { if (!location.hash.startsWith("#team")) history.replaceState(null, "", `${location.pathname}${location.search}#team`); }
+    else if (location.hash === "#tasks" || location.hash.startsWith("#team")) history.replaceState(null, "", `${location.pathname}${location.search}`);
   }, [screen.name]);
   useEffect(() => {
     if (botParams) return;
-    const navigate = () => { if (location.hash === "#tasks") setScreen({ name: "tasks" }); };
+    const navigate = () => { if (location.hash === "#tasks") setScreen({ name: "tasks" }); else if (location.hash.startsWith("#team")) setScreen({ name: "team" }); };
     window.addEventListener("hashchange", navigate);
     return () => window.removeEventListener("hashchange", navigate);
   }, [botParams]);
@@ -203,6 +206,7 @@ export function App() {
             <button aria-current={screen.name === "meeting" ? "page" : undefined} onPointerEnter={() => preload(loadMeeting)} onFocus={() => preload(loadMeeting)} onClick={() => setScreen({ name: "meeting" })}>会議</button>
             <button aria-current={screen.name === "meetings" ? "page" : undefined} onPointerEnter={() => preload(loadMeetings)} onFocus={() => preload(loadMeetings)} onClick={() => setScreen({ name: "meetings" })}>会議の履歴</button>
             <button aria-current={screen.name === "settings" ? "page" : undefined} onPointerEnter={() => preload(loadSettingsScreen)} onFocus={() => preload(loadSettingsScreen)} onClick={() => setScreen({ name: "settings" })}>設定</button>
+            {hostedEnabled && <button type="button" aria-current={screen.name === "team" ? "page" : undefined} onClick={() => setScreen({ name: "team" })}>チーム</button>}
           </nav>
         </header>
       )}
@@ -228,6 +232,7 @@ export function App() {
           onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
         />
       )}
+      {screen.name === "team" && <TeamWorkspace settings={settings} persona={personas.find(p => p.mode === "task_planning")} character={characters.find(c => c.id === "vroid-b") ?? characters.find(c => c.renderer === "vrm")} onBack={() => setScreen({ name: "home" })} />}
       {screen.name === "tasks" && <Tasks
         onBack={() => setScreen({ name: "home" })}
         onTalk={personas.some(p => p.mode === "task_planning") && availability && (availability.openai || availability.google || availability.local) ? () => onContinue("task_planning") : undefined}

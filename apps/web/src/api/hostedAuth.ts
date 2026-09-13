@@ -27,13 +27,21 @@ export function hostedAuth(): Promise<Auth> {
   return loading;
 }
 
-export function hostedTokenFetch(brokerUrl: string): typeof fetch {
+export interface TeamVoiceAccess { id: string; uid: string; consent: string }
+
+export function hostedTokenFetch(brokerUrl: string, team?: TeamVoiceAccess): typeof fetch {
   return async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const tokenEndpoint = `${brokerUrl.replace(/\/$/, '')}/api/token/gemini`;
     if (url !== tokenEndpoint || !hostedBrokerAllowed(brokerUrl) || !auth?.currentUser?.emailVerified) return fetch(input, init);
+    if (team && (auth.currentUser.uid !== team.uid || !/^team-[a-f0-9]{24}$/.test(team.id))) throw new Error('チームのログイン状態が変わりました。');
     const token = await auth.currentUser.getIdToken();
+    if (team && auth.currentUser?.uid !== team.uid) throw new Error('チームのログイン状態が変わりました。');
     const headers = new Headers(init?.headers); headers.set('Authorization', `Bearer ${token}`);
+    if (team) {
+      headers.set('Content-Type', 'application/json');
+      return fetch(`${brokerUrl.replace(/\/$/, '')}/api/team/${team.id}`, { ...init, method: 'POST', headers, body: JSON.stringify({ action: 'voice', consent: team.consent }), redirect: 'error' });
+    }
     return fetch(`${brokerUrl.replace(/\/$/, '')}/api/hosted/session`, { ...init, headers, redirect: 'error' });
   };
 }

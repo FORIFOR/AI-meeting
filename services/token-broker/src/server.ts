@@ -1,5 +1,6 @@
 import { VertexLiveRelay } from "./vertex-live.js";
 import { publicDemoOnly } from "./public-access.js";
+import { TeamWorkspaceService } from "./team-workspace.js";
 import { HostedAccess } from "./hosted-access.js";
 import { createServer } from "node:http";
 import { serve } from "@hono/node-server";
@@ -23,7 +24,8 @@ const sessions = new MeetingSessionRegistry(env.MEETING_TOKEN_SECRET);
 if (sessions.secretSource === "ephemeral") console.warn("[token-broker] MEETING_TOKEN_SECRET not set — using an ephemeral secret (meeting tokens are invalid after restart)");
 const vertex = new VertexLiveRelay(env);
 const hosted = new HostedAccess(env);
-const app = createApp({ env, relay, sessions, vertex, hosted });
+const teams = new TeamWorkspaceService(env, hosted);
+const app = createApp({ env, relay, sessions, vertex, hosted, teams });
 // TTL sweeper: ended/revoked sessions are dropped after 5 min, idle live sessions after 6 h.
 setInterval(() => {
   for (const id of sessions.sweep()) console.log(`[token-broker] meeting session swept ${id.slice(0, 8)}…`);
@@ -49,9 +51,10 @@ server.on("upgrade", (req, socket, head) => {
     const ticket = url.searchParams.get("ticket") ?? "";
     if (ticket.startsWith("hosted_")) {
       // Durable single use and an atomic reservation are checked before any provider connection.
-      void hosted.consume(ticket).then(grant => {
+      void hosted.consume(ticket).then(async grant => {
+        if (grant?.team && !await teams.allowed(grant.team.id, grant.team.actor)) grant = null;
         if (!grant || socket.destroyed) { socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n"); return; }
-        wss.handleUpgrade(req, socket, head, ws => { void vertex.connect(ws, grant.model, grant.seconds); });
+        wss.handleUpgrade(req, socket, head, ws => { void vertex.connect(ws, grant!.model, grant!.seconds, grant!.team ? () => teams.allowed(grant!.team!.id, grant!.team!.actor) : undefined); });
       }).catch(() => socket.destroy());
       return;
     }

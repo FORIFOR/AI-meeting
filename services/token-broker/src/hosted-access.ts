@@ -4,10 +4,10 @@ import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import type { BrokerEnv } from './env.js';
 
-export interface HostedGrant { hash: string; user: string; day: string; expiresAt: number; consumed: boolean; seconds: number }
+export interface HostedGrant { hash: string; user: string; day: string; expiresAt: number; consumed: boolean; seconds: number; team?: { id: string; actor: string } }
 export interface HostedUsage { grants: HostedGrant[] }
 export interface HostedStore { change<T>(month: string, update: (data: HostedUsage) => T): Promise<T> }
-export interface HostedIdentity { uid: string; email_verified?: boolean; firebase?: { sign_in_provider?: string } }
+export interface HostedIdentity { uid: string; email?: string; email_verified?: boolean; firebase?: { sign_in_provider?: string } }
 export class HostedAccessError extends Error { constructor(readonly status: 401 | 403 | 429 | 503, readonly code: string, message: string) { super(message); } }
 
 export function hostedPolicy(env: BrokerEnv) {
@@ -48,7 +48,7 @@ export class HostedAccess {
     this.store = deps.store ?? (this.policy.enabled ? new FirestoreHostedStore(env.GOOGLE_CLOUD_PROJECT!, env.RCAI_HOSTED_FIRESTORE_DATABASE!) : undefined);
   }
   private now() { return (this.deps.now ?? Date.now)(); }
-  private async identity(authorization?: string): Promise<HostedIdentity> {
+  async identity(authorization?: string): Promise<HostedIdentity> {
     if (!this.policy.enabled) throw new HostedAccessError(503, 'HOSTED_DISABLED', '音声体験は現在準備中です。タスク管理はそのまま使えます。');
     const token = /^Bearer ([^\s]{20,8192})$/.exec(authorization ?? '')?.[1];
     if (!token) throw new HostedAccessError(401, 'SIGN_IN_REQUIRED', '音声体験を始めるにはログインしてください。');
@@ -65,11 +65,11 @@ export class HostedAccess {
     return identity;
   }
 
-  async reserve(authorization?: string) {
+  async reserve(authorization?: string, team?: { id: string; actor: string }) {
     const identity = await this.identity(authorization);
     const now = this.now(), day = new Date(now).toISOString().slice(0, 10), month = day.slice(0, 7);
     const token = `hosted_${month}_${randomBytes(32).toString('hex')}`;
-    const grant: HostedGrant = { hash: digest(token), user: digest(identity.uid), day, expiresAt: now + 120_000, consumed: false, seconds: this.policy.seconds };
+    const grant: HostedGrant = { hash: digest(token), user: digest(identity.uid), day, expiresAt: now + 120_000, consumed: false, seconds: this.policy.seconds, ...(team ? { team } : {}) };
     try {
       await this.store!.change(month, data => {
         if (data.grants.length >= this.policy.monthly) throw new HostedAccessError(429, 'HOSTED_CAPACITY_REACHED', '今月の音声体験の提供枠に達しました。タスク管理は引き続き使えます。');
@@ -81,7 +81,7 @@ export class HostedAccess {
     return { token, expiresAt: grant.expiresAt, sessionSeconds: grant.seconds, backend: 'vertex' as const, model: this.env.VERTEX_LIVE_MODEL ?? 'gemini-live-2.5-flash-native-audio', websocketPath: '/api/live/vertex' };
   }
 
-  async consume(token: string): Promise<{ model: string; seconds: number } | null> {
+  async consume(token: string): Promise<{ model: string; seconds: number; team?: { id: string; actor: string } } | null> {
     if (!this.policy.enabled || !/^hosted_\d{4}-\d{2}_[a-f0-9]{64}$/.test(token)) return null;
     const thisMonth = new Date(this.now()).toISOString().slice(0, 7);
     const previousMonth = new Date(this.now() - 120_000).toISOString().slice(0, 7);
@@ -91,7 +91,7 @@ export class HostedAccess {
         const grant = data.grants.find(g => g.hash === digest(token));
         if (!grant || grant.consumed || grant.expiresAt <= this.now()) return null;
         grant.consumed = true;
-        return { model: this.env.VERTEX_LIVE_MODEL ?? 'gemini-live-2.5-flash-native-audio', seconds: Math.min(grant.seconds, this.policy.seconds) };
+        return { model: this.env.VERTEX_LIVE_MODEL ?? 'gemini-live-2.5-flash-native-audio', seconds: Math.min(grant.seconds, this.policy.seconds), ...(grant.team ? { team: grant.team } : {}) };
       });
     } catch { return null; }
   }

@@ -3,6 +3,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
+  RCAI_TEAM_WORKSPACES?: string;
+  RCAI_TEAM_FIRESTORE_DATABASE?: string;
   /** Public marketing origin; enables private inquiry intake and aggregate site events. */
   RCAI_MARKETING_ORIGIN?: string;
   /** Public demo launch: stop new billed provider work while retaining local demos and cleanup. */
