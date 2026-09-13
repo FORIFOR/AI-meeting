@@ -1,21 +1,34 @@
-# AI-meeting
+# AI Meeting
 
-[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Download beta / ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
-**話すうちに、次の一歩。**
+**会話で決めたTODOを、次回へ残す。**
 
-面接、英会話、商談を、AIキャラクターを相手に練習できます。自分のペースで話し、途中で止めて言い直す。使うキャラクターとAIの接続先も選べます。
+「資料確認は今日中に。メール返信は明日に」。AIキャラクターに話し、途中で言い直し、タスクを追加・完了・延期。聞き取りの確認が必要な変更は、内容を確かめてから保存します。
 
-[タスク管理を始める](https://ai-meeting.web.app/#tasks) · [音声とアバターを試す](https://ai-meeting.web.app/vrm-demo) · [紹介サイト](https://ai-meeting.forifor.chatgpt.site) · [English](README.md)
+[登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [English](README.md)
 
-**タスク管理は無料・登録不要です。** 入力や会話で決めたタスクをこのブラウザーに保存し、次回も続きから使えます。完了・延期・編集と、JSONバックアップの保存・復元に対応しています。端末間の自動同期はありません。
+[![実際のGeminiの返答とVRMアバター、会話で変更されるタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
-公開版の音声体験は、メール確認済みアカウントで1回3分・1日1回まで（UTC日付で集計）。全体の提供枠にも上限があり、自動課金はありません。長時間のAI会話や会議連携は、セルフホスト環境で接続先の設定が必要です。
+*入力は日本語の合成音声、返答は実際のGemini。録画用レイアウトを使い、入力と一致する提案をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)。*
 
-[![45秒の実録を見る：VRMアバター、Geminiの実応答、会話から記録したタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
+## インストール前に試す
 
-**[45秒の実録を見る](https://youtu.be/qLenE6R7-nI)** — タスクの追加、割り込み、変更の確認まで。入力はmacOS Kyokoの合成音声、返答は実際のGeminiで、専用の録画レイアウトを使っています。変更提案は台本との一致をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)も公開しています。
+| 入口 | できること・条件 |
+| --- | --- |
+| [タスクをひとつ保存する](https://ai-meeting.web.app/#tasks) | 無料・登録不要。追加・完了・延期して、同じブラウザーで次回も続けられます。JSONバックアップ対応、端末間の自動同期なし。 |
+| [AIと声で話す](https://ai-meeting.web.app/) | メール確認後に1回3分・UTC日付で1日1回。全体の提供枠にも上限があり、自動課金はありません。 |
+| [音声とVRMアバターを見る](https://ai-meeting.web.app/vrm-demo) | アカウント・APIキー・マイク不要。録音済み音声や手元の音声を再生できます。 |
 
-**チーム共有を追加しました。** [チームを開く](https://ai-meeting.web.app/#team)から、確認済みメールでの招待、共有タスク、権限管理、削除・復元を利用できます。5名・30日・1回3分の日本語音声が対象です。[提供範囲と技術的な受入結果](docs/team-deployment.md)。個人用タスクとは別の保存先です。
+[チーム共有](https://ai-meeting.web.app/#team)は、招待・権限・タスク同期に対応した5名・30日の限定構成です。[提供範囲と受入結果](docs/team-deployment.md)。
+
+## 音声AIを作る方へ
+
+- [タスクの検証](packages/conversation-core/src/tasks.ts)：ツール呼び出しをユーザー発話の引用と照合し、未確認の変更は提案として保留します。
+- [タスクの保存](apps/web/src/state/taskWorkspace.ts)：IndexedDBの処理完了後に成功を返し、別タブからの古い変更による上書きを防ぎます。
+- [音声とUIの同期](apps/web/src/session/voiceActivity.ts)：受信した音声と実際の再生を区別し、オーブを返答に合わせます。[表示を切り替えるサンプル](https://ai-meeting.web.app/orb-preview)。
+
+**自分の開発にも役立ちそうなら、Starで保存してください。** [導入・カスタマイズの相談](https://ai-meeting.forifor.chatgpt.site/ja#business)は非公開フォームで受け付けています。
+
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
 
 ## できること
 
@@ -58,7 +71,7 @@ Live2Dやクラウドアバターは任意の追加連携です。SDK・素材�
 
 ## 現在の状態と検証
 
-**ベータ版です。** 2026年9月13日に自動テスト1,087件、型検査、OSSビルド監査が合格しました。従来のVRM制約サンプルでは、日本語50文、割り込み20回、60分連続稼働を確認しています。新しいAvatarSample_Bはブラウザー上と45秒の実Gemini録画で確認しました。このモデル単体での60分連続検証は未実施です。
+**ベータ版です。** 2026年9月13日に自動テスト1,099件、型検査、OSSビルド監査が合格しました。従来のVRM制約サンプルでは、日本語50文、割り込み20回、60分連続稼働を確認しています。新しいAvatarSample_Bはブラウザー上と45秒の実Gemini録画で確認しました。このモデル単体での60分連続検証は未実施です。
 
 同じ20音声で測った、Live2Dに対するVRMのローカル再生の追加遅延は、各音声の差のp95で**+6.3ms**でした。**AIが返答するまでの時間ではありません。** 人が感じる自然さ、実AIとの60分連続会話、別のMeet/Zoom参加者の端末へ届く音声・映像は、この結果に含みません。会議連携には別途設定と検証が必要です。
 

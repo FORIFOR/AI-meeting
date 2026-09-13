@@ -1,21 +1,34 @@
-# AI-meeting
+# AI Meeting
 
-[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Download beta / ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
-**Think out loud with an AI character.**
+**Turn spoken plans into tasks you can pick up next time.**
 
-Organize a plan, rehearse an interview, or speak a new language. Talk at your own pace, interrupt to change direction, and choose the character and AI connection that fit your setup.
+Tell an AI character what needs doing, interrupt to change a plan, and keep the resulting tasks. Add, complete, or defer them by voice; check uncertain changes before they are saved.
 
-[Open your tasks](https://ai-meeting.web.app/#tasks) · [Try the avatar demo](https://ai-meeting.web.app/vrm-demo) · [Website](https://ai-meeting.forifor.chatgpt.site) · [日本語](README.ja.md)
+[Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [日本語](README.ja.md)
 
-**Personal task management is free and needs no registration.** Add, edit, complete, or defer tasks; they are saved in this browser and restored in the next conversation. Export and restore a JSON backup. There is no automatic sync between devices.
+[![Real Gemini responses, a VRM avatar, and tasks changing during a conversation](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
-**Team workspaces:** [open a team](https://ai-meeting.web.app/#team) with verified-email invitations, shared tasks, administrator controls, deletion and recovery. The limited profile supports five members for 30 days and three-minute Japanese voice sessions. [Technical scope and acceptance evidence](docs/team-deployment.md). Personal tasks stay separate.
+*Recorded demonstration: synthetic Japanese input, real Gemini responses, a dedicated recording layout, and a script that confirms proposals matching the input. [Recording method and limits](docs/validation.md).*
 
-The hosted voice experience requires a verified email account: up to 3 minutes per session, once per UTC day, subject to a shared capacity limit. There is no automatic billing. Longer conversations and meeting integrations require your own configured installation.
+## Try it before installing
 
-[![Watch the 45-second AI-meeting demo: a VRM character, live Gemini responses, and saved tasks](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
+| Start here | What you get |
+| --- | --- |
+| [Save your first task](https://ai-meeting.web.app/#tasks) | Free, no registration. Add, complete, defer, and reopen tasks saved in this browser. JSON backup; no automatic device sync. |
+| [Talk to the AI](https://ai-meeting.web.app/) | Verified email required. Up to 3 minutes, once per UTC day, within shared capacity. No automatic billing. |
+| [Explore voice and VRM](https://ai-meeting.web.app/vrm-demo) | No account, API key, or microphone. Play recorded or local audio with the avatar. |
 
-**[Watch the 45-second demo](https://youtu.be/qLenE6R7-nI):** add tasks, interrupt, and confirm an update. The recording uses synthetic Japanese input (macOS Kyoko), real Gemini responses, and a VRM avatar in a dedicated recording layout. A script confirms proposals that exactly match the demo inputs; see [the recording method and validation](docs/validation.md).
+For teams, [shared workspaces](https://ai-meeting.web.app/#team) include invitations, roles, and task synchronization in a limited five-member, 30-day profile. [Scope and acceptance evidence](docs/team-deployment.md).
+
+## Building a voice app? Read these parts
+
+- [Task validation](packages/conversation-core/src/tasks.ts): tie tool calls to quoted user statements and keep unverified changes pending.
+- [Persistent tasks](apps/web/src/state/taskWorkspace.ts): report success after the IndexedDB transaction completes; reject stale edits from another tab.
+- [Audio-driven UI](apps/web/src/session/voiceActivity.ts): distinguish received audio from actual playback, so the orb stays in sync with the reply. [Interactive visual sample](https://ai-meeting.web.app/orb-preview).
+
+**Useful for your own project? Star this repository to keep it handy.** [Implementation and deployment inquiries](https://ai-meeting.forifor.chatgpt.site/#business) use a private form.
+
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Beta release](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
 
 ## What you can do
 
@@ -58,7 +71,7 @@ Live2D and cloud avatar integrations are optional. Their SDKs, assets, credentia
 
 ## Status and validation
 
-**Beta.** On September 13, 2026, 1,087 automated tests across 122 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
+**Beta.** On September 13, 2026, 1,099 automated tests across 124 files passed, along with type checking. The OSS build includes a distribution and license audit. Earlier checks with the VRM constraint sample passed 50 Japanese audio samples, 20 interruptions, and a 60-minute run using fixture audio and the real renderer/audio runtime. The new AvatarSample_B was checked in the browser and in the 45-second real Gemini recording; that model has not yet had its own 60-minute soak test.
 
 For 20 paired audio samples, the p95 of VRM's additional local playback delay relative to Live2D was **+6.3 ms**. This measures local audio processing, **not AI response time**. Naturalness judged by people, a 60-minute live AI conversation, and audio/video received on a separate Meet/Zoom participant's device are not covered by that result. Meeting connectors require their own setup and validation. See [validation details and the recorded Gemini task demo](docs/validation.md).
 
