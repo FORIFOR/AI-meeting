@@ -73,6 +73,7 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, descripti
       <nav aria-label="AI Meetingの実演とソースコード">
         <a href="https://youtu.be/qLenE6R7-nI" target="_blank" rel="noopener noreferrer" aria-label="45秒の操作デモ（YouTube、新しいタブ）">45秒の操作デモ ↗</a>
         <a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noopener noreferrer" aria-label="GitHubでコードを見る（新しいタブ）">GitHubでコードを見る ↗</a>
+        <a className="tasks-star" href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noopener noreferrer" aria-label="GitHubでAI MeetingをStarする（新しいタブ）">役立ったらGitHubでStarする ↗</a>
         <a href="https://ai-meeting.forifor.chatgpt.site/ja#business" target="_blank" rel="noopener noreferrer" aria-label="導入・カスタマイズの相談（新しいタブ）">導入・カスタマイズの相談 ↗</a>
       </nav>
     </footer>}
