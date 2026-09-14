@@ -12,6 +12,7 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, descripti
   const [tasks, setTasks] = useState<ConversationTask[]>([]);
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false);
   const [error, setError] = useState(''), [message, setMessage] = useState('');
+  const [showStarNudge, setShowStarNudge] = useState(false);
   const [title, setTitle] = useState(''), [due, setDue] = useState('');
   const [filter, setFilter] = useState<'active' | 'done' | 'all'>('active');
   const [editing, setEditing] = useState<ConversationTask | null>(null);
@@ -50,7 +51,8 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, descripti
     <p className="tasks-storage">{storageDescription ?? 'このブラウザーに自動保存します。ほかの端末には同期されません。大切なタスクはバックアップできます。音声で整理を始めると、保存したタスクを選択中のAIに共有します。'}</p>
     {error && <div className="notice err" role="alert">{error} <button className="btn btn--ghost" onClick={() => { setError(''); void refresh().catch(fail); }}>読み直す</button></div>}
     <p className="tasks-status" role="status">{message || (!ready && !error ? 'タスクを読み込んでいます…' : '')}</p>
-    <form className="task-add" onSubmit={e => { e.preventDefault(); void mutate(async () => { await store.add(title, due); setTitle(''); setDue(''); }, 'タスクを保存しました。'); }}>
+    {showStarNudge && <p className="tasks-nudge" role="status">役立ちそうなら、<a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noopener noreferrer">GitHubでStarする ↗</a>と、あとで見つけやすくなります。</p>}
+    <form className="task-add" onSubmit={e => { e.preventDefault(); void mutate(async () => { await store.add(title, due); setTitle(''); setDue(''); setShowStarNudge(true); }, 'タスクを保存しました。'); }}>
       <label>やること<input className="input" value={title} onChange={e => setTitle(e.target.value)} placeholder="例：見積書を送る" maxLength={160} required disabled={busy || !ready} /></label>
       <label>期限（任意）<input className="input" value={due} onChange={e => setDue(e.target.value)} placeholder="例：9月15日 15時" maxLength={80} disabled={busy || !ready} /></label>
       <button className="btn btn--primary" disabled={busy || !ready || !title.trim() || tasks.length >= 100}>追加する</button>
