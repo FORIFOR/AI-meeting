@@ -4,7 +4,7 @@
 
 Tell an AI character what needs doing, interrupt to change a plan, and keep the resulting tasks. Add, complete, or defer them by voice; check uncertain changes before they are saved.
 
-[Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [日本語](README.ja.md)
+[Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
 [![Real Gemini responses, a VRM avatar, and tasks changing during a conversation](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
@@ -84,5 +84,7 @@ Application-specific code is licensed under [Apache-2.0](LICENSE), subject to th
 Try a scenario, report a reproducible problem, or improve a provider, language, or character integration. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 For **paid setup, customization, or operational support**, [start a business inquiry](https://ai-meeting.forifor.chatgpt.site/#business). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Inquiries use a private form; do not include confidential material.
+
+For questions and non-confidential use cases, use [GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions). Use the private form for business details or anything that should not be public.
 
 If the project is useful, a GitHub star helps you find it again and makes it easier for others to discover.

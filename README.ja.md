@@ -4,7 +4,7 @@
 
 「資料確認は今日中に。メール返信は明日に」。AIキャラクターに話し、途中で言い直し、タスクを追加・完了・延期。聞き取りの確認が必要な変更は、内容を確かめてから保存します。
 
-[登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [English](README.md)
+[登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
 [![実際のGeminiの返答とVRMアバター、会話で変更されるタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
@@ -86,5 +86,7 @@ Live2Dやクラウドアバターは任意の追加連携です。SDK・素材�
 シナリオを試す、不具合を報告する、接続先・言語・キャラクターの対応を改善するところから参加できます。[開発への参加方法](CONTRIBUTING.md)と[セキュリティ報告](SECURITY.md)を参照してください。
 
 **有料の導入・カスタマイズ・運用支援**は、[導入・開発の相談](https://ai-meeting.forifor.chatgpt.site/ja#business)へ。改善したい業務と必要な支援をお知らせください。対応可否・作業範囲・納期・費用を、着手前に個別に確認します。現在のアプリは開発者向けベータ版で、登録だけで使える月額サービスではありません。相談は非公開フォームで受け付けます。機密情報は含めないでください。
+
+公開できる質問や利用例は、[GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions)へ。業務の詳細や公開したくない内容は、非公開フォームからご相談ください。
 
 役に立ったら、GitHubのスターで保存していただけると、他の方にも見つけてもらいやすくなります。
