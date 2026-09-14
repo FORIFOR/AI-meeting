@@ -16,6 +16,11 @@ All notable changes to this project are documented here. Current release measure
 - Typography: Zen Old Mincho (display) + Zen Kaku Gothic New (body) + IBM Plex Mono restricted to numerals and instrument readouts. Design rules documented in `docs/ui-design.md`.
 - `soak-browser.mjs` matches the status pill by state word rather than prefix (the pill is now Japanese-first).
 
+## [0.2.0-beta.2] — 2026-09-14 — Voice orb and validation refresh
+- Voice orb now acknowledges clear microphone input during the VAD handoff while preserving speaking, thinking, mute and terminal-state priority.
+- Added focused regression coverage and documented the conservative input hint in `docs/voice-orb.md`.
+- Refreshed the quickstart links, Codespaces entry point and validation status; 1,100 automated tests across 124 files pass in CI.
+
 ## [0.2.0-beta.1] — 2026-08-30 — Production Beta Candidate
 First versioned build. Everything below was implemented and executed on 2026-08-30 (Gate 0–10, Round 2, Round 3).
 

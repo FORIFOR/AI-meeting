@@ -47,7 +47,7 @@
 | [GitHub Codespacesで開く](https://codespaces.new/FORIFOR/AI-meeting?quickstart=1) | Node.js 22とpnpmを自動準備します。`pnpm dev:oss`を実行し、転送されたポートの`/vrm-demo.html`を開いてください。 |
 | [AIと声で話す](https://ai-meeting.web.app/) | メール確認後に1回3分・UTC日付で1日1回。全体の提供枠にも上限があり、自動課金はありません。 |
 | [音声とVRMアバターを見る](https://ai-meeting.web.app/vrm-demo) | アカウント・APIキー・マイク不要。録音済み音声や手元の音声を再生できます。 |
-| [OSSプレビューをダウンロードする](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1) | `AI-meeting-0.2.0-beta.1-oss-web.zip`を展開し、`python3 -m http.server 8000`を実行して`vrm-demo.html`を開きます。Node.js設定・APIキー不要です。 |
+| [OSSプレビューをダウンロードする](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2) | `AI-meeting-0.2.0-beta.2-oss-web.zip`を展開し、`python3 -m http.server 8000`を実行して`vrm-demo.html`を開きます。Node.js設定・APIキー不要です。 |
 
 [チーム共有](https://ai-meeting.web.app/#team)は、招待・権限・タスク同期に対応した5名・30日の限定構成です。[提供範囲と受入結果](docs/team-deployment.md)。
 
@@ -70,7 +70,7 @@
 
 **自分の開発にも役立ちそうなら、Starで保存してください。** [導入・カスタマイズの相談](https://ai-meeting.forifor.chatgpt.site/ja#business)は非公開フォームで受け付けています。
 
-[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)
 
 ## できること
 

@@ -47,7 +47,7 @@ Evaluating AI Meeting as a voice and avatar building block? Start with the accou
 | [Open in GitHub Codespaces](https://codespaces.new/FORIFOR/AI-meeting?quickstart=1) | Node.js 22 and pnpm are prepared automatically. Run `pnpm dev:oss`, then open the forwarded port at `/vrm-demo.html`. |
 | [Talk to the AI](https://ai-meeting.web.app/) | Verified email required. Up to 3 minutes, once per UTC day, within shared capacity. No automatic billing. |
 | [Explore voice and VRM](https://ai-meeting.web.app/vrm-demo) | No account, API key, or microphone. Play recorded or local audio with the avatar. |
-| [Download the OSS preview](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1) | Extract `AI-meeting-0.2.0-beta.1-oss-web.zip`, run `python3 -m http.server 8000`, and open `vrm-demo.html`. No Node.js setup or API key. |
+| [Download the OSS preview](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2) | Extract `AI-meeting-0.2.0-beta.2-oss-web.zip`, run `python3 -m http.server 8000`, and open `vrm-demo.html`. No Node.js setup or API key. |
 
 For teams, [shared workspaces](https://ai-meeting.web.app/#team) include invitations, roles, and task synchronization in a limited five-member, 30-day profile. [Scope and acceptance evidence](docs/team-deployment.md).
 
@@ -70,7 +70,7 @@ Choose the rendering path that matches your privacy and deployment needs. The ho
 
 **Useful for your own project? Star this repository to keep it handy.** [Implementation and deployment inquiries](https://ai-meeting.forifor.chatgpt.site/#business) use a private form.
 
-[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Beta release](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Beta release](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)
 
 ## What you can do
 
