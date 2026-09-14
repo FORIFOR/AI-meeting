@@ -2,7 +2,7 @@
 
 The live session (including team sessions) and meeting relay/bot views use a liquid glass orb alongside the selected character. It replaces the fading state text so listening, thinking and speaking remain visible. The separate `/orb-preview` page is a labelled visual sample and never captures audio or calls an AI service.
 
-- **Input:** the existing microphone or meeting PCM is reduced to a bounded RMS level; the listening state follows the conversation's speech activity.
+- **Input:** the existing microphone or meeting PCM is reduced to a bounded RMS level; the listening state follows the conversation's speech activity, with a conservative level hint covering the short handoff before a VAD event arrives. The hint is visual only and never changes turn-taking.
 - **Thinking:** the conversation's thinking state uses the linked Siri Wave settings. Generated speech without played PCM remains in the thinking state.
 - **Output:** only the existing speaker playback tap activates output. Playback can continue after generation has ended. The label stays stable over pauses while the audio sink remains active.
 - **Interrupt/mute/exit:** interruption clears output immediately. Microphone mute clears input but does not hide audible AI output. Ending, closed and error phases take priority over residual levels.
