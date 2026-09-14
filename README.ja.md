@@ -10,6 +10,8 @@
 
 [登録せずタスクを試す](https://ai-meeting.web.app/#tasks) → [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) → [GitHubでStarする](https://github.com/FORIFOR/AI-meeting)
 
+**最新ベータ：[v0.2.0-beta.2](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)** — 音声入力の引き継ぎ表示を改善し、自動テスト1,100件とローカルで動かせるOSSプレビューを公開しています。
+
 [VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [TikTokの8秒実演](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [有料の導入・カスタマイズ相談](https://ai-meeting.forifor.chatgpt.site/ja#business) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
 [![8秒のプレビュー：VRMアバターとの会話でタスクが更新される様子](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)

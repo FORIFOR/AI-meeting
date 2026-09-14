@@ -10,6 +10,8 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 
 [Try tasks — no account](https://ai-meeting.web.app/#tasks) → [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) → [Star on GitHub](https://github.com/FORIFOR/AI-meeting)
 
+**Latest beta: [v0.2.0-beta.2](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)** — voice-orb input handoff, 1,100 automated tests, and an OSS preview you can run locally.
+
 [Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [See the 8-second TikTok demo](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [Paid setup and customization](https://ai-meeting.forifor.chatgpt.site/#business) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
 [![8-second preview: a VRM avatar hears a spoken task change and the task list updates](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
