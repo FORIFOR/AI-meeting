@@ -6,7 +6,7 @@ An open-source **voice-to-task** app for interruptible AI conversations, VRM ava
 
 Tell an AI character what needs doing, interrupt to change a plan, and keep the resulting tasks. Add, complete, or defer them by voice; check uncertain changes before they are saved.
 
-[Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
+[Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
 [![Real Gemini responses, a VRM avatar, and tasks changing during a conversation](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 

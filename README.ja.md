@@ -6,7 +6,7 @@
 
 「資料確認は今日中に。メール返信は明日に」。AIキャラクターに話し、途中で言い直し、タスクを追加・完了・延期。聞き取りの確認が必要な変更は、内容を確かめてから保存します。
 
-[登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
+[登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
 [![実際のGeminiの返答とVRMアバター、会話で変更されるタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
 
