@@ -30,6 +30,17 @@
 - [タスクの保存](apps/web/src/state/taskWorkspace.ts)：IndexedDBの処理完了後に成功を返し、別タブからの古い変更による上書きを防ぎます。
 - [音声とUIの同期](apps/web/src/session/voiceActivity.ts)：受信した音声と実際の再生を区別し、オーブを返答に合わせます。[表示を切り替えるサンプル](https://ai-meeting.web.app/orb-preview)。
 
+### アバター連携
+
+プライバシーと運用条件に合わせて表示方式を選べます。公開プレビューはローカルVRMを使い、クラウド連携は自分でbrokerを設定した場合だけ接続します。
+
+| 方式 | 含まれるもの | 必要なもの・利用条件 |
+| --- | --- | --- |
+| [VRM（ローカル）](avatar-providers/vrm) | Three.js + `@pixiv/three-vrm`、ローカルのモデル・音声プレビュー、ブラウザー内の口パク | WebGL対応ブラウザーと、利用権のあるVRM 0.0/1.0モデル。[公開プレビュー](https://ai-meeting.web.app/vrm-demo)はアカウント・APIキー不要です。 |
+| [Live2D（任意）](avatar-providers/live2d/README.md) | Cubism描画、MotionStackの身振り、Analyzer/MotionSyncの口パク | Cubism Core、利用権のあるモデル、Live2D SDK・素材の個別条件。MotionSyncには別途Coreのダウンロードが必要です。 |
+| [LiveAvatar（任意）](avatar-providers/liveavatar/src/LiveAvatarProvider.ts) | LiveKit経由のHeyGen LiveAvatarストリーミング連携 | 自分のbroker設定、プロバイダー認証情報、HeyGen/LiveAvatarの利用・データ処理条件。 |
+| [Tavus（任意）](avatar-providers/tavus/src/TavusAvatarProvider.ts) | Daily経由のTavus CVI連携 | 自分のbroker設定、プロバイダー認証情報、Tavus/Dailyの利用・データ処理条件。 |
+
 **自分の開発にも役立ちそうなら、Starで保存してください。** [導入・カスタマイズの相談](https://ai-meeting.forifor.chatgpt.site/ja#business)は非公開フォームで受け付けています。
 
 [![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)

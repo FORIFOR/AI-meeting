@@ -30,6 +30,17 @@ For teams, [shared workspaces](https://ai-meeting.web.app/#team) include invitat
 - [Persistent tasks](apps/web/src/state/taskWorkspace.ts): report success after the IndexedDB transaction completes; reject stale edits from another tab.
 - [Audio-driven UI](apps/web/src/session/voiceActivity.ts): distinguish received audio from actual playback, so the orb stays in sync with the reply. [Interactive visual sample](https://ai-meeting.web.app/orb-preview).
 
+### Avatar integrations
+
+Choose the rendering path that matches your privacy and deployment needs. The hosted preview uses the local VRM path; optional cloud adapters never connect without your own broker configuration.
+
+| Path | What is included | Requirements and terms |
+| --- | --- | --- |
+| [VRM (local)](avatar-providers/vrm) | Three.js + `@pixiv/three-vrm`, local model/audio preview, and browser-local lip sync | WebGL-capable browser and a permitted VRM 0.0/1.0 model. The [hosted preview](https://ai-meeting.web.app/vrm-demo) needs no account or API key. |
+| [Live2D (optional)](avatar-providers/live2d/README.md) | Cubism renderer, MotionStack gestures, and analyzer/MotionSync lip sync | Cubism Core, a permitted model, and separate Live2D SDK/material terms. MotionSync needs its separately downloaded Core. |
+| [LiveAvatar (optional)](avatar-providers/liveavatar/src/LiveAvatarProvider.ts) | HeyGen LiveAvatar streaming adapter over LiveKit | Your broker configuration, provider credentials, and HeyGen/LiveAvatar service and data-processing terms. |
+| [Tavus (optional)](avatar-providers/tavus/src/TavusAvatarProvider.ts) | Tavus CVI adapter over Daily | Your broker configuration, provider credentials, and Tavus/Daily service and data-processing terms. |
+
 **Useful for your own project? Star this repository to keep it handy.** [Implementation and deployment inquiries](https://ai-meeting.forifor.chatgpt.site/#business) use a private form.
 
 [![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Beta release](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1)
