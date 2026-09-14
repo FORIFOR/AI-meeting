@@ -6,7 +6,7 @@ import { BehaviorEngine } from '@rcai/behavior-engine';
 
 const mount = document.getElementById('vrm-demo') ?? document.body;
 mount.innerHTML = `<main class="studio">
-<nav class="studio-nav" aria-label="メイン"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">a.</span> AI Meeting</a><div><span class="preview-label">INTERACTIVE PREVIEW</span><a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noreferrer">GitHub ↗</a></div></nav>
+<nav class="studio-nav" aria-label="メイン"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">a.</span> AI Meeting</a><div><span class="preview-label">INTERACTIVE PREVIEW</span><a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noreferrer">GitHub / Star ↗</a></div></nav>
 <section class="studio-hero">
 <div class="intro"><p class="eyebrow"><span></span> A LITTLE ROOM TO THINK</p><h1>話せば、<br>少し前に。</h1><p class="lead">アイデアも、今日やることも。<br>表情のある相棒と、ひとつずつ。</p>
 <div class="sample-copy"><p class="eyebrow">TRY THE VOICE & EXPRESSIONS</p><p id="caption" class="caption">まずは、声を聞いてみて。</p><div class="transport"><button id="play" class="primary" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z"/></svg><span>声と表情を試す</span></button><button id="stop" class="stop" aria-label="音声を止める"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg></button></div><p class="micro">録音したAIの応答を再生します。マイクは使いません。</p></div>
@@ -16,7 +16,7 @@ mount.innerHTML = `<main class="studio">
 </section>
 <section class="next-step"><div><p class="eyebrow">MAKE IT YOURS</p><h2>次は、あなたの話を。</h2><p>音声AIをつなげると、アイデアの壁打ちやタスクの整理ができます。</p></div><a class="outline-link" href="/">会話の準備をする <span aria-hidden="true">↗</span></a></section>
 <details class="customize"><summary>自分のアバターや音声で試す <span aria-hidden="true">＋</span></summary><div class="customize-grid"><div><label for="model">自分のVRMを開く</label><input id="model" type="file" accept=".vrm"><p class="micro">VRM 0.0 / 1.0・50MBまで。外部ファイルのないモデルに対応。</p><button id="sample" class="small-button">VRoid Bに戻す</button></div><div><label for="audio">手元の音声を再生する</label><input id="audio" type="file" accept="audio/*"><p class="micro">180秒・30MBまで。選んだファイルはアップロードしません。</p></div></div><details class="diagnostic"><summary>表示の診断</summary><pre id="diagnostics"></pre></details></details>
-<footer><span>AI Meeting · Open source, made for conversation.</span><span>Model: AvatarSample_B © pixiv Inc. / VRoid Project · <a href="/characters/vroid-b/LICENSE.md" target="_blank" rel="noreferrer">利用条件</a></span></footer>
+<footer><span>AI Meeting · Open source, made for conversation.</span><span><a href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noreferrer">GitHubでStarする ↗</a> · <a href="https://ai-meeting.forifor.chatgpt.site/ja#business" target="_blank" rel="noreferrer">導入・カスタマイズの相談 ↗</a></span><span>Model: AvatarSample_B © pixiv Inc. / VRoid Project · <a href="/characters/vroid-b/LICENSE.md" target="_blank" rel="noreferrer">利用条件</a></span></footer>
 </main>`;
 const stage = document.getElementById('stage')!;
 const status = document.getElementById('status')!;
