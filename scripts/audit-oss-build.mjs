@@ -114,7 +114,11 @@ const licenseExceptions=[
   {path:'scripts/reality/attendee-selfhost/local-patches.diff',distribution:'source tree only',license:'Elastic-2.0 for upstream material',notice:'scripts/reality/attendee-selfhost/LICENSE.upstream'},
   {path:'optional Live2D assets and hosted services',distribution:'excluded from OSS browser build',license:'Separate component, model and service terms',notice:'NOTICE.md'},
 ];
-const result={at:new Date().toISOString(),files:files.length,runtimePackages:[...new Set([...packages.values()].map(p=>`${p.name}@${p.version}`))].sort(),forbiddenAssets,forbiddenSources:[...new Set(forbiddenSources)],missingSourceMaps,invalidSourceMaps,unresolvedPackages,verifiedWorkerArtifacts,missingLicenseTexts:missing,verifiedSupplements,externalFontLinks:/<link[^>]*href="https?:\/\//.test(html),modelHashes,vrmHashMatched:modelHashes.every(model=>model.matched),avatarApiRequired:false,applicationLicense,licenseExceptions,rootCodeLicenseFinalized:applicationLicense.verified};
+const externalFontLinks=[...html.matchAll(/<link\b[^>]*>/gi)].some(([tag])=>
+  /\brel=["'][^"']*(?:stylesheet|preload|font)[^"']*["']/i.test(tag) &&
+  /\bhref=["']https?:\/\//i.test(tag),
+);
+const result={at:new Date().toISOString(),files:files.length,runtimePackages:[...new Set([...packages.values()].map(p=>`${p.name}@${p.version}`))].sort(),forbiddenAssets,forbiddenSources:[...new Set(forbiddenSources)],missingSourceMaps,invalidSourceMaps,unresolvedPackages,verifiedWorkerArtifacts,missingLicenseTexts:missing,verifiedSupplements,externalFontLinks,modelHashes,vrmHashMatched:modelHashes.every(model=>model.matched),avatarApiRequired:false,applicationLicense,licenseExceptions,rootCodeLicenseFinalized:applicationLicense.verified};
 await writeFile(path.join(dist,'OSS-BUILD-AUDIT.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify(result,null,2));
 if(forbiddenAssets.length||forbiddenSources.length||missingSourceMaps.length||invalidSourceMaps.length||unresolvedPackages.length||missing.length||result.externalFontLinks||!result.vrmHashMatched||!applicationLicense.verified)process.exitCode=1;
