@@ -14,6 +14,17 @@
 
 *README内のプレビューは録画フローの8秒抜粋です。全体の操作は45秒のデモで確認できます。*
 
+## アバター開発者向けの入口
+
+音声とアバターの部品として評価する場合は、登録不要のプレビューから始め、ローカルVRMの実装と任意のプロバイダー連携を順に確認してください。描画、音声の受け渡し、素材の利用条件を最初の実験で切り分けられます。
+
+| 手順 | リンク |
+| --- | --- |
+| 動きを見る | [VRMプレビューを開く](https://ai-meeting.web.app/vrm-demo) — アカウント・APIキー・マイク不要。 |
+| 実装を追う | [VRMプロバイダー](avatar-providers/vrm)と[音声連動UI](apps/web/src/session/voiceActivity.ts)を読む。 |
+| 連携方式を比べる | [Live2D](avatar-providers/live2d/README.md)、[LiveAvatar](avatar-providers/liveavatar/src/LiveAvatarProvider.ts)、[Tavus](avatar-providers/tavus/src/TavusAvatarProvider.ts)。 |
+| 再利用条件を確認する | [モデルと第三者素材の条件](characters/vroid-b/LICENSE.md)と[アプリのライセンス](LICENSE)。 |
+
 ## インストール前に試す
 
 | 入口 | できること・条件 |

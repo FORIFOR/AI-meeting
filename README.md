@@ -14,6 +14,17 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 
 *The inline preview is an 8-second excerpt of the recorded flow; open it for the full 45-second demonstration.*
 
+## For avatar developers
+
+Evaluating AI Meeting as a voice and avatar building block? Start with the account-free preview, then inspect the local VRM path and the optional provider adapters. This keeps the first experiment focused on the renderer, audio handoff, and license boundaries.
+
+| Step | Link |
+| --- | --- |
+| See the interaction | [Open the VRM preview](https://ai-meeting.web.app/vrm-demo) — no account, API key, or microphone. |
+| Trace the implementation | [Read the VRM provider](avatar-providers/vrm) and [audio-driven UI](apps/web/src/session/voiceActivity.ts). |
+| Compare deployment paths | [Live2D](avatar-providers/live2d/README.md), [LiveAvatar](avatar-providers/liveavatar/src/LiveAvatarProvider.ts), and [Tavus](avatar-providers/tavus/src/TavusAvatarProvider.ts). |
+| Confirm reuse conditions | [Model and third-party terms](characters/vroid-b/LICENSE.md) and the [application license](LICENSE). |
+
 ## Try it before installing
 
 | Start here | What you get |
