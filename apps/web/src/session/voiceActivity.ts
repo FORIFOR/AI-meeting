@@ -6,6 +6,12 @@ export type VoicePhase = "starting" | "live" | "ending" | "ended" | "error";
 export interface VoiceLevels { input: number; output: number; playing: boolean }
 export const SILENT_VOICE: VoiceLevels = Object.freeze({ input: 0, output: 0, playing: false });
 
+/**
+ * The orb is allowed to acknowledge a clear input sample before the provider/VAD event arrives.
+ * This is deliberately above the usual room-noise range; it is a visual hint, not a second VAD.
+ */
+export const VOICE_ORB_INPUT_THRESHOLD = 0.5;
+
 /** Numbers only, in memory. Reads existing PCM; never opens, retains or sends audio. */
 export class VoiceActivity {
   private input = { level: 0, at: -Infinity };
@@ -39,9 +45,12 @@ export function voiceOrbState(avatar: AvatarState, phase: VoicePhase, muted: boo
   if (phase === "ended") return "ended";
   // Playback can outlast generation. Source chunks alone never count as audible output.
   if (levels.playing) return "speaking";
-  if (avatar === "THINKING" || avatar === "SPEAKING") return "thinking";
+  // A mute switch must remain visible even if a meeting relay is still delivering room audio.
   if (muted) return "muted";
-  if (avatar === "LISTENING") return "listening";
+  if (avatar === "THINKING" || avatar === "SPEAKING") return "thinking";
+  // VAD remains authoritative for turn-taking. The level fallback only covers the first frames
+  // between microphone activity and the corresponding user_speech_started event.
+  if (avatar === "LISTENING" || levels.input >= VOICE_ORB_INPUT_THRESHOLD) return "listening";
   return "idle";
 }
 

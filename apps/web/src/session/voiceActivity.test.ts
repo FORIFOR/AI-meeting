@@ -15,6 +15,11 @@ describe("voice status reflects capture and playback", () => {
     expect(voiceOrbState("SPEAKING", "live", false, activity.read())).toBe("speaking");
     expect(voiceOrbState("IDLE", "live", false, activity.read())).toBe("speaking");
   });
+  it("shows clear input during the event handoff before VAD changes the avatar state", () => {
+    expect(voiceOrbState("IDLE", "live", false, { input: 0.51, output: 0, playing: false })).toBe("listening");
+    expect(voiceOrbState("IDLE", "live", false, { input: 0.49, output: 0, playing: false })).toBe("idle");
+    expect(voiceOrbState("THINKING", "live", false, { input: 0.9, output: 0, playing: false })).toBe("thinking");
+  });
   it("decays stale levels and holds the output label over real playback pauses", () => {
     let now = 0;
     const activity = new VoiceActivity(() => now);
