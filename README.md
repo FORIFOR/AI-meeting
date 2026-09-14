@@ -14,6 +14,10 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 
 *The inline preview is an 8-second excerpt of the recorded flow; open it for the full 45-second demonstration.*
 
+## Why AI Meeting
+
+Voice assistants often stop at a transcript. AI Meeting keeps a proposed change pending until you confirm it, then saves the decision as a browser-local task you can pick up next time. That focused voice-to-task workflow is the core you can inspect, run locally, and adapt.
+
 ## For avatar developers
 
 Evaluating AI Meeting as a voice and avatar building block? Start with the account-free preview, then inspect the local VRM path and the optional provider adapters. This keeps the first experiment focused on the renderer, audio handoff, and license boundaries.
