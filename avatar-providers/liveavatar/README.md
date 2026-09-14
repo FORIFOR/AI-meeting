@@ -5,6 +5,8 @@ LiveAvatar in LITE/custom mode. LiveAvatar renders the video and animates the
 face itself; the adapter sends assistant PCM over its command WebSocket and
 receives the synchronized LiveKit media track.
 
+**Useful for your project?** [Star AI Meeting on GitHub](https://github.com/FORIFOR/AI-meeting) · [Discuss paid integration](https://ai-meeting.forifor.chatgpt.site/#business)
+
 ## Requirements
 
 1. Run the token broker and configure the provider's credentials there.

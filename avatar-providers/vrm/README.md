@@ -4,6 +4,8 @@ This provider renders a VRM 0.0/1.0 character in the browser with Three.js and
 `@pixiv/three-vrm`. It maps the shared avatar state to humanoid bones,
 expressions, gaze, spring bones, and audio-driven lip sync.
 
+**Useful for your project?** [Star AI Meeting on GitHub](https://github.com/FORIFOR/AI-meeting) · [Discuss paid integration](https://ai-meeting.forifor.chatgpt.site/#business)
+
 ## Try it without an account
 
 - [Hosted VRM preview](https://ai-meeting.web.app/vrm-demo)

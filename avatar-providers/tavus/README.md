@@ -5,6 +5,8 @@ browser joins the Daily room returned by the broker and sends assistant audio
 through the CVI Interactions Protocol (`conversation.echo`); Tavus supplies the
 synchronized video and audio.
 
+**Useful for your project?** [Star AI Meeting on GitHub](https://github.com/FORIFOR/AI-meeting) · [Discuss paid integration](https://ai-meeting.forifor.chatgpt.site/#business)
+
 ## Requirements
 
 1. Run the token broker and configure Tavus credentials there.
