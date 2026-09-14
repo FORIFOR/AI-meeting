@@ -6,6 +6,8 @@ An open-source **voice-to-task** meeting assistant and voice task manager for in
 
 Tell an AI character what needs doing, interrupt to change a plan, and keep the resulting tasks. Add, complete, or defer them by voice; check uncertain changes before they are saved.
 
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) [![Beta release](https://img.shields.io/github/v/release/FORIFOR/AI-meeting?include_prereleases=true&label=beta)](https://github.com/FORIFOR/AI-meeting/releases) [![License](https://img.shields.io/github/license/FORIFOR/AI-meeting)](LICENSE)
+
 [Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [See the 8-second TikTok demo](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [Star on GitHub](https://github.com/FORIFOR/AI-meeting) · [Paid setup and customization](https://ai-meeting.forifor.chatgpt.site/#business) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
 [![8-second preview: a VRM avatar hears a spoken task change and the task list updates](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
@@ -13,6 +15,12 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 *Recorded demonstration: synthetic Japanese input, real Gemini responses, a dedicated recording layout, and a script that confirms proposals matching the input. [Recording method and limits](docs/validation.md).*
 
 *The inline preview is an 8-second excerpt of the recorded flow; open it for the full 45-second demonstration.*
+
+### One-minute path
+
+1. [Open the task flow](https://ai-meeting.web.app/#tasks) and add one task without an account.
+2. Complete or defer it, then reopen the page to verify that the result stays in this browser.
+3. If the confirmed voice-to-task pattern is useful, [star the repository](https://github.com/FORIFOR/AI-meeting) to keep the source close.
 
 ## Why AI Meeting
 

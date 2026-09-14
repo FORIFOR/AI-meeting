@@ -6,6 +6,8 @@
 
 「資料確認は今日中に。メール返信は明日に」。AIキャラクターに話し、途中で言い直し、タスクを追加・完了・延期。聞き取りの確認が必要な変更は、内容を確かめてから保存します。
 
+[![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) [![ベータ版](https://img.shields.io/github/v/release/FORIFOR/AI-meeting?include_prereleases=true&label=beta)](https://github.com/FORIFOR/AI-meeting/releases) [![ライセンス](https://img.shields.io/github/license/FORIFOR/AI-meeting)](LICENSE)
+
 [登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [TikTokの8秒実演](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [GitHubでStarする](https://github.com/FORIFOR/AI-meeting) · [有料の導入・カスタマイズ相談](https://ai-meeting.forifor.chatgpt.site/ja#business) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
 [![8秒のプレビュー：VRMアバターとの会話でタスクが更新される様子](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
@@ -13,6 +15,12 @@
 *入力は日本語の合成音声、返答は実際のGemini。録画用レイアウトを使い、入力と一致する提案をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)。*
 
 *README内のプレビューは録画フローの8秒抜粋です。全体の操作は45秒のデモで確認できます。*
+
+### 1分で試す
+
+1. [タスク体験を開く](https://ai-meeting.web.app/#tasks) — 登録せずにタスクをひとつ追加します。
+2. 完了または延期にして、ページを開き直し、このブラウザーに結果が残ることを確かめます。
+3. 確認してから保存する音声タスクの流れが役立ちそうなら、[リポジトリをStarする](https://github.com/FORIFOR/AI-meeting)と、ソースをあとで見つけやすくなります。
 
 ## AI Meetingが解決すること
 
