@@ -5,6 +5,10 @@ const {Firestore}=require('@google-cloud/firestore');
 const projectId=process.env.GOOGLE_CLOUD_PROJECT,databaseId=process.env.RCAI_HOSTED_FIRESTORE_DATABASE;
 if(!projectId||!databaseId)throw new Error('GOOGLE_CLOUD_PROJECT and RCAI_HOSTED_FIRESTORE_DATABASE are required');
 const db=new Firestore({projectId,databaseId});
-const [leads,events]=await Promise.all([db.collection('ai_meeting_site_leads').orderBy('createdAt','desc').limit(30).get(),db.collection('ai_meeting_site_events').orderBy('__name__','desc').limit(7).get()]);
+// A bounded collection read keeps the operator check usable without requiring
+// a composite index for document-id ordering. Lead recency still uses the
+// existing single-field createdAt index; event documents are sorted by their
+// ISO day key after the bounded read.
+const [leads,events]=await Promise.all([db.collection('ai_meeting_site_leads').orderBy('createdAt','desc').limit(30).get(),db.collection('ai_meeting_site_events').limit(7).get()]);
 const details=process.argv.includes('--details');
-console.log(JSON.stringify({inquiries:leads.docs.map(d=>d.data()).filter(d=>d.expiresAt.toMillis()>Date.now()).map(d=>details?{receipt:d.receipt,createdAt:d.createdAt.toDate().toISOString(),name:d.name,email:d.email,organization:d.organization,useCase:d.useCase,message:d.message,status:d.status}:{receipt:d.receipt,createdAt:d.createdAt.toDate().toISOString(),useCase:d.useCase,status:d.status}),dailyEvents:events.docs.map(d=>({day:d.id,counts:d.data().counts})),metricsNote:'Inquiries are saved lead records; GitHub outbound clicks are not GitHub stars. No visitor IDs or form content in event aggregates.'},null,2));
+console.log(JSON.stringify({inquiries:leads.docs.map(d=>d.data()).filter(d=>d.expiresAt.toMillis()>Date.now()).map(d=>details?{receipt:d.receipt,createdAt:d.createdAt.toDate().toISOString(),name:d.name,email:d.email,organization:d.organization,useCase:d.useCase,message:d.message,status:d.status}:{receipt:d.receipt,createdAt:d.createdAt.toDate().toISOString(),useCase:d.useCase,status:d.status}),dailyEvents:events.docs.sort((a,b)=>b.id.localeCompare(a.id)).map(d=>({day:d.id,counts:d.data().counts})),metricsNote:'Inquiries are saved lead records; GitHub outbound clicks are not GitHub stars. No visitor IDs or form content in event aggregates.'},null,2));
