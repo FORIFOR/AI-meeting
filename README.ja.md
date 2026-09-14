@@ -21,6 +21,7 @@
 | [タスクをひとつ保存する](https://ai-meeting.web.app/#tasks) | 無料・登録不要。追加・完了・延期して、同じブラウザーで次回も続けられます。JSONバックアップ対応、端末間の自動同期なし。 |
 | [AIと声で話す](https://ai-meeting.web.app/) | メール確認後に1回3分・UTC日付で1日1回。全体の提供枠にも上限があり、自動課金はありません。 |
 | [音声とVRMアバターを見る](https://ai-meeting.web.app/vrm-demo) | アカウント・APIキー・マイク不要。録音済み音声や手元の音声を再生できます。 |
+| [OSSプレビューをダウンロードする](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1) | `AI-meeting-0.2.0-beta.1-oss-web.zip`を展開し、`python3 -m http.server 8000`を実行して`vrm-demo.html`を開きます。Node.js設定・APIキー不要です。 |
 
 [チーム共有](https://ai-meeting.web.app/#team)は、招待・権限・タスク同期に対応した5名・30日の限定構成です。[提供範囲と受入結果](docs/team-deployment.md)。
 

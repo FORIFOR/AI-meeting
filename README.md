@@ -21,6 +21,7 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 | [Save your first task](https://ai-meeting.web.app/#tasks) | Free, no registration. Add, complete, defer, and reopen tasks saved in this browser. JSON backup; no automatic device sync. |
 | [Talk to the AI](https://ai-meeting.web.app/) | Verified email required. Up to 3 minutes, once per UTC day, within shared capacity. No automatic billing. |
 | [Explore voice and VRM](https://ai-meeting.web.app/vrm-demo) | No account, API key, or microphone. Play recorded or local audio with the avatar. |
+| [Download the OSS preview](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.1) | Extract `AI-meeting-0.2.0-beta.1-oss-web.zip`, run `python3 -m http.server 8000`, and open `vrm-demo.html`. No Node.js setup or API key. |
 
 For teams, [shared workspaces](https://ai-meeting.web.app/#team) include invitations, roles, and task synchronization in a limited five-member, 30-day profile. [Scope and acceptance evidence](docs/team-deployment.md).
 
