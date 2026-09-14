@@ -5,7 +5,7 @@ import type { BrokerEnv } from './env.js';
 
 export const SITE_EVENTS = ['demo_start','demo_complete','artifact_open','artifact_download','github_outbound','quickstart_open','vrm_preview_open'] as const;
 const products = ['genie','launchloom','oathra','aisecure','agent-team'];
-const scenarios = ['tasks','interview','english','walkthrough',...products];
+const scenarios = ['tasks','interview','english','walkthrough','ai-meeting',...products];
 const uses = ['interview','training','language','tasks','custom',...products];
 // Public marketing origins only. This route can create private inquiries and
 // anonymous counters, never read them or grant access to the product APIs.
