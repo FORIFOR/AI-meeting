@@ -2,6 +2,8 @@
 
 **Turn spoken plans into tasks you can pick up next time.**
 
+An open-source **voice-to-task** app for interruptible AI conversations, VRM avatars, and browser-local task persistence.
+
 Tell an AI character what needs doing, interrupt to change a plan, and keep the resulting tasks. Add, complete, or defer them by voice; check uncertain changes before they are saved.
 
 [Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
