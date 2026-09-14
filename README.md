@@ -8,9 +8,11 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 
 [Try tasks — no account](https://ai-meeting.web.app/#tasks) · [Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [Watch the 45-second demo](https://youtu.be/qLenE6R7-nI) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
-[![Real Gemini responses, a VRM avatar, and tasks changing during a conversation](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
+[![8-second preview: a VRM avatar hears a spoken task change and the task list updates](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
 
 *Recorded demonstration: synthetic Japanese input, real Gemini responses, a dedicated recording layout, and a script that confirms proposals matching the input. [Recording method and limits](docs/validation.md).*
+
+*The inline preview is an 8-second excerpt of the recorded flow; open it for the full 45-second demonstration.*
 
 ## Try it before installing
 

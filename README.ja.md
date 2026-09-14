@@ -8,9 +8,11 @@
 
 [登録せずタスクを試す](https://ai-meeting.web.app/#tasks) · [VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [45秒の操作デモ](https://youtu.be/qLenE6R7-nI) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
-[![実際のGeminiの返答とVRMアバター、会話で変更されるタスク](https://ai-meeting.forifor.chatgpt.site/demo-poster.jpg)](https://youtu.be/qLenE6R7-nI)
+[![8秒のプレビュー：VRMアバターとの会話でタスクが更新される様子](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
 
 *入力は日本語の合成音声、返答は実際のGemini。録画用レイアウトを使い、入力と一致する提案をスクリプトで確認して反映しています。[録画方法と検証範囲](docs/validation.md)。*
+
+*README内のプレビューは録画フローの8秒抜粋です。全体の操作は45秒のデモで確認できます。*
 
 ## インストール前に試す
 
