@@ -770,7 +770,18 @@ export class GeminiLiveProvider implements RealtimeAIProvider {
       this.emit({ type: "user_transcript", id: this.userTranscriptId, text: this.userTranscript, final: false });
       if (this.deliveredUserTranscript) this.flushUserTranscript();
     }
-    if (sc.modelTurn?.parts?.length && this.droppingUntilTurn) return; // the tail of a cut reply
+    if (this.droppingUntilTurn) {
+      // Audio and output transcription travel in separate packets. Neither may open a new
+      // generation for the cancelled reply, or its late captions bypass the runtime's stale gate.
+      // Consume the boundary even if the final packet also contains cancelled audio/text.
+      if (sc.turnComplete) {
+        this.droppingUntilTurn = false;
+        this.flushUserTranscript();
+        this.resetUserTranscript();
+        this.genOpen = false;
+      }
+      return;
+    }
     if (sc.modelTurn?.parts?.length) {
       this.flushUserTranscript();
       this.openGeneration();

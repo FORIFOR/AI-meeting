@@ -20,7 +20,7 @@ import { createRequire } from "node:module";
 import { loadEnv } from "./lib.mjs";
 import { ParticipationPolicy, detectPlatform } from "../../packages/meeting-core/src/index.js";
 
-const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
+const require = createRequire(new URL("../../services/agent/package.json", import.meta.url));
 const WebSocket = require("ws");
 
 const env = loadEnv();

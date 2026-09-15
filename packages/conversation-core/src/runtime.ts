@@ -295,6 +295,12 @@ export class ConversationRuntime {
           this.emit({ type: "interrupted", at, gen: cancelled ?? undefined });
         }
         if (!(this.provider?.fullDuplex && this._state === "speaking")) this.setState("listening");
+        if (!this.provider?.fullDuplex && this.opts.sink?.beginUserTurn?.()) {
+          // The source may have ended while an external renderer still holds its output.
+          // Invalidate that generation as well as its media, without rewriting the completed turn.
+          const cancelled = this.cancelGeneration();
+          this.emit({ type: "interrupted", at, gen: cancelled ?? undefined });
+        }
         break;
       }
       case "user_speech_ended": {
@@ -349,6 +355,7 @@ export class ConversationRuntime {
       }
       case "assistant_speech_ended": {
         if (this._state !== "speaking" && !this.currentAssistant) return;
+        this.opts.sink?.endTurn?.();
         this.finishAssistant(at, false);
         this.lastAssistantEnd = at;
         this.setState(this.userSpeechFlag ? "listening" : "idle");

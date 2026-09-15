@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createFrame } from "@rcai/audio-core";
 import { SessionObserver, reportToMarkdown } from "./observer.js";
 import { createTelemetrySender, sanitizeForTelemetry, stripContent } from "./telemetry.js";
@@ -90,6 +90,37 @@ describe("telemetry privacy", () => {
     expect(env.schema).toBe("rcai.telemetry.v1");
     expect(env.report.sessionId).toBe("s1");
     expect(JSON.stringify(env)).not.toMatch(/text|transcript|こんにちは/);
+  });
+
+  it("bounds stalled delivery and aborts the request even if fetch ignores cancellation", async () => {
+    vi.useFakeTimers();
+    try {
+      let signal: AbortSignal | null | undefined;
+      const fetchImpl = vi.fn((_url: unknown, init?: RequestInit) => {
+        signal = init?.signal;
+        return new Promise<Response>(() => {});
+      });
+      const sender = createTelemetrySender({ brokerUrl: "https://broker.test", privacyMode: "default", fetch: fetchImpl as typeof fetch });
+      const result = sender.send(run().toReport());
+      await vi.advanceTimersByTimeAsync(2500);
+      expect(await result).toBe("failed");
+      expect(signal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("clears its delivery deadline after a successful response", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn(async () => new Response("{}"));
+      const sender = createTelemetrySender({ brokerUrl: "https://broker.test", privacyMode: "default", fetch: fetchImpl });
+      expect(await sender.send(run().toReport())).toBe("sent");
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

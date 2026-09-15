@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HedgedLLM, type ChatMessage, type LLMAdapter } from "./llm.js";
+import { HedgedLLM, OpenAICompatibleLLM, type ChatMessage, type LLMAdapter } from "./llm.js";
 
 /** A model whose first token arrives after `firstAfterMs`, then the rest of `text` at once. */
 class SlowStart implements LLMAdapter {
@@ -49,6 +49,92 @@ class Sequence implements LLMAdapter {
 
 const collect = async (it: AsyncIterable<string>) => { let s = ""; for await (const d of it) s += d; return s; };
 const messages: ChatMessage[] = [{ role: "user", content: "こんにちは" }];
+
+describe("local model foreground priority", () => {
+  const completion = () => new Response(JSON.stringify({ choices: [{ message: { content: "はい。" } }] }));
+  const delta = new TextEncoder().encode('data: {"choices":[{"delta":{"content":"はい。"}}]}\n\n');
+
+  it.each(["stream", "complete"] as const)("cancels a queued warm-up before %s asks the model for an answer", async (method) => {
+    let warmSignal: AbortSignal | undefined;
+    const fetchImpl = (async (_url: unknown, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { max_tokens: number; stream: boolean };
+      if (body.max_tokens === 1) {
+        warmSignal = init.signal!;
+        return new Promise<Response>((_resolve, reject) => {
+          warmSignal!.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+        });
+      }
+      // On a single-slot local server an outstanding warm-up otherwise queues the real reply.
+      expect(warmSignal?.aborted).toBe(true);
+      return body.stream ? new Response(delta) : completion();
+    }) as typeof fetch;
+    const llm = new OpenAICompatibleLLM("http://127.0.0.1:8080/v1", "m", fetchImpl);
+    const warm = llm.warm(messages);
+    const answer = method === "stream" ? await collect(llm.stream(messages)) : await llm.complete(messages);
+    expect(answer).toBe("はい。");
+    await warm;
+  });
+
+  it("keeps periodic warm-ups out of an active stream and releases an abandoned response", async () => {
+    let requests = 0;
+    let cancelled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(delta); },
+      cancel() { cancelled++; },
+    });
+    const fetchImpl = (async () => ++requests === 1 ? new Response(body) : completion()) as typeof fetch;
+    const llm = new OpenAICompatibleLLM("http://127.0.0.1:8080/v1", "m", fetchImpl);
+    const stream = llm.stream(messages)[Symbol.asyncIterator]();
+    expect((await stream.next()).value).toBe("はい。");
+    await llm.warm(messages);
+    expect(requests).toBe(1);
+    await stream.return?.();
+    expect(cancelled).toBe(1);
+    expect(body.locked).toBe(false);
+    await llm.warm(messages);
+    expect(requests).toBe(2);
+  });
+
+  it("does not let a timer warm-up overlap a non-streaming completion", async () => {
+    let requests = 0;
+    let respond!: (response: Response) => void;
+    const fetchImpl = (async () => {
+      requests++;
+      if (requests === 1) return new Promise<Response>((resolve) => { respond = resolve; });
+      return completion();
+    }) as typeof fetch;
+    const llm = new OpenAICompatibleLLM("http://127.0.0.1:8080/v1", "m", fetchImpl);
+    const answer = llm.complete(messages);
+    await llm.warm(messages);
+    expect(requests).toBe(1);
+    respond(completion());
+    await answer;
+    await llm.warm(messages);
+    expect(requests).toBe(2);
+  });
+
+  it("replaces obsolete warm-ups and still warms again after a failed foreground request", async () => {
+    const warmSignals: AbortSignal[] = [];
+    const fetchImpl = (async (_url: unknown, init: RequestInit) => {
+      if ((JSON.parse(init.body as string) as { max_tokens: number }).max_tokens !== 1) throw new Error("model unavailable");
+      warmSignals.push(init.signal!);
+      if (warmSignals.length === 3) return completion();
+      return new Promise<Response>((_resolve, reject) => {
+        init.signal!.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+      });
+    }) as typeof fetch;
+    const llm = new OpenAICompatibleLLM("http://127.0.0.1:8080/v1", "m", fetchImpl);
+    const first = llm.warm(messages);
+    const second = llm.warm([{ role: "system", content: "Updated persona" }]);
+    expect(warmSignals[0]!.aborted).toBe(true);
+    await expect(collect(llm.stream(messages))).rejects.toThrow("model unavailable");
+    expect(warmSignals[1]!.aborted).toBe(true);
+    await Promise.all([first, second]);
+    await llm.warm(messages);
+    expect(warmSignals).toHaveLength(3);
+    expect(warmSignals[2]!.aborted).toBe(false);
+  });
+});
 
 describe("HedgedLLM", () => {
   it("leaves a prompt first request alone", async () => {
@@ -158,5 +244,41 @@ describe("HedgedLLM", () => {
     await expect(p).rejects.toThrow("aborted");
     expect(llm.calls).toBe(3); // 0 ms, 50 ms, 100 ms
     expect(llm.aborted).toBe(3);
+  });
+
+  it("does not start a request for a turn that was already cancelled", async () => {
+    const llm = new Sequence([{ text: "x", firstAfterMs: 10 }]);
+    const ac = new AbortController();
+    ac.abort(new Error("aborted"));
+    await expect(collect(new HedgedLLM(llm).stream(messages, { signal: ac.signal }))).rejects.toThrow("aborted");
+    expect(llm.calls).toBe(0);
+  });
+
+  it("does not retry when interrupted before the first hedge deadline", async () => {
+    const llm = new Sequence([{ text: "x", firstAfterMs: 2000 }]);
+    const ac = new AbortController();
+    const answer = collect(new HedgedLLM(llm, { afterMs: 1000 }).stream(messages, { signal: ac.signal }));
+    ac.abort(new Error("aborted"));
+    await expect(answer).rejects.toThrow("aborted");
+    expect(llm.calls).toBe(1);
+    expect(llm.aborted).toBe(1);
+  });
+
+  it("closes the winning stream when playback no longer needs its reply", async () => {
+    let signal: AbortSignal | undefined;
+    let closed = false;
+    const llm: LLMAdapter = {
+      engine: "fake", model: "fake", ready: true,
+      async complete() { return ""; },
+      async *stream(_messages, opts) {
+        signal = opts.signal;
+        try { yield "はい。"; yield "続き。"; } finally { closed = true; }
+      },
+    };
+    const stream = new HedgedLLM(llm).stream(messages)[Symbol.asyncIterator]();
+    expect((await stream.next()).value).toBe("はい。");
+    await stream.return?.();
+    expect(signal?.aborted).toBe(true);
+    expect(closed).toBe(true);
   });
 });

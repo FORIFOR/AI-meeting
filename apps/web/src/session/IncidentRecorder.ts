@@ -15,6 +15,7 @@ export type IncidentEntry =
   | { t: number; kind: "latency"; name: string; ms: number }
   | { t: number; kind: "error"; code?: string; message: string }
   | { t: number; kind: "provider"; providerId: string }
+  | { t: number; kind: "renderer"; requested: string; selected: string }
   | { t: number; kind: "stale"; drops: number };
 
 export interface IncidentOptIn {
@@ -133,6 +134,10 @@ export class IncidentRecorder {
       default:
         this.push({ t, kind: "event", type: e.type, gen });
     }
+  }
+
+  recordRenderer(requested: string, selected: string): void {
+    this.push({ t: this.clock(), kind: "renderer", requested, selected });
   }
 
   recordState(tr: StateTransition): void {

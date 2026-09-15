@@ -26,6 +26,8 @@ export class OpenAICompatibleLLM implements LLMAdapter {
   readonly engine = "openai-compatible";
   ready = false;
   model: string;
+  private warming: AbortController | null = null;
+  private foregroundRequests = 0;
 
   constructor(
     private readonly baseUrl: string,
@@ -71,63 +73,87 @@ export class OpenAICompatibleLLM implements LLMAdapter {
     return { "content-type": "application/json", ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}) };
   }
 
+  /** A cache warm-up must release the local model as soon as someone needs an answer. */
+  private beginForeground(): () => void {
+    this.foregroundRequests++;
+    this.warming?.abort();
+    return () => { this.foregroundRequests--; };
+  }
+
   async *stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {}): AsyncIterable<string> {
-    const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: this.headers(),
-      signal: opts.signal,
-      /**
-       * `cache_prompt` is llama.cpp's, not OpenAI's: it reuses the KV cache for the unchanged system
-       * prompt and history prefix, which is most of the local TTFT win. Other servers do not all
-       * ignore unknown fields — Gemini's OpenAI-compatible endpoint answers 400 — so it is sent only
-       * to a local server, where it is understood.
-       */
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        stream: true,
-        max_tokens: opts.maxTokens ?? 120,
-        temperature: opts.temperature ?? 0.7,
-        ...(this.isLocalServer ? { cache_prompt: true } : {}),
-        ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}),
-      }),
-    });
-    if (!res.ok || !res.body) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let idx: number;
-      while ((idx = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, idx).trim();
-        buf = buf.slice(idx + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (payload === "[DONE]") return;
-        try {
-          const json = JSON.parse(payload) as { choices?: { delta?: { content?: string } }[] };
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) yield delta;
-        } catch {
-          /* ignore keep-alives */
+    const finish = this.beginForeground();
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: this.headers(),
+        signal: opts.signal,
+        /**
+         * `cache_prompt` is llama.cpp's, not OpenAI's: it reuses the KV cache for the unchanged system
+         * prompt and history prefix, which is most of the local TTFT win. Other servers do not all
+         * ignore unknown fields — Gemini's OpenAI-compatible endpoint answers 400 — so it is sent only
+         * to a local server, where it is understood.
+         */
+        body: JSON.stringify({
+          model: this.model,
+          messages,
+          stream: true,
+          max_tokens: opts.maxTokens ?? 120,
+          temperature: opts.temperature ?? 0.7,
+          ...(this.isLocalServer ? { cache_prompt: true } : {}),
+          ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}),
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
+      reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, idx).trim();
+          buf = buf.slice(idx + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") return;
+          try {
+            const json = JSON.parse(payload) as { choices?: { delta?: { content?: string } }[] };
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) yield delta;
+          } catch {
+            /* ignore keep-alives */
+          }
         }
       }
+    } finally {
+      // A caller can stop consuming at any token. Release that request too: leaving its body open
+      // lets the model keep generating an answer nobody will hear while the next turn waits.
+      if (reader) {
+        try { await reader.cancel(); } catch { /* already aborted or closed */ }
+        reader.releaseLock();
+      }
+      finish();
     }
   }
 
   async complete(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean; signal?: AbortSignal } = {}): Promise<string> {
-    const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: this.headers(),
-      signal: opts.signal,
-      body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: opts.maxTokens ?? 400, temperature: opts.temperature ?? 0.2, ...(opts.json ? { response_format: { type: "json_object" } } : {}), ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}) }),
-    });
-    if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    return json.choices?.[0]?.message?.content ?? "";
+    const finish = this.beginForeground();
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: this.headers(),
+        signal: opts.signal,
+        body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: opts.maxTokens ?? 400, temperature: opts.temperature ?? 0.2, ...(opts.json ? { response_format: { type: "json_object" } } : {}), ...(this.reasoningEffort ? { reasoning_effort: this.reasoningEffort } : {}) }),
+      });
+      if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
+      const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      return json.choices?.[0]?.message?.content ?? "";
+    } finally {
+      finish();
+    }
   }
 
   /**
@@ -138,14 +164,25 @@ export class OpenAICompatibleLLM implements LLMAdapter {
    * server: a remote endpoint has no such cache and would be billed for the question.
    */
   async warm(messages: ChatMessage[]): Promise<void> {
-    if (!this.isLocalServer) return;
-    const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: this.headers(),
-      body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: 1, cache_prompt: true }),
-    });
-    if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
-    await res.arrayBuffer();
+    if (!this.isLocalServer || this.foregroundRequests > 0) return;
+    this.warming?.abort();
+    const controller = new AbortController();
+    this.warming = controller;
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: this.headers(),
+        signal: controller.signal,
+        body: JSON.stringify({ model: this.model, messages, stream: false, max_tokens: 1, cache_prompt: true }),
+      });
+      if (!res.ok) throw new Error(`llm ${res.status}: ${await res.text().catch(() => "")}`);
+      await res.arrayBuffer();
+    } catch (err) {
+      // Superseded warm-ups are best effort, not failures of the conversational model.
+      if (!controller.signal.aborted) throw err;
+    } finally {
+      if (this.warming === controller) this.warming = null;
+    }
   }
 }
 
@@ -205,6 +242,7 @@ export class HedgedLLM implements LLMAdapter {
   }
 
   async *stream(messages: ChatMessage[], opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {}): AsyncIterable<string> {
+    opts.signal?.throwIfAborted();
     const now = this.opts.now ?? Date.now;
     const t0 = now();
     const held = now() < this.quotaUntil;
@@ -212,11 +250,11 @@ export class HedgedLLM implements LLMAdapter {
     if (held) this.opts.log?.(`llm hedge: quota hold, one request only for another ${Math.ceil((this.quotaUntil - now()) / 1000)}s`);
     const controllers: AbortController[] = [];
     const onAbort = () => { for (const c of controllers) c.abort(); };
-    if (opts.signal?.aborted) onAbort();
     opts.signal?.addEventListener("abort", onAbort, { once: true });
     // Requests that have neither produced a first token nor failed, in the order they were sent.
     const live: { who: number; p: Promise<{ who: number; r: Settled<Head | null> }> }[] = [];
     const ask = (): void => {
+      opts.signal?.throwIfAborted();
       const c = new AbortController();
       controllers.push(c);
       const who = controllers.length;
@@ -224,9 +262,9 @@ export class HedgedLLM implements LLMAdapter {
       live.push({ who, p: settle(head(model.stream(messages, { ...opts, signal: c.signal }))).then((r) => ({ who, r })) });
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let source: Head | null = null;
     try {
       ask();
-      let source: Head | null = null;
       let winner = 0;
       for (;;) {
         // Another request may still go out: race the live ones against the clock. At the cap, just wait.
@@ -235,6 +273,8 @@ export class HedgedLLM implements LLMAdapter {
           : null;
         const outcome = await Promise.race(deadline ? [...live.map((l) => l.p), deadline] : live.map((l) => l.p));
         if (timer) clearTimeout(timer);
+        // An interrupted turn must not turn its aborted fetch into the next hedge request.
+        opts.signal?.throwIfAborted();
         if (outcome === "timeout") {
           this.opts.log?.(`llm hedge: no first token after ${now() - t0}ms, asking again`);
           ask();
@@ -272,8 +312,10 @@ export class HedgedLLM implements LLMAdapter {
     } finally {
       if (timer) clearTimeout(timer);
       opts.signal?.removeEventListener("abort", onAbort);
-      // Aborting the losers is enough for fetch; their pending promises settle as errors that nobody
-      // is waiting for, which `settle` has already made harmless.
+      // Also release the winner when the consumer stops early, before the whole reply is read.
+      onAbort();
+      await source?.rest.return?.();
+      // Losing requests settle as errors that nobody is waiting for; `settle` makes those harmless.
     }
   }
 

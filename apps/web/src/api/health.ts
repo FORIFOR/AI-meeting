@@ -2,7 +2,10 @@ import type { Availability, Settings } from "../state/settings.js";
 
 export interface BrokerHealth {
   ok: boolean;
+  publicAccess?: { mode: "full" | "demo_only"; reason?: string };
   providers: { openai: boolean; google: boolean; livekit: boolean; heygen: boolean; tavus: boolean };
+  /** Character-specific natural display availability; it does not affect AI or voice routing. */
+  avatars?: { anam?: { configured: boolean; characterIds: string[] } };
   /** Meeting connector readiness (Recall key + public URLs) — see docs/integration-contracts.md "Meeting". */
   meeting?: { attendee?: boolean; recall: boolean; recallPublicUrl: boolean; recallBotPageUrl: boolean };
 }

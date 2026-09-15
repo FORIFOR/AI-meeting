@@ -19,9 +19,9 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { loadEnv } from "./lib.mjs";
 
-const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
+const require = createRequire(new URL("../../services/agent/package.json", import.meta.url));
 const WebSocket = require("ws");
-const puppeteerRequire = createRequire("/Users/horioshuuhei/Projects/AI-meeting/apps/web/package.json");
+const puppeteerRequire = createRequire(new URL("../../apps/web/package.json", import.meta.url));
 const puppeteer = puppeteerRequire("puppeteer-core");
 
 const env = loadEnv();
@@ -110,7 +110,7 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   body: JSON.stringify({
     // Any platform the connector claims to carry: the stand-in does not care, but the broker and the
     // page both derive behaviour from the URL, and Zoom has never been exercised at all.
-    meetingUrl: process.env.MEET_URL ?? "https://meet.google.com/sim-ulat-ion",
+    meetingUrl: process.env.MEET_URL ?? "https://meet.google.com/abc-defg-hij",
     botName: env.RECALL_BOT_NAME ?? "Yui",
     botPageQuery: {
       engine: process.env.ENGINE ?? "local",
@@ -124,7 +124,7 @@ const created = await (await fetch(`${broker}/api/meeting/attendee/bots`, {
   }),
 })).json();
 if (!created.botId) { console.log("FAIL: broker did not create a bot:", JSON.stringify(created).slice(0, 300)); process.exit(1); }
-console.log(`meeting url ${process.env.MEET_URL ?? "https://meet.google.com/sim-ulat-ion"}`);
+console.log(`meeting url ${process.env.MEET_URL ?? "https://meet.google.com/abc-defg-hij"}`);
 console.log(`broker created ${created.botId}  page=${created.botPageUrl ? "yes" : "MISSING"}`);
 
 /**

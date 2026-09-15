@@ -1,0 +1,19 @@
+{
+  "model": "model.vrm",
+  "voice": {
+    "voices": {
+      "openai": "marin",
+      "google": "Zephyr",
+      "local": "Kyoko"
+    },
+    "style": {
+      "speed": 1.0,
+      "energy": 0.6,
+      "pitch": "mid",
+      "politeness": "polite"
+    }
+  },
+  "view": {
+    "background": "#f2e9e0"
+  }
+}

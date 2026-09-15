@@ -33,7 +33,7 @@ import { loadEnv, sleep } from "./lib.mjs";
 import { oneToOneCues } from "./scenarios/one-to-one.mjs";
 import { detectPlatform } from "../../packages/meeting-core/src/index.js";
 
-const require = createRequire("/Users/horioshuuhei/Projects/AI-meeting/services/agent/package.json");
+const require = createRequire(new URL("../../services/agent/package.json", import.meta.url));
 const WebSocket = require("ws");
 
 const env = loadEnv();

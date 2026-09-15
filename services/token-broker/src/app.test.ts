@@ -17,6 +17,38 @@ const post = (app: ReturnType<typeof createApp>, path: string, body: unknown) =>
   app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 describe("token broker", () => {
+  it("advertises available Anam character IDs without revealing vendor IDs or credentials", async () => {
+    const avatarId = "c4b9a21f-1df2-41c1-99d0-531b670b51d7";
+    const app = createApp({ env: { OPENAI_API_KEY: "sk-test", ANAM_API_KEY: "private-anam-test-key", ANAM_AVATAR_IDS: JSON.stringify({ yui: avatarId, haru: avatarId }) } });
+    const res = await app.request("/health");
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: true, providers: { openai: true, google: false }, avatars: { anam: { configured: true, characterIds: ["haru", "yui"] } } });
+    expect(JSON.stringify(body)).not.toContain(avatarId);
+    expect(JSON.stringify(body)).not.toContain("private-anam-test-key");
+    const unavailable = createApp({ env: { ANAM_AVATAR_IDS: JSON.stringify({ yui: avatarId }) } });
+    expect((await (await unavailable.request("/health")).json()).avatars.anam).toEqual({ configured: false, characterIds: [] });
+  });
+
+  it("serves Anam session tokens without caching success or error responses", async () => {
+    const calls: Call[] = [];
+    const app = createApp({
+      env: { ANAM_API_KEY: "private-anam-test-key", ANAM_AVATAR_IDS: JSON.stringify({ yui: "c4b9a21f-1df2-41c1-99d0-531b670b51d7" }) },
+      fetch: mockFetch(() => new Response(JSON.stringify({ sessionToken: "short-lived-test-token" })), calls),
+    });
+    const ok = await post(app, "/api/avatar/anam/session", { characterId: "yui" });
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("Cache-Control")).toBe("no-store");
+    expect(await ok.json()).toEqual({ sessionToken: "short-lived-test-token" });
+    const blocked = await post(app, "/api/avatar/anam/session", { characterId: "yui", privacyMode: "strict_local" });
+    expect(blocked.status).toBe(403);
+    expect(blocked.headers.get("Cache-Control")).toBe("no-store");
+    expect(await blocked.json()).toEqual({ error: "BLOCKED_BY_STRICT_LOCAL" });
+    const invalid = await post(app, "/api/avatar/anam/session", null);
+    expect(invalid.status).toBe(400);
+    expect(invalid.headers.get("Cache-Control")).toBe("no-store");
+    expect(calls).toHaveLength(1);
+  });
+
   it("/health reports configured providers as booleans only", async () => {
     const app = createApp({ env: { OPENAI_API_KEY: "sk-test" } });
     const res = await app.request("/health");

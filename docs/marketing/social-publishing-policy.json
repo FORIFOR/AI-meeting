@@ -1,0 +1,50 @@
+{
+  "updated_on": "2026-09-13",
+  "source": "Explicit user instruction: 私の個人のアカウントから投稿するのは禁止します",
+  "objective": "Qualified business inquiries, paid adoption, and revenue for AI Meeting",
+  "personal_account_publishing_allowed": false,
+  "applies_to": [
+    "posts",
+    "comments",
+    "replies",
+    "shares",
+    "crossposts",
+    "scheduled_posts",
+    "automated_posts"
+  ],
+  "rules": [
+    "Publish AI Meeting promotions only from the verified FORIFOR apps business identities below, or an explicitly authorized replacement. User-prohibited personal-profile publishing remains disallowed.",
+    "Never treat the currently signed-in identity, display name alone, or an existing unrelated channel as an approved publisher.",
+    "Confirm the selected publishing identity and destinations immediately before submission; stop if ambiguous.",
+    "Do not publish to a personal profile, invite the user's personal contacts, or crosspost to a personal destination.",
+    "A Facebook administrator login is distinct from the Page publishing identity; no posting from the administrator's personal profile.",
+    "Do not convert the user's existing personal TikTok profile into the product account.",
+    "Do not restart tester recruitment or use stars and view counts as evidence of customers or revenue."
+  ],
+  "channels": {
+    "tiktok": {
+      "intended_identity": "FORIFOR | AIアプリ開発 / @foriforapps",
+      "confirmed_account_id": "foriforapps",
+      "confirmed_url": "https://www.tiktok.com/@foriforapps",
+      "state": "business_brand_identity_verified_in_authenticated_studio_and_profile",
+      "account_type_setting": "not_verified",
+      "publishing_ready": true,
+      "evidence": "User completed login after the dedicated-account setup request. Authenticated Studio and public profile show @foriforapps, an apps-development brand with product demo content, not an individual personal identity."
+    },
+    "facebook": {
+      "intended_identity": "foriforapps Facebook Page",
+      "confirmed_page_id": "61593966556275",
+      "business_asset_id": "1291489030719973",
+      "confirmed_url": "https://www.facebook.com/profile.php?id=61593966556275",
+      "state": "page_identity_verified_in_page_management_and_composer",
+      "publishing_ready": true,
+      "evidence": "Page management navigation, IT company category, Business Suite Page asset, and composer author foriforapps all observed. Personal profile was not used to publish."
+    }
+  },
+  "automation": {
+    "scheduled": false,
+    "enforcement": "Operational instruction only; no publishing service or technical guard has been implemented.",
+    "requirement_before_enabling": "Restrict the publisher to verified product account/Page IDs and exclude personal-profile destinations."
+  },
+  "scope_note": "The logged-in identities are shared FORIFOR app-promotion channels, including Genie. They were not renamed, repurposed, or stripped of other projects. AI Meeting posts concern business inquiries, not testers."
+}

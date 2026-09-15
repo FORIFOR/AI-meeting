@@ -1,0 +1,27 @@
+name: Feature request / 改善提案
+description: Describe a user's problem and the behavior that would help.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem / 解決したいこと
+      description: Who is using the app, what are they trying to do, and where does the current flow get in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired behavior / 期待する動作
+      description: Give a concrete example of what a successful interaction would look like.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or current workaround / 代替案
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints / 条件
+      description: Browser, local/cloud preference, language, accessibility, hardware, or asset-license considerations. Do not include confidential information.

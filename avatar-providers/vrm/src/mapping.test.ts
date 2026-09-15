@@ -56,8 +56,8 @@ describe("mapParamsToVRM", () => {
 
   it("amplifies arm gestures (×2) and clamps", () => {
     const raised = mapParamsToVRM({ ...neutralParams(), armR: 0.5, armL: 0.9 });
-    expect(raised.rightUpperArm.z).toBeCloseTo(ARM_REST_RAD - 1.0 * 0.9);
-    expect(raised.leftUpperArm.z).toBeCloseTo(-(ARM_REST_RAD - 1.2 * 0.9)); // clamped at 1.2
+    expect(raised.rightUpperArm.z).toBeCloseTo(ARM_REST_RAD - 1.0 * 0.65);
+    expect(raised.leftUpperArm.z).toBeCloseTo(-(ARM_REST_RAD - 1.2 * 0.65)); // clamped at 1.2
     expect(raised.rightLowerArm.y).toBeGreaterThan(0.25);
     const breath = mapParamsToVRM({ ...neutralParams(), breath: 1 });
     expect(breath.breathScale).toBeCloseTo(1.015);

@@ -33,6 +33,8 @@ export interface TelemetrySenderOptions {
   privacyMode: PrivacyMode;
   fetch?: typeof fetch;
   now?: () => number;
+  /** Bound best-effort delivery so an unavailable broker cannot hold session completion open. */
+  timeoutMs?: number;
 }
 
 export type TelemetryOutcome = "sent" | "skipped-strict" | "failed";
@@ -48,11 +50,22 @@ export function createTelemetrySender(opts: TelemetrySenderOptions): { send(repo
       if (opts.privacyMode === "strict_local") return "skipped-strict";
       if (!fetchImpl) return "failed";
       const envelope: TelemetryEnvelope = { schema: "rcai.telemetry.v1", sentAt: (opts.now ?? Date.now)(), privacyMode: opts.privacyMode, report: sanitizeForTelemetry(report, opts.privacyMode) };
+      const controller = new AbortController();
+      let timeout: ReturnType<typeof setTimeout> | undefined;
       try {
-        const res = await fetchImpl(`${opts.brokerUrl.replace(/\/$/, "")}/api/telemetry`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(envelope) });
-        return res.ok ? "sent" : "failed";
+        const expired = new Promise<"failed">((resolve) => {
+          timeout = setTimeout(() => {
+            resolve("failed");
+            controller.abort();
+          }, opts.timeoutMs ?? 2500);
+        });
+        const delivery = fetchImpl(`${opts.brokerUrl.replace(/\/$/, "")}/api/telemetry`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(envelope), signal: controller.signal })
+          .then((res): TelemetryOutcome => res.ok ? "sent" : "failed");
+        return await Promise.race([delivery, expired]);
       } catch {
         return "failed";
+      } finally {
+        clearTimeout(timeout);
       }
     },
   };

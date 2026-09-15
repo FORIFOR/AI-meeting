@@ -18,6 +18,10 @@ export interface AudioSink {
   detachStream?(): void;
   /** Re-enable a stream that `interrupt()` muted (called by the runtime on the next assistant_speech_started). */
   resumeStream?(): void;
+  /** Source generation ended; optional processing sinks may flush an external audio sequence. */
+  endTurn?(): void;
+  /** A new half-duplex user turn may invalidate delayed external output after source completion. */
+  beginUserTurn?(): boolean;
   /**
    * Stop everything immediately (target < 100 ms). Returns ms taken.
    * `minGeneration`: frames with generationId below it are refused from now on (generation epoch).

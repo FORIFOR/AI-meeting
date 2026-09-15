@@ -1,0 +1,74 @@
+{
+  "observed_at_utc": "2026-09-12T19:53:07.800102+00:00",
+  "scope": "Publish initial AI Meeting product demonstrations and paid business inquiry routes using the signed-in FORIFOR apps business identities. No personal-profile posts or shares.",
+  "publisher_verification": {
+    "tiktok": "Authenticated Studio and profile show FORIFOR | AIアプリ開発, @foriforapps, apps-development bio and product content. The user completed login after the dedicated-business-account request.",
+    "facebook": "Page management for foriforapps, IT company category, business asset 1291489030719973 and Page profile 61593966556275; the composer and published post both identify foriforapps."
+  },
+  "tiktok": {
+    "account_url": "https://www.tiktok.com/@foriforapps",
+    "post_url": "https://www.tiktok.com/@foriforapps/video/7684738537786248468",
+    "media": "conversation-14s.mp4",
+    "duration_seconds": 13.79,
+    "status": "published",
+    "requested_audience": "everyone",
+    "observed_audience_during_review": "only_me_disabled",
+    "observed_status_label": "誰でも",
+    "ai_label": true,
+    "promotional_disclosure": "your_brand",
+    "caption_opener": "完了したこと。明日に回すこと。声で、いまの記録を確かめる。",
+    "landing_url": "https://ai-meeting.forifor.chatgpt.site/ja",
+    "caption_includes": "Product benefit, paid setup/customization/support inquiry route, plain repository navigation instructions, recorded-preview/live-setup distinction, synthetic input and actual API disclosure, model attribution. No tester recruitment.",
+    "initial_metrics": {
+      "views": 0,
+      "likes": 0,
+      "comments": 0
+    },
+    "audience": "everyone",
+    "review_complete": true,
+    "confirmation": "After reload, authenticated Studio shows the exact AI Meeting post at 9月13日 午前4:50, privacy 誰でも, and no コンテンツ審査中 indicator. It previously displayed only_me_disabled during processing."
+  },
+  "facebook": {
+    "page_url": "https://www.facebook.com/profile.php?id=61593966556275",
+    "page_id": "61593966556275",
+    "business_asset_id": "1291489030719973",
+    "post_url": "https://www.facebook.com/reel/881649988215503/",
+    "media": "demo.mp4",
+    "duration_seconds": 45.09,
+    "title": "話して、確かめて、タスクを更新｜AI Meeting",
+    "status": "published",
+    "audience": "public",
+    "ai_label": true,
+    "boost": false,
+    "story_crosspost": false,
+    "group_crosspost": false,
+    "caption_opener": "話して、確認して、次の仕事へ。",
+    "landing_url": "https://ai-meeting.forifor.chatgpt.site/ja#business",
+    "caption_includes": "Actual task workflow, paid business inquiry, scope/fees agreed before work, recorded-preview/live-setup distinction, synthetic input/recording-layout/scripted-confirmation disclosure and model attribution. No tester recruitment.",
+    "confirmation": "UI toast: 投稿がEVERYONEとシェアされました. Published post insights show foriforapps, public globe, AI content label, 45-second video and exact reel link.",
+    "initial_metrics": {
+      "views": 0,
+      "viewers": 0,
+      "engagements": 0,
+      "comments": 0
+    }
+  },
+  "media": {
+    "conversation-14s.mp4": {
+      "path": "/Users/shuhei/Projects/AI-meeting-launch/dist/conversation-14s.mp4",
+      "sha256": "76a0a2887f3351865d4b84f2426c033fb159ee621991a901a7f0b34e44ef6fe8",
+      "bytes": 1573788,
+      "video": "H.264 1280x720",
+      "audio": "AAC"
+    },
+    "demo.mp4": {
+      "path": "/Users/shuhei/Projects/AI-meeting-launch/dist/demo.mp4",
+      "sha256": "d680635192d7d100a0b5e13c8676eb89e7bf9936a91e2c1cf3b4fc9df2d307cc",
+      "bytes": 6092417,
+      "video": "H.264 1280x720",
+      "audio": "AAC"
+    }
+  },
+  "unchanged": "Existing Genie posts, profiles, follower relations, account credentials and other projects were preserved. No personal contact imports, individual invitations, account conversion, purchases, ads or new recurring automation.",
+  "limits": "Initial publications do not establish audience growth, inquiries, customers or revenue. Both final publishing states are public. No change to homepage publication or existing video files."
+}

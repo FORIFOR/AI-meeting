@@ -3,7 +3,7 @@ import type { BrokerHealth } from "../api/health.js";
 import { BLOCKED_JA, PLATE, RENDERER_JA, blockedReason } from "../components/characters.js";
 import { createAvatarProvider, type CharacterEntry } from "../integrations/registry.js";
 import { loadCharacter } from "@rcai/avatar-core";
-import type { Settings, SettingsAction } from "../state/settings.js";
+import { chosenAvatarQuality, type Settings, type SettingsAction } from "../state/settings.js";
 
 const PERSONALITY: Record<string, string> = {
   sora: "3Dの会話パートナー · 日本語 / English · 試験提供",
@@ -25,6 +25,7 @@ export interface CharacterSelectProps {
 
 /** One character at a time — neighbours are names, not a grid of cards. */
 export function CharacterSelect(p: CharacterSelectProps) {
+  const oss = import.meta.env.VITE_RCAI_OSS === "true";
   const strict = p.settings.privacyMode === "strict_local";
   const list = p.characters;
   const startIndex = Math.max(0, list.findIndex((c) => c.id === p.settings.characterId));
@@ -75,6 +76,8 @@ export function CharacterSelect(p: CharacterSelectProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Let controls such as the display-quality radios use their native arrow keys.
+      if (!list.length || e.defaultPrevented || (e.target instanceof Element && e.target.closest("input, select, textarea, [role='radiogroup']"))) return;
       if (e.key === "ArrowLeft") setIndex((i) => (i - 1 + list.length) % list.length);
       if (e.key === "ArrowRight") setIndex((i) => (i + 1) % list.length);
     };
@@ -84,6 +87,10 @@ export function CharacterSelect(p: CharacterSelectProps) {
 
   if (!current) return <div className="pick"><p className="empty">キャラクターがありません。</p><button type="button" className="btn btn--ghost" onClick={p.onDone}>戻る</button></div>;
 
+  const quality = oss ? "lightweight" : chosenAvatarQuality(p.settings, current.id);
+  const natural = p.broker?.avatars?.anam;
+  const naturalAvailable = !oss && !strict && natural?.configured === true && Array.isArray(natural.characterIds) && natural.characterIds.includes(current.id);
+  const naturalUnavailable = oss ? "この配布版では軽量表示を使います。" : strict ? "完全ローカルでは軽量表示を使います。" : "この相手の自然な表示は準備中です。";
   const move = (d: number) => setIndex((i) => (i + d + list.length) % list.length);
   const choose = () => {
     p.dispatch({ type: "character", id: current.id });
@@ -115,6 +122,23 @@ export function CharacterSelect(p: CharacterSelectProps) {
         ))}
         <button type="button" className="pick__arrow" aria-label="次の相手" onClick={() => move(1)}>›</button>
       </div>
+
+      <fieldset className="pick__quality" aria-describedby="avatar-quality-note">
+        <legend>表示品質</legend>
+        <div className="pick__quality-options">
+          <label className={`pick__quality-option ${quality === "lightweight" ? "is-selected" : ""}`}>
+            <input type="radio" name="avatar-quality" value="lightweight" checked={quality === "lightweight"} onChange={() => p.dispatch({ type: "avatarQuality", characterId: current.id, quality: "lightweight" })} />
+            <span><b>軽量表示</b><small>応答の速さを優先</small></span>
+          </label>
+          <label className={`pick__quality-option ${quality === "natural" ? "is-selected" : ""} ${naturalAvailable ? "" : "is-unavailable"}`}>
+            <input type="radio" name="avatar-quality" value="natural" checked={quality === "natural"} disabled={!naturalAvailable} aria-describedby={`avatar-quality-transmission${naturalAvailable ? "" : " avatar-quality-unavailable"}`} onChange={() => { if (naturalAvailable) p.dispatch({ type: "avatarQuality", characterId: current.id, quality: "natural" }); }} />
+            <span><b>自然な表示</b><small>AI返答音声の外部送信を許可</small></span>
+          </label>
+        </div>
+        {!naturalAvailable && <p id="avatar-quality-unavailable">{naturalUnavailable}</p>}
+        <p id="avatar-quality-transmission">自然な表示を選ぶと、AIの返答音声を外部サービスのAnamへ送信します。返答には会議内容が含まれることがあります。相手ごとに選択を保存し、次回の会話にも使います。送信をやめるには軽量表示を選んでください。</p>
+        <p id="avatar-quality-note">自然な表示は試験段階です。準備や応答に時間が加わり、発話の切り替わりで軽量表示に戻ります。<br />この画面のプレビューは軽量表示です。</p>
+      </fieldset>
 
       <div className="actions">
         <button type="button" className="btn btn--ghost" onClick={p.onDone}>戻る</button>

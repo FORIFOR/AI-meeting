@@ -13,7 +13,7 @@ import { MEETING_PERSONA_ID, defaultProactivityFor, type MeetingStatus, type Par
 import type { AvatarState } from "@rcai/avatar-core";
 import type { CharacterEntry } from "../integrations/registry.js";
 import { chosenVoice, decide, settingsForBotPage, type Availability, type Settings } from "../state/settings.js";
-import { MeetingSessionController, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
+import { MeetingSessionController, validatedAvatarQuality, type MeetingTranscriptLine } from "../session/MeetingSessionController.js";
 import { pillFor } from "../session/pill.js";
 import { meetingPlatform } from "@rcai/conversation-core";
 
@@ -97,6 +97,19 @@ function BotAvatarFallback({ name, characterId }: { name: string; characterId?: 
 
 /** P0-1: join a Google Meet / Zoom as the character. Operator view + bot-page view share one controller. */
 export function Meeting(p: MeetingProps) {
+  if (p.settings.privacyMode === "strict_local") return (
+    <div className="page"><h1 className="page__title">会議に参加</h1>
+      <p className="notice" role="status">会議に参加するには、設定でクラウドの利用を有効にしてください。</p>
+      <button type="button" className="btn btn--ghost" onClick={p.onBack}>戻る</button>
+    </div>
+  );
+  return <CloudMeeting {...p} />;
+}
+
+function CloudMeeting(p: MeetingProps) {
+  const demoOnly = p.broker?.publicAccess?.mode === "demo_only";
+  const active = useRef(false);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const isBot = Boolean(p.botParams);
   const usage = useRef(new MeetingUsageTracker());
   const [usageReceipt, setUsageReceipt] = useState<MeetingUsageReceipt | null>(null);
@@ -125,7 +138,7 @@ export function Meeting(p: MeetingProps) {
   /** Guards the single-use activation against StrictMode's double effect invocation. */
   const activating = useRef(false);
   /** Bot page: render config returned by the broker after the single-use token was accepted (never from the URL). */
-  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string; vision?: string; outbound?: string; framing?: string; fps?: string; observer?: string } | null>(null);
+  const [botConfig, setBotConfig] = useState<{ characterId?: string; personaId?: string; displayName?: string; proactivity?: string; engine?: string; provider?: string; voice?: string; vision?: string; outbound?: string; framing?: string; fps?: string; observer?: string; avatarQuality?: "natural" | "lightweight" } | null>(null);
   /** Public origins the broker hands the bot page at activation (loopback is blocked inside the bot). */
   const [botOrigins, setBotOrigins] = useState<{ brokerUrl?: string; agentUrl?: string }>({});
   /**
@@ -168,7 +181,9 @@ export function Meeting(p: MeetingProps) {
   // the meeting audible while the Yui avatar appeared to be missing.
   const meetingMode = !isBot && meetingProvider === "attendee" ? "relay" : mode;
   const connectorPending = !isBot && p.brokerMeeting === null;
-  const blocked = strict
+  const blocked = demoOnly
+    ? "PUBLIC_DEMO_ONLY"
+    : strict
     ? "BLOCKED_BY_STRICT_LOCAL"
     : connectorPending
       ? null
@@ -182,7 +197,7 @@ export function Meeting(p: MeetingProps) {
   const note = (text: string) => setTimeline((t) => [...t.slice(-60), { at: Date.now() - t0.current, text }]);
 
   const start = async (role: "operator" | "bot") => {
-    if (!character || !persona) return;
+    if (!active.current || !character || !persona) return;
     const meetingUrl = normalizeMeetingUrlInput(url);
     if (!meetingUrl) {
       setError("会議URLを入力してください。");
@@ -231,6 +246,7 @@ export function Meeting(p: MeetingProps) {
         outboundPath: (isBot ? botConfig?.outbound : undefined) === "page" ? "page" : "socket",
         framing: isBot && botConfig?.framing === "default" ? "default" : "meeting",
         avatarFps: isBot && Number(botConfig?.fps) > 0 ? Number(botConfig?.fps) : undefined,
+        avatarQuality: isBot ? botConfig?.avatarQuality : undefined,
         vision: (isBot ? botConfig?.vision : vision) === "model",
         visualCues: (isBot ? botConfig?.vision : vision) !== "off",
         // Which vendor is carrying this call. The bot page learns it from its own URL; without it the
@@ -248,12 +264,14 @@ export function Meeting(p: MeetingProps) {
           // it is addressed — and the in-bot socket exists only inside a bot, so on its own the path can
           // never be exercised outside a real call.
           const stops: (() => void)[] = [];
+          let listening = true;
           void import("@rcai/connector-recall").then((m) => {
+            if (!listening || !active.current) return;
             const once = m.dedupeTranscript(cb);
             stops.push(m.connectBotTranscript(once));
             if (relayWsUrl.current) stops.push(m.connectRelayTranscript(relayWsUrl.current, once));
           });
-          return () => { for (const s of stops) s(); };
+          return () => { listening = false; for (const s of stops) s(); };
         } : undefined,
         handlers: {
           onUsage: counters => {
@@ -282,6 +300,11 @@ export function Meeting(p: MeetingProps) {
           onActivated: (a) => { setActivation(a); note(`bot page activated · session ${a.sessionId.slice(0, 8)} · bot ${a.botId}`); },
           onError: (m, code) => {
             const line = `${code ? `${code}: ` : ""}${m}`;
+            if (code === "AVATAR_FALLBACK") {
+              setVisualNotice(m);
+              note(m);
+              return;
+            }
             // Visual cues are an optional enhancement. Do not put their failure in the fatal
             // error state: bot-page activation and the voice session must continue.
             if (code === "VISUAL") {
@@ -320,8 +343,8 @@ export function Meeting(p: MeetingProps) {
   // The token is single-use, so this must run EXACTLY once per page load. A ref guard — not the effect body —
   // enforces that: React StrictMode invokes the effect twice in development, and a second activation of the same
   // nonce is (correctly) refused as `replayed`, which would strand the bot page on an error it can never leave.
-  // For the same reason the in-flight result is applied even after cleanup: discarding it would lose the one
-  // activation the broker granted.
+  // StrictMode keeps the same instance active for the result. A real unmount (including strict_local)
+  // discards it so an old activation cannot start another probe or provider connection.
   useEffect(() => {
     if (!isBot || activation || error || activating.current) return;
     const token = p.botParams?.token ?? "";
@@ -330,16 +353,20 @@ export function Meeting(p: MeetingProps) {
     void (async () => {
       try {
         const m = await import("@rcai/connector-recall");
+        if (!active.current) return;
         const act = await m.activateBotPage(p.botParams?.brokerUrl ?? p.settings.brokerUrl, token);
-        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice, vision: act.botPageQuery.vision, outbound: act.botPageQuery.outbound, framing: act.botPageQuery.framing, fps: act.botPageQuery.fps, observer: act.botPageQuery.observer });
+        if (!active.current) return;
+        setBotConfig({ characterId: act.botPageQuery.character, personaId: act.botPageQuery.persona, displayName: act.botPageQuery.name, proactivity: act.botPageQuery.proactivity, engine: act.botPageQuery.engine, provider: act.botPageQuery.provider, voice: act.botPageQuery.voice, vision: act.botPageQuery.vision, outbound: act.botPageQuery.outbound, framing: act.botPageQuery.framing, fps: act.botPageQuery.fps, observer: act.botPageQuery.observer, avatarQuality: validatedAvatarQuality(act.botPageQuery.avatarQuality) });
         const origins = { brokerUrl: act.brokerUrl ?? undefined, agentUrl: act.agentUrl ?? undefined };
         setBotOrigins(origins);
         relayWsUrl.current = act.clientWsUrl;
         setBotRelayWsUrl(act.clientWsUrl);
         if (origins.brokerUrl && origins.agentUrl) {
           const { probe, shouldProbeLocalAgent } = await import("../api/health.js");
+          if (!active.current) return;
           const engine = (act.botPageQuery.engine as typeof p.settings.engine | undefined) ?? p.settings.engine;
           const h = await probe(origins.brokerUrl, origins.agentUrl, p.settings.privacyMode, { agent: shouldProbeLocalAgent({ ...p.settings, engine }) }).catch(() => null);
+          if (!active.current) return;
           if (h) { setBotAvailability(h.availability); note(`engines · local ${h.availability.local} · openai ${h.availability.openai} · google ${h.availability.google}`); }
         }
         setActivation({ sessionId: act.sessionId, botId: act.botId, clientToken: act.clientToken });
@@ -412,7 +439,7 @@ export function Meeting(p: MeetingProps) {
           <p className="page__lede">{displayName}と一緒に、会話に集中できる時間を。招待リンクと設定を確認して、会議を始めましょう。</p>
         </div>
         {connectorPending && <p className="hint" role="status">会議サービスを確認しています…</p>}
-        {blocked && <p className="err">{strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
+        {blocked && <p className="notice" role="status">{demoOnly ? <>公開版では<a href="/vrm-demo.html">音声とアバターのデモ</a>を利用できます。会議Botは、ご自身の環境で接続先を設定してご利用ください。</> : strict ? "会議に参加するには、設定でクラウドの利用を有効にしてください。" : "会議への接続を準備できていません。管理者にお問い合わせください。"}</p>}
         {visualNotice && <p className="hint" role="status">{visualNotice}</p>}
         {usageReceipt && terminal && <MeetingUsageSummary receipt={usageReceipt} aiUsage={aiUsage} />}
         <div className={`field meeting__url-field${joined ? " meeting__url-field--active" : ""}`}>
@@ -430,7 +457,7 @@ export function Meeting(p: MeetingProps) {
           )}
         </div>
         {aiUsage && !terminal && <LiveCostSummary counters={aiUsage} />}
-        <CreditBalance enabled={!strict} />
+        <CreditBalance enabled={!strict && !!p.broker && !demoOnly} />
         <div className="field"><label htmlFor="meeting-character">1. 話す相手</label>
           <select id="meeting-character" className="select" value={character?.id ?? ""} onChange={e => setCharacterId(e.target.value)} disabled={joined}>
             {p.characters.map(c => <option key={c.id} value={c.id} disabled={!!blockedReason(c, p.broker ?? null, strict)}>{c.name}{blockedReason(c, p.broker ?? null, strict) ? "（準備中）" : ""}</option>)}
@@ -447,7 +474,7 @@ export function Meeting(p: MeetingProps) {
             {voiceOptions.map(v => <option key={v.id} value={v.id}>{v.note}（{v.label}）</option>)}
           </select>
         </div>
-        <ZoomConnection base={p.settings.brokerUrl} meetingUrl={url} disabled={busy || joined} />
+        {!demoOnly && <ZoomConnection base={p.settings.brokerUrl} meetingUrl={url} disabled={busy || joined} privacyMode={p.settings.privacyMode} />}
         {p.brokerMeeting?.attendee && persona?.id === MEETING_PERSONA_ID && <div className="field">
           <label><input type="checkbox" checked={observeWithCaptions} onChange={e => setObserveWithCaptions(e.target.checked)} disabled={joined} /> 字幕で見守り、呼ばれたときだけAIと会話する（省コスト・試験提供）</label>
           <p className="hint">会議の字幕が必要です。会話品質を検証中です。呼びかけが届かない・会話が途切れる場合は、退出してこの設定を外してください。</p>

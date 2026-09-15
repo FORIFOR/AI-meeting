@@ -27,6 +27,12 @@ export interface CharacterEntry {
 
 export const characters: CharacterEntry[] = [
   {
+    id: "vroid-b", name: "VRoid B", renderer: "vrm", baseUrl: "/characters/vroid-b",
+    aliases: ["ブイロイド", "ぶいろいど"],
+    license: "AvatarSample_B © pixiv Inc. / VRoid Project — VRM Public License 1.0 + sample conditions",
+    defaultPersona: "friendly", description: "表情豊かな3Dの会話パートナー。アイデアの壁打ちや、毎日の整理に。",
+  },
+  {
     id: "yui",
     name: "Yui",
     aliases: ["ゆい", "ユイ", "結衣", "唯"], // 唯: run 79 heard 「唯イ寮の予定を教えて」 for 「ゆい、今日の予定を教えて」
@@ -71,6 +77,11 @@ export const characters: CharacterEntry[] = [
     id: "sora", name: "Sora", renderer: "human-glb", baseUrl: "/characters/sora",
     aliases: ["そら", "ソラ"], license: "MPFB sample by met4citizen — CC0-1.0",
     defaultPersona: "friendly", description: "3Dの会話パートナー。試験提供。",
+  },
+  {
+    id: "vrm-sample", name: "VRMサンプル", renderer: "vrm", baseUrl: "/characters/vrm-sample",
+    aliases: ["サンプル"], license: "VRM1_Constraint_Twist_Sample © 2022 pixiv Inc. — VRM Public License 1.0",
+    defaultPersona: "friendly", description: "外部アバターAPI不要の3Dサンプル。原作者の利用条件が適用されます。",
   },
 
 ];

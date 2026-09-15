@@ -5,12 +5,13 @@ import { createAvatarProvider, webglAvailable } from "./registry.js";
 describe("avatar renderers that need WebGL", () => {
   const container = { appendChild: () => {} } as unknown as HTMLElement;
 
-  it("uses the visible 2D fallback for Live2D and still rejects VRM", async () => {
+  it("uses a visible local fallback for Live2D and VRM without WebGL", async () => {
     vi.stubGlobal("document", { createElement: () => ({ getContext: () => null }) });
     expect(webglAvailable()).toBe(false);
     const fallback = await createAvatarProvider("live2d", { container, brokerUrl: "http://b", characterId: "yui", characterName: "Yui" });
     expect(fallback.id).toBe("canvas");
-    await expect(createAvatarProvider("vrm", { container, brokerUrl: "http://b" })).rejects.toThrow(/BLOCKED_BY_NO_WEBGL/);
+    const vrmFallback = await createAvatarProvider("vrm", { container, brokerUrl: "http://b" });
+    expect(vrmFallback.id).toBe("canvas");
     vi.unstubAllGlobals();
   });
 

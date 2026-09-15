@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DEFAULT_RULE,
   isFinished,
@@ -25,6 +25,17 @@ export interface MeetingsProps {
 
 /** Level 1: what the character will attend, and what it already attended. */
 export function Meetings(p: MeetingsProps) {
+  if (p.settings.privacyMode === "strict_local") return (
+    <div className="page"><h1 className="page__title">会議</h1>
+      <p className="notice" role="status">会議の記録を確認するには、設定でクラウドの利用を有効にしてください。</p>
+      <button type="button" className="btn btn--ghost" onClick={p.onBack}>戻る</button>
+    </div>
+  );
+  return <CloudMeetings {...p} />;
+}
+
+function CloudMeetings(p: MeetingsProps) {
+  const active = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<CalendarStatus | null>(null);
@@ -36,6 +47,7 @@ export function Meetings(p: MeetingsProps) {
   const [busyEvent, setBusyEvent] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!active.current) return;
     const url = p.settings.brokerUrl;
     const [st, evs, ms, rl] = await Promise.allSettled([
       meetingsApi.calendarStatus(url),
@@ -43,6 +55,7 @@ export function Meetings(p: MeetingsProps) {
       meetingsApi.list(url),
       meetingsApi.rule(url),
     ]);
+    if (!active.current) return;
     setStatus(st.status === "fulfilled" ? st.value : null);
     setEvents(evs.status === "fulfilled" ? evs.value : []);
     setMeetings(ms.status === "fulfilled" ? ms.value : []);
@@ -56,12 +69,14 @@ export function Meetings(p: MeetingsProps) {
   }, [p.settings.brokerUrl]);
 
   useEffect(() => {
+    active.current = true;
     void load();
     const t = setInterval(() => void load(), 20_000);
-    return () => clearInterval(t);
+    return () => { active.current = false; clearInterval(t); };
   }, [load]);
 
   const toggle = async (e: CalendarEvent) => {
+    if (!active.current) return;
     setBusyEvent(e.id);
     try {
       if (e.eligible) await meetingsApi.optOut(p.settings.brokerUrl, e.id);
@@ -75,6 +90,7 @@ export function Meetings(p: MeetingsProps) {
   };
 
   const saveRule = async () => {
+    if (!active.current) return;
     setSaving(true);
     try {
       const next: MeetingRule = {
@@ -82,6 +98,7 @@ export function Meetings(p: MeetingsProps) {
         leadMinutes: Math.max(0, Number.parseInt(ruleDraft.leadMinutes, 10) || 0),
       };
       const saved = await meetingsApi.saveRule(p.settings.brokerUrl, next);
+      if (!active.current) return;
       setRule(saved ?? next);
       await load();
     } catch (err) {

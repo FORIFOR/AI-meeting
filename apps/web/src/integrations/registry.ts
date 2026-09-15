@@ -1,4 +1,5 @@
 import { zoomToken } from "../api/zoom.js";
+import { LocalAvatarFallback } from "./localAvatarFallback.js";
 /**
  * The ONLY file that touches sibling integration packages. Everything is loaded lazily and
  * typed against the @rcai/*-core contracts, so the app typechecks/builds even while a sibling
@@ -6,7 +7,7 @@ import { zoomToken } from "../api/zoom.js";
  */
 import type { PrivacyMode, ProviderId } from "@rcai/conversation-core";
 import type { EvaluationProvider, RealtimeAIProvider } from "@rcai/provider-core";
-import type { AvatarProvider, CharacterManifest } from "@rcai/avatar-core";
+import { DualRenderer, type AvatarProvider, type CharacterManifest } from "@rcai/avatar-core";
 import type { Persona } from "@rcai/persona-core";
 import { agentHttpUrl } from "../api/health.js";
 
@@ -120,6 +121,10 @@ export async function createHeuristicEvaluator(): Promise<EvaluationProvider> {
 export type Renderer = CharacterManifest["renderer"];
 
 export interface AvatarFactoryOptions {
+  /** Local VRM import/demo override. Never forwarded to a cloud avatar. */
+  modelUrl?: string;
+  quality?: "lightweight" | "natural";
+  onFallback?: (reason: string) => void;
   container: HTMLElement;
   brokerUrl: string;
   /** Character metadata used to make a renderer fallback identifiable in a meeting tile. */
@@ -165,8 +170,51 @@ export function webglAvailable(): boolean {
 }
 
 export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryOptions): Promise<AvatarProvider> {
+  const oss = import.meta.env.VITE_RCAI_OSS === "true";
+  if (oss && !["vrm", "canvas"].includes(renderer)) throw new Error("BLOCKED_BY_OSS_RENDERER: enable licensed extensions in a regular build");
+  // Preview and strict-local never import or connect a billed external renderer.
+  if (!oss && o.quality === "natural" && o.privacyMode !== "strict_local" && o.framing !== "preview" &&
+      ["live2d", "canvas", "vrm", "human-glb"].includes(renderer)) {
+    const localContainer = document.createElement("div");
+    const naturalContainer = document.createElement("div");
+    for (const layer of [localContainer, naturalContainer]) {
+      layer.style.cssText = "position:absolute;inset:0;width:100%;height:100%";
+      o.container.appendChild(layer);
+    }
+    let local: AvatarProvider | undefined;
+    try {
+      local = await createAvatarProvider(renderer, { ...o, container: localContainer, quality: "lightweight" });
+      const { AnamAvatarProvider } = await import("@rcai/avatar-anam");
+      const natural = new AnamAvatarProvider({ container: naturalContainer, brokerUrl: o.brokerUrl, privacyMode: o.privacyMode });
+      return new DualRenderer({ local, natural, localContainer, naturalContainer, onFallback: o.onFallback });
+    } catch (error) {
+      if (local) {
+        naturalContainer.remove();
+        const stop = local.stop.bind(local);
+        local.stop = async () => { try { await stop(); } finally { localContainer.remove(); } };
+        o.onFallback?.("renderer_unavailable");
+        return local;
+      }
+      localContainer.remove(); naturalContainer.remove();
+      throw error;
+    }
+  }
   const strict = o.privacyMode === "strict_local";
   if (strict && (renderer === "liveavatar" || renderer === "tavus")) throw new Error("BLOCKED_BY_STRICT_LOCAL: cloud avatars are disabled under strict_local");
+  if (renderer === "vrm") {
+    const fallback = async () => {
+      const { CanvasAvatarProvider } = await import("@rcai/avatar-canvas");
+      return new CanvasAvatarProvider({ container: o.container, framing: o.framing, label: `${o.characterName ?? "VRM"} · 簡易表示` });
+    };
+    if (!webglAvailable()) { o.onFallback?.("vrm_webgl_unavailable"); return fallback(); }
+    try {
+      const { VRMAvatarProvider } = await import("@rcai/avatar-vrm");
+      return new LocalAvatarFallback(new VRMAvatarProvider({ container: o.container, modelUrl: o.modelUrl, privacyMode: o.privacyMode }), fallback, o.onFallback);
+    } catch {
+      o.onFallback?.("vrm_renderer_unavailable");
+      return fallback();
+    }
+  }
   if (renderer === "live2d" && o.preferCanvas) {
     const mod = await import("@rcai/avatar-canvas");
     const C = pick<Ctor<AvatarProvider, { container: HTMLElement; accent?: string; label?: string; framing?: "default" | "meeting" | "preview"; characterId?: string; staticPreview?: boolean }>>(mod, "CanvasAvatarProvider", "BLOCKED_BY_AVATAR_CANVAS");
@@ -203,11 +251,6 @@ export async function createAvatarProvider(renderer: Renderer, o: AvatarFactoryO
       const { HumanGLBAvatarProvider } = await import("@rcai/avatar-vrm");
       return new HumanGLBAvatarProvider({ container: o.container });
     }
-    case "vrm": {
-      const mod = await import("@rcai/avatar-vrm");
-      const C = pick<Ctor<AvatarProvider, { container: HTMLElement }>>(mod, "VRMAvatarProvider", "BLOCKED_BY_AVATAR_VRM");
-      return new C({ container: o.container });
-    }
     case "liveavatar": {
       const mod = await import("@rcai/avatar-liveavatar");
       const C = pick<Ctor<AvatarProvider, { brokerUrl: string; container: HTMLElement }>>(mod, "LiveAvatarProvider", "BLOCKED_BY_AVATAR_LIVEAVATAR");
@@ -240,7 +283,7 @@ export async function loadCharacterEntries(): Promise<{ entries: CharacterEntry[
   try {
     const mod = await import("@rcai/characters");
     const list = pick<CharacterEntry[]>(mod, "characters", "BLOCKED_BY_CHARACTERS_PKG");
-    return { entries: list };
+    return { entries: import.meta.env.VITE_RCAI_OSS === "true" ? list.filter((entry) => entry.renderer === "vrm") : list };
   } catch (e) {
     return { entries: [], error: e instanceof Error ? e.message : String(e) };
   }

@@ -55,6 +55,49 @@ class GenSink implements AudioSink {
 const config: SessionConfig = { systemPrompt: "x", mode: "free_talk", language: "ja-JP", privacyMode: "default" };
 
 describe("generation epoch", () => {
+  it("invalidates delayed external output and captions at the next user turn after source EOF", async () => {
+    let pending = false;
+    let ended = 0;
+    const sink = Object.assign(new GenSink(), {
+      endTurn: () => { pending = true; ended++; },
+      beginUserTurn: () => { const wasPending = pending; pending = false; return wasPending; },
+    });
+    const runtime = new ConversationRuntime({ sink });
+    const provider = new GenProvider();
+    const seen: ConversationEvent[] = [];
+    runtime.on(e => seen.push(e));
+    await runtime.start(provider, config);
+    const old = provider.startResponse(2);
+    provider.listener({ type: "assistant_speech_ended", gen: provider.counter.stamp() });
+    expect(ended).toBe(1);
+    expect(runtime.state).toBe("idle");
+    provider.listener({ type: "user_speech_started" });
+    expect(runtime.generation.accepted).toBe(2);
+    const count = seen.length;
+    provider.lateChunks(old, 6);
+    expect(seen).toHaveLength(count);
+    expect(sink.played).toEqual([1, 1]);
+    expect(runtime.getRecord().turns[0]?.interrupted).toBeFalsy();
+    provider.listener({ type: "user_speech_started" });
+    expect(runtime.generation.accepted).toBe(2);
+    provider.listener({ type: "user_speech_ended" });
+    provider.startResponse(1);
+    expect(sink.played).toEqual([1, 1, 2]);
+  });
+
+  it("preserves full-duplex user acknowledgements with an external output sink", async () => {
+    let begins = 0;
+    const sink = Object.assign(new GenSink(), { beginUserTurn: () => { begins++; return true; } });
+    const runtime = new ConversationRuntime({ sink });
+    const provider = Object.assign(new GenProvider(), { fullDuplex: true });
+    await runtime.start(provider, config);
+    provider.startResponse(1);
+    provider.listener({ type: "user_speech_started" });
+    expect(begins).toBe(0);
+    expect(runtime.state).toBe("speaking");
+    expect(runtime.generation.accepted).toBe(0);
+  });
+
   it("drops every late chunk of an interrupted generation (audio, caption, speaking state)", async () => {
     let t = 0;
     const sink = new GenSink();

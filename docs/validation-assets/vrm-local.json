@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-09-11T17:42:58.805Z",
+  "runId": "8bedacc6-9efe-46d2-85f8-16f9457cab01",
+  "automatedOutcome": "PASS_AUTOMATED_ONLY",
+  "startedAt": "2026-09-11T16:39:21.681Z",
+  "endedAt": "2026-09-11T17:39:21.934Z",
+  "durationMs": 3600002.1,
+  "japaneseSpeech": {
+    "count": 50,
+    "passed": 50,
+    "allUsedWasm": true
+  },
+  "interruptions": {
+    "count": 20,
+    "passed": 20,
+    "maxLocalStopMs": 1.1,
+    "staleCaptionsGestures": 0
+  },
+  "localTiming": {
+    "measure": "Same local WAV first 700ms, same SpeakerOutput settings, 20 samples per renderer; Live2D block then VRM block, not API latency",
+    "samplesPerRenderer": 20,
+    "percentileMethod": "nearest rank: sorted[ceil(n * 0.95) - 1]",
+    "live2dP95Ms": 40.6,
+    "vrmP95Ms": 41.6,
+    "differenceOfP95Ms": 1,
+    "pairedDeltaP95Ms": 6.3,
+    "pairedDeltaDefinition": "p95 of VRM[i] - Live2D[i], matched by the same WAV fixture; separate sequential renderer blocks",
+    "gateMetric": "pairedDeltaP95Ms",
+    "gateThresholdMs": 100,
+    "gatePass": true,
+    "providerResponseLatencyMeasured": false
+  },
+  "soak": {
+    "periodicSpeechCount": 127,
+    "periodicSpeechFailures": 0,
+    "samples": 61,
+    "visible": true,
+    "renderProgress": true,
+    "resourcesStable": true,
+    "heapFloorGrowthBytes": 2566503,
+    "heapThresholdBytes": 33554432,
+    "gpuResourceCounts": {
+      "renderedFrames": 429174,
+      "geometries": 13,
+      "textures": 26,
+      "programs": 8,
+      "contextLost": false,
+      "running": true
+    }
+  },
+  "cleanup": {
+    "audioContext": "closed",
+    "canvases": 0,
+    "mediaElements": 0
+  },
+  "errors": [],
+  "changedSources": [],
+  "humanPerceptualQuality": "NOT_TESTED",
+  "realAIContinuousConversation": "NOT_TESTED",
+  "otherParticipantMeetingOutput": "NOT_TESTED"
+}

@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "types": ["node"] },
+  "include": ["record-demo.ts", "../../apps/web/node_modules/vite/client.d.ts", "../../avatar-providers/vrm/src/assets.d.ts"]
+}

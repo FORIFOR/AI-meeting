@@ -3,6 +3,38 @@
 Status legend: `PASS` (executed evidence) · `PARTIAL` · `BLOCKED_BY_*` · `TODO`.
 Never mark PASS from code existence alone.
 
+## Optional Cara-4 renderer (2026-09-11)
+
+Follow-up verification **PASS_GEMINI_LIVE2D_AND_UNCONFIGURED_FALLBACK / ANAM_LIVE_STILL_BLOCKED**: actual SessionController/Yui with synthetic microphone input and production Gemini, 3 bounded connections. Input end → significant SpeakerOutput PCM 1,824 / 1,797 / 1,813ms (one sample per case). Found and fixed Anam's missing post-start video-error listener (mock reproduction, 39 focused tests) and Gemini's cancelled caption fragments reopening a generation (actual reproduction, 46 focused tests). Final live retest: cancelled captions 0, post-interrupt PCM 0, mouth and audio queue cleared in 2ms, local media/socket cleanup confirmed. Typechecks and production build passed. Web `10ac4165d56ce866` published 23:53 JST; all 55 HTML/JS/CSS files byte-matched, public Yui preview/quality controls and no browser error/warning logs confirmed. Broker unchanged; actual Cara-4 output and natural meeting AV remain blocked by missing Anam key and character IDs. [Verification and limits](reports/anam-verification-2026-09-11/README.md), [deployment](reports/anam-verification-2026-09-11/deployment.json).
+
+**PARTIAL / BLOCKED_BY_ANAM_KEY_AND_CHARACTER_MAPPING**. Same-character dual renderer, broker token endpoint, synchronized audio routing, conservative cancellation, page-capture meeting integration, per-character quality UI and local portrait preparation implemented. Automated validation: 103 test files / 941 tests, workspace typechecks and production build passed. No paid Anam request or real meeting AV comparison was performed. The response-speed default stays lightweight; natural mode remains unavailable with the current unconfigured broker. Passthrough output has no guaranteed turn/EOF acknowledgement, so normal source EOF is not playback completion, and the next half-duplex user turn returns to lightweight. [Full evidence and remaining requirements](reports/anam-integration-2026-09-11.md).
+
+Production publication **PASS_DISABLED_INTEGRATION**: Hosting `8a9dcceda469fe7b` (23:26 JST), Cloud Run `ai-meeting-broker-00023-fep` at 100%, all 55 HTML/JS/CSS byte-matched. Live Yui preview renders; lightweight selected, natural disabled with preparation notice; browser errors/warnings empty. Broker health preserves OpenAI/Google availability and reports Anam unconfigured; missing-key endpoint returns503/no-store without creating an Anam session. [Deployment evidence](reports/anam-deployment-2026-09-11/deployment.json).
+
+## GPT-Live 1 real connection check (2026-09-11)
+
+Post-credit follow-up **PASS_CONNECTION_AND_SPEAKER_PCM** (18:22–18:32 JST): user replenished credit; Dashboard $9.54. Independent SDK connected and returned Japanese voice. Actual Live provider then connected but produced no nonzero SpeakerOutput PCM; added the hidden muted media-element activation already used by conventional Realtime. Fixed provider through unchanged production broker: ready **949 ms**, synthetic input end → significant SpeakerOutput PCM **1,195 ms** (one sample), Japanese reply, finalized 15 s, no errors, full local resource cleanup. 97 files / 841 tests, typechecks and production build passed. Full hosted SessionController/avatar, physical microphone, and meeting bot validation remain outside this test. [Recovery report](reports/gpt-live-post-credit-2026-09-11.md), [evidence](reports/gpt-live-post-credit-2026-09-11.json).
+
+Live playback fix production Web publication **PASS** (18:35:55 JST): Hosting `c1fd6c9a1ac2daf4`, all 48 HTML/JS/CSS byte-matched, existing config/SPA routing preserved, published Home loaded with no error/warning logs. Broker unchanged. [Deployment evidence](reports/gpt-live-post-credit-deployment-2026-09-11/deployment.json). This does not supersede unrelated release gates.
+
+Authenticated Dashboard follow-up **BLOCKED_BY_OPENAI_CREDIT_BALANCE** (approximately 18:11–18:16 JST): login succeeded after user-approved macOS autofill. Production key suffix matched the Active AI-meeting key with All permissions in Default project / Personal Organization; actual Usage Tier 2. API credit balance **−$0.46**, auto-reload OFF. Billing must be resolved before retesting; this is not proof that billing caused the earlier unstructured HTTP 500. Effective model policy remains unconfirmed. No credits purchased, no account/production settings changed, no additional Live request. [Dashboard evidence](reports/gpt-live-dashboard-2026-09-11.md).
+
+Native browser + raw HTTP follow-up **FAIL_SESSION_CREATION_BOTH_BROWSERS** (17:23–17:25 JST): Chrome 153 and Safari 26.6.2 each returned HTTP 500 for SDK and raw `fetch`, with identical SDP within each pair. All failed responses lacked `x-request-id`; Cloudflare rays saved. Model GET still HTTP 200. Project tier/policy checks blocked by Dashboard login and unavailable admin configuration; no other project/key tested or created. Production unchanged. [Browser / Project report](reports/gpt-live-browser-project-2026-09-11.md), [evidence](reports/gpt-live-browser-project-2026-09-11.json).
+
+Independent official-SDK follow-up **FAIL_SESSION_CREATION** (17:05–17:06 JST): `openai@7.15.0` and Node `v26.5.0`, no application imports, real browser SDP. Both Terra-delegated and minimal model+instructions requests to `/v1/live/sessions` returned HTTP 500 before an answer or `session.started`. One configured key; no production changes. [SDK report](reports/gpt-live-sdk-smoke-2026-09-11.md), [evidence](reports/gpt-live-sdk-smoke-2026-09-11.json), [reproduction](../scripts/live-smoke-test/README.md).
+
+**FAIL_SESSION_CREATION** (16:17–16:20 JST): actual `OpenAILiveProvider` with a browser-generated SDP and synthetic silent audio failed via the production broker (HTTP 502). Direct `/v1/live/sessions` with the configured key returned HTTP 500 `Internal Server Error`; model metadata access was HTTP 200. Local and cloud configured keys were identical, so only one distinct key was verified. No `session.started` or voice response was observed. Full hosted UI, microphone conversation, and speech latency remain unverified. Production configuration and deployment unchanged. [Verification report](reports/gpt-live-verification-2026-09-11.md), [sanitized evidence](reports/gpt-live-verification-2026-09-11.json).
+
+## Response-speed improvements (2026-09-11)
+
+`pnpm gate` **PASS**: 25 package typechecks, 97 test files / 839 tests, production web build. Browser smoke verified Home → Settings → Meeting → Home, including screen-loading feedback and return navigation. Production entry JavaScript reduced from 478,462 to 236,435 bytes (50.58%); this is a payload measurement, not an end-to-end conversation latency improvement percentage.
+
+Mic/character preparation now overlaps; local LLM warm-up yields to responses; English sentence chunks reach TTS before full completion; cancelled hedges and unused streams stop; OpenAI Realtime setup and telemetry delivery have bounded waits; final evaluation starts alongside telemetry. Regression tests cover cancellation, late completions, streaming boundaries, and route loading. Existing Sora asset validation now checks its GLB format instead of assuming Live2D.
+
+Evidence: [response-speed report](reports/response-speed-2026-09-11.md), [bundle measurements](reports/response-speed-2026-09-11.json). Real microphone/cloud/Meet/Zoom response p50/p95 **NOT MEASURED in this change**. Earlier reality evidence is unchanged.
+
+Production Web deployment **PASS** (2026-09-11 12:32 JST): Firebase Hosting `f45de155ceca8c30`, 48 HTML/JS/CSS files byte-matched, existing Hosting configuration preserved, SPA rewrite and legacy bot entry verified, broker health HTTP 200, browser Home → Settings → Home with no error/warning logs. [Deployment evidence](reports/response-speed-deployment-2026-09-11/deployment.json). Cloud Run broker unchanged; local agent improvements still require desktop runtime distribution. No stable promotion or real-speech latency claim.
+
 | Gate | Status | Evidence |
 |---|---|---|
 | 0 Repository audit | PASS | `docs/current-state.md` |
@@ -203,6 +235,20 @@ What is NOT proven: the bot page actually opening that second subscription. In a
 activates (`activations: 1`) but never appears as a relay client, so the address → answer hop is still
 unverified outside a real call. Do not read the code being present as the path working.
 
+## 2026-09-09 用途別の追加検証
+
+型検査・708テスト・Webビルド成功。ニュース出典APIをCloud Runに反映。タスクの期限保持・終了画面、発話履歴参照を追加。ブラウザ音声のタスク更新で文字起こしの到着順による不一致を発見し修正・再検証。用途別品質と公開GOは未合格。範囲・原文・失敗例は `docs/reports/release/news/README.md`、最新の公開判定は `docs/reports/release/reality.json`。
+
+最終2発話の音声タスク試験は用途FAIL。モデルの完了操作と別言語に誤認した入力文字起こしが不一致となり、引用照合で拒否。画面例外0・終了後リソース0でも用途合格とはしない。詳細 `docs/reports/release/news/ui/tasks.json`。
+
+### 2026-09-09 タスク更新の回復修正
+
+新しいツール要求のgeneration採番を修正し、取り消し済みの要求を破棄するテストも維持。音声の文字起こし誤認は確認待ちUIで回復。最終3発話のブラウザ試験で完了・期限保持・追加・残件返答・終了後リソース解放を確認。証拠 `docs/reports/release/news/recovery-ui/assessment.json`。これは限定シナリオの合格であり公開GOではない。
+
+### タスク回復修正の公開Web反映
+
+2026-09-09 04:13 JST、明示された反映指示でHosting版 ec32d23ff8bd5fe2 を公開。公開URLで確認操作による完了更新・期限保持・終了画面・リソース解放を確認。別の追加指示の文字起こし取りこぼしは残る。全用途合格や公開GOに読み替えない。証拠 `docs/reports/release/news/public-ui/assessment.json`。
+
 
 ## 2026-09-09 最新公開版の残タスク検証
 
@@ -215,3 +261,11 @@ unverified outside a real call. Do not read the code being present as the path w
 - Real Hosted Meet: 600,126ms, 24 synthetic cues, 23 windows with room audio. One unsanctioned cut and an unexpected interruption remain: functional FAIL, not a completed platform gate.
 - Both bots ended; host left. No fabricated human evaluation or Zoom result. Release=NO_GO.
 - Evidence: docs/reports/release/playback-diagnostic-20260909/README.md.
+
+## 2026-09-12 — VRM + wLipSync local validation
+
+- 112ファイル・1,003自動テスト、全体型検査、通常版/OSSビルドと配布監査 PASS。
+- 実ConversationRuntime / SpeakerOutput / VRM / wLipSync WASMへローカルWAVを流し、日本語50文・割り込み20回・同一VRMの60分保持は **PASS_AUTOMATED_ONLY**。反復音声127回で失敗0、終了後AudioContext closed、canvas/media要素0。
+- 同じWAVの `VRM[i] − Live2D[i]` 20個のp95は **+6.3ms**、追加遅延上限100msを通過。各群の初音p95はLive2D 40.6ms / VRM 41.6msで、p95同士の差は別指標の **+1.0ms**。AI応答・実スピーカー・会議到達の遅延ではない。
+- 人による口形・同期評価、実AIとの60分連続会話、Meet/Zoomの別参加者への音声映像到達は未検証。今回の限定合格で全体の商用品質判定 **Release=NO_GO** は変更しない。
+- Evidence: [VRM検証レポート](reports/vrm-integration-2026-09-12/README.md)、最終run `8bedacc6-9efe-46d2-85f8-16f9457cab01`。

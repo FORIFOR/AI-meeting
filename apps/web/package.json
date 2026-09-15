@@ -14,6 +14,7 @@
     "@digital-go-jp/design-tokens": "^2.0.1",
     "@mediapipe/tasks-vision": "1.0.1",
     "@rcai/audio-core": "workspace:*",
+    "@rcai/avatar-anam": "workspace:*",
     "@rcai/avatar-canvas": "workspace:*",
     "@rcai/avatar-core": "workspace:*",
     "@rcai/avatar-live2d": "workspace:*",

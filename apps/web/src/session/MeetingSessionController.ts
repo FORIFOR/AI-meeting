@@ -1,6 +1,6 @@
-import { EnergyVAD, MicCapture, SpeakerOutput, dbfs, rms, type PCMFrame } from "@rcai/audio-core";
+import { EnergyVAD, MicCapture, SpeakerOutput, dbfs, rms, type AudioSink, type PCMFrame } from "@rcai/audio-core";
 import { ConversationRuntime, type ConversationEvent, type ProviderId } from "@rcai/conversation-core";
-import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
+import { AvatarRuntime, SynchronizedAvatarSink, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, HeuristicSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { JOINED_REASON, LIVE_LOOKUP_TOOL, ParticipationPolicy, SELF_TURN_REASON, parseLookupArguments, renderLookup, settingFor, type LiveLookupResult, canonicalizeName, meetingGreetingPrompt, meetingInstructions, meetingTurnPrompt, type MeetingEvent, type MeetingSession, type MeetingStatus, type PolicyTransition, type Proactivity } from "@rcai/meeting-core";
@@ -9,7 +9,7 @@ import { VisualPerceptionService } from "./VisualPerceptionService.js";
 import { OnDemandConversation } from "./OnDemandConversation.js";
 import { MeetingMemory } from "./MeetingMemory.js";
 import { createAvatarProvider, createConversationProvider, createMeetingConnector, type CharacterEntry } from "../integrations/registry.js";
-import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
+import { chosenAvatarQuality, chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 
 /** Gemini Live takes at most 1 fps, and every frame costs tokens whether or not it changes anything. */
 const VISION_MIN_INTERVAL_MS = 5000;
@@ -87,6 +87,8 @@ export interface MeetingInit {
   framing?: "default" | "meeting";
   /** Cap on the avatar's render frame rate; the bot page takes it from its `fps` query (a vendor's page browser is often short of CPU). */
   avatarFps?: number;
+  /** Validated signed bot-page selection; otherwise use this character's local setting. */
+  avatarQuality?: "natural" | "lightweight";
   /** Meeting vendor: "recall" (default) or "attendee". */
   meetingProvider?: "recall" | "attendee";
   /** Attendee voice-agent page: attach to the bot already carrying us instead of creating another. */
@@ -138,11 +140,24 @@ const AGENT_RECONNECT_BACKOFF_MS = [1000, 2000, 4000, 8000, 15_000, 30_000];
 /** A line the character heard recently: what a turn reads as context, and whose words it was. */
 interface RecentLine { speaker: string; text: string; utterance?: number; participantId?: string; line: MeetingTranscriptLine }
 
+/** Only signed activation config may override a bot page's local quality setting. */
+export function validatedAvatarQuality(value: unknown): MeetingInit["avatarQuality"] {
+  return value === "natural" || value === "lightweight" ? value : undefined;
+}
+
+/** Returned avatar AV has no utterance EOF; only a vendor capturing both page outputs can use it. */
+export function supportsSynchronizedPageOutput(init: Pick<MeetingInit, "role" | "meetingProvider" | "attendeeAttach" | "outboundPath">): boolean {
+  if (init.role !== "bot") return false;
+  if (init.attendeeAttach) return init.outboundPath === "page";
+  return (init.meetingProvider ?? "recall") === "recall";
+}
+
 export class MeetingSessionController {
   readonly policy: ParticipationPolicy;
   private session: MeetingSession | null = null;
   private runtime: ConversationRuntime | null = null;
   private speaker: SpeakerOutput | null = null;
+  private avatarSink: SynchronizedAvatarSink | null = null;
   private mic: MicCapture | null = null;
   private avatar: AvatarProvider | null = null;
   private avatarRuntime: AvatarRuntime | null = null;
@@ -239,12 +254,17 @@ export class MeetingSessionController {
   private async createAvatar(character: CharacterEntry, stage: HTMLElement, brokerUrl: string, privacyMode: Settings["privacyMode"]): Promise<AvatarProvider | null> {
     try {
       const framing = this.init.framing ?? (this.init.role === "bot" ? "meeting" : "default");
+      const requestedQuality = this.init.avatarQuality ?? chosenAvatarQuality(this.init.settings, character.id);
+      const quality = requestedQuality === "natural" && !supportsSynchronizedPageOutput(this.init) ? "lightweight" : requestedQuality;
+      if (quality !== requestedQuality) this.avatarFallback("unsupported_output_route");
       const selected = await createAvatarProvider(character.renderer, {
         container: stage,
         brokerUrl,
         characterId: character.id,
         characterName: character.name,
         privacyMode,
+        quality,
+        onFallback: (reason) => { if (!this.disposed) this.avatarFallback(reason); },
         framing,
         staticPreview: this.init.meetingProvider === "attendee",
         ...(this.init.avatarFps ? { maxFps: this.init.avatarFps } : {}),
@@ -252,14 +272,35 @@ export class MeetingSessionController {
         // use the same character’s pre-rendered animation via the Canvas fallback.
         preferCanvas: false,
       });
-      this.report("avatar_renderer", { requested: character.renderer, selected: selected.id, framing, fallback: selected.id !== character.renderer });
+      if (this.disposed) { await selected.stop().catch(() => {}); this.assertActive(); }
+      this.report("avatar_renderer", { requested: character.renderer, selected: selected.id, framing, quality, fallback: selected.id !== character.renderer });
       return selected;
     } catch (err) {
+      if (this.disposed) throw err;
       const message = err instanceof Error ? err.message : String(err);
       this.avatarFailure = message;
       this.init.handlers.onError(message, message.startsWith("BLOCKED_BY_NO_WEBGL") ? "AVATAR_NO_WEBGL" : "AVATAR");
       return null;
     }
+  }
+
+  private avatarFallback(reason: string): void {
+    if (reason.startsWith("vrm_")) {
+      this.report("avatar_fallback", { requested: "vrm", selected: "canvas", reason });
+      this.init.handlers.onError("3Dモデルを表示できないため、簡易表示で続けます。", "AVATAR_FALLBACK");
+      return;
+    }
+    this.report("avatar_fallback", { requestedQuality: "natural", selectedQuality: "lightweight", reason });
+    this.init.handlers.onError(
+      reason === "unsupported_output_route"
+        ? "この会議の接続では軽量表示を使用します。"
+        : "自然な表示を利用できないため、同じキャラクターの軽量表示に切り替えました。",
+      "AVATAR_FALLBACK",
+    );
+  }
+
+  private assertActive(): void {
+    if (this.disposed) throw new Error("MEETING_START_CANCELLED");
   }
 
 
@@ -354,10 +395,12 @@ export class MeetingSessionController {
   }
 
   async start(): Promise<void> {
+    this.assertActive();
     const { role, settings, handlers } = this.init;
     if (settings.privacyMode === "strict_local") throw new Error("BLOCKED_BY_STRICT_LOCAL: meetings need a cloud meeting service");
     if (role === "operator") await this.startOperator();
     else await this.startBotPage();
+    this.assertActive();
     this.policyTimer = setInterval(() => this.policy.tick(Date.now()), 250);
     /**
      * A bot page runs unattended inside a vendor's browser. Every failure so far has been "which hop
@@ -434,13 +477,16 @@ export class MeetingSessionController {
         name: displayName,
         proactivity: this.init.proactivity,
         language: persona.language,
+        avatarQuality: this.init.avatarQuality ?? chosenAvatarQuality(settings, character.id),
         ...(provider === "attendee" && this.usesObserver ? { observer: "captions" } : {}),
         ...(provider === "attendee" ? { outbound: "page" } : {}),
         vision: this.init.vision ? "model" : this.init.visualCues === false ? "off" : "cues",
         ...(this.voiceId() ? { voice: this.voiceId()! } : {}),
       },
     });
+    this.assertActive();
     const session = await connector.join({ meetingUrl, displayName, privacyMode: settings.privacyMode, language: persona.language.split("-")[0] });
+    if (this.disposed) { await session.leave(); this.assertActive(); }
     this.session = session;
     session.onEvent((e) => this.onMeetingEvent(e));
     if (mode === "relay") {
@@ -476,6 +522,7 @@ export class MeetingSessionController {
       if (!botToken) throw new Error("BOT_PAGE_TOKEN_REQUIRED: this page was opened without a signed session token");
       const { activateBotPage } = await import("@rcai/connector-recall");
       const act = await activateBotPage(botBrokerUrl ?? settings.brokerUrl, botToken);
+      this.assertActive();
       this.activated = { sessionId: act.sessionId, botId: act.botId, clientToken: act.clientToken };
     }
     handlers.onActivated?.(this.activated);
@@ -495,6 +542,7 @@ export class MeetingSessionController {
       return;
     }
     await this.startPipeline({ micFromMeeting: false });
+    this.assertActive();
     const feed = this.init.botTranscriptFeed;
     if (feed) {
       this.stopFeed = feed((e) => this.onMeetingTranscript(e.text, e.final, e.speakerName ?? null, e.participantId));
@@ -521,6 +569,7 @@ export class MeetingSessionController {
       })().catch(() => {}),
       new Promise<void>((resolve) => setTimeout(resolve, AUDIO_START_GRACE_MS)),
     ]);
+    this.assertActive();
     void speaker.resume().catch(() => {});
     /**
      * The runtime's own energy VAD is the operator page's instant cut: a headset, one voice, no
@@ -542,10 +591,28 @@ export class MeetingSessionController {
     const localVad = this.init.meetingProvider === "attendee"
       ? false
       : this.init.role !== "bot" || this.decision.conversation === "google";
-    const runtime = new ConversationRuntime({ sink: speaker, localVad });
+    const avatarSink = new SynchronizedAvatarSink({ sink: speaker, avatar: () => this.avatar });
+    this.avatarSink = avatarSink;
+    // Runtime may synthesize speech_started and then play the same untagged frame even when
+    // our start handler cancelled that draft. Gate the actual source submission as well as
+    // the socket path, so cancellation cannot leak that frame through a local fallback.
+    const meetingSink: AudioSink = {
+      tap: avatarSink.tap,
+      get isPlaying() { return avatarSink.isPlaying; },
+      play: (frame, options) => this.sanctioned && this.outboundAllowed ? avatarSink.play(frame, options) : false,
+      attachStream: (stream) => avatarSink.attachStream(stream),
+      detachStream: () => avatarSink.detachStream(),
+      resumeStream: () => { if (this.sanctioned && this.outboundAllowed) avatarSink.resumeStream(); },
+      beginUserTurn: () => avatarSink.beginUserTurn(),
+      endTurn: () => avatarSink.endTurn(),
+      interrupt: (generation) => avatarSink.interrupt(generation),
+      clearQueue: (generation) => avatarSink.clearQueue(generation),
+    };
+    const runtime = new ConversationRuntime({ sink: meetingSink, localVad });
     this.runtime = runtime;
 
     const def = await this.resolveCharacter(character);
+    this.assertActive();
     this.character = def;
     /**
      * A missing avatar must not cost the meeting its voice. A meeting vendor runs this page in its own
@@ -554,11 +621,14 @@ export class MeetingSessionController {
      * start — provided the reason is reported and a visible 2D fallback is used when possible.
      */
     let avatar = stage ? await this.createAvatar(character, stage, brokerUrl, settings.privacyMode) : null;
+    this.assertActive();
     if (stage && avatar) {
       this.avatar = avatar;
       try {
         await avatar.prepare(def);
+        this.assertActive();
       } catch (err) {
+        if (this.disposed) { await avatar.stop().catch(() => {}); throw err; }
         /**
          * A hosted meeting browser can expose WebGL but still fail to initialise a model (GPU
          * process policy, a transient asset load, or a renderer-specific limitation). Keep Yui
@@ -580,13 +650,18 @@ export class MeetingSessionController {
           preferCanvas: true,
           staticPreview: true,
         });
+        if (this.disposed) { await avatar.stop().catch(() => {}); this.assertActive(); }
+        this.avatar = avatar;
         await avatar.prepare(def);
+        this.assertActive();
         this.avatar = avatar;
       }
       const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
+      this.report("avatar_renderer_ready", { requested: character.renderer, selected: avatar.id, fallback: avatar.id !== character.renderer });
       this.avatarRuntime = avatarRuntime;
       avatarRuntime.onStateChange((t) => handlers.onAvatarState?.(t));
       await avatar.start();
+      if (this.disposed) { await avatar.stop().catch(() => {}); this.assertActive(); }
       const planner = new HeuristicSemanticPlanner();
       const behavior = new BehaviorEngine(avatarRuntime, { planner, mode: persona.mode, baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? "warm_positive", baseEmotionIntensity: 0.25 });
       this.behavior = behavior;
@@ -607,12 +682,14 @@ export class MeetingSessionController {
       const mic = new MicCapture({ context: speaker.context });
       this.mic = mic;
       const stream = await mic.start();
+      if (this.disposed) { await mic.stop().catch(() => {}); this.assertActive(); }
       mic.onFrame((frame) => this.onMeetingAudio(frame));
       runtime.attachMicStream(stream);
     }
 
     this.providerOpts = { brokerUrl, agentUrl, privacyMode: settings.privacyMode, expressive: settings.expressive };
     const baseProvider = await createConversationProvider(this.decision.conversation, this.providerOpts);
+    if (this.disposed) { await baseProvider.disconnect().catch(() => {}); this.assertActive(); }
     const provider = this.usesObserver ? new OnDemandConversation(baseProvider) : baseProvider;
     this.provider = provider as typeof this.provider;
     this.canLookUp = false;
@@ -646,6 +723,7 @@ export class MeetingSessionController {
       bargeInConfirmMs: this.init.role === "bot" ? BOT_BARGE_IN_CONFIRM_MS : undefined,
     };
     await runtime.start(provider, config);
+    if (this.disposed) { await runtime.stop().catch(() => {}); this.assertActive(); }
     this.runtimeReady = true;
   }
 
@@ -1121,6 +1199,7 @@ export class MeetingSessionController {
   }
 
   private onConversationEvent(e: ConversationEvent): void {
+    if (this.disposed) return;
     const now = Date.now();
     this.avatarRuntime?.handleEvent(e);
     this.behavior?.handleEvent(e);
@@ -1174,6 +1253,8 @@ export class MeetingSessionController {
         }
         this.clearAnswerWatchdog();
         this.policy.markResponding(now);
+        // A native provider's turn can be adopted above after Runtime tried to resume its stream.
+        if (this.outboundAllowed) this.avatarSink?.resumeStream();
         if (this.init.role === "bot") this.report("speaking", { state: this.policy.state });
         this.spokeText = "";
         this.spokeSeconds = 0;
@@ -1202,7 +1283,7 @@ export class MeetingSessionController {
         if (this.outboundAllowed && this.sanctioned && (this.policy.state === "ADDRESSED" || this.policy.state === "RESPONDING")) {
           this.spokeFrames++;
           this.spokeSeconds += e.frame.data.length / e.frame.sampleRate;
-          if (!this.init.attendeeAttach || this.init.outboundPath !== "page") this.session?.pushOutboundAudio(e.frame);
+          if (!this.avatar?.synchronizedAudio && (!this.init.attendeeAttach || this.init.outboundPath !== "page")) this.session?.pushOutboundAudio(e.frame);
         }
         break;
       case "assistant_transcript":
@@ -1211,7 +1292,7 @@ export class MeetingSessionController {
         if (this.sanctioned && e.final !== false) this.init.handlers.onTranscript({ id: ++this.lineId, speaker: this.init.displayName, text: e.text, final: true, at: now, self: true });
         break;
       case "assistant_speech_ended":
-        void this.session?.endOutboundUtterance?.();
+        if (!supportsSynchronizedPageOutput(this.init)) void this.session?.endOutboundUtterance?.();
         // What was said and how much audio it took: the unattended gate reads the text for a parroted
         // name and the seconds against what the room actually heard (a stretch means underruns).
         if (this.init.role === "bot" && this.sanctioned) this.report("spoke", { frames: this.spokeFrames, seconds: Math.round(this.spokeSeconds * 100) / 100, text: this.spokeText.slice(0, 200) });
@@ -1265,7 +1346,7 @@ export class MeetingSessionController {
           if (this.init.role === "bot") console.log("[rcai:bot] draft cancelled, turn still ours");
           break;
         }
-        void this.session?.endOutboundUtterance?.();
+        if (!supportsSynchronizedPageOutput(this.init)) void this.session?.endOutboundUtterance?.();
         // What she had said when cut: the harness reads a reply from here too (run 63: three cut answers, 0 read).
         if (this.init.role === "bot" && this.sanctioned) this.report("interrupted", { frames: this.spokeFrames, text: this.spokeText.slice(0, 200) });
         this.clearAnswerWatchdog();
@@ -1358,6 +1439,8 @@ export class MeetingSessionController {
   async leave(): Promise<void> {
     if (this.disposed) { await this.session?.leave(); return; }
     this.disposed = true;
+    this.avatarSink?.dispose();
+    this.avatarSink = null;
     if (this.policyTimer) clearInterval(this.policyTimer);
     this.clearAnswerWatchdog();
     this.stopFeed?.();
@@ -1376,12 +1459,14 @@ export class MeetingSessionController {
     this.visual = null;
     this.cues.clear();
     await this.avatarRuntime?.dispose().catch(() => {});
+    if (!this.avatarRuntime) await this.avatar?.stop().catch(() => {});
+    this.avatar = null;
     await this.speaker?.close().catch(() => {});
     await this.session?.leave();
   }
 
   private async resolveCharacter(entry: CharacterEntry): Promise<CharacterDefinition> {
-    if (entry.renderer === "live2d" || entry.renderer === "vrm" || entry.renderer === "canvas") return loadCharacter(entry.baseUrl);
+    if (entry.renderer === "live2d" || entry.renderer === "vrm" || entry.renderer === "human-glb" || entry.renderer === "canvas") return loadCharacter(entry.baseUrl);
     return {
       manifest: { id: entry.id, name: entry.name, renderer: entry.renderer, defaultPersona: entry.defaultPersona ?? "friendly", supportedLanguages: ["ja-JP", "en-US"], motionProfile: "vendor", voiceProfiles: [] },
       baseUrl: entry.baseUrl,

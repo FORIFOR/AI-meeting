@@ -1,0 +1,13 @@
+{
+  "id": "vrm-sample",
+  "name": "VRMサンプル",
+  "renderer": "vrm",
+  "defaultPersona": "friendly",
+  "supportedLanguages": [
+    "ja-JP",
+    "en-US"
+  ],
+  "motionProfile": "expressive_v1",
+  "voiceProfiles": [],
+  "license": "VRM Public License 1.0 + embedded VRMC_vrm.meta permissions"
+}

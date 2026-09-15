@@ -32,7 +32,7 @@ export interface VRMPose {
 const DEG = Math.PI / 180;
 
 /** Resting drop of the upper arms from the T-pose (rad). Larger gestures than Live2D per spec §16. */
-export const ARM_REST_RAD = 1.25;
+export const ARM_REST_RAD = 1.42;
 export const ARM_GESTURE_SCALE = 2;
 
 function clamp(v: number, lo: number, hi: number): number {
@@ -57,8 +57,8 @@ export function mapParamsToVRM(p: AvatarParams): VRMPose {
   const raiseL = clamp(p.armL * ARM_GESTURE_SCALE, -0.3, 1.2);
   const raiseR = clamp(p.armR * ARM_GESTURE_SCALE, -0.3, 1.2);
   const shoulderLift = clamp(p.shoulder, -1, 1) * 0.15;
-  const leftUpperArm: Euler3 = { x: raiseL * 0.15, y: -raiseL * 0.35, z: -(ARM_REST_RAD - raiseL * 0.9) };
-  const rightUpperArm: Euler3 = { x: raiseR * 0.15, y: raiseR * 0.35, z: ARM_REST_RAD - raiseR * 0.9 };
+  const leftUpperArm: Euler3 = { x: 0.06 + raiseL * 0.15, y: -raiseL * 0.35, z: -(ARM_REST_RAD - raiseL * 0.65) };
+  const rightUpperArm: Euler3 = { x: 0.06 + raiseR * 0.15, y: raiseR * 0.35, z: ARM_REST_RAD - raiseR * 0.65 };
   const leftLowerArm: Euler3 = { x: 0, y: -(0.25 + raiseL * 0.9), z: 0 };
   const rightLowerArm: Euler3 = { x: 0, y: 0.25 + raiseR * 0.9, z: 0 };
   const leftShoulder: Euler3 = { x: 0, y: 0, z: shoulderLift };
@@ -90,7 +90,7 @@ export function mapParamsToVRM(p: AvatarParams): VRMPose {
     head, neck, spine, chest, upperChest,
     leftShoulder, rightShoulder, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftHand, rightHand,
     expressions,
-    lookAt: { x: -clamp(p.eyeBallX, -1, 1) * 0.6, y: clamp(p.eyeBallY, -1, 1) * 0.4, z: 1.0 },
+    lookAt: { x: -clamp(p.eyeBallX, -1, 1) * 0.35, y: clamp(p.eyeBallY, -1, 1) * 0.25, z: 1.0 },
     breathScale: 1 + clamp(p.breath, 0, 1) * 0.015,
   };
 }

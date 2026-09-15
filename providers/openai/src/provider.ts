@@ -17,7 +17,7 @@ export interface OpenAIRealtimeProviderOptions {
   /** Injectable for the pushAudio fallback (creates the AudioContext lazily). */
   createAudioContext?: () => AudioContext;
   clock?: () => number;
-  /** Data-channel open timeout (ms). */
+  /** Total connection setup deadline, including broker, SDP and data-channel open (ms). */
   connectTimeoutMs?: number;
   /** Max automatic reconnect attempts after ICE/connection failure (default 3). */
   maxReconnects?: number;
@@ -61,6 +61,8 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
   private fallbackResampler = createResampler(INTERNAL_SAMPLE_RATE, INTERNAL_SAMPLE_RATE);
   private connected = false;
   private closing = false;
+  private sessionEpoch = 0;
+  private sessionAbort = new AbortController();
   // Persistent output: remote tracks are routed into one MediaStreamDestination so the runtime's
   // sink keeps a single stream across reconnects (the runtime attaches the output stream only once).
   private outputCtx: AudioContext | null = null;
@@ -115,11 +117,16 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
 
   async connect(config: SessionConfig): Promise<void> {
     privacyGuard.assert(config.privacyMode, "cloud_conversation");
-    if (this.connected) await this.disconnect();
+    const disconnected = this.disconnect();
+    const epoch = this.sessionEpoch;
+    await disconnected;
+    if (epoch !== this.sessionEpoch) throw new Error("openai realtime: connection cancelled");
+    this.sessionAbort = new AbortController();
     this.closing = false;
     this.config = config;
     this.reconnectAttempts = 0;
     await this.openConnection(config);
+    if (this.closing || epoch !== this.sessionEpoch) throw new Error("openai realtime: connection cancelled");
     this.emit({ type: "session_ready", providerId: this.id });
     const opening = (config.providerOptions?.opening as string | undefined)?.trim();
     if (opening) this.send({ type: "response.create", response: { instructions: `Start the conversation by saying, in your own voice: ${opening}` } });
@@ -135,75 +142,103 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
     this.lastInstructions = instructions;
     this.lastVoice = voice;
 
-    // 1. Ephemeral credential from the broker (never an API key).
-    const tokenRes = await this.fetchImpl(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/token/openai`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, voice, instructions, language: config.language }),
+    const epoch = this.sessionEpoch;
+    const sessionSignal = this.sessionAbort.signal;
+    const setupAbort = new AbortController();
+    const cancel = () => setupAbort.abort(new Error("openai realtime: connection cancelled"));
+    sessionSignal.addEventListener("abort", cancel, { once: true });
+    if (sessionSignal.aborted) cancel();
+    const timer = setTimeout(() => setupAbort.abort(new Error("openai realtime: connection setup timed out")), this.opts.connectTimeoutMs ?? 15000);
+    let rejectCancelled!: () => void;
+    const cancelled = new Promise<never>((_, reject) => {
+      rejectCancelled = () => reject(setupAbort.signal.reason);
+      setupAbort.signal.addEventListener("abort", rejectCancelled, { once: true });
+      if (setupAbort.signal.aborted) rejectCancelled();
     });
-    if (!tokenRes.ok) {
-      const body = (await tokenRes.json().catch(() => ({}))) as { error?: string };
-      throw new Error(body.error ?? `token broker ${tokenRes.status}`);
-    }
-    const token = (await tokenRes.json()) as BrokerToken;
-
-    // 2. Peer connection + tracks.
-    const pc = (this.opts.createPeerConnection ?? (() => new RTCPeerConnection()))();
-    this.pc = pc;
-    this.senders = [];
-    pc.ontrack = (ev) => {
-      this.routeRemoteTrack(ev.streams[0] ?? new MediaStream([ev.track]));
+    void cancelled.catch(() => {});
+    // Race every setup step as WebRTC operations and injected fetches may ignore abort signals.
+    // A late completion cannot resume setup after cancellation or mutate a newer connection.
+    const wait = async <T>(pending: Promise<T>): Promise<T> => {
+      const value = await Promise.race([pending, cancelled]);
+      if (setupAbort.signal.aborted) throw setupAbort.signal.reason;
+      if (this.closing || epoch !== this.sessionEpoch) throw new Error("openai realtime: connection cancelled");
+      return value;
     };
-    pc.onconnectionstatechange = () => this.onConnectionState(pc);
-    const input = this.inputStream ?? this.ensureFallbackInput();
-    if (input) for (const track of input.getAudioTracks()) this.senders.push(pc.addTrack(track, input));
-    else pc.addTransceiver("audio", { direction: "recvonly" });
-
-    // 3. Events data channel.
-    const dc = pc.createDataChannel("oai-events");
-    this.dc = dc;
-    dc.onmessage = (ev: MessageEvent<string>) => this.handleRaw(ev.data);
-    dc.onclose = () => {
-      if (this.dc !== dc) return; // stale channel from a previous connection
-      if (this.connected && !this.reconnecting && !this.closing) this.emit({ type: "session_closed", reason: "data channel closed" });
-      this.connected = false;
-    };
-    let openingTimer: ReturnType<typeof setTimeout>;
-    const opened = new Promise<void>((resolve, reject) => {
-      openingTimer = setTimeout(() => reject(new Error("openai realtime: data channel open timeout")), this.opts.connectTimeoutMs ?? 15000);
-      dc.onopen = () => {
-        clearTimeout(openingTimer);
-        resolve();
-      };
-    });
-    // SDP can fail (or take longer than the channel timeout) before we await this promise.
-    // Observe rejection immediately; awaiting the original promise below still propagates it.
-    void opened.catch(() => {});
-
-    // 4. SDP exchange with the ephemeral secret.
+    let pc: RTCPeerConnection | null = null;
+    let dc: RTCDataChannel | null = null;
     try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
+      // 1. Ephemeral credential from the broker (never an API key).
+      const tokenRes = await wait(this.fetchImpl(`${this.opts.brokerUrl.replace(/\/$/, "")}/api/token/openai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, voice, instructions, language: config.language }),
+        signal: setupAbort.signal,
+      }));
+      if (!tokenRes.ok) {
+        const body = (await wait(tokenRes.json().catch(() => ({})))) as { error?: string };
+        throw new Error(body.error ?? `token broker ${tokenRes.status}`);
+      }
+      const token = (await wait(tokenRes.json())) as BrokerToken;
+
+      // 2. Peer connection + tracks.
+      pc = (this.opts.createPeerConnection ?? (() => new RTCPeerConnection()))();
+      this.pc = pc;
+      const ownsConnection = () => !this.closing && epoch === this.sessionEpoch && this.pc === pc;
+      this.senders = [];
+      pc.ontrack = (ev) => {
+        if (!ownsConnection()) return;
+        this.routeRemoteTrack(ev.streams[0] ?? new MediaStream([ev.track]));
+      };
+      pc.onconnectionstatechange = () => {
+        if (!ownsConnection()) return;
+        if (this.connected) this.onConnectionState(pc!);
+        else if (pc!.connectionState === "failed") setupAbort.abort(new Error("openai realtime: connection failed during setup"));
+      };
+      const input = this.inputStream ?? this.ensureFallbackInput();
+      if (input) for (const track of input.getAudioTracks()) this.senders.push(pc.addTrack(track, input));
+      else pc.addTransceiver("audio", { direction: "recvonly" });
+
+      // 3. Events data channel.
+      dc = pc.createDataChannel("oai-events");
+      this.dc = dc;
+      dc.onmessage = (ev: MessageEvent<string>) => { if (ownsConnection() && this.dc === dc) this.handleRaw(ev.data); };
+      dc.onclose = () => {
+        if (!ownsConnection() || this.dc !== dc) return;
+        if (!this.connected) setupAbort.abort(new Error("openai realtime: data channel closed during setup"));
+        if (this.connected && !this.reconnecting && !this.closing) this.emit({ type: "session_closed", reason: "data channel closed" });
+        this.connected = false;
+      };
+      const opened = new Promise<void>((resolve) => {
+        dc!.onopen = () => { if (ownsConnection()) resolve(); };
+      });
+
+      // 4. SDP exchange with the ephemeral secret.
+      const offer = await wait(pc.createOffer());
+      await wait(pc.setLocalDescription(offer));
       const callsUrl = `${token.baseUrl.replace(/\/$/, "")}/calls?model=${encodeURIComponent(token.model)}`;
-      const sdpRes = await this.fetchImpl(callsUrl, {
+      const sdpRes = await wait(this.fetchImpl(callsUrl, {
         method: "POST",
         body: offer.sdp ?? "",
         headers: { Authorization: `Bearer ${token.clientSecret}`, "Content-Type": "application/sdp" },
-      });
-      if (!sdpRes.ok) throw new Error(`openai realtime calls ${sdpRes.status}: ${(await sdpRes.text().catch(() => "")).slice(0, 200)}`);
-      await pc.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
-      await opened;
+        signal: setupAbort.signal,
+      }));
+      if (!sdpRes.ok) throw new Error(`openai realtime calls ${sdpRes.status}: ${(await wait(sdpRes.text().catch(() => ""))).slice(0, 200)}`);
+      const sdp = await wait(sdpRes.text());
+      await wait(pc.setRemoteDescription({ type: "answer", sdp }));
+      await wait(opened);
+      this.connected = true;
+
+      // 5. Session settings (transcription, VAD, instructions, voice).
+      this.send({ type: "session.update", session: this.sessionPatch(instructions, voice) });
     } catch (error) {
-      this.teardownConnection();
+      if (pc && this.pc === pc) this.teardownConnection();
       throw error;
     } finally {
-      clearTimeout(openingTimer!);
-      dc.onopen = null;
+      clearTimeout(timer);
+      sessionSignal.removeEventListener("abort", cancel);
+      setupAbort.signal.removeEventListener("abort", rejectCancelled);
+      if (dc) dc.onopen = null;
     }
-    this.connected = true;
-
-    // 5. Session settings (transcription, VAD, instructions, voice).
-    this.send({ type: "session.update", session: this.sessionPatch(instructions, voice) });
   }
 
   // ---- reconnection ---------------------------------------------------------
@@ -235,35 +270,39 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
   private async reconnect(reason: string): Promise<void> {
     if (this.reconnecting || this.closing || !this.config) return;
     this.reconnecting = true;
+    const epoch = this.sessionEpoch;
+    const config = this.config;
     this.clearSpeechTimer();
     if (this.mapper.isSpeaking) this.emit({ type: "interrupted", at: this.clock() });
     this.emit({ type: "error", error: new Error(`openai realtime: ${reason}; reconnecting`), fatal: false });
     const max = this.opts.maxReconnects ?? 3;
     const base = this.opts.reconnectBackoffMs ?? 1000;
     try {
-      while (this.reconnectAttempts < max && !this.closing) {
+      while (this.reconnectAttempts < max && !this.closing && epoch === this.sessionEpoch) {
         const attempt = ++this.reconnectAttempts;
         await new Promise((r) => setTimeout(r, base * 2 ** (attempt - 1)));
-        if (this.closing) return;
+        if (this.closing || epoch !== this.sessionEpoch) return;
         this.teardownConnection();
         try {
-          await this.openConnection(this.config);
+          await this.openConnection(config);
+          if (this.closing || epoch !== this.sessionEpoch) return;
           this.diagnostics.reconnects++;
           this.reconnectAttempts = 0;
           this.emit({ type: "session_ready", providerId: this.id });
           return;
         } catch (err) {
+          if (this.closing || epoch !== this.sessionEpoch) return;
           this.diagnostics.reconnectFailures++;
           this.emit({ type: "error", error: err instanceof Error ? err : new Error(String(err)), fatal: false });
         }
       }
-      if (!this.closing) {
+      if (!this.closing && epoch === this.sessionEpoch) {
         this.connected = false;
         this.emit({ type: "error", error: new Error(`openai realtime: reconnect failed after ${max} attempts`), fatal: true });
         this.emit({ type: "session_closed", reason: "reconnect exhausted" });
       }
     } finally {
-      this.reconnecting = false;
+      if (epoch === this.sessionEpoch) this.reconnecting = false;
     }
   }
 
@@ -272,6 +311,15 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
     if (this.disconnectGraceTimer) {
       clearTimeout(this.disconnectGraceTimer);
       this.disconnectGraceTimer = null;
+    }
+    if (this.dc) {
+      this.dc.onopen = null;
+      this.dc.onmessage = null;
+      this.dc.onclose = null;
+    }
+    if (this.pc) {
+      this.pc.ontrack = null;
+      this.pc.onconnectionstatechange = null;
     }
     try {
       this.dc?.close();
@@ -390,6 +438,10 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
   async disconnect(): Promise<void> {
     const wasConnected = this.connected;
     this.closing = true;
+    this.sessionEpoch++;
+    this.sessionAbort.abort();
+    this.reconnecting = false;
+    this.config = null;
     this.clearSpeechTimer();
     this.teardownConnection();
     this.outputStream = null;
@@ -398,17 +450,17 @@ export class OpenAIRealtimeProvider implements RealtimeAIProvider {
       this.remoteAudioEl.remove();
       this.remoteAudioEl = null;
     }
-    if (this.outputCtx) {
-      await this.outputCtx.close().catch(() => {});
-      this.outputCtx = null;
-      this.outputDest = null;
-    }
-    if (this.fallbackCtx) {
-      await this.fallbackCtx.close().catch(() => {});
-      this.fallbackCtx = null;
-      this.fallbackDest = null;
-    }
+    // Release ownership before awaiting close: an older disconnect must not clear a newer
+    // connection's contexts when two starts/stops overlap.
+    const outputCtx = this.outputCtx;
+    const fallbackCtx = this.fallbackCtx;
+    this.outputCtx = null;
+    this.outputDest = null;
+    this.fallbackCtx = null;
+    this.fallbackDest = null;
+    this.fallbackNext = 0;
     if (wasConnected) this.emit({ type: "session_closed" });
+    await Promise.all([outputCtx?.close().catch(() => {}), fallbackCtx?.close().catch(() => {})]);
   }
 
   // ---- internals ---------------------------------------------------------

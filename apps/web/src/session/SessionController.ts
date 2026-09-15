@@ -5,11 +5,11 @@ import { MicCapture, SpeakerOutput, dbfs, rms, type LatencyTracker } from "@rcai
 import { ConversationRuntime, type ConversationEvent, type SessionRecord } from "@rcai/conversation-core";
 import type { ProviderId } from "@rcai/conversation-core";
 import type { EvaluationResult } from "@rcai/provider-core";
-import { AvatarRuntime, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
+import { AvatarRuntime, SynchronizedAvatarSink, loadCharacter, type AvatarProvider, type CharacterDefinition, type Emotion, type StateTransition } from "@rcai/avatar-core";
 import { BehaviorEngine, HeuristicSemanticPlanner } from "@rcai/behavior-engine";
 import { createSessionConfig, type Persona } from "@rcai/persona-core";
 import { createAvatarProvider, createConversationProvider, createEvaluator, createHeuristicEvaluator, type CharacterEntry } from "../integrations/registry.js";
-import { chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
+import { chosenAvatarQuality, chosenVoice, decide, type Availability, type Settings } from "../state/settings.js";
 import { EvaluationSidecar, type DeferredFeedback } from "./sidecar.js";
 import { SessionObserver, createTelemetrySender, type SessionReport } from "@rcai/observability";
 import { IncidentRecorder, submitIncident, saveIncidentMeta, type IncidentOptIn, type PresenceIncident } from "./IncidentRecorder.js";
@@ -69,6 +69,7 @@ export class SessionController {
   private tasks = new TaskLedger();
   private taskSource = new TaskTranscript();
   private speaker: SpeakerOutput | null = null;
+  private avatarSink: SynchronizedAvatarSink | null = null;
   private mic: MicCapture | null = null;
   private runtime: ConversationRuntime | null = null;
   private avatarRuntime: AvatarRuntime | null = null;
@@ -157,8 +158,20 @@ export class SessionController {
     }
 
     // 2. Conversation runtime with local VAD (fast LISTENING path, <100 ms).
-    const runtime = new ConversationRuntime({ sink: speaker, localVad: true });
+    const avatarSink = new SynchronizedAvatarSink({ sink: speaker, avatar: () => this.avatar });
+    this.avatarSink = avatarSink;
+    const runtime = new ConversationRuntime({ sink: avatarSink, localVad: true });
     this.runtime = runtime;
+
+    // Device permission/worklet setup can run while character assets load. Keep capture owned
+    // by the controller from the outset so leaving during either operation releases the mic.
+    // Frames are subscribed only after the avatar and event consumers are ready below.
+    const mic = new MicCapture({ context: speaker.context, deviceId: settings.inputDeviceId });
+    this.mic = mic;
+    const micReady = mic.start();
+    // Permission can fail before asset loading finishes; observe the rejection immediately,
+    // while retaining it for the awaited result below.
+    void micReady.catch(() => {});
 
     // 2b. Observability (Gate 7) + presence incident ring buffer (Gate 6). Both are passive observers.
     const observer = new SessionObserver({ sessionId: runtime.getRecord().sessionId, provider: this.decision.conversation });
@@ -178,11 +191,21 @@ export class SessionController {
     const def = await this.resolveCharacter(character);
     this.checkpoint();
     this.character = def;
-    const rawAvatar = await createAvatarProvider(character.renderer, { container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode });
+    const rawAvatar = await createAvatarProvider(character.renderer, {
+      container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
+      characterId: character.id, characterName: character.name,
+      quality: chosenAvatarQuality(settings, character.id),
+      onFallback: (reason) => handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"),
+    });
+    if (this.signal.aborted) {
+      await rawAvatar.stop().catch(() => {});
+      this.checkpoint();
+    }
     this.checkpoint();
     const avatar = recorder.wrapAvatar(rawAvatar); // logs emotion/gesture/gaze calls for incidents; behaviour unchanged
     this.avatar = avatar;
     await avatar.prepare(def);
+    recorder.recordRenderer(character.renderer, avatar.id);
     this.checkpoint();
     const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
     this.avatarRuntime = avatarRuntime;
@@ -249,9 +272,10 @@ export class SessionController {
     });
 
     // 7. Microphone → runtime (48k frames) + behavior energy.
-    const mic = new MicCapture({ context: speaker.context, deviceId: settings.inputDeviceId });
-    this.mic = mic;
-    const stream = await mic.start();
+    const stream = await micReady.catch((err: unknown) => {
+      this.checkpoint();
+      throw err;
+    });
     this.checkpoint();
     mic.onFrame((frame) => {
       runtime.pushMicFrame(frame);
@@ -292,7 +316,7 @@ export class SessionController {
       const pending = this.tasks.propose(call.arguments);
       if (pending.proposal) {
         this.init.handlers.onTaskProposals?.(this.tasks.pending());
-        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更は未実行です。聞き取りを確認できなかったため、画面の「この変更を反映」で確認をお願いしてください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
+        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更案を画面に用意しましたが、まだ反映していません。ユーザー発話の引用を照合できなかったため、画面で内容を確認してもらう必要があります。「変更案を用意したよ。内容が合っていたら『この変更を反映』を押してね」のように短く案内してください。確認待ちの状態であり、システムの故障や処理失敗とは説明しないでください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
         return;
       }
     }
@@ -430,8 +454,10 @@ export class SessionController {
     saveIncidentMeta(incidents);
     await this.teardown();
     // Telemetry: numbers only; a strict_local session never touches the network here.
-    let telemetry: SessionOutcome["telemetry"];
-    if (report) telemetry = await createTelemetrySender({ brokerUrl: this.init.settings.brokerUrl, privacyMode: this.init.settings.privacyMode }).send(report);
+    // Delivery and evaluation are independent; neither needs to wait for the other to begin.
+    const telemetryPending = report
+      ? createTelemetrySender({ brokerUrl: this.init.settings.brokerUrl, privacyMode: this.init.settings.privacyMode }).send(report)
+      : Promise.resolve(undefined);
 
     let evaluation: EvaluationResult | null = null;
     let evaluationError: string | undefined;
@@ -444,6 +470,7 @@ export class SessionController {
     } catch (err) {
       evaluationError = err instanceof Error ? err.message : String(err);
     }
+    const telemetry = await telemetryPending;
     return { liveUsage, tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
   }
 
@@ -457,6 +484,8 @@ export class SessionController {
     if (this.disposed) return;
     this.disposed = true;
     this.abort.abort();
+    this.avatarSink?.dispose();
+    this.avatarSink = null;
     setActiveSession(null);
     this.behavior?.stop();
     this.behavior = null;
@@ -477,7 +506,7 @@ export class SessionController {
   }
 
   private async resolveCharacter(entry: CharacterEntry): Promise<CharacterDefinition> {
-    if (entry.renderer === "live2d" || entry.renderer === "vrm" || entry.renderer === "canvas") {
+    if (entry.renderer === "live2d" || entry.renderer === "vrm" || entry.renderer === "human-glb" || entry.renderer === "canvas") {
       return loadCharacter(entry.baseUrl);
     }
     // Cloud avatars: identity only; the vendor owns model/animation (spec §17).

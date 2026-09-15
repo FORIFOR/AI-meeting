@@ -13,6 +13,7 @@ export class OpenAILiveProvider implements RealtimeAIProvider {
  private dc:RTCDataChannel|null=null;
  private input:MediaStream|null=null;
  private output:MediaStream|null=null;
+ private remoteAudioEl:HTMLAudioElement|null=null;
  private ctx:AudioContext|null=null;
  private tap:PcmTapNode|null=null;
  private speaking=false;
@@ -42,7 +43,21 @@ export class OpenAILiveProvider implements RealtimeAIProvider {
   // Analysis only: SpeakerOutput owns audible playback and lip sync.
   const mute=ctx.createGain();mute.gain.value=0;this.tap.node.connect(mute);mute.connect(ctx.destination);
   this.tap.onChunk(pcm=>this.observeAudio(pcm));
-  pc.ontrack=e=>{this.output!.addTrack(e.track);this.trackResolve?.();ctx.createMediaStreamSource(new MediaStream([e.track])).connect(this.tap!.node);};
+  pc.ontrack=e=>{
+   this.output!.addTrack(e.track);
+   // Chrome needs a playing media element to deliver remote WebRTC audio into WebAudio.
+   // Keep it muted: SpeakerOutput remains the only audible playback and lip-sync path.
+   if(typeof document!=='undefined'){
+    if(!this.remoteAudioEl){
+     this.remoteAudioEl=document.createElement('audio');
+     this.remoteAudioEl.muted=true;this.remoteAudioEl.autoplay=true;this.remoteAudioEl.style.display='none';
+     document.body?.appendChild(this.remoteAudioEl);
+    }
+    this.remoteAudioEl.srcObject=this.output;
+    void this.remoteAudioEl.play?.()?.catch?.(()=>{});
+   }
+   this.trackResolve?.();ctx.createMediaStreamSource(new MediaStream([e.track])).connect(this.tap!.node);
+  };
   for(const t of this.input.getAudioTracks())pc.addTrack(t,this.input);
   const dc=this.dc=pc.createDataChannel('oai-events');
   dc.onmessage=e=>{try{this.handleEvent(JSON.parse(e.data));}catch{this.emit({type:'error',error:new Error('Invalid Live event')});}};
@@ -98,5 +113,9 @@ export class OpenAILiveProvider implements RealtimeAIProvider {
   }
   await this.cleanup();
  }
- private async cleanup(){this.ready=false;if(this.dc){this.dc.onclose=null;this.dc.onmessage=null;}this.dc?.close();this.pc?.close();this.tap?.dispose();await this.ctx?.close();this.dc=null;this.pc=null;this.ctx=null;this.output=null;}
+ private async cleanup(){
+  this.ready=false;if(this.dc){this.dc.onclose=null;this.dc.onmessage=null;}this.dc?.close();this.pc?.close();
+  if(this.remoteAudioEl){this.remoteAudioEl.pause();this.remoteAudioEl.srcObject=null;this.remoteAudioEl.remove();this.remoteAudioEl=null;}
+  this.tap?.dispose();await this.ctx?.close();this.dc=null;this.pc=null;this.ctx=null;this.output=null;
+ }
 }

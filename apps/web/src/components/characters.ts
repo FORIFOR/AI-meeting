@@ -24,6 +24,7 @@ export const BLOCKED_JA: Record<string, string> = {
 
 /** Realistic avatars sit beside the anime ones (spec §17), even before a key exists. */
 export function withRealistic(entries: CharacterEntry[]): CharacterEntry[] {
+  if (import.meta.env.VITE_RCAI_OSS === "true") return entries;
   const out = [...entries];
   if (!out.some((e) => e.renderer === "liveavatar")) out.push({ id: "heygen", name: "HeyGen LiveAvatar", renderer: "liveavatar", baseUrl: "/characters/heygen", license: "HeyGen cloud" });
   if (!out.some((e) => e.renderer === "tavus")) out.push({ id: "tavus", name: "Tavus", renderer: "tavus", baseUrl: "/characters/tavus", license: "Tavus cloud" });
