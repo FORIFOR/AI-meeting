@@ -29,4 +29,9 @@ vendor/smart-turn
 vendor/supertonic
 .firebase/
 
+# Local package cache and generated evidence/media; keep source and checked-in demo assets public.
+.pnpm-store/
+artifacts/
+outputs/
+
 apps/desktop/src-tauri/resources/local-runtime/
