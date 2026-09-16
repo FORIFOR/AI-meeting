@@ -9,7 +9,7 @@ const scenarios = ['tasks','interview','english','walkthrough','ai-meeting',...p
 const uses = ['interview','training','language','tasks','custom',...products];
 // Public marketing origins only. This route can create private inquiries and
 // anonymous counters, never read them or grant access to the product APIs.
-export const portfolioOrigins = ['https://astra-forifor.forifor.chatgpt.site','https://forifor.github.io'];
+export const portfolioOrigins = ['https://astra-forifor.forifor.chatgpt.site','https://forifor.github.io','https://reachmade.com'];
 export interface SiteEvent { event: typeof SITE_EVENTS[number]; scenario: string; language: 'ja'|'en' }
 export interface SiteLead { requestId: string; name: string; email: string; organization: string; useCase: string; message: string; consent: true; website: ''; language: 'ja'|'en' }
 export class IntakeError extends Error { constructor(readonly status: 400|409|429|503, readonly code: string) { super(code); } }
@@ -76,7 +76,10 @@ export function createSiteIntake(env:BrokerEnv,override?:SiteStore){
     const origin=c.req.header('Origin');
     if(!origin||![env.RCAI_MARKETING_ORIGIN,'http://127.0.0.1:5196',...portfolioOrigins].includes(origin))return c.json({error:'ORIGIN'},403);
     if(!store)return c.json({error:'UNAVAILABLE'},503);
-    if(c.req.method==='GET')return c.json({error:'METHOD'},405);
+    // Read-only capability probe. Never lists records or inspects private data.
+    // A successful probe is not a guarantee that the next database write succeeds.
+    if(c.req.method==='GET' && ['/status','/api/site/status'].includes(c.req.path))return c.json({available:true});
+    if(c.req.method!=='POST')return c.json({error:'METHOD'},405);
     if(!c.req.header('Content-Type')?.startsWith('application/json'))return c.json({error:'CONTENT_TYPE'},415);
     // Limit actual streamed bytes too; a forged Content-Length cannot bypass this bound.
     const reader=c.req.raw.body?.getReader();let length=0;const chunks:Uint8Array[]=[];
