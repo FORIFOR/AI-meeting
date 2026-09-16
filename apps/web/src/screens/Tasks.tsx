@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ConversationTask } from '@rcai/conversation-core';
 import { TaskWorkspace, parseTaskBackup, type TaskBackup } from '../state/taskWorkspace.js';
 import '../styles/tasks.css';
+import { TaskOverview } from '../components/TaskOverview.js';
 
 const workspace = new TaskWorkspace();
 const label = { pending: '未完了', done: '完了', deferred: '延期' };
@@ -43,11 +44,10 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, descripti
     } catch (e) { fail(e); }
   };
   const visible = tasks.filter(t => filter === 'all' || (filter === 'done' ? t.status === 'done' : t.status !== 'done'));
-  const remaining = tasks.filter(t => t.status !== 'done').length;
 
   return <main className="tasks-page">
     <div className="tasks-heading"><div><p className="workspace-label">YOUR NEXT STEP</p><h1>今日の一歩を、ここに。</h1><p>{description ?? '会話で決めたことも、ふと思いついたことも。'}</p></div><div className="tasks-heading__actions">{showResources && <a className="tasks-star tasks-star--top" href="https://github.com/FORIFOR/AI-meeting" target="_blank" rel="noopener noreferrer" aria-label="GitHubでAI MeetingをStarする（新しいタブ）">GitHubでStarする ↗</a>}<button className="btn" onClick={onBack}>ホームへ</button></div></div>
-    <section className="tasks-summary"><div><strong>{remaining}</strong><span>これからのタスク</span><small>{tasks.filter(t => t.status === 'done').length}件完了</small></div><div><button className="btn btn--primary" onClick={onTalk} disabled={!onTalk || !ready || busy}>声でタスクを整理する ↗</button><p>{voiceHint ?? '保存したタスクを引き継いで話せます。'}</p></div></section>
+    <TaskOverview tasks={tasks} ready={ready} busy={busy} onTalk={onTalk} voiceHint={voiceHint} />
     <p className="tasks-storage">{storageDescription ?? 'このブラウザーに自動保存します。ほかの端末には同期されません。大切なタスクはバックアップできます。音声で整理を始めると、保存したタスクを選択中のAIに共有します。'}</p>
     {error && <div className="notice err" role="alert">{error} <button className="btn btn--ghost" onClick={() => { setError(''); void refresh().catch(fail); }}>読み直す</button></div>}
     <p className="tasks-status" role="status">{message || (!ready && !error ? 'タスクを読み込んでいます…' : '')}</p>
