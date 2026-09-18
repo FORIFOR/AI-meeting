@@ -201,49 +201,13 @@ export class SessionController {
     });
     this.recorder = recorder;
 
-    // 3. Avatar (renderer chosen by the character pack; never by the AI provider).
-    const def = await this.resolveCharacter(character);
-    this.checkpoint();
-    this.character = def;
-    const rawAvatar = await createAvatarProvider(character.renderer, {
-      container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
-      characterId: character.id, characterName: character.name,
-      quality: this.init.team ? "lightweight" : chosenAvatarQuality(settings, character.id),
-      onFallback: (reason) => handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"),
-    });
-    if (this.signal.aborted) {
-      await rawAvatar.stop().catch(() => {});
-      this.checkpoint();
-    }
-    this.checkpoint();
-    const avatar = recorder.wrapAvatar(rawAvatar); // logs emotion/gesture/gaze calls for incidents; behaviour unchanged
-    this.avatar = avatar;
-    await avatar.prepare(def);
-    recorder.recordRenderer(character.renderer, avatar.id);
-    this.checkpoint();
-    const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
-    this.avatarRuntime = avatarRuntime;
-    avatarRuntime.onStateChange((t) => {
-      recorder.recordState(t);
-      handlers.onAvatarState(t);
-    });
-    await avatar.start();
-    recorder.startProbe(rawAvatar);
-    this.checkpoint();
+    // 3. Character metadata is needed for voice/persona configuration, but renderer preparation is not.
+    // Start resolving it in parallel with microphone permission and attach the avatar only after the
+    // realtime provider is usable. A slow/broken VRM must never block the first spoken turn.
+    const characterReady = this.resolveCharacter(character);
+    void characterReady.catch(() => {});
 
-    // 4. Behavior engine (fast tier + async semantic planner; never blocks audio).
-    const planner = new HeuristicSemanticPlanner();
-    const interview = persona.mode === "interview";
-    const behavior = new BehaviorEngine(avatarRuntime, {
-      planner,
-      mode: persona.mode,
-      baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? (interview ? "neutral" : "warm_positive"),
-      baseEmotionIntensity: interview ? 0.15 : 0.3,
-    });
-    this.behavior = behavior;
-    behavior.start();
-
-    // 5. Evaluator sidecar (off the latency path).
+    // 4. Evaluator sidecar (off the latency path).
     const sidecar = new EvaluationSidecar({
       enableDeferred: persona.mode === "english_lesson",
       deferredEveryTurns: 4,
@@ -262,13 +226,13 @@ export class SessionController {
       if (this.disposed) return;
       this.voiceActivity.playback(frame);
       observer.notePlaybackFrame(frame);
-      avatarRuntime.pushAudio(frame);
+      this.avatarRuntime?.pushAudio(frame);
       recorder.recordAssistantFrame(frame);
     });
     runtime.on((e) => {
       if (e.type === "interrupted" || e.type === "session_closed") this.voiceActivity.resetOutput();
-      avatarRuntime.handleEvent(e);
-      behavior.handleEvent(e);
+      this.avatarRuntime?.handleEvent(e);
+      this.behavior?.handleEvent(e);
       sidecar.handleEvent(e);
       observer.handleEvent(e);
       recorder.recordEvent(e);
@@ -308,12 +272,15 @@ export class SessionController {
       runtime.pushMicFrame(frame);
       recorder.recordMicFrame(frame);
       const db = dbfs(rms(frame.data));
-      behavior.reportUserAudio(Math.max(0, Math.min(1, (db + 50) / 35)), frame.timestamp);
+      this.behavior?.reportUserAudio(Math.max(0, Math.min(1, (db + 50) / 35)), frame.timestamp);
     });
 
-    // 8. AI provider (routed) + session config (persona + character + policy; no secrets).
+    // 8. AI provider (routed) + session config. Renderer work is intentionally not awaited here.
     const provider = await createConversationProvider(this.decision.conversation, this.factoryOptions);
     this.checkpoint();
+    const def = await characterReady;
+    this.checkpoint();
+    this.character = def;
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
     if (persona.id === "thinking_ja" && params.previousMemory) config.systemPrompt += "\n\n" + params.previousMemory.slice(0,3000);
     configureSessionTools(config, provider.capabilities().toolCalling);
@@ -324,8 +291,62 @@ export class SessionController {
     recorder.recordProvider(this._providerId);
     handlers.onProviderChange(this._providerId);
 
-    // 9. Opening line: owned by the provider (config.providerOptions.opening) — each adapter starts it natively
-    //    (OpenAI response.create, Local agent TTS, Gemini hidden client turn). Nothing to send here.
+    // 9. Late-attach the visual presence. This runs after the provider is live and is never awaited by
+    // start(): voice remains usable when a renderer is slow or fails. dispose() aborts/cleans late work.
+    void this.attachAvatar(def).catch((error: unknown) => {
+      if (this.disposed || error instanceof SessionDisposedError) return;
+      handlers.onError("アバターを表示できないため、音声のみで続けます。", "AVATAR_FALLBACK");
+    });
+
+    // 10. Opening line: owned by the provider (config.providerOptions.opening) — each adapter starts it natively
+    //     (OpenAI response.create, Local agent TTS, Gemini hidden client turn). Nothing to send here.
+  }
+
+  private async attachAvatar(def: CharacterDefinition): Promise<void> {
+    const { settings, persona, character, stage, handlers } = this.init;
+    const runtime = this.runtime;
+    const recorder = this.recorder;
+    if (!runtime || !recorder || this.disposed) return;
+
+    const rawAvatar = await createAvatarProvider(character.renderer, {
+      container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
+      characterId: character.id, characterName: character.name,
+      quality: this.init.team ? "lightweight" : chosenAvatarQuality(settings, character.id),
+      onFallback: (reason) => handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"),
+    });
+    if (this.disposed) { await rawAvatar.stop().catch(() => {}); return; }
+
+    const avatar = recorder.wrapAvatar(rawAvatar);
+    try {
+      await avatar.prepare(def);
+      if (this.disposed) { await avatar.stop().catch(() => {}); return; }
+      recorder.recordRenderer(character.renderer, avatar.id);
+      const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
+      avatarRuntime.onStateChange((t) => {
+        recorder.recordState(t);
+        handlers.onAvatarState(t);
+      });
+      await avatar.start();
+      if (this.disposed) { await avatarRuntime.dispose().catch(() => {}); return; }
+
+      this.avatar = avatar;
+      this.avatarRuntime = avatarRuntime;
+      recorder.startProbe(rawAvatar);
+
+      const planner = new HeuristicSemanticPlanner();
+      const interview = persona.mode === "interview";
+      const behavior = new BehaviorEngine(avatarRuntime, {
+        planner,
+        mode: persona.mode,
+        baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? (interview ? "neutral" : "warm_positive"),
+        baseEmotionIntensity: interview ? 0.15 : 0.3,
+      });
+      this.behavior = behavior;
+      behavior.start();
+    } catch (error) {
+      await avatar.stop().catch(() => {});
+      throw error;
+    }
   }
 
   private async recordTaskCall(call: {id?:string;name:string;arguments:Record<string,unknown>}): Promise<void> {
