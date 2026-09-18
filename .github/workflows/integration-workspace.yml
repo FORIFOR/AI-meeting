@@ -1,0 +1,41 @@
+name: Prepare integration workspace
+on:
+  push:
+    branches: [work/meeting-integration-20260919]
+    paths: [.github/workflows/integration-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Integrate the three reviewed source snapshots without publishing
+        run: |
+          set -eu
+          base=bdf4d2267565525d752a0dcd5822259f6ec1ab2f
+          git fetch --no-tags --depth=1 origin "$base" 680c08072350aed5dda976a4e9315daea4f878ba e2a73024bef3b0b48565a33edc8f91efea43c419 5409c1d49413f1a2e01323a5e46b0240bdbcf6fa
+          for head in 680c08072350aed5dda976a4e9315daea4f878ba e2a73024bef3b0b48565a33edc8f91efea43c419 5409c1d49413f1a2e01323a5e46b0240bdbcf6fa; do
+            git diff "$base" "$head" | git apply --index
+          done
+      - name: Install locked dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.12.2 --activate
+          pnpm install --frozen-lockfile
+      - name: Bundle public source and dependencies only
+        run: |
+          tar --exclude='./.git' --exclude='./.env' --exclude='./.env.local' --exclude='*/.env' --exclude='*/.env.local' -czf "$RUNNER_TEMP/ai-meeting-workspace.tar.gz" .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ai-meeting-integration-workspace
+          path: ${{ runner.temp }}/ai-meeting-workspace.tar.gz
+          retention-days: 1
+          compression-level: 0
