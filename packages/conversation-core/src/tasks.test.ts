@@ -86,3 +86,20 @@ it('accepts repaired real-provider arguments without weakening quote or update-i
  expect(result.error).toBeUndefined();
  expect(result.tasks.map(({title,status,due})=>({title,status,due}))).toEqual([{title:'資料確認',status:'done',due:'今日'},{title:'メール返信',status:'deferred',due:'明日'}]);
 });
+
+describe('task status semantic safety',()=> {
+ it('refuses to mark a task done from negated or hypothetical speech',()=> {
+  const s=new TaskLedger();s.apply({operations:[{action:'add',title:'資料を送る',quote:'資料を送る'}]},'資料を送る');
+  for(const quote of ['資料はまだ送っていない','資料を送ったら連絡します','資料は明日送る予定です']) {
+   const result=s.apply({operations:[{action:'update',id:'task-1',status:'done',quote}]},quote);
+   expect(result.error).toMatch(/done status/);
+   expect(s.snapshot()[0]?.status).toBe('pending');
+  }
+ });
+ it('accepts explicit completion and refuses invented deferral intent',()=> {
+  const s=new TaskLedger();s.apply({operations:[{action:'add',title:'資料を送る',quote:'資料を送る'}]},'資料を送る');
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'deferred',quote:'資料のことを考えています'}]},'資料のことを考えています').error).toBe('deferred status lacks explicit deferral evidence');
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'done',quote:'資料を送りました'}]},'資料を送りました').error).toBeUndefined();
+  expect(s.snapshot()[0]?.status).toBe('done');
+ });
+});
