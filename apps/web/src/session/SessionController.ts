@@ -1,3 +1,4 @@
+import { awaitAvatarStep } from "./lateAvatar.js";
 import { VoiceActivity } from "./voiceActivity.js";
 import { configureSessionTools, TaskTranscript } from "./sessionTools.js";
 import { PersistentTaskLedger } from "../state/taskWorkspace.js";
@@ -30,6 +31,7 @@ export interface SessionHandlers {
   onAvatarState(t: StateTransition): void;
   onError(message: string, code?: string): void;
   onProviderChange(id: ProviderId): void;
+  onAvatarAvailability?(state: "loading" | "ready" | "voice_only"): void;
   onDeferred?(f: DeferredFeedback): void;
   onLookup?(result: LiveLookupResult): void;
   onTasks?(tasks: ConversationTask[]): void;
@@ -50,6 +52,7 @@ export interface SessionInit {
 
 export interface SessionOutcome {
   tasks?: ConversationTask[];
+  unconfirmedTaskChanges?: number;
   record: SessionRecord;
   evaluation: EvaluationResult | null;
   evaluationError?: string;
@@ -81,6 +84,10 @@ export class SessionController {
   private runtime: ConversationRuntime | null = null;
   private avatarRuntime: AvatarRuntime | null = null;
   private avatar: AvatarProvider | null = null;
+  private pendingAvatar: AvatarProvider | null = null;
+  private synchronizedAvatarReady = false;
+  private avatarReady: Promise<void> = Promise.resolve();
+  whenAvatarSettled(): Promise<void> { return this.avatarReady; }
   private behavior: BehaviorEngine | null = null;
   private sidecar: EvaluationSidecar | null = null;
   private character: CharacterDefinition | null = null;
@@ -151,7 +158,7 @@ export class SessionController {
   }
 
   private async build(): Promise<void> {
-    const { settings, persona, character, stage, handlers, params } = this.init;
+    const { settings, persona, character, handlers, params } = this.init;
 
     // Refuse to start a task conversation if its existing workspace cannot be read.
     if (this.tasks instanceof PersistentTaskLedger) {
@@ -172,7 +179,7 @@ export class SessionController {
     }
 
     // 2. Conversation runtime with local VAD (fast LISTENING path, <100 ms).
-    const avatarSink = new SynchronizedAvatarSink({ sink: speaker, avatar: () => this.avatar });
+    const avatarSink = new SynchronizedAvatarSink({ sink: speaker, avatar: () => this.avatar?.synchronizedAudio && !this.synchronizedAvatarReady ? null : this.avatar });
     this.avatarSink = avatarSink;
     const runtime = new ConversationRuntime({ sink: avatarSink, localVad: true });
     this.runtime = runtime;
@@ -201,49 +208,13 @@ export class SessionController {
     });
     this.recorder = recorder;
 
-    // 3. Avatar (renderer chosen by the character pack; never by the AI provider).
-    const def = await this.resolveCharacter(character);
-    this.checkpoint();
-    this.character = def;
-    const rawAvatar = await createAvatarProvider(character.renderer, {
-      container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
-      characterId: character.id, characterName: character.name,
-      quality: this.init.team ? "lightweight" : chosenAvatarQuality(settings, character.id),
-      onFallback: (reason) => handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"),
-    });
-    if (this.signal.aborted) {
-      await rawAvatar.stop().catch(() => {});
-      this.checkpoint();
-    }
-    this.checkpoint();
-    const avatar = recorder.wrapAvatar(rawAvatar); // logs emotion/gesture/gaze calls for incidents; behaviour unchanged
-    this.avatar = avatar;
-    await avatar.prepare(def);
-    recorder.recordRenderer(character.renderer, avatar.id);
-    this.checkpoint();
-    const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
-    this.avatarRuntime = avatarRuntime;
-    avatarRuntime.onStateChange((t) => {
-      recorder.recordState(t);
-      handlers.onAvatarState(t);
-    });
-    await avatar.start();
-    recorder.startProbe(rawAvatar);
-    this.checkpoint();
+    // 3. Character metadata is needed for voice/persona configuration, but renderer preparation is not.
+    // Start resolving it in parallel with microphone permission and attach the avatar only after the
+    // realtime provider is usable. A slow/broken VRM must never block the first spoken turn.
+    const characterReady = this.resolveCharacter(character);
+    void characterReady.catch(() => {});
 
-    // 4. Behavior engine (fast tier + async semantic planner; never blocks audio).
-    const planner = new HeuristicSemanticPlanner();
-    const interview = persona.mode === "interview";
-    const behavior = new BehaviorEngine(avatarRuntime, {
-      planner,
-      mode: persona.mode,
-      baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? (interview ? "neutral" : "warm_positive"),
-      baseEmotionIntensity: interview ? 0.15 : 0.3,
-    });
-    this.behavior = behavior;
-    behavior.start();
-
-    // 5. Evaluator sidecar (off the latency path).
+    // 4. Evaluator sidecar (off the latency path).
     const sidecar = new EvaluationSidecar({
       enableDeferred: persona.mode === "english_lesson",
       deferredEveryTurns: 4,
@@ -262,13 +233,14 @@ export class SessionController {
       if (this.disposed) return;
       this.voiceActivity.playback(frame);
       observer.notePlaybackFrame(frame);
-      avatarRuntime.pushAudio(frame);
+      this.avatarRuntime?.pushAudio(frame);
       recorder.recordAssistantFrame(frame);
     });
     runtime.on((e) => {
+      if (this.disposed) return;
       if (e.type === "interrupted" || e.type === "session_closed") this.voiceActivity.resetOutput();
-      avatarRuntime.handleEvent(e);
-      behavior.handleEvent(e);
+      this.avatarRuntime?.handleEvent(e);
+      this.behavior?.handleEvent(e);
       sidecar.handleEvent(e);
       observer.handleEvent(e);
       recorder.recordEvent(e);
@@ -280,7 +252,7 @@ export class SessionController {
         // A fatal provider failure must also release capture and playback.
         void this.dispose();
       }
-      if (e.type === "user_speech_started") this.taskSource.start();
+      if (e.type === "user_speech_started") { this.taskSource.start(); this.synchronizedAvatarReady = true; }
       if (e.type === "user_transcript") this.taskSource.update(e.text, e.final);
       if (persona.mode === "task_planning" && e.type === "tool_call" && e.call.name === TASK_TOOL.name) {
         this.taskQueue = this.taskQueue.then(() => this.recordTaskCall(e.call)).catch(() => {
@@ -308,14 +280,18 @@ export class SessionController {
       runtime.pushMicFrame(frame);
       recorder.recordMicFrame(frame);
       const db = dbfs(rms(frame.data));
-      behavior.reportUserAudio(Math.max(0, Math.min(1, (db + 50) / 35)), frame.timestamp);
+      this.behavior?.reportUserAudio(Math.max(0, Math.min(1, (db + 50) / 35)), frame.timestamp);
     });
 
-    // 8. AI provider (routed) + session config (persona + character + policy; no secrets).
+    // 8. AI provider (routed) + session config. Renderer work is intentionally not awaited here.
     const provider = await createConversationProvider(this.decision.conversation, this.factoryOptions);
     this.checkpoint();
+    const def = await characterReady;
+    this.checkpoint();
+    this.character = def;
     const config = createSessionConfig({ persona, character: def, providerId: this.decision.conversation, privacyMode: settings.privacyMode, params, voiceId: chosenVoice(settings, def?.manifest.id, this.decision.conversation) });
     if (persona.id === "thinking_ja" && params.previousMemory) config.systemPrompt += "\n\n" + params.previousMemory.slice(0,3000);
+    if (params.projectContext) config.systemPrompt += "\n\n" + params.projectContext.slice(0,6000);
     configureSessionTools(config, provider.capabilities().toolCalling);
     provider.attachInputStream?.(stream);
     await runtime.start(provider, config);
@@ -324,33 +300,96 @@ export class SessionController {
     recorder.recordProvider(this._providerId);
     handlers.onProviderChange(this._providerId);
 
-    // 9. Opening line: owned by the provider (config.providerOptions.opening) — each adapter starts it natively
-    //    (OpenAI response.create, Local agent TTS, Gemini hidden client turn). Nothing to send here.
+    // 9. Late-attach the visual presence. This runs after the provider is live and is never awaited by
+    // start(): voice remains usable when a renderer is slow or fails. dispose() aborts/cleans late work.
+    handlers.onAvatarAvailability?.("loading");
+    this.avatarReady = this.attachAvatar(def).catch((error: unknown) => {
+      if (this.disposed || error instanceof SessionDisposedError) return;
+      handlers.onAvatarAvailability?.("voice_only");
+      handlers.onError("アバターを表示できないため、音声のみで続けます。", "AVATAR_FALLBACK");
+    });
+
+    // 10. Opening line: owned by the provider (config.providerOptions.opening) — each adapter starts it natively
+    //     (OpenAI response.create, Local agent TTS, Gemini hidden client turn). Nothing to send here.
+  }
+
+  private async attachAvatar(def: CharacterDefinition): Promise<void> {
+    const { settings, persona, character, stage, handlers } = this.init;
+    const runtime = this.runtime;
+    const recorder = this.recorder;
+    if (!runtime || !recorder || this.disposed) return;
+
+    const rawAvatar = await awaitAvatarStep(createAvatarProvider(character.renderer, {
+      container: stage, brokerUrl: settings.brokerUrl, privacyMode: settings.privacyMode,
+      characterId: character.id, characterName: character.name,
+      quality: this.init.team ? "lightweight" : chosenAvatarQuality(settings, character.id),
+      onFallback: (reason) => { if (!this.disposed) handlers.onError(reason.startsWith("vrm_") ? "3Dモデルを表示できないため、簡易表示で続けます。" : "接続に合わせて軽量表示に切り替えました。", "AVATAR_FALLBACK"); },
+    }), this.signal, async late => { await late?.stop(); });
+    if (this.disposed) { await rawAvatar.stop().catch(() => {}); return; }
+
+    const avatar = recorder.wrapAvatar(rawAvatar);
+    this.pendingAvatar = avatar;
+    let preparedRuntime: AvatarRuntime | null = null;
+    try {
+      await awaitAvatarStep(avatar.prepare(def), this.signal, async () => { await avatar.stop(); });
+      if (this.disposed) { await avatar.stop().catch(() => {}); return; }
+      recorder.recordRenderer(character.renderer, avatar.id);
+      const avatarRuntime = new AvatarRuntime(avatar, { latency: runtime.latency });
+      preparedRuntime = avatarRuntime;
+      avatarRuntime.onStateChange((t) => {
+        if (this.disposed) return;
+        recorder.recordState(t);
+        handlers.onAvatarState(t);
+      });
+      await awaitAvatarStep(avatar.start(), this.signal, async () => { await avatar.stop(); });
+      if (this.disposed) { await avatarRuntime.dispose().catch(() => {}); return; }
+
+      this.pendingAvatar = null;
+      // A cloud audio renderer must not cut or re-route an already audible reply halfway through.
+      // Local renderers can attach immediately; synchronized source routing waits for a new user turn.
+      this.synchronizedAvatarReady = runtime.state !== "speaking" && !this.speaker?.isPlaying;
+      this.avatar = avatar;
+      this.avatarRuntime = avatarRuntime;
+      avatarRuntime.synchronize(runtime.state, runtime.generation);
+      recorder.startProbe(rawAvatar);
+
+      const planner = new HeuristicSemanticPlanner();
+      const interview = persona.mode === "interview";
+      const behavior = new BehaviorEngine(avatarRuntime, {
+        planner,
+        mode: persona.mode,
+        baseEmotion: (persona.defaultEmotion as Emotion | undefined) ?? (interview ? "neutral" : "warm_positive"),
+        baseEmotionIntensity: interview ? 0.15 : 0.3,
+      });
+      this.behavior = behavior;
+      behavior.start();
+      handlers.onAvatarAvailability?.("ready");
+    } catch (error) {
+      this.behavior?.stop(); this.behavior = null;
+      if (this.avatar === avatar) { this.avatar = null; this.avatarRuntime = null; }
+      if (preparedRuntime) await preparedRuntime.dispose().catch(() => {});
+      else await avatar.stop().catch(() => {});
+      throw error;
+    } finally { if (this.pendingAvatar === avatar) this.pendingAvatar = null; }
   }
 
   private async recordTaskCall(call: {id?:string;name:string;arguments:Record<string,unknown>}): Promise<void> {
-    // Live audio may deliver the tool call before its transcription has caught up.
-    // Never relax quote validation; briefly wait for the actual user transcript instead.
     if (this.disposed) return;
-    let result = await this.tasks.apply(call.arguments, this.taskSource.text());
-    const deadline = Date.now() + 1200;
-    while (result.error === "quote must occur in the latest user statement" && Date.now() < deadline && !this.disposed) {
-      await new Promise(resolve => setTimeout(resolve, 50));
-      if (this.disposed) return;
-      result = await this.tasks.apply(call.arguments, this.taskSource.text());
+    const operations = call.arguments.operations;
+    if (Array.isArray(operations) && operations.length === 0) {
+      const result = await this.tasks.apply({ operations: [] }, this.taskSource.text());
+      if (!this.disposed) this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:result}]);
+      return;
     }
+    // Quotation/regex matches are evidence, not proof of intent or target identity. Every voice
+    // mutation is a preview until the user approves its exact diff in the existing review UI.
+    const pending = await this.tasks.propose(call.arguments);
     if (this.disposed) return;
-    if (result.error === "quote must occur in the latest user statement") {
-      const pending = await this.tasks.propose(call.arguments);
-      if (pending.proposal) {
-        this.init.handlers.onTaskProposals?.(this.tasks.pending());
-        this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:{tasks:result.tasks,status:'needs_user_confirmation',proposal:pending.proposal,instruction:'変更案を画面に用意しましたが、まだ反映していません。ユーザー発話の引用を照合できなかったため、画面で内容を確認してもらう必要があります。「変更案を用意したよ。内容が合っていたら『この変更を反映』を押してね」のように短く案内してください。確認待ちの状態であり、システムの故障や処理失敗とは説明しないでください。完了・記録済みとは言わず、同じ操作を繰り返さない。'}}]);
-        return;
-      }
-    }
-    if (result.error) this.init.handlers.onError("タスクの変更を確認できませんでした。変更内容をもう一度伝えてください。", "TASK_RECORD");
-    this.init.handlers.onTasks?.(result.tasks);
-    this.runtime?.sendToolResponse([{id:call.id,name:call.name,response:result}]);
+    this.init.handlers.onTaskProposals?.(this.tasks.pending());
+    this.runtime?.sendToolResponse([{id:call.id,name:call.name,response: pending.proposal ? {
+      tasks:this.tasks.snapshot(), status:"needs_user_confirmation", proposal:pending.proposal,
+      instruction:"画面に変更案を用意しました。まだ保存していません。内容を確認して『この変更を反映』を押すよう一度だけ案内してください。完了・記録済みとは言わず、同じ変更を再送しないでください。",
+    } : {tasks:this.tasks.snapshot(),error:pending.error,instruction:"保存していません。引数を確認し、根拠を作らないでください。"}}]);
   }
 
   async resolveTaskProposal(id: string, accept: boolean): Promise<void> {
@@ -501,7 +540,7 @@ export class SessionController {
       evaluationError = err instanceof Error ? err.message : String(err);
     }
     const telemetry = await telemetryPending;
-    return { liveUsage, tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
+    return { unconfirmedTaskChanges: this.tasks.pending().length, liveUsage, tasks: this.tasks.snapshot(), record, evaluation, evaluationError, fallbackUsed, deferred: this.sidecar?.deferred ?? [], providerId: this._providerId, latency, report, incidents, telemetry };
   }
 
   /** Idempotent; safe during start(). Order: abort → mic tracks → runtime/provider → avatar → speaker/context. */
@@ -520,6 +559,7 @@ export class SessionController {
     setActiveSession(null);
     this.behavior?.stop();
     this.behavior = null;
+    void this.pendingAvatar?.stop().catch(() => {});
     this.recorder?.dispose(); // stops the rAF/interval probes; ring buffers are dropped
     // 1. Stop capture first so no frame reaches a provider that is going away.
     await this.mic?.stop().catch(() => {});
@@ -538,7 +578,7 @@ export class SessionController {
 
   private async resolveCharacter(entry: CharacterEntry): Promise<CharacterDefinition> {
     if (entry.renderer === "live2d" || entry.renderer === "vrm" || entry.renderer === "human-glb" || entry.renderer === "canvas") {
-      return loadCharacter(entry.baseUrl);
+      return loadCharacter(entry.baseUrl, (url, options) => fetch(url, { ...options, signal: AbortSignal.any([this.signal, AbortSignal.timeout(10_000)]) }));
     }
     // Cloud avatars: identity only; the vendor owns model/animation (spec §17).
     return {

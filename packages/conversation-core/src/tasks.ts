@@ -30,6 +30,22 @@ export const TASK_TOOL = {
 };
 export const TASK_INSTRUCTIONS = '\nタスク整理にはsession_tasksツールを使う。タスクや状態の変更を聞いたら、返答前に原文引用を添えて記録する。記録は追加・更新のみで、前提作業の追加は元のタスクを置き換えない。\n引数の規則: addのtitleは原文どおり。dueを指定する場合、quoteは行動名と期限の両方を含む連続した原文にする。行動名だけのquoteに、別の箇所で聞いたdueを付けると拒否される。複数文で期限を話した場合は、その複数文全体を引用してよい。updateは返された既存idを必ず指定し、titleは送らない。idが不明ならoperations=[]で一覧を読んでから更新する。\n残件や期限の要約・次の一歩を求められたら、まずoperations=[]で最新の記録を読み、pendingの行動とdueを省かず答える。既に記録された期限を聞き直さない。記録にない行動・期限を作らない。ツールの結果を待ってから変更の成功を伝える。\n形式エラーの扱い: due must be quoted, not inferredなら、発話に明示された期限も含むquoteへ直す。title must be quotedなら原文の行動名に戻す。unknown task idなら一覧を読み、実在するidで更新する。updates must preserve the task titleならupdateからtitleを除く。根拠が既にある形式エラーはユーザーに同じ内容を言わせず、自分の引数を修正して一度だけ再試行する。推測で根拠を補わない。needs_user_confirmationなら未反映なので画面での確認を案内し、完了・記録済みとは言わない。同じ変更を再送しない。';
 const normalized = (text: string) => text.normalize("NFKC").replace(/\s+/gu, "");
+
+const DONE_NEGATION = /(?:[?？]|ません|ない|なかった|まだ|未(?:完了|対応|実施|送信|提出)|して(?:い|お)ない|できていない|終わっていない|完了していない|\bnot(?:yet)?\b|haven['’]?t|hasn['’]?t|didn['’]?t|isn['’]?t|aren['’]?t)/iu;
+const DONE_HYPOTHETICAL = /(?:ったら|えたら|けたら|したら|できたら|なら|場合|予定|つもり|したい|しよう|しておく|\bwhen\b|\bif\b|\bonce\b|plan(?:ning)?to|\bwill\b|goingto|wantto)/iu;
+const DONE_EVIDENCE = /(?:完了(?:した|しました|済み|です)?|終わった|終わりました|済ませた|済ませました|やった|やりました|対応済み|送った|送りました|提出した|提出しました|買いました|買った|\bdone\b|\bcompleted\b|\bfinished\b|\bsent\b|\bsubmitted\b)/iu;
+const DEFER_EVIDENCE = /(?:延期|後回し|先送り|明日(?:に)?回|あとで|後で|defer(?:red)?|postpone(?:d)?|later|tomorrow)/iu;
+
+function validateStatusEvidence(status: ConversationTask['status'], quote: string): string | undefined {
+  const text = quote.normalize("NFKC").trim();
+  if (status === 'done') {
+    if (DONE_NEGATION.test(text)) return 'done status contradicted by quoted statement';
+    if (DONE_HYPOTHETICAL.test(text)) return 'done status lacks explicit completion evidence';
+    if (!DONE_EVIDENCE.test(text)) return 'done status lacks explicit completion evidence';
+  }
+  if (status === 'deferred' && (DONE_NEGATION.test(text) || !DEFER_EVIDENCE.test(text))) return 'deferred status lacks explicit deferral evidence';
+  return undefined;
+}
 export class TaskLedger {
   private tasks: ConversationTask[] = [];
   private proposals = new Map<string, { args: Record<string,unknown>; source: string; before: ConversationTask[]; changes: ConversationTask[] }>();
@@ -42,7 +58,7 @@ export class TaskLedger {
     if (!Array.isArray(args.operations)) return {error:'invalid operations'};
     const source=args.operations.map(op=>typeof op?.quote==='string'?op.quote:'').join('\n');
     const preview=new TaskLedger(); preview.tasks=this.snapshot();
-    const result=preview.apply(args,source);
+    const result=preview.applyValidated(args,source,true);
     if(result.error)return {error:result.error};
     const changes=result.tasks.filter(t=>JSON.stringify(t)!==JSON.stringify(this.tasks.find(old=>old.id===t.id)));
     if(!changes.length)return {error:'no changes'};
@@ -59,10 +75,14 @@ export class TaskLedger {
     // Never overwrite a newer change the user has already made to the same task.
     const updates=(p.args.operations as {action:string;id?:string}[]).filter(op=>op.action==='update');
     if(updates.some(op=>JSON.stringify(p.before.find(t=>t.id===op.id))!==JSON.stringify(this.tasks.find(t=>t.id===op.id))))return {tasks:this.snapshot(),error:'task changed; please request the update again'};
-    return this.apply(p.args,p.source);
+    return this.applyValidated(p.args,p.source,true);
   }
   snapshot(): ConversationTask[] { return this.tasks.map(t=>({...t})); }
   apply(args: Record<string, unknown>, latestUserText: string): { tasks: ConversationTask[]; error?: string } {
+    return this.applyValidated(args, latestUserText, false);
+  }
+  /** UI approval bypasses the conservative language heuristic, never structure/quote/ID checks. */
+  private applyValidated(args: Record<string, unknown>, latestUserText: string, reviewed: boolean): { tasks: ConversationTask[]; error?: string } {
     const fail=(error:string)=>({tasks:this.snapshot(),error});
     if (!Array.isArray(args.operations) || args.operations.length>10) return fail('operations must contain at most 10 changes');
     const next=this.snapshot();
@@ -73,6 +93,7 @@ export class TaskLedger {
       if(op.due!==undefined&&(typeof op.due!=='string'||!op.due.trim()||op.due.length>80||!normalized(quote).includes(normalized(op.due))))return fail('due must be quoted, not inferred');
       const status=op.status===undefined?'pending':op.status;
       if(typeof status!=='string'||!['pending','done','deferred'].includes(status))return fail('unknown status');
+      if(!reviewed && op.status!==undefined){const evidenceError=validateStatusEvidence(status as ConversationTask['status'],latestUserText);if(evidenceError)return fail(evidenceError);}
       if(op.action==='add') {
         if(typeof op.title!=='string'||!op.title.trim()||op.title.length>160||!normalized(quote).includes(normalized(op.title)))return fail('title must be quoted');
         if(next.length>=100)return fail('task limit reached');

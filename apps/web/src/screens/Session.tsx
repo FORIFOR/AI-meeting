@@ -1,3 +1,4 @@
+import "../styles/session-presence.css";
 import { VoiceOrb } from "../components/VoiceOrb.js";
 import { TaskList } from "../components/TaskList.js";
 import { LookupSources } from "../components/LookupSources.js";
@@ -67,7 +68,8 @@ export function Session(p: SessionProps) {
       <div className="stage" onClick={() => (sheet ? setSheet(false) : s.interrupt())} role="button" aria-label="タップで割り込む">
         <div className="stage__mount" ref={stageRef} />
 
-        {s.status === "starting" && <div className="stage__loading">支度中…</div>}
+        {s.status === "starting" && <div className="stage__loading">音声に接続しています…</div>}
+        {s.status === "live" && s.avatarAvailability !== "ready" && <p className="session__visual-status" role="status">{s.avatarAvailability === "loading" ? "会話できます。アバターを準備しています。" : "音声のみで会話を続けられます。"}</p>}
         {s.status === "error" && (
           <div className="stage__loading">
             <div style={{ textAlign: "center" }}>
@@ -79,7 +81,7 @@ export function Session(p: SessionProps) {
 
         <div className="session__head" onClick={(e) => e.stopPropagation()}>
           <span className="session__who">
-            <b>{p.character.name}</b>
+            <b>{p.character.name}</b>{p.params.projectTitle && <span>{p.params.projectTitle}</span>}
             <span className="session__mode">{MODE_NAME[p.persona.mode] ?? p.persona.mode}</span>
           </span>
           <button type="button" className="more" aria-pressed={notes} onClick={() => setNotes(v=>!v)}>{notes ? "会話へ" : "ノート"}</button>

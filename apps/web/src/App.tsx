@@ -1,3 +1,5 @@
+import { projectContext, type ProjectNote } from "./state/projectWorkspace.js";
+import { TaskWorkspace } from "./state/taskWorkspace.js";
 import { memoryContext, readConversationMemory } from "./state/conversationMemory.js";
 import { ZoomReturn } from "./components/ZoomConnection.js";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useState } from "react";
@@ -31,6 +33,8 @@ const MeetingDetail = lazy(() => import("./screens/MeetingDetail.js").then((m) =
 const Setup = lazy(() => import("./screens/Setup.js").then((m) => ({ default: m.Setup })));
 const Result = lazy(() => import("./screens/Result.js").then((m) => ({ default: m.Result })));
 const ThinkingResult = lazy(() => import("./screens/ThinkingResult.js").then((m) => ({ default: m.ThinkingResult })));
+const Projects = lazy(() => import("./screens/Projects.js").then(m => ({ default: m.Projects })));
+const ProjectResult = lazy(() => import("./screens/ProjectResult.js").then(m => ({ default: m.ProjectResult })));
 const Tasks = lazy(() => import("./screens/Tasks.js").then((m) => ({ default: m.Tasks })));
 const TeamWorkspace = import.meta.env.VITE_RCAI_OSS === "true" ? () => null : lazy(() => import("./screens/TeamWorkspace.js").then(m => ({ default: m.TeamWorkspace })));
 const HostedAccount = import.meta.env.VITE_RCAI_OSS === "true" ? () => null : lazy(() => import("./components/HostedAccount.js").then(m => ({ default: m.HostedAccount })));
@@ -44,6 +48,7 @@ function preload(load: () => Promise<unknown>) {
 type Screen =
   | { name: "home" }
   | { name: "tasks" }
+  | { name: "projects"; projectId?: string }
   | { name: "team" }
   | { name: "settings" }
   | { name: "character"; back: "home" | "settings" | "setup"; mode?: ConversationMode }
@@ -51,7 +56,7 @@ type Screen =
   | { name: "meetings" }
   | { name: "meetingDetail"; id: string }
   | { name: "setup"; mode: ConversationMode }
-  | { name: "session"; persona: Persona; character: CharacterEntry; params: Record<string, string>; availability: Availability }
+  | { name: "session"; project?: ProjectNote; persona: Persona; character: CharacterEntry; params: Record<string, string>; availability: Availability }
   | { name: "result"; outcome: SessionOutcome; last: Extract<Screen, { name: "session" }> };
 
 /**
@@ -83,7 +88,7 @@ function readBotParams(): { token: string; brokerUrl?: string; botId?: string; c
 export function App() {
   const [settings, dispatch] = useReducer(settingsReducer, undefined, () => loadSettings());
   const botParams = useMemo(() => readBotParams(), []);
-  const [screen, setScreen] = useState<Screen>(() => botParams ? { name: "meeting" } : typeof location !== "undefined" && location.hash.startsWith("#team") ? { name: "team" } : typeof location !== "undefined" && location.hash === "#tasks" ? { name: "tasks" } : { name: "home" });
+  const [screen, setScreen] = useState<Screen>(() => botParams ? { name: "meeting" } : typeof location !== "undefined" && location.hash.startsWith("#team") ? { name: "team" } : typeof location !== "undefined" && location.hash === "#tasks" ? { name: "tasks" } : typeof location !== "undefined" && location.hash === "#projects" ? { name: "projects" } : { name: "home" });
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [characters, setCharacters] = useState<CharacterEntry[]>([]);
   const [contentNote, setContentNote] = useState<string | undefined>();
@@ -98,13 +103,14 @@ export function App() {
 
   useEffect(() => saveSettings(settings), [settings]);
   useEffect(() => {
-    if (screen.name === "tasks") history.replaceState(null, "", `${location.pathname}${location.search}#tasks`);
+    if (screen.name === "projects") history.replaceState(null, "", `${location.pathname}${location.search}#projects`);
+    else if (screen.name === "tasks") history.replaceState(null, "", `${location.pathname}${location.search}#tasks`);
     else if (screen.name === "team") { if (!location.hash.startsWith("#team")) history.replaceState(null, "", `${location.pathname}${location.search}#team`); }
-    else if (location.hash === "#tasks" || location.hash.startsWith("#team")) history.replaceState(null, "", `${location.pathname}${location.search}`);
+    else if (location.hash === "#tasks" || location.hash === "#projects" || location.hash.startsWith("#team")) history.replaceState(null, "", `${location.pathname}${location.search}`);
   }, [screen.name]);
   useEffect(() => {
     if (botParams) return;
-    const navigate = () => { if (location.hash === "#tasks") setScreen({ name: "tasks" }); else if (location.hash.startsWith("#team")) setScreen({ name: "team" }); };
+    const navigate = () => { if (location.hash === "#projects") setScreen({ name: "projects" }); else if (location.hash === "#tasks") setScreen({ name: "tasks" }); else if (location.hash.startsWith("#team")) setScreen({ name: "team" }); };
     window.addEventListener("hashchange", navigate);
     return () => window.removeEventListener("hashchange", navigate);
   }, [botParams]);
@@ -169,12 +175,12 @@ export function App() {
   const selectedCharacter = characters.find((c) => c.id === settings.characterId) ?? characters[0];
 
   const startSession = useCallback(
-    (persona: Persona, params: Record<string, string>) => {
+    (persona: Persona, params: Record<string, string>, project?: ProjectNote) => {
       if (!selectedCharacter) return;
       const r: Recent = { mode: persona.mode, characterId: selectedCharacter.id, characterName: selectedCharacter.name, personaId: persona.id, at: Date.now() };
       saveRecent(r);
       setRecent(r);
-      setScreen({ name: "session", persona, character: selectedCharacter, params, availability: availability ?? { openai: false, google: false, local: false } });
+      setScreen({ name: "session", project, persona, character: selectedCharacter, params, availability: availability ?? { openai: false, google: false, local: false } });
     },
     [selectedCharacter, availability],
   );
@@ -202,6 +208,7 @@ export function App() {
           </a>
           <nav className="workspace-nav" aria-label="メインメニュー">
             <button aria-current={screen.name === "home" ? "page" : undefined} onClick={() => setScreen({ name: "home" })}>ホーム</button>
+            <button aria-current={screen.name === "projects" ? "page" : undefined} onClick={() => setScreen({ name: "projects" })}>案件</button>
             <button aria-current={screen.name === "tasks" ? "page" : undefined} onClick={() => setScreen({ name: "tasks" })}>タスク</button>
             <button aria-current={screen.name === "meeting" ? "page" : undefined} onPointerEnter={() => preload(loadMeeting)} onFocus={() => preload(loadMeeting)} onClick={() => setScreen({ name: "meeting" })}>会議</button>
             <button aria-current={screen.name === "meetings" ? "page" : undefined} onPointerEnter={() => preload(loadMeetings)} onFocus={() => preload(loadMeetings)} onClick={() => setScreen({ name: "meetings" })}>会議の履歴</button>
@@ -232,6 +239,11 @@ export function App() {
           onMeeting={(url) => { setMeetingDraft(url ?? ""); setScreen({ name: "meeting" }); }}
         />
       )}
+      {screen.name === "projects" && <Projects initialId={screen.projectId} privacyMode={settings.privacyMode} onBack={() => setScreen({ name: "home" })}
+        onStart={availability && (availability.openai || availability.google || availability.local) && personas.some(p=>p.mode === "task_planning") ? async project => {
+          const persona = personas.find(p=>p.mode === "task_planning")!;
+          startSession(persona, {projectId:project.id, projectTitle:project.title, projectContext:projectContext(project)}, project);
+        } : undefined} />}
       {screen.name === "team" && <TeamWorkspace settings={settings} persona={personas.find(p => p.mode === "task_planning")} character={characters.find(c => c.id === "vroid-b") ?? characters.find(c => c.renderer === "vrm")} onBack={() => setScreen({ name: "home" })} />}
       {screen.name === "tasks" && <Tasks
         onBack={() => setScreen({ name: "home" })}
@@ -291,6 +303,7 @@ export function App() {
       )}
       {screen.name === "session" && (
         <Session
+          taskWorkspace={screen.project ? new TaskWorkspace(`ai-meeting-project-tasks-${screen.project.id}`) : undefined}
           settings={hostedReady ? { ...settings, engine: "google", advanced: {} } : settings}
           dispatch={dispatch}
           availability={screen.availability}
@@ -301,7 +314,7 @@ export function App() {
           onAbort={() => setScreen({ name: "home" })}
         />
       )}
-      {screen.name === "result" && (screen.last.persona.id === "thinking_ja" ? <ThinkingResult outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} /> : <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />)}
+      {screen.name === "result" && (screen.last.project ? <ProjectResult outcome={screen.outcome} project={screen.last.project} onDone={() => setScreen({ name: "projects", projectId: screen.last.project!.id })} /> : screen.last.persona.id === "thinking_ja" ? <ThinkingResult outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} /> : <Result outcome={screen.outcome} onHome={() => setScreen({ name: "home" })} onAgain={() => setScreen(screen.last)} />)}
       </ScreenBoundary>
     </div>
   );
