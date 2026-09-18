@@ -32,7 +32,7 @@ export const TASK_INSTRUCTIONS = '\nタスク整理にはsession_tasksツール�
 const normalized = (text: string) => text.normalize("NFKC").replace(/\s+/gu, "");
 
 const DONE_NEGATION = /(?:まだ|未(?:完了|対応|実施|送信|提出)|して(?:い|お)ない|できていない|終わっていない|完了していない|not(?:yet)?|haven['’]?t|hasn['’]?t|didn['’]?t|isn['’]?t|aren['’]?t)/iu;
-const DONE_HYPOTHETICAL = /(?:たら|なら|場合|予定|つもり|したい|しよう|しておく|when|if|once|plan(?:ning)?to|will|goingto|wantto)/iu;
+const DONE_HYPOTHETICAL = /(?:ったら|えたら|けたら|したら|できたら|なら|場合|予定|つもり|したい|しよう|しておく|when|if|once|plan(?:ning)?to|will|goingto|wantto)/iu;
 const DONE_EVIDENCE = /(?:完了(?:した|しました|済み|です)?|終わった|終わりました|済ませた|済ませました|やった|やりました|対応済み|送った|送りました|提出した|提出しました|done|completed|finished|sent|submitted|did|ました)/iu;
 const DEFER_EVIDENCE = /(?:延期|後回し|先送り|明日(?:に)?回|あとで|後で|defer(?:red)?|postpone(?:d)?|later|tomorrow)/iu;
 
