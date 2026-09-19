@@ -16,7 +16,7 @@ export function cueEndpoint(brokerUrl: string): string {
   const url = new URL(brokerUrl);
   if (url.username || url.password || url.search || url.hash || url.pathname !== '/' && url.pathname !== '') throw new Error('invalid cue broker');
   if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))) throw new Error('cue broker requires HTTPS');
-  return `${url.origin}/api/live-cues/`;
+  return `${url.origin}/api/live-cues`;
 }
 
 export function remoteCueProvider(options: { brokerUrl: string; token: string; consent: boolean; privacyMode: 'default' | 'strict_local'; team: boolean; fetchImpl?: typeof fetch }): CueProvider {

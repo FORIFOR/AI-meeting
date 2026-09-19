@@ -19,7 +19,7 @@ describe('live cue contract', () => {
   });
   it('asks both questions in one request, with no transcript history, raw audio or tools', () => {
     const body = jevCueRequest(input);
-    expect(body.model).toBe('jev-1.13.0'); expect(Object.keys(body.questions)).toEqual(['focus', 'intent']);
+    expect(body.model).toBe('jev-latest'); expect(Object.keys(body.questions)).toEqual(['focus', 'intent']);
     expect(body.state).toEqual({ utterance: input.text });
     expect(body.questions.focus.criteria.c0).toContain('予算確認');
     expect(body).not.toHaveProperty('tools');

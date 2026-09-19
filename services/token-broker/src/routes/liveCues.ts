@@ -54,7 +54,7 @@ export function createLiveCueRoutes(env: BrokerEnv & LiveCueEnv, fetchImpl: type
       const response = await fetchImpl('https://api.typesafe.ai/v1/systemone', {
         method: 'POST', redirect: 'error',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.TYPESAFE_API_KEY}` },
-        body: JSON.stringify(jevCueRequest(input)),
+        body: JSON.stringify({ ...jevCueRequest(input), model: env.TYPESAFE_DEFAULT_MODEL ?? 'jev-latest' }),
         signal: AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(1500)]),
       });
       if (!response.ok) { await response.body?.cancel(); return c.json({ error: 'CUE_PROVIDER_UNAVAILABLE' }, 502); }

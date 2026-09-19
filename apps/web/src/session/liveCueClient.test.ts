@@ -13,8 +13,8 @@ describe('cue client', () => {
     expect(JSON.stringify(result)).not.toContain(project.goal);
   });
   it('rejects credential-bearing, non-HTTPS and non-root broker URLs', () => {
-    expect(cueEndpoint('https://broker.example')).toBe('https://broker.example/api/live-cues/');
-    expect(cueEndpoint('http://localhost:8787')).toBe('http://localhost:8787/api/live-cues/');
+    expect(cueEndpoint('https://broker.example')).toBe('https://broker.example/api/live-cues');
+    expect(cueEndpoint('http://localhost:8787')).toBe('http://localhost:8787/api/live-cues');
     for (const url of ['http://remote.example','https://user:pass@broker.example','https://broker.example/?secret=1','https://broker.example/#fragment','https://broker.example/admin']) expect(() => cueEndpoint(url)).toThrow();
   });
   it('does not send a single request without consent or in strict/team mode', async () => {
@@ -30,7 +30,7 @@ describe('cue client', () => {
     const provider = remoteCueProvider({brokerUrl:'https://broker.example',token,consent:true,privacyMode:'default',team:false,fetchImpl:network});
     expect((await provider(input,new AbortController().signal)).candidateId).toBe('budget');
     const [url, options] = network.mock.calls[0] as unknown as [string,RequestInit];
-    expect(url).toBe('https://broker.example/api/live-cues/'); expect(options.redirect).toBe('error');
+    expect(url).toBe('https://broker.example/api/live-cues'); expect(options.redirect).toBe('error');
     expect(JSON.parse(String(options.body))).toEqual({input,consent:'live-cues-v1',privacyMode:'default'});
   });
   it('ignores an invented reference or a response mislabelled as local', async () => {

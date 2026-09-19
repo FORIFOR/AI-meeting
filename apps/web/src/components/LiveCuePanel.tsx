@@ -6,7 +6,7 @@ import { ProjectWorkspace, type ProjectNote } from '../state/projectWorkspace.js
 import '../styles/live-cues.css';
 
 export interface LiveCuePanelProps {
-  captions: Caption[]; tasks: ConversationTask[]; projectId?: string;
+  transcript?: string; captions: Caption[]; tasks: ConversationTask[]; projectId?: string;
   active: boolean; brokerUrl: string; privacyMode: 'default' | 'strict_local'; team?: boolean;
   onCue?: (intent: CueIntent) => void;
 }
@@ -22,10 +22,11 @@ export function LiveCuePanel(p: LiveCuePanelProps) {
   const [cue, setCue] = useState<LiveCue | null>(null);
   const [token, setToken] = useState('');
   const [consent, setConsent] = useState(false);
+  const [consentBroker, setConsentBroker] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
   const scheduler = useRef<LiveCueScheduler | null>(null);
   const latest = p.captions.filter(c => c.role === 'user').at(-1);
-  const text = latest?.text.trim().slice(-800) ?? '';
+  const text = (p.transcript ?? latest?.text ?? '').trim().slice(-800);
   const cloudAllowed = p.privacyMode !== 'strict_local' && !p.team;
 
   useEffect(() => { setConsent(false); setToken(''); }, [p.brokerUrl, p.privacyMode, p.team]);
@@ -37,7 +38,7 @@ export function LiveCuePanel(p: LiveCuePanelProps) {
 
   const candidates = useMemo(() => cueCandidates(p.tasks, project, text), [p.tasks, project, text]);
   const key = JSON.stringify(candidates);
-  const remote = cloudAllowed && consent && /^[^\s]{32,512}$/.test(token);
+  const remote = cloudAllowed && consent && consentBroker === p.brokerUrl && /^[^\s]{32,512}$/.test(token);
   const provider = useMemo(() => remote ? remoteCueProvider({ brokerUrl: p.brokerUrl, token, consent, privacyMode: p.privacyMode, team: !!p.team }) : undefined,
     [remote, p.brokerUrl, token, consent, p.privacyMode, p.team]);
   useEffect(() => {
@@ -71,7 +72,7 @@ export function LiveCuePanel(p: LiveCuePanelProps) {
           <p>現在の発話テキスト（最大800文字）と候補メモ（最大12件）を、次の接続先経由でTypeSafeへ送ります。音声や会話全文は送りません。</p>
           <code>{p.brokerUrl}</code>
           <label>専用の接続トークン<input type="password" value={token} maxLength={512} autoComplete="off" onChange={e => { setConsent(false); setToken(e.target.value); }} placeholder="管理者が発行した判断専用トークン" /></label>
-          <label><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />送信先と内容を確認し、この会話中の送信に同意する</label>
+          <label><input type="checkbox" checked={consent} onChange={e => { setConsentBroker(p.brokerUrl); setConsent(e.target.checked); }} />送信先と内容を確認し、この会話中の送信に同意する</label>
           <p>TypeSafeのAPIキーは入力しないでください。トークンと同意は保存せず、接続設定変更時に消去します。公開・チーム提供ではJevは無効です。</p>
         </details> : <p>このモードのヒントは端末内で処理します。Jevへの送信は行いません。</p>}
       </div>

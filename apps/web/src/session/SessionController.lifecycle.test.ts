@@ -12,6 +12,7 @@ const avatarFactory = vi.fn(async () => {});
 const avatarPrepare = vi.fn(async () => {});
 const avatarStart = vi.fn(async () => {});
 const avatarSetState = vi.fn();
+const avatarSetEmotion = vi.fn();
 const errors = vi.fn();
 const taskProposals = vi.fn();
 const toolResponse = vi.fn();
@@ -63,7 +64,7 @@ vi.mock("../integrations/registry.js", () => ({
     start: avatarStart,
     pushAudio() {},
     setState: avatarSetState,
-    setEmotion() {},
+    setEmotion: avatarSetEmotion,
     performGesture() {},
     setGaze() {},
     interrupt() {},
@@ -105,6 +106,19 @@ function makeController(privacyMode: "strict_local" | "default" = "strict_local"
 }
 
 describe("SessionController lifecycle", () => {
+  it("applies live cues only as quiet, optional expressions, not as speech or task authority", async () => {
+    const c = makeController(); await c.start(); await c.whenAvatarSettled();
+    for (const notify of providerListeners) notify({type:"user_speech_started"});
+    avatarSetEmotion.mockClear(); toolResponse.mockClear();
+    expect(c.setLiveCue("explore")).toBe(true);
+    expect(avatarSetEmotion).toHaveBeenCalledWith("warm_positive", 0.18);
+    expect(toolResponse).not.toHaveBeenCalled();
+    avatarSetEmotion.mockClear();
+    for (const notify of providerListeners) notify({type:"assistant_speech_started"});
+    avatarSetEmotion.mockClear();
+    expect(c.setLiveCue("compare")).toBe(false); expect(avatarSetEmotion).not.toHaveBeenCalled();
+    await c.dispose(); expect(c.setLiveCue("none")).toBe(false);
+  });
   afterEach(async () => { await getActiveSession()?.dispose(); vi.unstubAllGlobals(); });
   beforeEach(() => {
     vi.clearAllMocks(); providerListeners.clear();

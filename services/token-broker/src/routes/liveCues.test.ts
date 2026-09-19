@@ -68,9 +68,9 @@ describe('optional Jev route', () => {
   it('is actually mounted by the application without bypassing the public gate', async () => {
     const network = vi.fn(async () => ok());
     const app = createApp({ env, fetch: network, startWorker: false });
-    expect((await app.request('/api/live-cues/', req())).status).toBe(200);
+    expect((await app.request('/api/live-cues', req())).status).toBe(200);
     const publicApp = createApp({ env: { ...env, RCAI_PUBLIC_DEMO_ONLY: '1' }, fetch: network, startWorker: false });
-    expect((await publicApp.request('/api/live-cues/', req())).status).not.toBe(200);
+    expect((await publicApp.request('/api/live-cues', req())).status).not.toBe(200);
     expect(network).toHaveBeenCalledOnce();
   });
 });
