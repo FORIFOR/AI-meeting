@@ -27,7 +27,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Apply exact reviewed integration
-        run: node scripts/verification/apply-live-cues.mjs
+        run: node scripts/verification/verify-live-cue-integration.mjs
       - name: Install locked dependencies
         run: |
           corepack enable
@@ -59,8 +59,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add packages/conversation-core/src/index.ts packages/conversation-core/src/liveCues.ts packages/conversation-core/src/liveCues.test.ts
-          git add services/token-broker/src/env.ts services/token-broker/src/app.ts services/token-broker/src/routes/liveCues.ts services/token-broker/.env.example
-          git add apps/web/src/components/LiveCuePanel.tsx apps/web/src/screens/Session.tsx apps/web/src/session/useSession.ts apps/web/src/session/SessionController.ts apps/web/src/session/SessionController.lifecycle.test.ts
+          git add services/token-broker/src/env.ts services/token-broker/src/app.ts services/token-broker/src/routes/liveCues.ts services/token-broker/.env.example services/token-broker/src/routes/liveCues.test.ts
+          git add apps/web/src/components/LiveCuePanel.tsx apps/web/src/screens/Session.tsx apps/web/src/session/useSession.ts apps/web/src/session/SessionController.ts apps/web/src/session/SessionController.lifecycle.test.ts apps/web/src/session/liveCueClient.ts apps/web/src/session/liveCueClient.test.ts
           git commit -m 'Integrate live cues into session UI and broker after full verification'
           git push origin HEAD:refs/heads/feat/live-meeting-cues-20260919
       - name: Preserve test evidence
