@@ -40,7 +40,9 @@ function validateStatusEvidence(status: ConversationTask['status'], quote: strin
   const text = normalized(quote);
   if (status === 'done') {
     if (DONE_NEGATION.test(text)) return 'done status contradicted by quoted statement';
-    if (DONE_HYPOTHETICAL.test(text) && !DONE_EVIDENCE.test(text)) return 'done status lacks explicit completion evidence';
+    // A completion-looking token inside a conditional/future clause ("送ったら", "when sent")
+    // is not evidence that the action has happened. Require an unambiguous completed assertion.
+    if (DONE_HYPOTHETICAL.test(text)) return 'done status lacks explicit completion evidence';
     if (!DONE_EVIDENCE.test(text)) return 'done status lacks explicit completion evidence';
   }
   if (status === 'deferred' && !DEFER_EVIDENCE.test(text)) return 'deferred status lacks explicit deferral evidence';
