@@ -27,7 +27,11 @@ export function localCue(input: CueInput): LiveCue {
     : /先に|次に|優先|予定|計画|やること|plan|nextstep/iu.test(text) ? 'plan'
     : /ありがとう|助かった|thanks|thankyou/iu.test(text) ? 'acknowledge'
     : /アイデア|考え|どう思|idea|explore/iu.test(text) ? 'explore' : 'none';
-  const grams = (s: string) => new Set(Array.from(s).slice(0, -1).map((v, i) => v + Array.from(s)[i + 1]));
+  // Decode Unicode once per string, not again for every bigram on each partial transcript.
+  const grams = (s: string) => {
+    const characters = Array.from(s);
+    return new Set(characters.slice(0, -1).map((v, i) => v + characters[i + 1]));
+  };
   const spoken = grams(text);
   let best: { id: string; score: number } | null = null;
   for (const candidate of x.candidates) {
