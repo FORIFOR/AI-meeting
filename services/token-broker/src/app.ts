@@ -1,3 +1,4 @@
+import { createLiveCueRoutes } from "./routes/liveCues.js";
 import { createOpenAILiveSession } from "./routes/openaiLive.js";
 import { publicDemoOnly, startsProviderWork, PUBLIC_DEMO_ONLY_MESSAGE } from "./public-access.js";
 import { TeamWorkspaceService, createTeamRoutes } from "./team-workspace.js";
@@ -162,7 +163,7 @@ export function createApp(deps: AppDeps): Hono {
     }
   })();
   app.use("*", cors({
-    origin: (origin, c) => (!origin || localOrigins.includes(origin) || origin === botPageOrigin || (c.req.path.startsWith('/api/site/') && [env.RCAI_MARKETING_ORIGIN, 'http://127.0.0.1:5196', ...portfolioOrigins].includes(origin)) ? origin ?? localOrigins[0] : null),
+    origin: (origin, c) => (!origin || localOrigins.includes(origin) || origin === botPageOrigin || (c.req.path.startsWith('/api/live-cues') && origin === env.RCAI_LIVE_CUES_ORIGIN) || (c.req.path.startsWith('/api/site/') && [env.RCAI_MARKETING_ORIGIN, 'http://127.0.0.1:5196', ...portfolioOrigins].includes(origin)) ? origin ?? localOrigins[0] : null),
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   }));
@@ -175,6 +176,8 @@ export function createApp(deps: AppDeps): Hono {
     }
     await next();
   });
+
+  app.route('/api/live-cues', createLiveCueRoutes(env, fetchImpl, now));
 
   app.get("/health", (c) =>
     c.json({

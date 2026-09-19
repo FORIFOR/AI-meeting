@@ -1,0 +1,11 @@
+.live-cues{position:absolute;z-index:8;top:88px;left:20px;width:min(310px,calc(100vw - 40px));max-height:42vh;overflow:auto;border:1px solid rgba(128,128,128,.22);border-radius:18px;background:var(--surface,#fff);color:var(--text,#252a30);box-shadow:0 8px 28px rgba(0,0,0,.06);font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.live-cues summary{cursor:pointer;padding:10px 14px;font-weight:600;min-height:42px;box-sizing:border-box}
+.live-cues summary span{float:right;font-size:11px;font-weight:400;opacity:.65}
+.live-cues__body{padding:0 14px 12px}.live-cues__body small{display:block;font-size:11px;opacity:.7}
+.live-cues__title{margin:5px 0 8px;font-weight:600;font-size:14px}.live-cues__empty{margin:0;opacity:.65;font-size:12px}
+.live-cues__notice{font-size:11px;margin:8px 0 0}.live-cues__settings{padding:0 14px 12px;font-size:12px}
+.live-cues__settings label{display:block;margin:10px 0;cursor:pointer;min-height:30px}.live-cues__settings input[type=checkbox]{margin-right:7px;accent-color:currentColor}
+.live-cues__settings input[type=password]{display:block;box-sizing:border-box;width:100%;padding:10px;margin-top:6px;border:1px solid #cbd0d6;border-radius:9px;font-size:16px;background:inherit;color:inherit}
+.live-cues__settings summary{padding:8px 0}.live-cues__settings p{margin:7px 0;opacity:.8}.live-cues__settings code{font-size:11px}
+@media(max-width:600px){.live-cues{top:82px;left:12px;width:min(260px,calc(100vw - 24px));max-height:30vh;border-radius:14px}.live-cues summary{padding:8px 12px}.live-cues__body{padding:0 12px 9px}.live-cues__title{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.live-cues,.live-cues *{transition:none!important;animation:none!important}}

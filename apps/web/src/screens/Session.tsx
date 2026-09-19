@@ -1,4 +1,5 @@
 import "../styles/session-presence.css";
+import { LiveCuePanel } from "../components/LiveCuePanel.js";
 import { VoiceOrb } from "../components/VoiceOrb.js";
 import { TaskList } from "../components/TaskList.js";
 import { LookupSources } from "../components/LookupSources.js";
@@ -94,6 +95,9 @@ export function Session(p: SessionProps) {
         {notes && <TranscriptLog items={s.captions} />}
         {notes && s.lookup && <LookupSources result={s.lookup} />}
         {(notes || s.taskProposals.length > 0) && (s.tasks.length > 0 || s.taskProposals.length > 0) && <TaskList tasks={s.tasks} proposals={s.taskProposals} onResolve={s.resolveTaskProposal} />}
+        <LiveCuePanel captions={s.captions} transcript={s.liveCueText} tasks={s.tasks}
+          projectId={p.params.projectId} active={s.status === "live" && !s.muted}
+          brokerUrl={p.settings.brokerUrl} privacyMode={p.settings.privacyMode} team={!!p.team} onCue={s.setLiveCue} />
         <SelfCamera enabled={!p.team && p.settings.cameraOn} />
         {p.settings.showHud && <LatencyHud report={s.latency} providerId={s.providerId} observability={s.observability} />}
 

@@ -3,6 +3,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface BrokerEnv {
+  /** Optional decision-only TypeSafe integration; disabled on the public hosted profile. */
+  RCAI_LIVE_CUES_ENABLED?: string;
+  TYPESAFE_API_KEY?: string;
+  TYPESAFE_DEFAULT_MODEL?: string;
+  RCAI_LIVE_CUES_TOKEN?: string;
+  RCAI_LIVE_CUES_ORIGIN?: string;
   RCAI_TEAM_WORKSPACES?: string;
   RCAI_TEAM_FIRESTORE_DATABASE?: string;
   /** Public marketing origin; enables private inquiry intake and aggregate site events. */

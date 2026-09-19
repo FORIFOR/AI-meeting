@@ -97,6 +97,7 @@ export class SessionController {
   private _providerId: ProviderId;
   private decision: ReturnType<typeof decide>;
   private disposed = false;
+  private lastLiveCueAt = -Infinity;
   private started = false;
   /** Aborted by dispose(); every async step of start() checks it after awaiting (docs/audio-lifecycle.md). */
   private readonly abort = new AbortController();
@@ -490,6 +491,19 @@ export class SessionController {
     }
     const stats = (rt as unknown as { stats?: { staleDrops?: number } }).stats;
     if (typeof stats?.staleDrops === "number") obs.noteStaleDrops(stats.staleDrops);
+  }
+
+  /** Display-only intent cue. Never speaks, takes a turn, saves a task or approves an action. */
+  setLiveCue(intent: import("@rcai/conversation-core").CueIntent): boolean {
+    if (this.disposed || !this.avatarRuntime || !this.runtime ||
+        !["idle", "listening", "interrupted"].includes(this.runtime.state) ||
+        !["none", "explore", "compare", "clarify", "plan", "acknowledge"].includes(intent)) return false;
+    const now = Date.now();
+    if (intent !== "none" && now - this.lastLiveCueAt < 800) return false;
+    if (intent !== "none") this.lastLiveCueAt = now;
+    this.avatarRuntime.setEmotion(intent === "explore" || intent === "acknowledge" ? "warm_positive" : "neutral",
+      intent === "acknowledge" ? 0.3 : intent === "explore" ? 0.18 : 0.12);
+    return true;
   }
 
   async interrupt(): Promise<void> {

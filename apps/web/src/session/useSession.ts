@@ -38,6 +38,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   const [avatarAvailability, setAvatarAvailability] = useState<"loading" | "ready" | "voice_only">("loading");
   const [avatarState, setAvatarState] = useState<AvatarState>("IDLE");
   const [captions, setCaptions] = useState<Caption[]>([]);
+  const [liveCueText, setLiveCueText] = useState("");
   const [providerId, setProviderId] = useState<ProviderId | null>(null);
   const [latency, setLatency] = useState<ReturnType<LatencyTracker["report"]> | null>(null);
   const [observability, setObservability] = useState<SessionReport | null>(null);
@@ -59,6 +60,9 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   }, []);
 
   const onEvent = useCallback((e: ConversationEvent) => {
+    // Invalidate advisory work at the start of a new turn, not only when revised text arrives.
+    if (e.type === "user_speech_started" || e.type === "interrupted" || e.type === "session_closed") setLiveCueText("");
+    if (e.type === "user_transcript") setLiveCueText(previous => (e.delta ? previous + e.text : e.text).slice(-800));
     if (e.type === "error" && e.fatal !== false) setStatus("error");
     const g = genRef.current;
     const eventGen = "gen" in e && e.gen ? e.gen.generationId : undefined;
@@ -103,6 +107,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   useEffect(() => {
     if (!init || !stageRef.current) return;
     setLookup(null);
+    setLiveCueText("");
     setTasks([]);
     setTaskProposals([]);
     let cancelled = false;
@@ -167,6 +172,7 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
 
   const readVoiceLevels = useCallback(() => controller.current?.readVoiceLevels() ?? SILENT_VOICE, []);
   const interrupt = useCallback(() => void controller.current?.interrupt(), []);
+  const setLiveCue = useCallback((intent: import("@rcai/conversation-core").CueIntent) => { controller.current?.setLiveCue(intent); }, []);
   const captureIncident = useCallback((note?: string) => {
     const c = controller.current;
     if (!c) return;
@@ -208,5 +214,5 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   const resolveTaskProposal = useCallback((id:string,accept:boolean)=>{
     void controller.current?.resolveTaskProposal(id,accept).catch(() => toast("タスクを保存できませんでした。タスク画面で保存状態を確認してください。", "TASK_STORAGE"));
   },[toast]);
-  return { avatarAvailability, readVoiceLevels, tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
+  return { liveCueText, setLiveCue, avatarAvailability, readVoiceLevels, tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
 }
