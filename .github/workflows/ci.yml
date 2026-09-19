@@ -40,3 +40,22 @@ jobs:
         run: pnpm test
       - name: Build and audit OSS distribution
         run: pnpm build:oss
+      - name: Browser project workflow (local preview, no live providers)
+        run: |
+          set -eu
+          pnpm --filter @rcai/web exec vite preview --mode oss --host 127.0.0.1 --port 5180 > /tmp/project-preview.log 2>&1 &
+          preview=$!
+          trap 'kill "$preview" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5180/ > /dev/null; then break; fi
+            sleep 1
+          done
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" node scripts/verification/project-browser.mjs
+      - name: Preserve browser acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: project-browser-evidence
+          path: test-results/project-browser
+          if-no-files-found: ignore
+          retention-days: 7

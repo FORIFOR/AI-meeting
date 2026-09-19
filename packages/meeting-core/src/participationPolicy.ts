@@ -42,9 +42,13 @@ export interface Engagement {
  */
 export type Proactivity = "addressed_only" | "invited" | "active" | "open";
 
-/** Natural conversation is the default; operators can explicitly choose addressed_only. */
-export function defaultProactivityFor(_input: { personaId?: string | null; mode?: string | null }): Proactivity {
-  return "open";
+/**
+ * One-to-one conversation is naturally open. A multi-participant meeting is a different social
+ * contract: the character listens unless it is addressed or the room explicitly opens the floor.
+ * Operators can still opt into active/open, but the default must not make a new bot dominate a room.
+ */
+export function defaultProactivityFor(input: { personaId?: string | null; mode?: string | null }): Proactivity {
+  return input.personaId === MEETING_PERSONA_ID || input.mode === "meeting" ? "invited" : "open";
 }
 
 export interface ParticipationPolicyOptions {

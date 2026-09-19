@@ -10,7 +10,7 @@ export function TaskList({tasks,proposals=[],onResolve}:{tasks:ConversationTask[
       {t.due&&<small>期限: {t.due}{t.dueRecordedAt && `（${new Date(t.dueRecordedAt).toLocaleDateString('ja-JP')}に記録）`}</small>}
     </li>)}</ul> : <p>記録されたタスクはありません。会話の記録も確認してください。</p>}
     {proposals.map(p=><div className="task-review" key={p.id}>
-      <h3>聞き取りの確認</h3><p>まだ反映していません。この内容でよいですか？</p>
+      <h3>変更内容の確認</h3><p>まだ反映していません。この内容でよいですか？</p>
       <ul>{p.changes.map(t=><li key={t.id}>{t.title} → {t.status==='done'?'完了':t.status==='deferred'?'延期':'未完了'}{t.due&&`（期限: ${t.due}）`}</li>)}</ul>
       {onResolve ? <>
         <button type="button" onClick={()=>onResolve(p.id,true)}>この変更を反映</button>{' '}

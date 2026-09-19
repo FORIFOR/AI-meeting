@@ -86,3 +86,36 @@ it('accepts repaired real-provider arguments without weakening quote or update-i
  expect(result.error).toBeUndefined();
  expect(result.tasks.map(({title,status,due})=>({title,status,due}))).toEqual([{title:'資料確認',status:'done',due:'今日'},{title:'メール返信',status:'deferred',due:'明日'}]);
 });
+
+describe('task status semantic safety',()=> {
+ it('refuses to mark a task done from negated or hypothetical speech',()=> {
+  const s=new TaskLedger();s.apply({operations:[{action:'add',title:'資料を送る',quote:'資料を送る'}]},'資料を送る');
+  for(const quote of ['資料はまだ送っていない','資料を送ったら連絡します','資料は明日送る予定です']) {
+   const result=s.apply({operations:[{action:'update',id:'task-1',status:'done',quote}]},quote);
+   expect(result.error).toMatch(/done status/);
+   expect(s.snapshot()[0]?.status).toBe('pending');
+  }
+ });
+ it('accepts explicit completion and refuses invented deferral intent',()=> {
+  const s=new TaskLedger();s.apply({operations:[{action:'add',title:'資料を送る',quote:'資料を送る'}]},'資料を送る');
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'deferred',quote:'資料のことを考えています'}]},'資料のことを考えています').error).toBe('deferred status lacks explicit deferral evidence');
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'done',quote:'資料を送りました'}]},'資料を送りました').error).toBeUndefined();
+  expect(s.snapshot()[0]?.status).toBe('done');
+ });
+});
+
+describe('review boundary and conservative status evidence',()=>{
+ it.each(['資料を送ったら連絡します','資料は送りませんでした','資料を送った？','If I sent the report, would that help?'])("does not accept a clipped completion quote from %s",quote=>{
+  const s=new TaskLedger([{id:'task-1',title:'資料',status:'pending'}]);
+  expect(s.apply({reviewed:true,operations:[{action:'update',id:'task-1',status:'done',quote}]},quote).error).toBeDefined();
+  expect(s.snapshot()[0]!.status).toBe('pending');
+ });
+ it('never treats a request to avoid deferral as deferral',()=>{
+  const s=new TaskLedger([{id:'task-1',title:'資料',status:'pending'}]);const quote='延期しないでください';
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'deferred',quote}]},quote).error).toBeDefined();
+ });
+ it('checks full utterance even when a model quotes only the completion substring',()=>{
+  const s=new TaskLedger([{id:'task-1',title:'資料',status:'pending'}]);
+  expect(s.apply({operations:[{action:'update',id:'task-1',status:'done',quote:'送った'}]},'資料を送ったら連絡します').error).toBeDefined();
+ });
+});

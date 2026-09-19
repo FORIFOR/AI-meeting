@@ -33,3 +33,6 @@ vendor/supertonic
 artifacts/
 
 apps/desktop/src-tauri/resources/local-runtime/
+
+# Browser verification outputs (synthetic fixtures)
+test-results/

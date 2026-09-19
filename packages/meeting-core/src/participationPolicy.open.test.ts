@@ -241,14 +241,14 @@ describe("greeting on arrival", () => {
   });
 
 describe("how forward the character is by default", () => {
-  it("allows natural conversation by default, including meetings", () => {
+  it("keeps one-to-one open and waits for invitations in meetings", () => {
     // The ordinary case: someone talks to the character. Waiting to be called by name is a summons.
     expect(defaultProactivityFor({ mode: "free_talk" })).toBe("open");
     expect(defaultProactivityFor({ personaId: "friend_ja", mode: "companion" })).toBe("open");
     expect(defaultProactivityFor({})).toBe("open");
-    // Quiet participation remains an explicit operator choice.
-    expect(defaultProactivityFor({ personaId: MEETING_PERSONA_ID })).toBe("open");
-    expect(defaultProactivityFor({ mode: "meeting" })).toBe("open");
+    // A meeting is not an implicit invitation to join every exchange.
+    expect(defaultProactivityFor({ personaId: MEETING_PERSONA_ID })).toBe("invited");
+    expect(defaultProactivityFor({ mode: "meeting" })).toBe("invited");
   });
 });
 });

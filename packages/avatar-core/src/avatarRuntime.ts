@@ -21,6 +21,7 @@ export class AvatarRuntime {
   private reactionTimer: ReturnType<typeof setTimeout> | null = null;
   private stateListeners = new Set<(t: StateTransition) => void>();
   private lastTranscript = "";
+  private synchronizing = false;
   /** Generation epoch mirror (independent of the conversation runtime's own gate). */
   private acceptedGeneration = 0;
   private currentGeneration = 0;
@@ -32,7 +33,7 @@ export class AvatarRuntime {
     this.machine = new AvatarStateMachine(this.clock);
     this.machine.onTransition((t) => {
       this.provider.setState(t.to);
-      if (t.to === "LISTENING") this.opts.latency?.mark("avatar_listening", t.at);
+      if (!this.synchronizing && t.to === "LISTENING") this.opts.latency?.mark("avatar_listening", t.at);
       for (const l of this.stateListeners) l(t);
     });
   }
@@ -48,6 +49,20 @@ export class AvatarRuntime {
   onStateChange(l: (t: StateTransition) => void): () => void {
     this.stateListeners.add(l);
     return () => this.stateListeners.delete(l);
+  }
+
+  /** Hydrate a late renderer from current state only. Never replay old speech, text or gestures. */
+  synchronize(state: "idle" | "listening" | "thinking" | "speaking" | "interrupted", generation: { accepted: number; current: { generationId: number } | null }): void {
+    this.cancelReaction();
+    this.acceptedGeneration = generation.accepted;
+    this.currentGeneration = generation.current?.generationId ?? generation.accepted;
+    this.synchronizing = true;
+    try {
+      this.machine.dispatch("reset");
+      if (state === "listening" || state === "interrupted") this.machine.dispatch("userSpeechStarted");
+      else if (state === "thinking") this.machine.dispatch("assistantThinking");
+      else if (state === "speaking") this.machine.dispatch("assistantSpeechStarted");
+    } finally { this.synchronizing = false; }
   }
 
   /** Swap renderer (Live2D ⇄ VRM ⇄ realistic) without touching the conversation side. */

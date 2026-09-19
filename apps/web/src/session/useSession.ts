@@ -35,6 +35,7 @@ let seq = Date.now() % 1_000_000_000; // survives Vite HMR module re-evaluation 
 export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null, stageRef: React.RefObject<HTMLDivElement | null>, onEnded: (o: SessionOutcome) => void) {
   const controller = useRef<SessionController | null>(null);
   const [status, setStatus] = useState<SessionStatus>("starting");
+  const [avatarAvailability, setAvatarAvailability] = useState<"loading" | "ready" | "voice_only">("loading");
   const [avatarState, setAvatarState] = useState<AvatarState>("IDLE");
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [providerId, setProviderId] = useState<ProviderId | null>(null);
@@ -110,7 +111,8 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
       stage: stageRef.current,
       handlers: {
         onEvent,
-        onAvatarState: (t) => setAvatarState(t.to),
+        onAvatarState: (t) => { if (!cancelled) setAvatarState(t.to); },
+        onAvatarAvailability: (state) => { if (!cancelled) setAvatarAvailability(state); },
         onError: (message, code) => toast(message, code),
         onProviderChange: (id) => setProviderId(id),
         onDeferred: (f) => deferred.current.push(f),
@@ -206,5 +208,5 @@ export function useSession(init: Omit<SessionInit, "stage" | "handlers"> | null,
   const resolveTaskProposal = useCallback((id:string,accept:boolean)=>{
     void controller.current?.resolveTaskProposal(id,accept).catch(() => toast("タスクを保存できませんでした。タスク画面で保存状態を確認してください。", "TASK_STORAGE"));
   },[toast]);
-  return { readVoiceLevels, tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
+  return { avatarAvailability, readVoiceLevels, tasks, taskProposals, resolveTaskProposal, lookup, status, avatarState, captions, providerId, latency, observability, toasts, muted, end, interrupt, toggleMute, switchProvider, toast, captureIncident, setIncidentOptIn, incidentOptIn, incidentCount };
 }

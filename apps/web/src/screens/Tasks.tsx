@@ -7,8 +7,8 @@ import { TaskOverview } from '../components/TaskOverview.js';
 const workspace = new TaskWorkspace();
 const label = { pending: '未完了', done: '完了', deferred: '延期' };
 
-export function Tasks({ onTalk, onBack, voiceHint, storageDescription, description, showResources = false, store = workspace }: {
-  onTalk?: () => void; onBack: () => void; voiceHint?: string; storageDescription?: string; description?: string; showResources?: boolean; store?: TaskWorkspace;
+export function Tasks({ onTalk, onSchedule, onBack, voiceHint, storageDescription, description, showResources = false, store = workspace }: {
+  onTalk?: () => void; onSchedule?: (task: ConversationTask) => void; onBack: () => void; voiceHint?: string; storageDescription?: string; description?: string; showResources?: boolean; store?: TaskWorkspace;
 }) {
   const [tasks, setTasks] = useState<ConversationTask[]>([]);
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false);
@@ -61,7 +61,7 @@ export function Tasks({ onTalk, onBack, voiceHint, storageDescription, descripti
     <ul className="task-cards">{visible.map(task => <li key={task.id} className={`task-card task-card--${task.status}`}>
       <button className="task-check" type="button" aria-label={`${task.title}を${task.status === 'done' ? '未完了に戻す' : '完了にする'}`} disabled={busy} onClick={() => void mutate(() => store.update(task, { status: task.status === 'done' ? 'pending' : 'done' }), '変更を保存しました。')}>{task.status === 'done' ? '✓' : '○'}</button>
       <div className="task-card__content"><span className="task-state">{label[task.status]}</span><h2>{task.title}</h2>{task.due && <p>期限：{task.due}{task.dueRecordedAt && <small> · {new Date(task.dueRecordedAt).toLocaleDateString('ja-JP')}に記録</small>}</p>}</div>
-      <div className="task-card__actions"><button className="btn btn--ghost" disabled={busy} onClick={() => { setEditing(task); setEditTitle(task.title); setEditDue(task.due ?? ''); }}>編集</button><button className="btn btn--ghost" disabled={busy} onClick={() => void mutate(() => store.update(task, { status: task.status === 'deferred' ? 'pending' : 'deferred' }), '変更を保存しました。')}>{task.status === 'deferred' ? '再開' : '延期'}</button><button className="btn btn--ghost" disabled={busy} aria-label={`${task.title}を削除`} onClick={() => setRemoving(task)}>削除</button></div>
+      <div className="task-card__actions">{onSchedule && <button className="btn btn--ghost" disabled={busy} onClick={() => onSchedule(task)}>予定にする</button>}<button className="btn btn--ghost" disabled={busy} onClick={() => { setEditing(task); setEditTitle(task.title); setEditDue(task.due ?? ''); }}>編集</button><button className="btn btn--ghost" disabled={busy} onClick={() => void mutate(() => store.update(task, { status: task.status === 'deferred' ? 'pending' : 'deferred' }), '変更を保存しました。')}>{task.status === 'deferred' ? '再開' : '延期'}</button><button className="btn btn--ghost" disabled={busy} aria-label={`${task.title}を削除`} onClick={() => setRemoving(task)}>削除</button></div>
     </li>)}</ul>
     {ready && !visible.length && <div className="tasks-empty"><span aria-hidden="true">✳</span><h2>{tasks.length ? 'この一覧にはまだタスクがありません。' : 'まずは、小さな一歩から。'}</h2><p>{tasks.length ? 'ほかの一覧に切り替えて確認できます。' : '上の欄に、今日やりたいことをひとつ書いてみましょう。'}</p></div>}
     {editing && <form className="task-review" aria-label="タスクを編集" onSubmit={e => { e.preventDefault(); void mutate(async () => { await store.update(editing, { title: editTitle.trim(), due: editDue.trim() }); setEditing(null); }, '変更を保存しました。'); }}><h2>タスクを編集</h2><label>やること<input className="input" value={editTitle} onChange={e => setEditTitle(e.target.value)} maxLength={160} required /></label><label>期限<input className="input" value={editDue} onChange={e => setEditDue(e.target.value)} maxLength={80} /></label><button className="btn btn--primary" disabled={busy || !editTitle.trim()}>保存する</button><button className="btn" type="button" onClick={() => setEditing(null)}>取り消す</button></form>}
