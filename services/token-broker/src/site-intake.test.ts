@@ -10,6 +10,20 @@ const input={requestId:'ba0236d4-9f1b-41fb-bfbc-8c15f889af13',name:'Demo User',e
 const request=(path:string,body:any,extra={})=>new Request(`http://localhost${path}`,{method:'POST',headers:{origin,'content-type':'application/json',...extra},body:JSON.stringify(body)});
 const memory:SiteStore={lead:vi.fn(async()=>({receipt:'AM-EXAMPLE'})),event:vi.fn(async()=>{})};
 describe('private site intake',()=>{
+ it('records business entry clicks separately from private inquiries in both site languages',async()=>{
+  ledger.data.clear();
+  const store=new FirestoreSiteStore('test','test',()=>0);
+  const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},store);
+  for(const language of ['ja','en']){
+   const event={event:'business_open',scenario:'ai-meeting',language};
+   expect((await app.fetch(request('/events',event))).status).toBe(204);
+   expect((await app.fetch(request('/events',{...event,email:'private@example.invalid'}))).status).toBe(400);
+   expect((await app.fetch(request('/events',event,{origin:'https://foreign.test'}))).status).toBe(403);
+  }
+  expect([...ledger.data.entries()]).toEqual([['ai_meeting_site_events/1970-01-01',{
+   total:2,counts:{'business_open:ai-meeting:ja':1,'business_open:ai-meeting:en':1},expiresAt:90*86400000,
+  }]]);
+ });
  it('accepts portfolio inquiries without exposing a public inbox or arbitrary telemetry',async()=>{
   const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},memory);
   for(const product of ['genie','launchloom','oathra','aisecure','agent-team']){

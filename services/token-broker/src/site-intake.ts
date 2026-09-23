@@ -3,7 +3,7 @@ import { Firestore, Timestamp } from '@google-cloud/firestore';
 import { Hono } from 'hono';
 import type { BrokerEnv } from './env.js';
 
-export const SITE_EVENTS = ['demo_start','demo_complete','artifact_open','artifact_download','github_outbound','quickstart_open','vrm_preview_open','oss_preview_download'] as const;
+export const SITE_EVENTS = ['demo_start','demo_complete','artifact_open','artifact_download','github_outbound','quickstart_open','vrm_preview_open','oss_preview_download','business_open'] as const;
 const products = ['genie','launchloom','oathra','aisecure','agent-team'];
 const scenarios = ['tasks','interview','english','walkthrough','ai-meeting',...products];
 const uses = ['interview','training','language','tasks','custom',...products];
