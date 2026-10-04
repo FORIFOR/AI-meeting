@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { IDBObjectStore } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 import { PersistentTaskLedger, TaskWorkspace, parseTaskBackup } from './taskWorkspace.js';
 
@@ -78,5 +79,43 @@ describe('durable task workspace', () => {
     await s.import({ version: 1, tasks: [{ id: 'task-2', title: '既存', status: 'pending' }] });
     await live.apply({ operations: [{ action: 'add', title: '新規', quote: '新規' }] }, '新規');
     expect((await s.read()).map(t => t.id)).toEqual(['task-2', 'task-3']);
+  });
+
+  it('an IndexedDB transaction abort cannot expose an unsaved task', async () => {
+    const s = workspace(), ledger = new PersistentTaskLedger(s);
+    await s.read();
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args: Parameters<typeof put>) {
+      const request = put.apply(this, args);
+      this.transaction.abort();
+      return request;
+    };
+    try {
+      await expect(ledger.apply({ operations: [{ action: 'add', title: '合成資料を作る', quote: '合成資料を作る' }] }, '合成資料を作る')).rejects.toThrow('保存できません');
+      expect(ledger.snapshot()).toEqual([]);
+      expect(await s.read()).toEqual([]);
+    } finally { IDBObjectStore.prototype.put = put; }
+  });
+
+  it('confirmation survives IndexedDB abort, retries once, and restores across instances', async () => {
+    const s = workspace(), ledger = new PersistentTaskLedger(s);
+    const { proposal } = await ledger.propose({ operations: [{ action: 'add', title: '合成資料を作る', quote: '合成資料を作る' }] });
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args: Parameters<typeof put>) {
+      const request = put.apply(this, args);
+      this.transaction.abort();
+      return request;
+    };
+    try {
+      await expect(ledger.resolve(proposal!.id, true)).rejects.toThrow('保存できません');
+      expect(ledger.pending()).toEqual([proposal]);
+      expect(ledger.snapshot()).toEqual([]);
+      expect(await s.read()).toEqual([]);
+    } finally { IDBObjectStore.prototype.put = put; }
+    const saved = await ledger.resolve(proposal!.id, true);
+    expect(saved.tasks).toHaveLength(1);
+    expect(await new PersistentTaskLedger(s).read()).toEqual(saved.tasks);
+    expect((await ledger.resolve(proposal!.id, true)).error).toBe('proposal expired');
+    expect(await s.read()).toHaveLength(1);
   });
 });

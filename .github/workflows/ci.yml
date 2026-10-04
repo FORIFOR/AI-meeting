@@ -38,6 +38,8 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Aborted and concurrent task-write regressions (offline)
+        run: node --experimental-transform-types --loader ./tests/task-storage.loader.mjs --test tests/task-storage.regression.test.mjs
       - name: Build and audit OSS distribution
         run: pnpm build:oss
       - name: Browser project workflow (local preview, no live providers)
