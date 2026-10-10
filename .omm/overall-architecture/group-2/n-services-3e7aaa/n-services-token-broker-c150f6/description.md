@@ -1,0 +1,27 @@
+実在パス: `services/token-broker`。72ファイル。
+
+- `services/token-broker/.env.example`
+- `services/token-broker/README.md`
+- `services/token-broker/package.json`
+- `services/token-broker/scripts/smoke-meeting-security.ts`
+- `services/token-broker/scripts/smoke-recall-webhooks.ts`
+- `services/token-broker/src/app.test.ts`
+- `services/token-broker/src/app.ts`
+- `services/token-broker/src/env.ts`
+- `services/token-broker/src/evaluation-bridge.ts`
+- `services/token-broker/src/hosted-access.test.ts`
+- `services/token-broker/src/hosted-access.ts`
+- `services/token-broker/src/hosted-live-limits.ts`
+- `services/token-broker/src/index.ts`
+- `services/token-broker/src/meeting-relay.ts`
+- `services/token-broker/src/meeting-session.test.ts`
+- `services/token-broker/src/meeting-session.ts`
+- `services/token-broker/src/meeting-ws-auth.ts`
+- `services/token-broker/src/public-access.test.ts`
+- `services/token-broker/src/public-access.ts`
+- `services/token-broker/src/recall/balance.ts`
+- `services/token-broker/src/recall/botState.test.ts`
+- `services/token-broker/src/recall/botState.ts`
+- `services/token-broker/src/recall/calendar.test.ts`
+- `services/token-broker/src/recall/calendarBotConfig.ts`
+- `services/token-broker/src/recall/calendarClient.ts`

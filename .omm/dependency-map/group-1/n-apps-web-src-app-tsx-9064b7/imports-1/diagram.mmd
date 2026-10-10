@@ -1,0 +1,18 @@
+graph TD
+    source["ソース\napps/web/src/App.tsx"]
+    n-state-projectworkspace-js-c6e1a1["./state/projectWorkspace.js\napps/web/src/state/projectWorkspace.ts"]
+    source -->|"字句抽出: import／export"| n-state-projectworkspace-js-c6e1a1
+    n-state-taskworkspace-js-af640b["./state/taskWorkspace.js\napps/web/src/state/taskWorkspace.ts"]
+    source -->|"字句抽出: import／export"| n-state-taskworkspace-js-af640b
+    n-state-conversationmemory-js-49c47c["./state/conversationMemory.js\napps/web/src/state/conversationMemory.ts"]
+    source -->|"字句抽出: import／export"| n-state-conversationmemory-js-49c47c
+    n-components-zoomconnection-js-9fdd3f["./components/ZoomConnection.js\napps/web/src/components/ZoomConnection.tsx"]
+    source -->|"字句抽出: import／export"| n-components-zoomconnection-js-9fdd3f
+    n-react-6b810c["react\n外部・別名・未解決"]
+    source -->|"字句抽出: import／export"| n-react-6b810c
+    n-api-hostedauth-js-b6f627["./api/hostedAuth.js\napps/web/src/api/hostedAuth.ts"]
+    source -->|"字句抽出: import／export"| n-api-hostedauth-js-b6f627
+    n-components-screenboundary-js-842717["./components/ScreenBoundary.js\napps/web/src/components/ScreenBoundary.tsx"]
+    source -->|"字句抽出: import／export"| n-components-screenboundary-js-842717
+    n-rcai-conversation-core-872592["@rcai/conversation-core\n外部・別名・未解決"]
+    source -->|"字句抽出: import／export"| n-rcai-conversation-core-872592

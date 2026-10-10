@@ -1,0 +1,24 @@
+実在パス: `avatar-providers/vrm`。22ファイル。
+
+- `avatar-providers/vrm/README.md`
+- `avatar-providers/vrm/demo/index.html`
+- `avatar-providers/vrm/demo/main.ts`
+- `avatar-providers/vrm/demo/tsconfig.json`
+- `avatar-providers/vrm/demo/vite.config.ts`
+- `avatar-providers/vrm/package.json`
+- `avatar-providers/vrm/src/HumanGLBAvatarProvider.ts`
+- `avatar-providers/vrm/src/VRMAvatarProvider.ts`
+- `avatar-providers/vrm/src/WLipSyncEngine.ts`
+- `avatar-providers/vrm/src/assets.d.ts`
+- `avatar-providers/vrm/src/human.test.ts`
+- `avatar-providers/vrm/src/index.ts`
+- `avatar-providers/vrm/src/mapping.test.ts`
+- `avatar-providers/vrm/src/mapping.ts`
+- `avatar-providers/vrm/src/vrm-lifecycle.test.ts`
+- `avatar-providers/vrm/src/wlipsync-profile.LICENSE`
+- `avatar-providers/vrm/src/wlipsync-profile.json`
+- `avatar-providers/vrm/src/wlipsync.test.ts`
+- `avatar-providers/vrm/src/wlipsync.worker.ts`
+- `avatar-providers/vrm/src/wlipsyncCore.ts`
+- `avatar-providers/vrm/src/wlipsyncProtocol.ts`
+- `avatar-providers/vrm/tsconfig.json`

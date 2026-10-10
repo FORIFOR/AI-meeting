@@ -1,0 +1,6 @@
+graph TD
+    source["ソース\napps/web/src/components/characters.ts"]
+    n-api-health-js-6829ac["../api/health.js\napps/web/src/api/health.ts"]
+    source -->|"字句抽出: import／export"| n-api-health-js-6829ac
+    n-integrations-registry-js-38c7d9["../integrations/registry.js\napps/web/src/integrations/registry.ts"]
+    source -->|"字句抽出: import／export"| n-integrations-registry-js-38c7d9

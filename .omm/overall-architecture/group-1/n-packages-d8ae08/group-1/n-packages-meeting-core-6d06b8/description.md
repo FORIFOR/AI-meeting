@@ -1,0 +1,26 @@
+実在パス: `packages/meeting-core`。24ファイル。
+
+- `packages/meeting-core/package.json`
+- `packages/meeting-core/src/addressDetector.ja.test.ts`
+- `packages/meeting-core/src/addressDetector.live.test.ts`
+- `packages/meeting-core/src/addressDetector.ts`
+- `packages/meeting-core/src/botFailure.test.ts`
+- `packages/meeting-core/src/botFailure.ts`
+- `packages/meeting-core/src/engagement.test.ts`
+- `packages/meeting-core/src/engagementState.test.ts`
+- `packages/meeting-core/src/index.ts`
+- `packages/meeting-core/src/lifecycle.test.ts`
+- `packages/meeting-core/src/lifecycle.ts`
+- `packages/meeting-core/src/liveLookup.test.ts`
+- `packages/meeting-core/src/liveLookup.ts`
+- `packages/meeting-core/src/meeting-core.test.ts`
+- `packages/meeting-core/src/meetingPrompt.test.ts`
+- `packages/meeting-core/src/meetingPrompt.ts`
+- `packages/meeting-core/src/participationPolicy.default.test.ts`
+- `packages/meeting-core/src/participationPolicy.open.test.ts`
+- `packages/meeting-core/src/participationPolicy.ts`
+- `packages/meeting-core/src/scheduling.test.ts`
+- `packages/meeting-core/src/scheduling.ts`
+- `packages/meeting-core/src/types.ts`
+- `packages/meeting-core/src/visualTurn.test.ts`
+- `packages/meeting-core/tsconfig.json`

@@ -1,0 +1,19 @@
+確認したパス: `connectors`。配下の登録ファイルは17件。
+
+- `connectors/attendee/package.json`（一覧のみ）
+- `connectors/attendee/src/AttendeeConnector.ts`（一覧のみ）
+- `connectors/attendee/src/attendee.test.ts`（一覧のみ）
+- `connectors/attendee/src/index.ts`（一覧のみ）
+- `connectors/attendee/src/protocol.ts`（一覧のみ）
+- `connectors/attendee/tsconfig.json`（一覧のみ）
+- `connectors/recall/fixtures/bot-status-poll.json`（一覧のみ）
+- `connectors/recall/fixtures/status-webhooks.json`（一覧のみ）
+- `connectors/recall/package.json`（一覧のみ）
+- `connectors/recall/scripts/e2e-meet.ts`（一覧のみ）
+- `connectors/recall/src/RecallConnector.ts`（一覧のみ）
+- `connectors/recall/src/botPage.ts`（一覧のみ）
+- `connectors/recall/src/index.ts`（一覧のみ）
+- `connectors/recall/src/lifecycle.test.ts`（一覧のみ）
+- `connectors/recall/src/protocol.ts`（一覧のみ）
+- `connectors/recall/src/recall.test.ts`（一覧のみ）
+- `connectors/recall/tsconfig.json`（一覧のみ）

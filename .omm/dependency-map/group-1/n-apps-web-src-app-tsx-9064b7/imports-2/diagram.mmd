@@ -1,0 +1,18 @@
+graph TD
+    source["ソース\napps/web/src/App.tsx"]
+    n-rcai-persona-core-4ee739["@rcai/persona-core\n外部・別名・未解決"]
+    source -->|"字句抽出: import／export"| n-rcai-persona-core-4ee739
+    n-api-health-js-ac28d8["./api/health.js\napps/web/src/api/health.ts"]
+    source -->|"字句抽出: import／export"| n-api-health-js-ac28d8
+    n-components-characters-js-859071["./components/characters.js\napps/web/src/components/characters.ts"]
+    source -->|"字句抽出: import／export"| n-components-characters-js-859071
+    n-content-fallbackpersonas-js-d7252d["./content/fallbackPersonas.js\napps/web/src/content/fallbackPersonas.ts"]
+    source -->|"字句抽出: import／export"| n-content-fallbackpersonas-js-d7252d
+    n-integrations-registry-js-914e81["./integrations/registry.js\napps/web/src/integrations/registry.ts"]
+    source -->|"字句抽出: import／export"| n-integrations-registry-js-914e81
+    n-screens-home-jsx-72d295["./screens/Home.jsx\n外部・別名・未解決"]
+    source -->|"字句抽出: import／export"| n-screens-home-jsx-72d295
+    n-session-sessioncontroller-js-219df2["./session/SessionController.js\napps/web/src/session/SessionController.ts"]
+    source -->|"字句抽出: import／export"| n-session-sessioncontroller-js-219df2
+    n-state-settings-js-80f163["./state/settings.js\napps/web/src/state/settings.ts"]
+    source -->|"字句抽出: import／export"| n-state-settings-js-80f163

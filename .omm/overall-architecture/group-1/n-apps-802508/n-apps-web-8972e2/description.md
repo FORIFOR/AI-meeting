@@ -1,0 +1,27 @@
+実在パス: `apps/web`。184ファイル。
+
+- `apps/web/.env.example`
+- `apps/web/index.html`
+- `apps/web/orb-preview.html`
+- `apps/web/package.json`
+- `apps/web/public/agent/runtime/index.html`
+- `apps/web/public/avatar-fallbacks/sora.png`
+- `apps/web/public/characters`
+- `apps/web/public/demo/SOURCE.md`
+- `apps/web/public/demo/voice-sample.m4a`
+- `apps/web/public/icon.svg`
+- `apps/web/public/robots.txt`
+- `apps/web/public/sitemap.xml`
+- `apps/web/public/vendor`
+- `apps/web/scripts/acoustic-gate.mjs`
+- `apps/web/scripts/e2e-browser.mjs`
+- `apps/web/scripts/lib/make-soak-wav.mjs`
+- `apps/web/scripts/lifecycle-stress.mjs`
+- `apps/web/scripts/r3-incident-e2e.mjs`
+- `apps/web/scripts/screens.mjs`
+- `apps/web/scripts/soak-browser.mjs`
+- `apps/web/src/App.loading.test.tsx`
+- `apps/web/src/App.privacy.test.tsx`
+- `apps/web/src/App.projects.test.tsx`
+- `apps/web/src/App.tsx`
+- `apps/web/src/api/googleCalendar.oauth.test.ts`

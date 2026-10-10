@@ -1,0 +1,110 @@
+{
+  "repo": "FORIFOR/AI-meeting",
+  "branch": "main",
+  "tree_sha": "0b4cd4e6df9f43a846d6082ddc47d82c51ce4242",
+  "tree_files": 814,
+  "read_files": [
+    {
+      "path": "README.ja.md",
+      "sha": "756ffcbd70774672b944bb395196a500c99378af"
+    },
+    {
+      "path": "README.md",
+      "sha": "3b269e92d9d8126f2506409ebd52d4add0781c6e"
+    },
+    {
+      "path": "package.json",
+      "sha": "b24bb9facdf029de2a025eecf0aab20a6b762559"
+    },
+    {
+      "path": "apps/desktop/package.json",
+      "sha": "e3bc6e85ad9a92b322e3f7b4d634fa95cd4f33e8"
+    },
+    {
+      "path": "apps/web/package.json",
+      "sha": "b4673c8ac2f4a6ec2f51668605829ff806d4272e"
+    },
+    {
+      "path": "avatar-providers/anam/package.json",
+      "sha": "3937802de674ec6c2fc6068ee8f07117d78281dc"
+    },
+    {
+      "path": "avatar-providers/canvas/package.json",
+      "sha": "1ce9f007161d31ba409ed06a1c4ad0d176bf3405"
+    },
+    {
+      "path": "avatar-providers/live2d/package.json",
+      "sha": "8e78a762d10f2a9017aceab81515547e824adbab"
+    },
+    {
+      "path": "characters/index.ts",
+      "sha": "e80f9e1ec67928da1b55d1d36b9683bb7077d881"
+    },
+    {
+      "path": "personas/index.ts",
+      "sha": "e258df15c9cc260ba047bd36e6d0fcced6348479"
+    },
+    {
+      "path": "characters/src/index.ts",
+      "sha": "439147731944479cf6940406e0ed05fb36edbc08"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "sha": "d5ff4d1ddc3437ee0a0cec64d3587e22a29b88e9"
+    },
+    {
+      "path": "personas/src/index.ts",
+      "sha": "49267ebc7b02ff4bff57c66103dce116caea7735"
+    },
+    {
+      "path": "apps/web/src/state/projectWorkspace.ts",
+      "sha": "7bec56b365d1c60d351ea248185b9b4f87e00337"
+    },
+    {
+      "path": "apps/web/src/state/taskWorkspace.ts",
+      "sha": "cda285d079a85b60132313cd1d5439b282887c41"
+    },
+    {
+      "path": "apps/web/src/state/conversationMemory.ts",
+      "sha": "e894d4613c826704e6b9f8b032c468b9cba5be88"
+    },
+    {
+      "path": "apps/web/src/components/ZoomConnection.tsx",
+      "sha": "b65536817bcff1d9928cf175c9c35b6e7616af37"
+    },
+    {
+      "path": "apps/web/src/api/hostedAuth.ts",
+      "sha": "5b79517a4ac1e7ec3e227146dfb2bec7ca776fa2"
+    },
+    {
+      "path": "apps/web/src/components/ScreenBoundary.tsx",
+      "sha": "1e1abe6d258b650c35e52ddd81643d6dfca68d43"
+    },
+    {
+      "path": "apps/web/src/api/health.ts",
+      "sha": "3d745de1c42cb8040d104e1ba1361cf06d824c2c"
+    },
+    {
+      "path": "apps/web/src/components/characters.ts",
+      "sha": "4a84bb807e38ba88448f85ef0fa3199015487cb7"
+    },
+    {
+      "path": "apps/web/src/content/fallbackPersonas.ts",
+      "sha": "75e28e634c21c6e6cf662075bee5e4a6bd7bb689"
+    },
+    {
+      "path": "apps/web/src/integrations/registry.ts",
+      "sha": "711c87a371d14ed821e9e629e9041156b16f4b1c"
+    },
+    {
+      "path": "apps/web/src/session/SessionController.ts",
+      "sha": "57491f1ad80544936e7555961f4e47681ac5eb88"
+    },
+    {
+      "path": "apps/web/src/main.tsx",
+      "sha": "0193425920337e6590d9563678fd2dee5067becb"
+    }
+  ],
+  "not_read_count": 789,
+  "scope": "initial entry-point and direct-import analysis; not exhaustive semantic scan"
+}

@@ -1,0 +1,27 @@
+実在パス: `services/agent`。34ファイル。
+
+- `services/agent/package.json`
+- `services/agent/scripts/e2e-browser.mjs`
+- `services/agent/scripts/e2e-local.ts`
+- `services/agent/scripts/endpointing-eval.ts`
+- `services/agent/scripts/stress-bargein.ts`
+- `services/agent/src/adapters/llm.test.ts`
+- `services/agent/src/adapters/llm.ts`
+- `services/agent/src/adapters/sherpa-online.ts`
+- `services/agent/src/adapters/sherpa.ts`
+- `services/agent/src/adapters/stt-streaming.ts`
+- `services/agent/src/adapters/stt.ts`
+- `services/agent/src/adapters/tts.test.ts`
+- `services/agent/src/adapters/tts.ts`
+- `services/agent/src/adapters/turn.ts`
+- `services/agent/src/adapters/vad.ts`
+- `services/agent/src/agent.test.ts`
+- `services/agent/src/config.ts`
+- `services/agent/src/egress.ts`
+- `services/agent/src/endpointing.test.ts`
+- `services/agent/src/endpointing.ts`
+- `services/agent/src/evaluation-bridge.ts`
+- `services/agent/src/index.ts`
+- `services/agent/src/memory.test.ts`
+- `services/agent/src/memory.ts`
+- `services/agent/src/planner.ts`

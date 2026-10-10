@@ -1,0 +1,21 @@
+実在パス: `packages/avatar-core`。19ファイル。
+
+- `packages/avatar-core/package.json`
+- `packages/avatar-core/src/avatar-core.test.ts`
+- `packages/avatar-core/src/avatarRuntime.ts`
+- `packages/avatar-core/src/character.ts`
+- `packages/avatar-core/src/defaultMotions.ts`
+- `packages/avatar-core/src/dualRenderer.test.ts`
+- `packages/avatar-core/src/dualRenderer.ts`
+- `packages/avatar-core/src/expressions.ts`
+- `packages/avatar-core/src/generation.test.ts`
+- `packages/avatar-core/src/index.ts`
+- `packages/avatar-core/src/lipsync.ts`
+- `packages/avatar-core/src/motion.ts`
+- `packages/avatar-core/src/motionLibrary.ts`
+- `packages/avatar-core/src/motionStackAvatar.ts`
+- `packages/avatar-core/src/stateMachine.ts`
+- `packages/avatar-core/src/synchronizedAudioSink.test.ts`
+- `packages/avatar-core/src/synchronizedAudioSink.ts`
+- `packages/avatar-core/src/types.ts`
+- `packages/avatar-core/tsconfig.json`

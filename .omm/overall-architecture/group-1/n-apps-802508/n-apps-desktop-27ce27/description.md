@@ -1,0 +1,20 @@
+実在パス: `apps/desktop`。18ファイル。
+
+- `apps/desktop/README.md`
+- `apps/desktop/local-runtime/models.json`
+- `apps/desktop/local-runtime/node-entitlements.plist`
+- `apps/desktop/local-runtime/setup.mjs`
+- `apps/desktop/local-runtime/setup.test.mjs`
+- `apps/desktop/package.json`
+- `apps/desktop/src-tauri/Cargo.lock`
+- `apps/desktop/src-tauri/Cargo.toml`
+- `apps/desktop/src-tauri/Entitlements.plist`
+- `apps/desktop/src-tauri/Info.plist`
+- `apps/desktop/src-tauri/build.rs`
+- `apps/desktop/src-tauri/capabilities/default.json`
+- `apps/desktop/src-tauri/icons/icon.icns`
+- `apps/desktop/src-tauri/icons/icon.png`
+- `apps/desktop/src-tauri/src/lib.rs`
+- `apps/desktop/src-tauri/src/local_setup.rs`
+- `apps/desktop/src-tauri/src/main.rs`
+- `apps/desktop/src-tauri/tauri.conf.json`

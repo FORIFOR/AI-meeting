@@ -1,0 +1,21 @@
+実在パス: `docs/validation-assets`。19ファイル。
+
+- `docs/validation-assets/avatar-refinement.json`
+- `docs/validation-assets/browser-timing.json`
+- `docs/validation-assets/conversation-benchmark-manifest.json`
+- `docs/validation-assets/conversation-benchmark.json`
+- `docs/validation-assets/conversation-timing-1.json`
+- `docs/validation-assets/conversation-timing-2.json`
+- `docs/validation-assets/demo-preview.gif`
+- `docs/validation-assets/hosted-access.json`
+- `docs/validation-assets/hosted-browser.json`
+- `docs/validation-assets/portfolio-intake.json`
+- `docs/validation-assets/site-intake.json`
+- `docs/validation-assets/task-repeatability.json`
+- `docs/validation-assets/task-workspace.json`
+- `docs/validation-assets/team-cloud-first-attempt.json`
+- `docs/validation-assets/team-cloud.json`
+- `docs/validation-assets/team-promotion.json`
+- `docs/validation-assets/team-readiness.json`
+- `docs/validation-assets/vrm-local.json`
+- `docs/validation-assets/vrm-local.png`

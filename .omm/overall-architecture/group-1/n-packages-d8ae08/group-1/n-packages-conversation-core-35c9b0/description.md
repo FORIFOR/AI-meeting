@@ -1,0 +1,20 @@
+実在パス: `packages/conversation-core`。18ファイル。
+
+- `packages/conversation-core/package.json`
+- `packages/conversation-core/src/events.ts`
+- `packages/conversation-core/src/execution.test.ts`
+- `packages/conversation-core/src/execution.ts`
+- `packages/conversation-core/src/generation.test.ts`
+- `packages/conversation-core/src/index.ts`
+- `packages/conversation-core/src/liveCues.test.ts`
+- `packages/conversation-core/src/liveCues.ts`
+- `packages/conversation-core/src/policy.ts`
+- `packages/conversation-core/src/record.ts`
+- `packages/conversation-core/src/release-policy.json`
+- `packages/conversation-core/src/release.ts`
+- `packages/conversation-core/src/runtime.test.ts`
+- `packages/conversation-core/src/runtime.ts`
+- `packages/conversation-core/src/session.ts`
+- `packages/conversation-core/src/tasks.test.ts`
+- `packages/conversation-core/src/tasks.ts`
+- `packages/conversation-core/tsconfig.json`

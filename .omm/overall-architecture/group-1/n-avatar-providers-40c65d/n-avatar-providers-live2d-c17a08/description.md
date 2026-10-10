@@ -1,0 +1,24 @@
+実在パス: `avatar-providers/live2d`。22ファイル。
+
+- `avatar-providers/live2d/README.md`
+- `avatar-providers/live2d/demo/ab-main.ts`
+- `avatar-providers/live2d/demo/ab-run.mjs`
+- `avatar-providers/live2d/demo/ab.html`
+- `avatar-providers/live2d/demo/index.html`
+- `avatar-providers/live2d/demo/main.ts`
+- `avatar-providers/live2d/demo/verify.mjs`
+- `avatar-providers/live2d/demo/vite.config.ts`
+- `avatar-providers/live2d/package.json`
+- `avatar-providers/live2d/src/core.ts`
+- `avatar-providers/live2d/src/index.ts`
+- `avatar-providers/live2d/src/live2d.test.ts`
+- `avatar-providers/live2d/src/live2dAvatar.ts`
+- `avatar-providers/live2d/src/mapping.ts`
+- `avatar-providers/live2d/src/motionSync.ts`
+- `avatar-providers/live2d/src/motionsync.test.ts`
+- `avatar-providers/live2d/src/motionsync/coreApi.ts`
+- `avatar-providers/live2d/src/motionsync/cubismMotionSync.ts`
+- `avatar-providers/live2d/src/motionsync/data.ts`
+- `avatar-providers/live2d/src/motionsync/engine.ts`
+- `avatar-providers/live2d/src/motionsync/index.ts`
+- `avatar-providers/live2d/tsconfig.json`

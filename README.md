@@ -132,3 +132,9 @@ For **paid setup, customization, or operational support**, [start a business inq
 For questions and non-confidential use cases, use [GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions). Use the private form for business details or anything that should not be public.
 
 If the project is useful, a GitHub star helps you find it again and makes it easier for others to discover.
+
+<!-- omm-scan-2026-10-11 -->
+
+## 構成図・依存関係
+
+[日本語の構成図と説明を見る](docs/architecture/omm-scan-2026-10-11/README.md)（2026-10-11 初回解析）。解析範囲と未検証事項はリンク先に記載しています。

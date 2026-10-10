@@ -134,3 +134,9 @@ Live2Dやクラウドアバターは任意の追加連携です。SDK・素材�
 公開できる質問や利用例は、[GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions)へ。業務の詳細や公開したくない内容は、非公開フォームからご相談ください。
 
 役に立ったら、GitHubのスターで保存していただけると、他の方にも見つけてもらいやすくなります。
+
+<!-- omm-scan-2026-10-11 -->
+
+## 構成図・依存関係
+
+[日本語の構成図と説明を見る](docs/architecture/omm-scan-2026-10-11/README.md)（2026-10-11 初回解析）。解析範囲と未検証事項はリンク先に記載しています。

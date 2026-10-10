@@ -1,0 +1,27 @@
+実在パス: `scripts/reality`。37ファイル。
+
+- `scripts/reality/attendee-auto.mjs`
+- `scripts/reality/attendee-human.mjs`
+- `scripts/reality/attendee-selfhost/Dockerfile.arm64`
+- `scripts/reality/attendee-selfhost/LICENSE.upstream`
+- `scripts/reality/attendee-selfhost/MODIFICATIONS.md`
+- `scripts/reality/attendee-selfhost/attendee-selfhost.sh`
+- `scripts/reality/attendee-selfhost/compose.rcai.yaml`
+- `scripts/reality/attendee-selfhost/local-patches.diff`
+- `scripts/reality/attendee-sim.mjs`
+- `scripts/reality/attendee-verify.mjs`
+- `scripts/reality/cloud.mjs`
+- `scripts/reality/context-window.ts`
+- `scripts/reality/conversation-eval.mjs`
+- `scripts/reality/converse.mjs`
+- `scripts/reality/cost-ab.ts`
+- `scripts/reality/gemini-conversation.ts`
+- `scripts/reality/gemini-lifecycle.ts`
+- `scripts/reality/human.mjs`
+- `scripts/reality/lib.mjs`
+- `scripts/reality/local.mjs`
+- `scripts/reality/meet-human.mjs`
+- `scripts/reality/meet-live.mjs`
+- `scripts/reality/meet-setup.sh`
+- `scripts/reality/meeting-address.mjs`
+- `scripts/reality/meeting.mjs`
