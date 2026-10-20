@@ -13,7 +13,10 @@ export const portfolioOrigins = ['https://astra-forifor.forifor.chatgpt.site','h
 export interface SiteEvent { event: typeof SITE_EVENTS[number]; scenario: string; language: 'ja'|'en' }
 export interface SiteLead { requestId: string; name: string; email: string; organization: string; useCase: string; message: string; consent: true; website: ''; language: 'ja'|'en' }
 export class IntakeError extends Error { constructor(readonly status: 400|409|429|503, readonly code: string) { super(code); } }
-export interface SiteStore { lead(input: SiteLead): Promise<{receipt:string}>; event(input: SiteEvent): Promise<void> }
+// `created` is false for an idempotent retry, so the owner is notified once per inquiry.
+export interface SiteStore { lead(input: SiteLead): Promise<{receipt:string;created?:boolean}>; event(input: SiteEvent): Promise<void>; notice?(requestId: string, outcome: 'sent'|'failed'): Promise<void> }
+export interface LeadNotice { receipt: string; useCase: string; language: 'ja'|'en' }
+export type LeadNotifier = (notice: LeadNotice) => Promise<void>;
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 const language = (v: unknown): v is 'ja'|'en' => v === 'ja' || v === 'en';
 function object(value: unknown, keys: string[]): Record<string,any> {
@@ -43,15 +46,18 @@ export class FirestoreSiteStore implements SiteStore {
       const ref=this.db.collection('ai_meeting_site_leads').doc(requestId);
       const usageRef=this.db.collection('ai_meeting_site_lead_usage').doc(day);
       const [existing,usage]=await Promise.all([tx.get(ref),tx.get(usageRef)]);
-      if(existing.exists){if(existing.data()!.fingerprint!==fingerprint)throw new IntakeError(409,'REQUEST_CONFLICT');return {receipt:existing.data()!.receipt as string};}
+      if(existing.exists){if(existing.data()!.fingerprint!==fingerprint)throw new IntakeError(409,'REQUEST_CONFLICT');return {receipt:existing.data()!.receipt as string,created:false};}
       const data=usage.exists?usage.data()!:{total:0,emails:{}};
       if(!Number.isInteger(data.total)||data.total<0||!data.emails||typeof data.emails!=='object'||Object.values(data.emails).some(n=>!Number.isInteger(n)||Number(n)<0))throw new IntakeError(503,'UNAVAILABLE');
       if(data.total>=100||(data.emails[emailHash]??0)>=3)throw new IntakeError(429,'CAPACITY');
       const receipt=`AM-${randomUUID().slice(0,8).toUpperCase()}`;
       tx.create(ref,{...content,fingerprint,receipt,createdAt:Timestamp.fromMillis(this.now()),expiresAt:Timestamp.fromMillis(this.now()+90*86400000),status:'new'});
       tx.set(usageRef,{total:data.total+1,emails:{...data.emails,[emailHash]:(data.emails[emailHash]??0)+1},expiresAt:Timestamp.fromMillis(this.now()+90*86400000)});
-      return {receipt};
+      return {receipt,created:true};
     });
+  }
+  async notice(requestId:string,outcome:'sent'|'failed'){
+    await this.db.collection('ai_meeting_site_leads').doc(requestId).update({notice:outcome});
   }
   async event(input:SiteEvent){
     const day=new Date(this.now()).toISOString().slice(0,10);
@@ -66,7 +72,21 @@ export class FirestoreSiteStore implements SiteStore {
     });
   }
 }
-export function createSiteIntake(env:BrokerEnv,override?:SiteStore){
+// The privacy page names only Google Cloud as the inquiry destination, so the
+// email carries no contact details or message. Read those with site-inbox --details.
+export function resendNotifier(env:BrokerEnv,fetcher:typeof fetch=fetch):LeadNotifier|undefined{
+  if(!env.RESEND_API_KEY||!env.RCAI_LEAD_NOTIFY_TO)return undefined;
+  return async({receipt,useCase,language})=>{
+    const response=await fetcher('https://api.resend.com/emails',{method:'POST',redirect:'error',signal:AbortSignal.timeout(5000),
+      headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`site-lead-${receipt}`},
+      body:JSON.stringify({from:env.RCAI_LEAD_NOTIFY_FROM||'Reachmade <onboarding@resend.dev>',to:[env.RCAI_LEAD_NOTIFY_TO],
+        subject:`新しい問い合わせ ${receipt}`,
+        text:`受付番号: ${receipt}\n相談の種類: ${useCase}\n言語: ${language}\n\n内容は site-inbox.mts --details で確認してください。`})});
+    await response.body?.cancel();
+    if(!response.ok)throw new Error(`Resend HTTP ${response.status}`);
+  };
+}
+export function createSiteIntake(env:BrokerEnv,override?:SiteStore,notifier:LeadNotifier|undefined=resendNotifier(env)){
   const app=new Hono<{Variables:{siteBody:unknown}}>();
   app.onError((e,c)=>e instanceof IntakeError?c.json({error:e.code},e.status):c.json({error:'UNAVAILABLE'},503));
   const enabled=!!env.RCAI_MARKETING_ORIGIN&&!!env.GOOGLE_CLOUD_PROJECT&&!!env.RCAI_HOSTED_FIRESTORE_DATABASE;
@@ -88,7 +108,17 @@ export function createSiteIntake(env:BrokerEnv,override?:SiteStore){
     try{c.set('siteBody',JSON.parse(Buffer.concat(chunks).toString('utf8')));}catch{return c.json({error:'INVALID_INPUT'},400);}
     try{await next();}catch(e){if(e instanceof IntakeError)return c.json({error:e.code},e.status);return c.json({error:'UNAVAILABLE'},503);}
   });
-  app.post('/leads',async c=>c.json(await store!.lead(parseSiteLead(c.get('siteBody'))),201));
+  app.post('/leads',async c=>{
+    const lead=parseSiteLead(c.get('siteBody'));
+    const {receipt,created}=await store!.lead(lead);
+    // The inquiry is already durable; a failed email must not turn it into an error.
+    // The outcome is kept on the record so site-inbox can show unnotified inquiries.
+    if(created&&notifier){
+      const outcome=await notifier({receipt,useCase:lead.useCase,language:lead.language}).then(()=>'sent' as const,e=>{console.error('[site-intake] lead notice failed',receipt,e instanceof Error?e.message:'');return 'failed' as const;});
+      await store!.notice?.(lead.requestId,outcome).catch(()=>{});
+    }
+    return c.json({receipt},201);
+  });
   app.post('/events',async c=>{await store!.event(parseSiteEvent(c.get('siteBody')));return c.body(null,204);});
   return app;
 }

@@ -13,6 +13,10 @@ export interface BrokerEnv {
   RCAI_TEAM_FIRESTORE_DATABASE?: string;
   /** Public marketing origin; enables private inquiry intake and aggregate site events. */
   RCAI_MARKETING_ORIGIN?: string;
+  /** Owner notification for new inquiries via Resend. Content-free: receipt, use case and language only. */
+  RESEND_API_KEY?: string;
+  RCAI_LEAD_NOTIFY_TO?: string;
+  RCAI_LEAD_NOTIFY_FROM?: string;
   /** Public demo launch: stop new billed provider work while retaining local demos and cleanup. */
   RCAI_PUBLIC_DEMO_ONLY?: string;
   /** Verified-account, server-timed Vertex experience. Defaults to disabled / zero capacity. */
