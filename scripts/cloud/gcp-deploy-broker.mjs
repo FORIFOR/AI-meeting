@@ -39,6 +39,10 @@ const secretNames = {
 };
 if (hostedKey) secretNames.ATTENDEE_API_KEY = `${service}-hosted-attendee-api-key`;
 if (process.env.HOSTED_ATTENDEE_WEBHOOK_SECRET) secretNames.ATTENDEE_WEBHOOK_SECRET = `${service}-hosted-attendee-webhook-secret`;
+// --set-secrets replaces the whole mapping, so keep the inquiry-notice key once it exists.
+const resendSecret = `${service}-resend-api-key`;
+const hasSecret = name => { try { execFileSync("gcloud", ["secrets", "describe", name, "--project", project], { stdio: "ignore" }); return true; } catch { return false; } };
+if (process.env.RESEND_API_KEY || hasSecret(resendSecret)) secretNames.RESEND_API_KEY = resendSecret;
 function run(args, input) { return execFileSync("gcloud", args, { input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "inherit"] }).trim(); }
 function ensureSecret(name, value) {
   try { run(["secrets", "describe", name, "--project", project]); } catch { run(["secrets", "create", name, "--project", project, "--replication-policy=automatic"]); }
@@ -47,12 +51,12 @@ function ensureSecret(name, value) {
 run(["config", "set", "project", project]);
 run(["services", "enable", "run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "secretmanager.googleapis.com", "aiplatform.googleapis.com"]);
 try { run(["artifacts", "repositories", "describe", repo, "--location", region, "--project", project]); } catch { run(["artifacts", "repositories", "create", repo, "--repository-format=docker", "--location", region, "--project", project, "--description=AI Meeting images"]); }
-for (const [key, name] of Object.entries(secretNames)) ensureSecret(name,
+for (const [key, name] of Object.entries(secretNames)) if (key !== "RESEND_API_KEY" || process.env.RESEND_API_KEY) ensureSecret(name,
   key === "ATTENDEE_API_KEY" ? hostedKey : key === "ATTENDEE_WEBHOOK_SECRET" ? process.env.HOSTED_ATTENDEE_WEBHOOK_SECRET : process.env[key]);
 run(["builds", "submit", ".", "--project", project, "--config", "deploy/gcp/cloudbuild.broker.yaml", `--substitutions=_IMAGE=${image}`]);
 const envVars = ["HOST=0.0.0.0", "RCAI_RELEASE_CHANNEL=beta", "ATTENDEE_API_BASE_URL=https://app.attendee.dev"];
 // Incremental deployments preserve separately configured access policy/OAuth settings.
-for (const key of ["RCAI_PUBLIC_DEMO_ONLY", "ZOOM_OAUTH_CLIENT_ID", "ZOOM_OAUTH_CALLBACK_URL", "ZOOM_OAUTH_WEB_ORIGIN", "ZOOM_FIRESTORE_DATABASE", "ZOOM_REQUIRE_AUTH"]) {
+for (const key of ["RCAI_PUBLIC_DEMO_ONLY", "ZOOM_OAUTH_CLIENT_ID", "ZOOM_OAUTH_CALLBACK_URL", "ZOOM_OAUTH_WEB_ORIGIN", "ZOOM_FIRESTORE_DATABASE", "ZOOM_REQUIRE_AUTH", "RCAI_LEAD_NOTIFY_TO", "RCAI_LEAD_NOTIFY_FROM"]) {
   if (process.env[key]) envVars.push(`${key}=${process.env[key]}`);
 }
 if (process.env.BROKER_PUBLIC_URL) envVars.push(`RECALL_PUBLIC_URL=${process.env.BROKER_PUBLIC_URL}`);
