@@ -51,6 +51,13 @@ export class TaskLedger {
   private proposals = new Map<string, { args: Record<string,unknown>; source: string; before: ConversationTask[]; changes: ConversationTask[] }>();
   private proposalSeq = 0;
   constructor(initial: ConversationTask[] = []) { this.rebase(initial); }
+  /** Stage a transaction without consuming live proposals before durable storage commits. */
+  copy(): TaskLedger {
+    const copy = new TaskLedger(this.tasks);
+    copy.proposals = structuredClone(this.proposals);
+    copy.proposalSeq = this.proposalSeq;
+    return copy;
+  }
   /** Refresh persisted tasks without approving or discarding pending proposals. */
   rebase(current: ConversationTask[]): void { this.tasks = validateTasks(current); }
   pending(): TaskProposal[] { return [...this.proposals].map(([id,p])=>({id,changes:p.changes.map(t=>({...t}))})); }

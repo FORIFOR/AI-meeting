@@ -100,27 +100,37 @@ export class TaskWorkspace {
 /** Keeps unverified proposals in memory; only confirmed changes enter durable storage. */
 export class PersistentTaskLedger {
   private ledger = new TaskLedger();
+  private work: Promise<void> = Promise.resolve();
+  // Keep proposals created while a transaction is pending out of an older staged copy.
+  private exclusive<T>(action: () => Promise<T>): Promise<T> {
+    const result = this.work.then(action);
+    this.work = result.then(() => undefined, () => undefined);
+    return result;
+  }
   constructor(private readonly workspace = new TaskWorkspace()) {}
-  async read(): Promise<ConversationTask[]> { const tasks = await this.workspace.read(); this.ledger.rebase(tasks); return tasks; }
+  private async readCurrent(): Promise<ConversationTask[]> { const tasks = await this.workspace.read(); this.ledger.rebase(tasks); return tasks; }
+  read(): Promise<ConversationTask[]> { return this.exclusive(() => this.readCurrent()); }
   snapshot(): ConversationTask[] { return this.ledger.snapshot(); }
   pending(): TaskProposal[] { return this.ledger.pending(); }
-  async apply(args: Record<string, unknown>, source: string) {
+  private async commit(change: (ledger: TaskLedger) => ReturnType<TaskLedger['apply']>) {
+    let staged: TaskLedger | undefined;
     const result = await this.workspace.change(tasks => {
-      this.ledger.rebase(tasks);
-      const result = this.ledger.apply(args, source);
+      staged = this.ledger.copy();
+      staged.rebase(tasks);
+      const result = change(staged);
       return { tasks: result.tasks, result };
     });
-    await this.read();
+    // workspace.change resolves only after the storage transaction completes.
+    // On quota/abort errors the live ledger and its pending confirmation remain intact.
+    this.ledger = staged!;
+    await this.readCurrent();
     return { ...result, tasks: this.snapshot() };
   }
-  async propose(args: Record<string, unknown>) { await this.read(); return this.ledger.propose(args); }
+  async apply(args: Record<string, unknown>, source: string) {
+    return this.exclusive(() => this.commit(ledger => ledger.apply(args, source)));
+  }
+  async propose(args: Record<string, unknown>) { return this.exclusive(async () => { await this.readCurrent(); return this.ledger.propose(args); }); }
   async resolve(id: string, accept: boolean) {
-    const result = await this.workspace.change(tasks => {
-      this.ledger.rebase(tasks);
-      const result = this.ledger.resolve(id, accept);
-      return { tasks: result.tasks, result };
-    });
-    await this.read();
-    return { ...result, tasks: this.snapshot() };
+    return this.exclusive(() => this.commit(ledger => ledger.resolve(id, accept)));
   }
 }

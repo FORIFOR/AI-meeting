@@ -38,8 +38,15 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Aborted and concurrent task-write regressions (offline)
+        run: node --experimental-transform-types --loader ./tests/task-storage.loader.mjs --test tests/task-storage.regression.test.mjs
       - name: Build and audit OSS distribution
         run: pnpm build:oss
+      - name: Install Japanese fonts for readable browser evidence
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-match -f '%{family}\n' 'sans-serif:lang=ja' | grep -qi 'Noto Sans CJK'
       - name: Browser project workflow (local preview, no live providers)
         run: |
           set -eu
