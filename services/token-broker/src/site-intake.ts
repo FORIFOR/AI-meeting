@@ -15,7 +15,7 @@ export interface SiteLead { requestId: string; name: string; email: string; orga
 export class IntakeError extends Error { constructor(readonly status: 400|409|429|503, readonly code: string) { super(code); } }
 // `created` is false for an idempotent retry, so the owner is notified once per inquiry.
 export interface SiteStore { lead(input: SiteLead): Promise<{receipt:string;created?:boolean}>; event(input: SiteEvent): Promise<void>; notice?(requestId: string, outcome: 'sent'|'failed'): Promise<void> }
-export interface LeadNotice { receipt: string; useCase: string; language: 'ja'|'en' }
+export type LeadNotice = Omit<SiteLead,'requestId'|'consent'|'website'> & { receipt: string }
 export type LeadNotifier = (notice: LeadNotice) => Promise<void>;
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 const language = (v: unknown): v is 'ja'|'en' => v === 'ja' || v === 'en';
@@ -72,16 +72,16 @@ export class FirestoreSiteStore implements SiteStore {
     });
   }
 }
-// The privacy page names only Google Cloud as the inquiry destination, so the
-// email carries no contact details or message. Read those with site-inbox --details.
+// The email carries the whole inquiry so the owner can read and reply from the inbox.
+// The privacy page names Resend as this delivery route; keep the two in step.
 export function resendNotifier(env:BrokerEnv,fetcher:typeof fetch=fetch):LeadNotifier|undefined{
   if(!env.RESEND_API_KEY||!env.RCAI_LEAD_NOTIFY_TO)return undefined;
-  return async({receipt,useCase,language})=>{
+  return async({receipt,name,email,organization,useCase,message,language})=>{
     const response=await fetcher('https://api.resend.com/emails',{method:'POST',redirect:'error',signal:AbortSignal.timeout(5000),
       headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`site-lead-${receipt}`},
-      body:JSON.stringify({from:env.RCAI_LEAD_NOTIFY_FROM||'Reachmade <onboarding@resend.dev>',to:[env.RCAI_LEAD_NOTIFY_TO],
+      body:JSON.stringify({from:env.RCAI_LEAD_NOTIFY_FROM||'Reachmade <onboarding@resend.dev>',to:[env.RCAI_LEAD_NOTIFY_TO],reply_to:email,
         subject:`新しい問い合わせ ${receipt}`,
-        text:`受付番号: ${receipt}\n相談の種類: ${useCase}\n言語: ${language}\n\n内容は site-inbox.mts --details で確認してください。`})});
+        text:`受付番号: ${receipt}\nお名前: ${name}\nメール: ${email}\n会社・団体: ${organization||'（なし）'}\n相談の種類: ${useCase}\n言語: ${language}\n\n${message}\n\n（このメールに返信すると、問い合わせた方へ届きます）`})});
     await response.body?.cancel();
     if(!response.ok)throw new Error(`Resend HTTP ${response.status}`);
   };
@@ -114,7 +114,7 @@ export function createSiteIntake(env:BrokerEnv,override?:SiteStore,notifier:Lead
     // The inquiry is already durable; a failed email must not turn it into an error.
     // The outcome is kept on the record so site-inbox can show unnotified inquiries.
     if(created&&notifier){
-      const outcome=await notifier({receipt,useCase:lead.useCase,language:lead.language}).then(()=>'sent' as const,e=>{console.error('[site-intake] lead notice failed',receipt,e instanceof Error?e.message:'');return 'failed' as const;});
+      const outcome=await notifier({receipt,name:lead.name,email:lead.email,organization:lead.organization,useCase:lead.useCase,message:lead.message,language:lead.language}).then(()=>'sent' as const,e=>{console.error('[site-intake] lead notice failed',receipt,e instanceof Error?e.message:'');return 'failed' as const;});
       await store!.notice?.(lead.requestId,outcome).catch(()=>{});
     }
     return c.json({receipt},201);
