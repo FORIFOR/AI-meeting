@@ -42,12 +42,12 @@ describe('private site intake',()=>{
  it('retries idempotently across store instances and rejects a changed payload',async()=>{ledger.data.clear();const a=new FirestoreSiteStore('test','test',()=>0),b=new FirestoreSiteStore('test','test',()=>0);const one=await a.lead(parseSiteLead({...input}));expect((await b.lead(parseSiteLead({...input}))).receipt).toBe(one.receipt);expect(ledger.data.get('ai_meeting_site_lead_usage/1970-01-01').total).toBe(1);await expect(b.lead(parseSiteLead({...input,message:'A different inquiry body'}))).rejects.toMatchObject({status:409});const stored=ledger.data.get(`ai_meeting_site_leads/${input.requestId}`);expect(stored.expiresAt).toBe(90*86400000);expect(stored).not.toHaveProperty('website');});
  it('serializes concurrent daily quota reservations and fails closed on corruption',async()=>{ledger.data.clear();const a=new FirestoreSiteStore('test','test',()=>0);const make=(n:number)=>parseSiteLead({...input,requestId:`ba0236d4-9f1b-41fb-bfbc-8c15f889af1${n}`});const results=await Promise.allSettled([1,2,3,4].map(n=>a.lead(make(n))));expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(3);expect(results.filter(r=>r.status==='rejected')).toHaveLength(1);ledger.data.set('ai_meeting_site_lead_usage/1970-01-01',{total:'bad',emails:{}});await expect(a.lead(make(5))).rejects.toBeInstanceOf(IntakeError);});
  it('stores only daily aggregate event counts and preserves the cap',async()=>{ledger.data.clear();const a=new FirestoreSiteStore('test','test',()=>0);const event=parseSiteEvent({event:'github_outbound',scenario:'tasks',language:'ja'});await a.event(event);const row=ledger.data.get('ai_meeting_site_events/1970-01-01');expect(row).toEqual({total:1,counts:{'github_outbound:tasks:ja':1},expiresAt:90*86400000});ledger.data.set('ai_meeting_site_events/1970-01-01',{...row,total:20000});await expect(a.event(event)).rejects.toMatchObject({status:429});});
- it('notifies the owner once per new inquiry without contact details or the message',async()=>{
+ it('notifies the owner once per new inquiry with the whole inquiry',async()=>{
   const notices:any[]=[],outcomes:string[]=[];
   const store:SiteStore={lead:vi.fn().mockResolvedValueOnce({receipt:'AM-EXAMPLE',created:true}).mockResolvedValueOnce({receipt:'AM-EXAMPLE',created:false}),event:vi.fn(),notice:async(_id,o)=>{outcomes.push(o);}};
   const app=createSiteIntake({RCAI_MARKETING_ORIGIN:origin},store,async n=>{notices.push(n);});
   for(let i=0;i<2;i++){const r=await app.fetch(request('/leads',input));expect(r.status).toBe(201);expect(await r.json()).toEqual({receipt:'AM-EXAMPLE'});}
-  expect(notices).toEqual([{receipt:'AM-EXAMPLE',useCase:'training',language:'ja'}]);
+  expect(notices).toEqual([{receipt:'AM-EXAMPLE',name:input.name,email:input.email,organization:input.organization,useCase:input.useCase,message:input.message,language:input.language}]);
   expect(outcomes).toEqual(['sent']);
  });
  it('keeps the receipt when the email fails and records the failure',async()=>{
@@ -56,15 +56,15 @@ describe('private site intake',()=>{
   const r=await app.fetch(request('/leads',input));expect(r.status).toBe(201);expect(await r.json()).toEqual({receipt:'AM-EXAMPLE'});expect(outcomes).toEqual(['failed']);
   expect(JSON.stringify(error.mock.calls)).not.toContain(input.email);error.mockRestore();
  });
- it('sends a content-free Resend email only when configured',async()=>{
+ it('sends the inquiry by Resend with reply-to only when configured',async()=>{
   expect(resendNotifier({})).toBeUndefined();expect(resendNotifier({RESEND_API_KEY:'k'})).toBeUndefined();
   const calls:any[]=[];const fetcher=(async(url:string,init:any)=>{calls.push([url,init]);return new Response('{}',{status:200});}) as any;
-  await resendNotifier({RESEND_API_KEY:'k',RCAI_LEAD_NOTIFY_TO:'owner@example.invalid'},fetcher)!({receipt:'AM-EXAMPLE',useCase:'oathra',language:'en'});
+  await resendNotifier({RESEND_API_KEY:'k',RCAI_LEAD_NOTIFY_TO:'owner@example.invalid'},fetcher)!({receipt:'AM-EXAMPLE',name:input.name,email:input.email,organization:input.organization,useCase:'oathra',message:input.message,language:'en'});
   const [url,init]=calls[0],body=JSON.parse(init.body);
   expect(url).toBe('https://api.resend.com/emails');expect(init.headers.Authorization).toBe('Bearer k');expect(init.headers['Idempotency-Key']).toBe('site-lead-AM-EXAMPLE');
   expect(body.to).toEqual(['owner@example.invalid']);expect(body.text).toContain('AM-EXAMPLE');expect(body.text).toContain('oathra');
-  for(const secret of [input.name,input.email,input.organization,input.message])expect(init.body).not.toContain(secret);
-  await expect(resendNotifier({RESEND_API_KEY:'k',RCAI_LEAD_NOTIFY_TO:'o@example.invalid'},(async()=>new Response('{}',{status:403})) as any)!({receipt:'AM-X',useCase:'tasks',language:'ja'})).rejects.toThrow('403');
+  expect(body.reply_to).toBe(input.email);for(const field of [input.name,input.email,input.organization,input.message])expect(body.text).toContain(field);
+  await expect(resendNotifier({RESEND_API_KEY:'k',RCAI_LEAD_NOTIFY_TO:'o@example.invalid'},(async()=>new Response('{}',{status:403})) as any)!({receipt:'AM-X',name:'n',email:'a@example.invalid',organization:'',useCase:'tasks',message:'m',language:'ja'})).rejects.toThrow('403');
  });
  it('marks only newly stored inquiries as created',async()=>{ledger.data.clear();const a=new FirestoreSiteStore('test','test',()=>0);expect((await a.lead(parseSiteLead({...input}))).created).toBe(true);expect((await a.lead(parseSiteLead({...input}))).created).toBe(false);});
 });
