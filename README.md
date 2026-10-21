@@ -1,5 +1,7 @@
 # AI Meeting
 
+[Website and usage guide](https://reachmade.com/en/products/ai-meeting/guide/)
+
 **Turn spoken plans into tasks you can pick up next time.**
 
 An open-source **voice-to-task** meeting assistant and voice task manager for interruptible AI conversations, VRM avatars, and browser-local task persistence.
@@ -12,7 +14,7 @@ Tell an AI character what needs doing, interrupt to change a plan, and keep the 
 
 **Latest beta: [v0.2.0-beta.2](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)** — voice-orb input handoff, 1,100 automated tests, and an OSS preview you can run locally.
 
-[Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [See the 8-second TikTok demo](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [Paid setup and customization](https://ai-meeting.forifor.chatgpt.site/#business) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
+[Explore the VRM preview](https://ai-meeting.web.app/vrm-demo) · [See the 8-second TikTok demo](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [Paid setup and customization](https://reachmade.com/en/contact/) · [Questions and use cases](https://github.com/FORIFOR/AI-meeting/discussions) · [日本語](README.ja.md)
 
 [![8-second preview: a VRM avatar hears a spoken task change and the task list updates](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
 
@@ -70,7 +72,7 @@ Choose the rendering path that matches your privacy and deployment needs. The ho
 | [LiveAvatar (optional)](avatar-providers/liveavatar/src/LiveAvatarProvider.ts) | HeyGen LiveAvatar streaming adapter over LiveKit | Your broker configuration, provider credentials, and HeyGen/LiveAvatar service and data-processing terms. |
 | [Tavus (optional)](avatar-providers/tavus/src/TavusAvatarProvider.ts) | Tavus CVI adapter over Daily | Your broker configuration, provider credentials, and Tavus/Daily service and data-processing terms. |
 
-**Useful for your own project? Star this repository to keep it handy.** [Implementation and deployment inquiries](https://ai-meeting.forifor.chatgpt.site/#business) use a private form.
+**Useful for your own project? Star this repository to keep it handy.** [Implementation and deployment inquiries](https://reachmade.com/en/contact/) use a private form.
 
 [![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [Beta release](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)
 
@@ -127,7 +129,7 @@ Application-specific code is licensed under [Apache-2.0](LICENSE), subject to th
 
 Try a scenario, report a reproducible problem, or improve a provider, language, or character integration. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-For **paid setup, customization, or operational support**, [start a business inquiry](https://ai-meeting.forifor.chatgpt.site/#business). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Inquiries use a private form; do not include confidential material.
+For **paid setup, customization, or operational support**, [start a business inquiry](https://reachmade.com/en/contact/). Describe the work you want to improve and the support you need. We will assess feasibility, scope, delivery timing, and fees for that use case before work begins. The application is currently a developer beta; this is not a ready-to-use hosted subscription. Inquiries use a private form; do not include confidential material.
 
 For questions and non-confidential use cases, use [GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions). Use the private form for business details or anything that should not be public.
 

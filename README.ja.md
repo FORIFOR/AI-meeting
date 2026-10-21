@@ -1,5 +1,7 @@
 # AI Meeting
 
+[製品サイト・利用案内](https://reachmade.com/products/ai-meeting/guide/)
+
 **会話で決めたTODOを、次回へ残す。**
 
 会話をTODOへ変える、オープンソースの**voice-to-task**音声タスク管理アプリです。割り込み可能な音声AI、VRMアバター、ブラウザー内のタスク保存を試せます。
@@ -12,7 +14,7 @@
 
 **最新ベータ：[v0.2.0-beta.2](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)** — 音声入力の引き継ぎ表示を改善し、自動テスト1,100件とローカルで動かせるOSSプレビューを公開しています。
 
-[VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [TikTokの8秒実演](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [有料の導入・カスタマイズ相談](https://ai-meeting.forifor.chatgpt.site/ja#business) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
+[VRMアバターを試す](https://ai-meeting.web.app/vrm-demo) · [TikTokの8秒実演](https://www.tiktok.com/@foriforapps/video/7685224040239238420) · [有料の導入・カスタマイズ相談](https://reachmade.com/contact/) · [質問・利用例を共有](https://github.com/FORIFOR/AI-meeting/discussions) · [English](README.md)
 
 [![8秒のプレビュー：VRMアバターとの会話でタスクが更新される様子](docs/validation-assets/demo-preview.gif)](https://youtu.be/qLenE6R7-nI)
 
@@ -70,7 +72,7 @@
 | [LiveAvatar（任意）](avatar-providers/liveavatar/src/LiveAvatarProvider.ts) | LiveKit経由のHeyGen LiveAvatarストリーミング連携 | 自分のbroker設定、プロバイダー認証情報、HeyGen/LiveAvatarの利用・データ処理条件。 |
 | [Tavus（任意）](avatar-providers/tavus/src/TavusAvatarProvider.ts) | Daily経由のTavus CVI連携 | 自分のbroker設定、プロバイダー認証情報、Tavus/Dailyの利用・データ処理条件。 |
 
-**自分の開発にも役立ちそうなら、Starで保存してください。** [導入・カスタマイズの相談](https://ai-meeting.forifor.chatgpt.site/ja#business)は非公開フォームで受け付けています。
+**自分の開発にも役立ちそうなら、Starで保存してください。** [導入・カスタマイズの相談](https://reachmade.com/contact/)は非公開フォームで受け付けています。
 
 [![CI](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/FORIFOR/AI-meeting/actions/workflows/ci.yml) · [ベータ版](https://github.com/FORIFOR/AI-meeting/releases/tag/v0.2.0-beta.2)
 
@@ -129,7 +131,7 @@ Live2Dやクラウドアバターは任意の追加連携です。SDK・素材�
 
 シナリオを試す、不具合を報告する、接続先・言語・キャラクターの対応を改善するところから参加できます。[開発への参加方法](CONTRIBUTING.md)と[セキュリティ報告](SECURITY.md)を参照してください。
 
-**有料の導入・カスタマイズ・運用支援**は、[導入・開発の相談](https://ai-meeting.forifor.chatgpt.site/ja#business)へ。改善したい業務と必要な支援をお知らせください。対応可否・作業範囲・納期・費用を、着手前に個別に確認します。現在のアプリは開発者向けベータ版で、登録だけで使える月額サービスではありません。相談は非公開フォームで受け付けます。機密情報は含めないでください。
+**有料の導入・カスタマイズ・運用支援**は、[導入・開発の相談](https://reachmade.com/contact/)へ。改善したい業務と必要な支援をお知らせください。対応可否・作業範囲・納期・費用を、着手前に個別に確認します。現在のアプリは開発者向けベータ版で、登録だけで使える月額サービスではありません。相談は非公開フォームで受け付けます。機密情報は含めないでください。
 
 公開できる質問や利用例は、[GitHub Discussions](https://github.com/FORIFOR/AI-meeting/discussions)へ。業務の詳細や公開したくない内容は、非公開フォームからご相談ください。
 
