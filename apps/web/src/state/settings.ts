@@ -180,6 +180,16 @@ export function loadSettings(storage: Pick<Storage, "getItem"> | null = typeof l
     const parsed = JSON.parse(raw) as Partial<Settings>;
     const clean: Partial<Settings> = {};
     for (const [k, v] of Object.entries(parsed)) if (!FORBIDDEN.test(k)) (clean as Record<string, unknown>)[k] = v;
+    // An earlier Firebase build used the development defaults. Move only that exact
+    // saved pair to the configured cloud endpoints; keep intentional custom URLs.
+    if (import.meta.env.VITE_RCAI_CLOUD === "true" &&
+      clean.brokerUrl === "http://localhost:8787" &&
+      clean.agentUrl === "ws://localhost:8788" &&
+      clean.engine === "auto") {
+      clean.brokerUrl = DEFAULT_SETTINGS.brokerUrl;
+      clean.agentUrl = DEFAULT_SETTINGS.agentUrl;
+      clean.engine = DEFAULT_SETTINGS.engine;
+    }
     return { ...DEFAULT_SETTINGS, ...clean, advanced: { ...(clean.advanced ?? {}) }, voices: { ...(clean.voices ?? {}) }, avatarQuality: validAvatarQuality(clean.avatarQuality) };
   } catch {
     return { ...DEFAULT_SETTINGS };

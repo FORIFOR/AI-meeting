@@ -2,6 +2,7 @@
   "hosting": {
     "site": "ai-meeting",
     "public": "apps/web/dist",
+    "predeploy": ["pnpm build:firebase"],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "cleanUrls": true,
     "rewrites": [{ "source": "**", "destination": "/index.html" }],

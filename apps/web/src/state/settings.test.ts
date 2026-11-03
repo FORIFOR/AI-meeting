@@ -34,6 +34,25 @@ describe("OSS profile", () => {
   });
 });
 
+it("moves only the old development defaults to the configured hosted broker", async () => {
+  vi.stubEnv("VITE_RCAI_CLOUD", "true");
+  vi.stubEnv("VITE_RCAI_BROKER_URL", "https://broker.example");
+  vi.stubGlobal("window", { location: { origin: "https://ai-meeting.web.app", protocol: "https:", host: "ai-meeting.web.app" } });
+  vi.resetModules();
+  try {
+    const cloud = await import("./settings.js");
+    const legacy = { brokerUrl: "http://localhost:8787", agentUrl: "ws://localhost:8788", engine: "auto", characterId: "yui" };
+    expect(cloud.loadSettings({ getItem: () => JSON.stringify(legacy) })).toMatchObject({
+      brokerUrl: "https://broker.example", engine: "google", characterId: "yui",
+    });
+    expect(cloud.loadSettings({ getItem: () => JSON.stringify({ ...legacy, brokerUrl: "https://custom.example" }) }).brokerUrl).toBe("https://custom.example");
+  } finally {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  }
+});
+
 describe("a page running inside a meeting bot", () => {
   it("routes with the engine the bot was created with, not its own empty settings", () => {
     // Observed in-call: the page kept "auto", picked OpenAI, and the account had no credit — the

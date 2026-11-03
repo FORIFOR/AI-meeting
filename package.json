@@ -13,6 +13,7 @@
     "dev:broker": "pnpm --filter @rcai/token-broker dev",
     "dev:agent": "pnpm --filter @rcai/agent dev",
     "build": "pnpm --filter @rcai/web build",
+    "build:firebase": "node scripts/build-firebase.mjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
