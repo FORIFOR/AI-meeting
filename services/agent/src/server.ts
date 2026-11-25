@@ -7,7 +7,8 @@ import type { EvaluationInput } from "@rcai/provider-core";
 import type { MotionPlanInput } from "@rcai/behavior-engine";
 import { loadConfig, nonLoopbackEndpoints, type AgentConfig } from "./config.js";
 import { clearEgressLog, getEgressLog, installEgressGuard, setStrictEgressBlock } from "./egress.js";
-import { SherpaSTT, WhisperServerSTT, type STTAdapter } from "./adapters/stt.js";
+import { WhisperServerSTT, type STTAdapter } from "./adapters/stt.js";
+import { SherpaWorkerSTT } from "./adapters/stt-worker.js";
 import { IncrementalOfflineSTT, type StreamingSTT } from "./adapters/stt-streaming.js";
 import { SherpaOnlineSTT } from "./adapters/sherpa-online.js";
 import { EnergyVADAdapter, SileroVAD, type VADAdapter } from "./adapters/vad.js";
@@ -47,7 +48,7 @@ export async function createRuntime(cfg: AgentConfig = loadConfig()): Promise<Ag
     await w.init();
     stt = w;
   } else {
-    const s = new SherpaSTT(cfg.sherpaModelDir);
+    const s = new SherpaWorkerSTT(cfg.sherpaModelDir);
     await s.init();
     stt = s;
     if (!s.ready) {
@@ -302,6 +303,7 @@ export async function startAgent(cfg: AgentConfig = loadConfig()): Promise<{ ser
     close: () =>
       new Promise((resolve) => {
         wss.close();
+        if (rt.stt instanceof SherpaWorkerSTT) rt.stt.close();
         server.close(() => resolve());
       }),
   };
