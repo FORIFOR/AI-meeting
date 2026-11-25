@@ -1,14 +1,16 @@
 import type { PCMFrame } from "@rcai/audio-core";
 
-const BLOCK = 12; // 48 kHz to 4 kHz, with box averaging before downsampling.
-const HISTORY = 960; // Retain 240 ms of rendered audio in memory only.
+const HISTORY_MS = 240;
+const SEARCH_RATE = 4000;
 const STRONG_MATCH = 0.985;
 
 /** Recognize a delayed copy of playback after browser AEC. Mixed or uncertain frames pass intact. */
 export class PlaybackEchoGuard {
-  private readonly reference = new Float32Array(HISTORY);
-  private readonly fullRate = new Float32Array(HISTORY * BLOCK);
-  private readonly pending = new Float32Array(BLOCK);
+  private rate = 0;
+  private block = 1;
+  private reference = new Float32Array(0);
+  private fullRate = new Float32Array(0);
+  private pending = new Float32Array(0);
   private pendingSize = 0;
   private cursor = 0;
   private count = 0;
@@ -20,28 +22,33 @@ export class PlaybackEchoGuard {
   }
 
   playback(frame: PCMFrame): void {
-    if (frame.sampleRate !== 48000) {
+    if (frame.sampleRate !== this.rate) {
       this.reset();
-      return;
+      this.rate = frame.sampleRate;
+      this.block = Math.max(1, Math.round(this.rate / SEARCH_RATE));
+      this.reference = new Float32Array(Math.ceil(this.rate * HISTORY_MS / (1000 * this.block)));
+      this.fullRate = new Float32Array(this.reference.length * this.block);
+      this.pending = new Float32Array(this.block);
     }
+    if (!this.rate) return;
     for (const sample of frame.data) {
       this.pending[this.pendingSize++] = sample;
-      if (this.pendingSize < BLOCK) continue;
+      if (this.pendingSize < this.block) continue;
       this.reference[this.cursor] = this.mean(this.pending, 0);
-      this.fullRate.set(this.pending, this.cursor * BLOCK);
-      this.cursor = (this.cursor + 1) % HISTORY;
-      this.count = Math.min(this.count + 1, HISTORY);
+      this.fullRate.set(this.pending, this.cursor * this.block);
+      this.cursor = (this.cursor + 1) % this.reference.length;
+      this.count = Math.min(this.count + 1, this.reference.length);
       this.pendingSize = 0;
     }
   }
 
   filter(frame: PCMFrame): PCMFrame {
-    const size = Math.floor(frame.data.length / BLOCK);
-    if (frame.sampleRate !== 48000 || size < 24 || size > this.count) return frame;
+    const size = Math.floor(frame.data.length / this.block);
+    if (frame.sampleRate !== this.rate || size * this.block < frame.sampleRate * 0.006 || size > this.count) return frame;
     const capture = new Float32Array(size);
     let captureEnergy = 0;
     for (let i = 0; i < size; i++) {
-      capture[i] = this.mean(frame.data, i * BLOCK);
+      capture[i] = this.mean(frame.data, i * this.block);
       captureEnergy += capture[i]! ** 2;
     }
     if (captureEnergy < size * 0.00001) return frame;
@@ -50,12 +57,12 @@ export class PlaybackEchoGuard {
     for (let delay = 0; delay <= this.count - size; delay++) {
       let dot = 0;
       let referenceEnergy = 0;
-      let index = (this.cursor + HISTORY - size - delay) % HISTORY;
+      let index = (this.cursor + this.reference.length - size - delay) % this.reference.length;
       for (let i = 0; i < size; i++) {
         const sample = this.reference[index]!;
         dot += capture[i]! * sample;
         referenceEnergy += sample * sample;
-        if (++index === HISTORY) index = 0;
+        if (++index === this.reference.length) index = 0;
       }
       // The captured copy must be quieter than its reference. Preserve double-talk
       // and all uncertain audio, including the first phoneme, without lookahead.
@@ -67,18 +74,18 @@ export class PlaybackEchoGuard {
       }
     }
     if (bestDelay === undefined) return frame;
-    const residual = this.cancelAlignedEcho(frame.data, size * BLOCK, bestDelay * BLOCK);
+    const residual = this.cancelAlignedEcho(frame.data, size * this.block, bestDelay * this.block);
     return residual ? { ...frame, data: residual } : frame;
   }
 
   private cancelAlignedEcho(capture: Float32Array, size: number, coarseDelay: number): Float32Array | undefined {
     const ringSize = this.fullRate.length;
-    const newest = this.cursor * BLOCK;
+    const newest = this.cursor * this.block;
     let energy = 0;
     for (let i = 0; i < size; i++) energy += capture[i]! ** 2;
     let best: { score: number; gain: number; start: number } | undefined;
-    for (let delay = Math.max(0, coarseDelay - BLOCK + 1);
-         delay + size <= this.count * BLOCK && delay < coarseDelay + BLOCK; delay++) {
+    for (let delay = Math.max(0, coarseDelay - this.block + 1);
+         delay + size <= this.count * this.block && delay < coarseDelay + this.block; delay++) {
       const start = (newest + ringSize - size - delay) % ringSize;
       let dot = 0;
       let refEnergy = 0;
@@ -107,7 +114,7 @@ export class PlaybackEchoGuard {
 
   private mean(samples: Float32Array, start: number): number {
     let sum = 0;
-    for (let j = 0; j < BLOCK; j++) sum += samples[start + j]!;
-    return sum / BLOCK;
+    for (let j = 0; j < this.block; j++) sum += samples[start + j]!;
+    return sum / this.block;
   }
 }

@@ -24,7 +24,8 @@ export interface VADAdapter {
 export class SileroVAD implements VADAdapter {
   readonly engine = "silero-vad";
   private vad: InstanceType<NonNullable<ReturnType<typeof loadSherpa>>["Vad"]> | null = null;
-  private pending = new Float32Array(0);
+  private readonly pending = new Float32Array(512);
+  private pendingSize = 0;
   private detected = false;
   private fed = 0;
 
@@ -52,14 +53,16 @@ export class SileroVAD implements VADAdapter {
 
   process(samples: Float32Array, at: number): VADAdapterEvent[] {
     if (!this.vad) return [];
-    const merged = new Float32Array(this.pending.length + samples.length);
-    merged.set(this.pending);
-    merged.set(samples, this.pending.length);
     const events: VADAdapterEvent[] = [];
-    let off = 0;
-    while (off + 512 <= merged.length) {
-      this.vad.acceptWaveform(merged.subarray(off, off + 512));
-      off += 512;
+    let offset = 0;
+    while (offset < samples.length) {
+      const take = Math.min(this.pending.length - this.pendingSize, samples.length - offset);
+      this.pending.set(samples.subarray(offset, offset + take), this.pendingSize);
+      this.pendingSize += take;
+      offset += take;
+      if (this.pendingSize < this.pending.length) break;
+      this.vad.acceptWaveform(this.pending);
+      this.pendingSize = 0;
       this.fed += 512;
       const nowDetected = this.vad.isDetected();
       if (nowDetected && !this.detected) {
@@ -78,13 +81,12 @@ export class SileroVAD implements VADAdapter {
         this.detected = false;
       }
     }
-    this.pending = merged.subarray(off);
     return events;
   }
 
   reset(): void {
     this.vad?.reset();
-    this.pending = new Float32Array(0);
+    this.pendingSize = 0;
     this.detected = false;
     this.fed = 0;
   }

@@ -44,3 +44,14 @@ it("subtracts an aligned echo without erasing a quieter overlapping onset", () =
   const error = actual.data.reduce((sum, sample, i) => sum + (sample - voice[i]!) ** 2, 0);
   expect(error).toBeLessThan(0.004);
 });
+
+it("matches delayed playback at 44.1 kHz across uneven worklet blocks", () => {
+  const guard = new PlaybackEchoGuard();
+  const rate = 44100;
+  const reference = Float32Array.from({ length: 9900 }, (_, i) => tone(i));
+  for (let offset = 0; offset < reference.length; offset += 512) {
+    guard.playback(createFrame(reference.subarray(offset, offset + 512), rate));
+  }
+  const echo = createFrame(reference.slice(7700, 8580).map(sample => sample * 0.4), rate);
+  expect(guard.filter(echo).data.every(sample => Math.abs(sample) < 1e-6)).toBe(true);
+});
