@@ -52,6 +52,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
   readonly model: string;
   private chunks: Float32Array[] = [];
   private total = 0;
+  private generation = 0;
   private decodedUpTo = 0; // samples covered by the last completed decode
   private lastPartial = "";
   private prevPartial = "";
@@ -117,7 +118,9 @@ export class IncrementalOfflineSTT implements StreamingSTT {
 
   /** Fresh transcript: reuse when the last decode covers all but `reuseTailMs` of speech, else decode now. */
   async snapshot(opts: { trailingSilenceMs?: number } = {}): Promise<StreamingTranscript> {
+    const generation = this.generation;
     if (this.decoding) await this.decoding;
+    if (generation !== this.generation) return { text: "", kind: "partial", reused: false };
     const silence = Math.round(((opts.trailingSilenceMs ?? 0) / 1000) * 16000);
     const tailMs = (Math.max(0, this.total - silence - this.decodedUpTo) / 16000) * 1000;
     if (this.lastPartial && tailMs <= this.o.reuseTailMs) {
@@ -126,14 +129,15 @@ export class IncrementalOfflineSTT implements StreamingSTT {
     if (this.total === 0) return { text: "", kind: "partial", reused: false };
     this.decoding = this.decodeAll("partial").finally(() => (this.decoding = null));
     await this.decoding;
-    return { text: this.lastPartial, kind: "partial", reused: false };
+    return { text: generation === this.generation ? this.lastPartial : "", kind: "partial", reused: false };
   }
 
   /** The final is the last partial whenever that already covers the speech (silence excluded). */
   async endUtterance(opts: { trailingSilenceMs?: number } = {}): Promise<StreamingTranscript> {
+    const generation = this.generation;
     const snap = await this.snapshot(opts);
     const final: StreamingTranscript = { text: snap.text, kind: "final", reused: snap.reused };
-    for (const l of this.listeners) l(final);
+    if (generation === this.generation) for (const l of this.listeners) l(final);
     return final;
   }
 
@@ -150,6 +154,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
   }
 
   reset(): void {
+    this.generation++;
     this.speechEndSample = null;
     this.chunks = [];
     this.total = 0;
@@ -161,6 +166,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
   }
 
   private async decodeAll(kind: "partial"): Promise<void> {
+    const generation = this.generation;
     const upTo = this.total;
     const merged = new Float32Array(upTo);
     let off = 0;
@@ -172,7 +178,7 @@ export class IncrementalOfflineSTT implements StreamingSTT {
       return;
     }
     // A newer reset happened while decoding: discard.
-    if (upTo > this.total) return;
+    if (generation !== this.generation) return;
     this.decodedUpTo = upTo;
     this.prevPartial = this.lastPartial;
     this.lastPartial = text;
