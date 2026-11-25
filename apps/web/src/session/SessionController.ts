@@ -1,3 +1,4 @@
+import { PlaybackEchoGuard } from "./PlaybackEchoGuard.js";
 import { awaitAvatarStep } from "./lateAvatar.js";
 import { VoiceActivity } from "./voiceActivity.js";
 import { configureSessionTools, TaskTranscript } from "./sessionTools.js";
@@ -229,9 +230,13 @@ export class SessionController {
     });
     this.sidecar = sidecar;
 
+    const echoGuard = new PlaybackEchoGuard();
+    const useEchoGuard = () => this._providerId === "local";
     // 6. Fan-out of unified events + played audio.
     speaker.tap.subscribe((frame) => {
       if (this.disposed) return;
+      if (useEchoGuard()) echoGuard.playback(frame);
+      else echoGuard.reset();
       this.voiceActivity.playback(frame);
       observer.notePlaybackFrame(frame);
       this.avatarRuntime?.pushAudio(frame);
@@ -278,7 +283,8 @@ export class SessionController {
     mic.onFrame((frame) => {
       if (this.disposed) return;
       if (!mic.isMuted) this.voiceActivity.capture(frame);
-      runtime.pushMicFrame(frame);
+      if (!speaker.isPlaying) echoGuard.reset();
+      runtime.pushMicFrame(useEchoGuard() && speaker.isPlaying ? echoGuard.filter(frame) : frame);
       recorder.recordMicFrame(frame);
       const db = dbfs(rms(frame.data));
       this.behavior?.reportUserAudio(Math.max(0, Math.min(1, (db + 50) / 35)), frame.timestamp);
